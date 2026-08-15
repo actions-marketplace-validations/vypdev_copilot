@@ -9,6 +9,7 @@ import { IssueLabelProvisioningRepository } from './issue_label_provisioning_rep
 import { IssueTypeRepository } from './issue_type_repository';
 import { IssueTypeAssignmentRepository } from './issue_type_assignment_repository';
 import { IssueAssignmentRepository } from './issue_assignment_repository';
+import { IssueLifecycleRepository } from './issue_lifecycle_repository';
 import { Labels } from "../model/labels";
 
 export { PROGRESS_LABEL_PATTERN } from './progress_labels';
@@ -24,6 +25,7 @@ export class IssueRepository {
         (owner, repository, issueNumber, token) => this.getId(owner, repository, issueNumber, token),
     );
     private readonly issueAssignmentRepository = new IssueAssignmentRepository();
+    private readonly issueLifecycleRepository = new IssueLifecycleRepository();
 
     updateTitleIssueFormat = async (
         owner: string,
@@ -268,65 +270,9 @@ export class IssueRepository {
 
     listIssueComments = this.issueContentRepository.listIssueComments;
 
-    closeIssue = async (
-        owner: string,
-        repository: string,
-        issueNumber: number,
-        token: string,
-    ) => {
-        const octokit = github.getOctokit(token);
-        const {data: issue} = await octokit.rest.issues.get({
-            owner: owner,
-            repo: repository,
-            issue_number: issueNumber,
-        });
+    closeIssue = this.issueLifecycleRepository.closeIssue;
 
-        logDebugInfo(`Issue #${issueNumber} state: ${issue.state}`);
-
-        if (issue.state === 'open') {
-            await octokit.rest.issues.update({
-                owner: owner,
-                repo: repository,
-                issue_number: issueNumber,
-                state: 'closed',
-            });
-            logDebugInfo(`Issue #${issueNumber} has been closed.`);
-            return true;
-        } else {
-            logDebugInfo(`Issue #${issueNumber} is already closed.`);
-            return false;
-        }
-    }
-
-    openIssue = async (
-        owner: string,
-        repository: string,
-        issueNumber: number,
-        token: string,
-    ) => {
-        const octokit = github.getOctokit(token);
-        const {data: issue} = await octokit.rest.issues.get({
-            owner: owner,
-            repo: repository,
-            issue_number: issueNumber,
-        });
-
-        logDebugInfo(`Issue #${issueNumber} state: ${issue.state}`);
-
-        if (issue.state === 'closed') {
-            await octokit.rest.issues.update({
-                owner: owner,
-                repo: repository,
-                issue_number: issueNumber,
-                state: 'open',
-            });
-            logDebugInfo(`Issue #${issueNumber} has been re-opened.`);
-            return true;
-        } else {
-            logDebugInfo(`Issue #${issueNumber} is already opened.`);
-            return false;
-        }
-    }
+    openIssue = this.issueLifecycleRepository.openIssue;
 
     getCurrentAssignees = this.issueAssignmentRepository.getCurrentAssignees;
 
