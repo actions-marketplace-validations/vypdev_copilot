@@ -5,6 +5,7 @@ import { ProjectResult } from "../graph/project_result";
 import { ProjectDetail } from "../model/project_detail";
 import { authorizationForFileModification } from './actor_modification_policy';
 import { collectOrganizationMembers, selectAvailableMembers } from './project_members_policy';
+import { tagReference, tagReferencePath, releaseName } from './release_tag_policy';
 
 export class ProjectRepository {
   
@@ -626,7 +627,7 @@ export class ProjectRepository {
         const { data: foundTag } = await octokit.rest.git.getRef({
           owner,
           repo,
-          ref: `tags/${tag}`,
+          ref: tagReference(tag),
         });
         return foundTag;
       } catch {
@@ -651,7 +652,7 @@ export class ProjectRepository {
       }
 
       const foundTargetTag = await this.findTag(owner, repo, targetTag, token);
-      const refName = `tags/${targetTag}`;
+      const refName = tagReference(targetTag);
 
       const octokit = github.getOctokit(token);
       if (foundTargetTag) {
@@ -668,7 +669,7 @@ export class ProjectRepository {
         await octokit.rest.git.createRef({
           owner,
           repo,
-          ref: `refs/${refName}`,
+          ref: tagReferencePath(targetTag),
           sha: sourceTagSHA,
         });
       }
@@ -739,7 +740,7 @@ export class ProjectRepository {
           owner,
           repo,
           tag_name: version,
-          name: `${version} - ${title}`,
+          name: releaseName(version, title),
           body: changelog,
           draft: false,
           prerelease: false,
