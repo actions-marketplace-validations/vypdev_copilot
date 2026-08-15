@@ -4,17 +4,18 @@ import { logDebugInfo, logError } from "../../utils/logger";
 import { IssueContentRepository } from './issue_content_repository';
 import { IssueMetadataRepository } from './issue_metadata_repository';
 import { IssueLabelRepository } from './issue_label_repository';
+import { IssueProgressLabelRepository } from './issue_progress_label_repository';
 import { Labels } from "../model/labels";
 import { IssueTypes } from "../model/issue_types";
 import { getRequiredLabels } from './required_labels';
 
-/** Matches labels that are progress percentages (e.g. "0%", "85%"). Used for setProgressLabel and syncing. */
-export const PROGRESS_LABEL_PATTERN = /^\d+%$/;
+export { PROGRESS_LABEL_PATTERN } from './progress_labels';
 
 export class IssueRepository {
     private readonly issueContentRepository = new IssueContentRepository();
     private readonly issueMetadataRepository = new IssueMetadataRepository();
     private readonly issueLabelRepository = new IssueLabelRepository();
+    private readonly issueProgressLabelRepository = new IssueProgressLabelRepository(this.issueLabelRepository);
 
     updateTitleIssueFormat = async (
         owner: string,
@@ -234,78 +235,18 @@ export class IssueRepository {
 
     setLabels = this.issueLabelRepository.setLabels;
 
-    /** Progress labels: 0%, 5%, 10%, ..., 100% (multiples of 5). */
-    private static readonly PROGRESS_LABEL_PERCENTS = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100];
-
-    /**
-     * Returns 6-char hex color for progress (no leading #).
-     * 0% = red, 50% = yellow, 100% = green, with linear interpolation.
-     */
-    private static progressPercentToColor(percent: number): string {
-        const p = Math.min(100, Math.max(0, percent));
-        let r: number, g: number, b: number;
-        if (p <= 50) {
-            const t = p / 50;
-            r = Math.round(182 + (251 - 182) * t);
-            g = Math.round(2 + (202 - 2) * t);
-            b = Math.round(5 + (4 - 5) * t);
-        } else {
-            const t = (p - 50) / 50;
-            r = Math.round(251 + (14 - 251) * t);
-            g = Math.round(202 + (138 - 202) * t);
-            b = Math.round(4 + (22 - 4) * t);
-        }
-        return [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
-    }
-
-    /**
-     * Ensures progress labels (0%, 5%, ..., 100%) exist in the repo with red→yellow→green colors.
-     */
-    ensureProgressLabels = async (
+    ensureProgressLabels = (
         owner: string,
         repository: string,
         token: string,
-    ): Promise<{ created: number; existing: number; errors: string[] }> => {
-        const errors: string[] = [];
-        let created = 0;
-        let existing = 0;
-        for (const p of IssueRepository.PROGRESS_LABEL_PERCENTS) {
-            const name = `${p}%`;
-            const color = IssueRepository.progressPercentToColor(p);
-            const description = `Progress: ${p}%`;
-            try {
-                const result = await this.ensureLabel(owner, repository, name, color, description, token);
-                if (result.created) created++;
-                else if (result.existed) existing++;
-            } catch (error: unknown) {
-                const err = error as { message?: string };
-                logError(`Error ensuring progress label "${name}": ${error}`);
-                errors.push(`Error creating label "${name}": ${err.message || error}`);
-            }
-        }
-        return { created, existing, errors };
-    };
+    ) => this.issueProgressLabelRepository.ensureProgressLabels(
+        owner,
+        repository,
+        token,
+        this.ensureLabel,
+    );
 
-    /**
-     * Sets the progress label on the issue: removes any existing percentage label and adds the new one.
-     * Progress is rounded to the nearest 5 (0, 5, 10, ..., 100).
-     */
-    setProgressLabel = async (
-        owner: string,
-        repository: string,
-        issueNumber: number,
-        progress: number,
-        token: string,
-    ): Promise<void> => {
-        const rounded = Math.min(100, Math.max(0, Math.round(progress / 5) * 5));
-        const newLabel = `${rounded}%`;
-        const current = await this.getLabels(owner, repository, issueNumber, token);
-        const withoutProgress = current.filter(name => !PROGRESS_LABEL_PATTERN.test(name));
-        const hasNew = withoutProgress.includes(newLabel);
-        const nextLabels = hasNew ? withoutProgress : [...withoutProgress, newLabel];
-        await this.setLabels(owner, repository, issueNumber, nextLabels, token);
-        logDebugInfo(`Progress label set to ${newLabel} for issue #${issueNumber}`);
-    };
+    setProgressLabel = this.issueProgressLabelRepository.setProgressLabel;
 
     isIssue = this.issueMetadataRepository.isIssue;
 
