@@ -1,57 +1,8 @@
-import {
-    OPENCODE_MAX_RETRIES,
-    OPENCODE_REQUEST_TIMEOUT_MS,
-    OPENCODE_RETRY_DELAY_MS,
-} from '../../utils/constants';
+import { OPENCODE_REQUEST_TIMEOUT_MS } from '../../utils/constants';
 import { logDebugInfo, logError, logInfo } from '../../utils/logger';
 import { Ai } from '../model/ai';
 import { parseJsonFromAgentText } from './agent_json_parser';
-
-function delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-/**
- * Runs an async OpenCode operation with retries. On failure, logs and retries up to OPENCODE_MAX_RETRIES.
- * Single retry system for all OpenCode interactions: no parallel retry logic.
- *
- * Retries when the operation throws, including:
- * - Network errors (fetch fails, connection refused, etc.)
- * - HTTP errors (4xx/5xx from session create or message)
- * - Timeout (OPENCODE_REQUEST_TIMEOUT_MS)
- * - Empty or invalid JSON response body (parseJsonResponse throws)
- * - Missing session id in create response
- * - Parse failure of expected format (e.g. expectJson but text is not valid JSON) when parse is done inside the callback
- */
-async function withOpenCodeRetry<T>(fn: () => Promise<T>, context: string): Promise<T> {
-    let lastError: unknown;
-    for (let attempt = 1; attempt <= OPENCODE_MAX_RETRIES; attempt++) {
-        try {
-            return await fn();
-        } catch (error) {
-            lastError = error;
-            const message = error instanceof Error ? error.message : String(error);
-            const cause =
-                error instanceof Error && (error as Error & { cause?: unknown }).cause instanceof Error
-                    ? (error as Error & { cause: Error }).cause.message
-                    : '';
-            const detail = cause ? ` (cause: ${cause})` : '';
-            const noResponseHint =
-                message === 'fetch failed'
-                    ? ' No HTTP response; connection lost or timeout. If this was before the client timeout (see log above), the OpenCode server or a proxy may have a shorter timeout.'
-                    : '';
-            if (attempt < OPENCODE_MAX_RETRIES) {
-                logInfo(
-                    `OpenCode [${context}] attempt ${attempt}/${OPENCODE_MAX_RETRIES} failed: ${message}${detail}.${noResponseHint} Retrying in ${OPENCODE_RETRY_DELAY_MS}ms...`
-                );
-                await delay(OPENCODE_RETRY_DELAY_MS);
-            } else {
-                logError(`OpenCode [${context}] failed after ${OPENCODE_MAX_RETRIES} attempts: ${message}${detail}`);
-            }
-        }
-    }
-    throw lastError;
-}
+import { withOpenCodeRetry } from './opencode_retry';
 
 function createTimeoutSignal(ms: number): AbortSignal {
     const controller = new AbortController();
