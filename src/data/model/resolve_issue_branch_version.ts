@@ -1,4 +1,5 @@
 import { nextHotfixVersion, nextReleaseVersion } from './version_resolution_policy';
+import { hotfixBranch, hotfixOriginBranch, releaseBranch } from './branch_state_policy';
 import { BranchRepository } from '../repository/branch_repository';
 import type { Execution } from './execution';
 import { GetHotfixVersionUseCase } from '../../usecase/steps/common/get_hotfix_version_use_case';
@@ -28,7 +29,7 @@ export async function resolveIssueBranchVersion(
                 execution.release.version = nextReleaseVersion(lastTag, execution.release.type);
             }
         }
-        execution.release.branch = `${execution.branches.releaseTree}/${execution.release.version}`;
+        execution.release.branch = releaseBranch(execution.branches.releaseTree, execution.release.version);
     } else if (execution.hotfix.active && execution.hotfix.version === undefined) {
         const versionResult = await new GetHotfixVersionUseCase().invoke(execution);
         const versionInfo = versionResult.at(-1);
@@ -41,9 +42,9 @@ export async function resolveIssueBranchVersion(
             execution.hotfix.baseVersion = nextVersion.baseVersion;
             execution.hotfix.version = nextVersion.version;
         }
-        execution.hotfix.branch = `${execution.branches.hotfixTree}/${execution.hotfix.version}`;
+        execution.hotfix.branch = hotfixBranch(execution.branches.hotfixTree, execution.hotfix.version);
         execution.currentConfiguration.hotfixBranch = execution.hotfix.branch;
-        execution.hotfix.baseBranch = `tags/v${execution.hotfix.baseVersion}`;
+        execution.hotfix.baseBranch = hotfixOriginBranch(execution.hotfix.baseVersion ?? '');
         execution.currentConfiguration.hotfixOriginBranch = execution.hotfix.baseBranch;
     }
     return true;
