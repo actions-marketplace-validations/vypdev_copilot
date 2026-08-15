@@ -9,13 +9,6 @@ import { IssueRepository } from "../repository/issue_repository";
 import { ProjectRepository } from "../repository/project_repository";
 import { Ai } from "./ai";
 import { Branches } from "./branches";
-import {
-    hotfixBranch,
-    hotfixOriginBranch,
-    releaseBranch,
-    versionFromHotfixOriginBranch,
-    versionFromReleaseBranch,
-} from './branch_state_policy';
 import { Commit } from "./commit";
 import { Config } from "./config";
 import { Emoji } from "./emoji";
@@ -35,6 +28,7 @@ import { Welcome } from "./welcome";
 import { Workflows } from "./workflows";
 import { resolveExecutionIssueNumber } from "./resolve_execution_issue_number";
 import { resolveIssueBranchVersion } from './resolve_issue_branch_version';
+import { restorePreviousBranchState } from './previous_branch_state_policy';
 
 export class Execution {
     debug: boolean = false;
@@ -269,43 +263,23 @@ export class Execution {
         this.release.active = this.labels.isRelease;
         this.hotfix.active = this.labels.isHotfix;
 
-        /**
-         * Get previous state
-         */
-        if (this.release.active) {
-            const previousReleaseBranch = this.previousConfiguration?.releaseBranch
-            if (previousReleaseBranch) {
-                this.release.version = versionFromReleaseBranch(previousReleaseBranch)
-                this.release.branch = releaseBranch(this.branches.releaseTree, this.release.version);
-                this.currentConfiguration.parentBranch = this.previousConfiguration?.parentBranch
-                this.currentConfiguration.releaseBranch = this.release.branch
-            }
-        } else if (this.hotfix.active) {
-            const previousHotfixOriginBranch = this.previousConfiguration?.hotfixOriginBranch
-            if (previousHotfixOriginBranch) {
-                this.hotfix.baseVersion = versionFromHotfixOriginBranch(previousHotfixOriginBranch)
-                this.hotfix.baseBranch = hotfixOriginBranch(this.hotfix.baseVersion);
-                this.currentConfiguration.hotfixOriginBranch = this.hotfix.baseBranch;
-                this.currentConfiguration.parentBranch = this.hotfix.baseBranch
-            }
-            const previousHotfixBranch = this.previousConfiguration?.hotfixBranch
-            if (previousHotfixBranch) {
-                this.hotfix.version = versionFromReleaseBranch(previousHotfixBranch)
-                this.hotfix.branch = hotfixBranch(this.branches.hotfixTree, this.hotfix.version);
-                this.currentConfiguration.hotfixBranch = this.hotfix.branch
-            }
-        } else {
-            this.currentConfiguration.parentBranch = this.previousConfiguration?.parentBranch
-            this.currentConfiguration.workingBranch = this.previousConfiguration?.workingBranch
-        }
-
-        if (this.currentConfiguration.parentBranch === undefined && this.previousConfiguration?.parentBranch != null) {
-            this.currentConfiguration.parentBranch = this.previousConfiguration.parentBranch;
-        }
-
-        if (this.currentConfiguration.workingBranch === undefined && this.previousConfiguration?.workingBranch != null) {
-            this.currentConfiguration.workingBranch = this.previousConfiguration.workingBranch;
-        }
+        const previousState = restorePreviousBranchState(
+            this.previousConfiguration,
+            this.release.active ? 'release' : this.hotfix.active ? 'hotfix' : 'default',
+            this.branches.releaseTree,
+            this.branches.hotfixTree,
+        );
+        this.release.version = previousState.releaseVersion;
+        this.release.branch = previousState.releaseBranch;
+        this.hotfix.baseVersion = previousState.hotfixBaseVersion;
+        this.hotfix.baseBranch = previousState.hotfixBaseBranch;
+        this.hotfix.version = previousState.hotfixVersion;
+        this.hotfix.branch = previousState.hotfixBranch;
+        this.currentConfiguration.parentBranch = previousState.parentBranch;
+        this.currentConfiguration.workingBranch = previousState.workingBranch;
+        this.currentConfiguration.releaseBranch = previousState.releaseBranch;
+        this.currentConfiguration.hotfixOriginBranch = previousState.hotfixBaseBranch;
+        this.currentConfiguration.hotfixBranch = previousState.hotfixBranch;
 
         if (this.isSingleAction) {
             /**
