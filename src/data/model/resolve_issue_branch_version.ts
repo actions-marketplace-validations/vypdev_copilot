@@ -1,5 +1,6 @@
 import { nextHotfixVersion, nextReleaseVersion } from './version_resolution_policy';
 import { hotfixBranch, hotfixOriginBranch, releaseBranch } from './branch_state_policy';
+import { hotfixResolutionFromPayload, releaseResolutionFromPayload } from './version_resolution_result_policy';
 import { BranchRepository } from '../repository/branch_repository';
 import type { Execution } from './execution';
 import { GetHotfixVersionUseCase } from '../../usecase/steps/common/get_hotfix_version_use_case';
@@ -18,12 +19,14 @@ export async function resolveIssueBranchVersion(
         const versionResult = await new GetReleaseVersionUseCase().invoke(execution);
         const versionInfo = lastResult(versionResult);
         if (versionInfo?.executed && versionInfo.success) {
-            execution.release.version = versionInfo.payload['releaseVersion'];
+            const releaseResolution = releaseResolutionFromPayload(versionInfo.payload);
+            execution.release.version = releaseResolution.version;
         } else {
             const typeResult = await new GetReleaseTypeUseCase().invoke(execution);
             const typeInfo = typeResult.at(-1);
             if (typeInfo?.executed && typeInfo.success) {
-                execution.release.type = typeInfo.payload['releaseType'];
+                const releaseResolution = releaseResolutionFromPayload(typeInfo.payload);
+                execution.release.type = releaseResolution.type;
                 if (execution.release.type === undefined) return false;
                 const lastTag = await branchRepository.getLatestTag();
                 execution.release.version = nextReleaseVersion(lastTag, execution.release.type);
@@ -34,8 +37,9 @@ export async function resolveIssueBranchVersion(
         const versionResult = await new GetHotfixVersionUseCase().invoke(execution);
         const versionInfo = versionResult.at(-1);
         if (versionInfo?.executed && versionInfo.success) {
-            execution.hotfix.baseVersion = versionInfo.payload['baseVersion'];
-            execution.hotfix.version = versionInfo.payload['hotfixVersion'];
+            const hotfixResolution = hotfixResolutionFromPayload(versionInfo.payload);
+            execution.hotfix.baseVersion = hotfixResolution.baseVersion;
+            execution.hotfix.version = hotfixResolution.version;
         } else {
             const latestTag = await branchRepository.getLatestTag();
             const nextVersion = nextHotfixVersion(latestTag);
