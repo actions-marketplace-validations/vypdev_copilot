@@ -18,60 +18,52 @@ jobs:
     runs-on: [self-hosted, X64, Linux, coolify]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
-
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
-
       - name: Create isolated RepoWise environment
-        run: python -m venv "$RUNNER_TEMP/repowise-venv"
-
+        run: python -m venv "$[self-hosted, X64, Linux, coolify]_TEMP/repowise-venv"
       - name: Install RepoWise
         run: |
-          "$RUNNER_TEMP/repowise-venv/bin/python" -m pip install \
+          "$[self-hosted, X64, Linux, coolify]_TEMP/repowise-venv/bin/python" -m pip install \
             --disable-pip-version-check \
             --no-cache-dir \
-            "repowise==0.42.0"
-
-      - name: Generate code-health reports
+            'repowise==0.42.0'
+      - name: Generate RepoWise reports
         env:
           REPOWISE_SKIP_EDITOR_SETUP: '1'
         run: |
           set -euo pipefail
-          report_dir="$RUNNER_TEMP/repowise-report"
-          repowise_bin="$RUNNER_TEMP/repowise-venv/bin/repowise"
-
-          rm -rf "$report_dir" .repowise
+          report_dir="$[self-hosted, X64, Linux, coolify]_TEMP/repowise-report"
+          repowise_bin="$[self-hosted, X64, Linux, coolify]_TEMP/repowise-venv/bin/repowise"
           mkdir -p "$report_dir"
-          trap 'rm -rf .repowise' EXIT
-
-          "$repowise_bin" health \
-            --no-workspace \
-            --refactoring-targets \
-            --format md \
-            . | tee "$report_dir/health.md"
-
-          "$repowise_bin" health \
-            --no-workspace \
-            --refactoring-targets \
-            --format json \
-            . > "$report_dir/health.json"
-
+          cleanup() {
+            rm -rf .repowise .mcp.json
+            rm -f .vscode/mcp.json .vscode/extensions.json
+            rmdir .vscode 2>/dev/null || true
+          }
+          trap cleanup EXIT
+          "$repowise_bin" init \
+            --no-prose --no-claude-md --no-codex --no-editor-setup \
+            --no-onboarding --no-distill-hook --no-workspace . > "$report_dir/index.log"
+          "$repowise_bin" health --no-workspace --refactoring-targets --format md . | tee "$report_dir/health.md"
+          "$repowise_bin" health --no-workspace --refactoring-targets --format json . > "$report_dir/health.json"
+          "$repowise_bin" dead-code --safe-only --no-workspace --format json . > "$report_dir/dead-code.json" || true
+          "$repowise_bin" security scan --path . --format json > "$report_dir/security.json" || true
           {
             echo '## RepoWise code health'
             echo
-            echo 'RepoWise is advisory in this repository. The reports are retained as workflow artifacts.'
+            echo 'Advisory reports are retained as workflow artifacts for this commit.'
             echo
-            sed -n '1,80p' "$report_dir/health.md"
+            sed -n '1,100p' "$report_dir/health.md"
           } >> "$GITHUB_STEP_SUMMARY"
-
       - name: Upload RepoWise reports
         if: ${{ always() }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: repowise-code-health
           path: ${{ runner.temp }}/repowise-report/
