@@ -2,8 +2,8 @@ import * as core from "@actions/core";
 import * as github from "@actions/github";
 import { logDebugInfo, logError } from "../../utils/logger";
 import { IssueContentRepository } from './issue_content_repository';
+import { IssueMetadataRepository } from './issue_metadata_repository';
 import { Labels } from "../model/labels";
-import { Milestone } from "../model/milestone";
 import { IssueTypes } from "../model/issue_types";
 import { getRequiredLabels } from './required_labels';
 
@@ -12,6 +12,7 @@ export const PROGRESS_LABEL_PATTERN = /^\d+%$/;
 
 export class IssueRepository {
     private readonly issueContentRepository = new IssueContentRepository();
+    private readonly issueMetadataRepository = new IssueMetadataRepository();
 
     updateTitleIssueFormat = async (
         owner: string,
@@ -221,81 +222,11 @@ export class IssueRepository {
 
     getDescription = this.issueContentRepository.getDescription;
 
-    getId = async (
-        owner: string,
-        repository: string,
-        issueNumber: number,
-        token: string,
-    ): Promise<string> => {
-        const octokit = github.getOctokit(token);
+    getId = this.issueMetadataRepository.getId;
 
-        const issueQuery = `
-          query($repo: String!, $owner: String!, $issueNumber: Int!) {
-            repository(name: $repo, owner: $owner) {
-              issue(number: $issueNumber) {
-                id
-              }
-            }
-          }
-        `;
-        const issueResult = await octokit.graphql<{ repository: { issue: { id: string } } }>(issueQuery, {
-            owner: owner,
-            repo: repository,
-            issueNumber,
-        });
+    getMilestone = this.issueMetadataRepository.getMilestone;
 
-        const issueId = issueResult.repository.issue.id;
-        logDebugInfo(`Fetched issue ID: ${issueId}`);
-
-        return issueId;
-    }
-
-    getMilestone = async (
-        owner: string,
-        repository: string,
-        issueNumber: number,
-        token: string,
-    ): Promise<Milestone | undefined> => {
-        const octokit = github.getOctokit(token);
-
-        const {data: issue} = await octokit.rest.issues.get({
-            owner: owner,
-            repo: repository,
-            issue_number: issueNumber,
-        });
-
-        if (issue.milestone) {
-            return new Milestone(
-                issue.milestone.id,
-                issue.milestone.title,
-                issue.milestone.description ?? '',
-            )
-        } else {
-            return undefined
-        }
-    }
-
-    getTitle = async (
-        owner: string,
-        repository: string,
-        issueNumber: number,
-        token: string,
-    ): Promise<string | undefined> => {
-        const octokit = github.getOctokit(token);
-
-        try {
-            const {data: issue} = await octokit.rest.issues.get({
-                owner: owner,
-                repo: repository,
-                issue_number: issueNumber,
-            });
-
-            return issue.title;
-        } catch (error) {
-            logError(`Failed to fetch the issue title: ${error}`);
-            return undefined;
-        }
-    };
+    getTitle = this.issueMetadataRepository.getTitle;
 
     getLabels = async (
         owner: string,
@@ -414,62 +345,11 @@ export class IssueRepository {
         logDebugInfo(`Progress label set to ${newLabel} for issue #${issueNumber}`);
     };
 
-    isIssue = async (
-        owner: string,
-        repository: string,
-        issueNumber: number,
-        token: string,
-    ) => {
-        const isPullRequest = await this.isPullRequest(
-            owner,
-            repository,
-            issueNumber,
-            token,
-        )
-        return !isPullRequest;
-    }
+    isIssue = this.issueMetadataRepository.isIssue;
 
-    isPullRequest = async (
-        owner: string,
-        repository: string,
-        issueNumber: number,
-        token: string,
-    ) => {
-        const octokit = github.getOctokit(token);
-        const {data} = await octokit.rest.issues.get({
-            owner: owner,
-            repo: repository,
-            issue_number: issueNumber,
-        });
+    isPullRequest = this.issueMetadataRepository.isPullRequest;
 
-        return !!data.pull_request;
-    }
-
-
-    getHeadBranch = async (
-        owner: string,
-        repository: string,
-        issueNumber: number,
-        token: string
-    ): Promise<string | undefined> => {
-        const isPr = await this.isPullRequest(
-            owner,
-            repository,
-            issueNumber,
-            token
-        )
-        if (!isPr) {
-            return undefined
-        }
-        const octokit = github.getOctokit(token);
-        const pullRequest = await octokit.rest.pulls.get({
-            owner,
-            repo: repository,
-            pull_number: issueNumber,
-        })
-
-        return pullRequest.data.head.ref
-    };
+    getHeadBranch = this.issueMetadataRepository.getHeadBranch;
 
     addComment = this.issueContentRepository.addComment;
 
