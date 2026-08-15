@@ -1,7 +1,7 @@
 import * as github from "@actions/github";
 
 import { ConfigurationHandler } from "../../manager/description/configuration_handler";
-import { ACTIONS } from "../../utils/constants";
+import { shouldSkipInitialLabelsFetch } from './initial_labels_policy';
 import { branchesForManagement, typesForIssue } from "../../utils/label_utils";
 import { logDebugInfo, setGlobalLoggerDebug } from "../../utils/logger";
 import { BranchRepository } from "../repository/branch_repository";
@@ -244,8 +244,11 @@ export class Execution {
                 this.tokens.token
             );
         } catch (error) {
-            const isInitialSetup = this.singleAction.currentSingleAction === ACTIONS.INITIAL_SETUP;
-            if (this.isSingleAction && isInitialSetup) {
+            const isInitialSetup = shouldSkipInitialLabelsFetch(
+                this.isSingleAction,
+                this.singleAction.currentSingleAction,
+            );
+            if (isInitialSetup) {
                 logDebugInfo('Skipping initial labels fetch for setup action.');
                 this.labels.currentIssueLabels = [];
             } else {
