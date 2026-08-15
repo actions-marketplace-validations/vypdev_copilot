@@ -10,6 +10,7 @@ import { IssueTypeRepository } from './issue_type_repository';
 import { IssueTypeAssignmentRepository } from './issue_type_assignment_repository';
 import { IssueAssignmentRepository } from './issue_assignment_repository';
 import { IssueLifecycleRepository } from './issue_lifecycle_repository';
+import { sanitizeIssueTitle, sanitizePullRequestTitle } from './issue_title_policy';
 import { Labels } from "../model/labels";
 
 export { PROGRESS_LABEL_PATTERN } from './progress_labels';
@@ -75,17 +76,7 @@ export class IssueRepository {
                 emoji = '❓';
             }
 
-            const sanitizedTitle = issueTitle
-                .replace(/\b\d+(\.\d+){2,}\b/g, '')
-                .replace(/\bUnknown Version\b/gi, '')
-                .replace(/[^\p{L}\p{N}\p{P}\p{Z}^$\n]/gu, '')
-                .replace(/\u200D/g, '')
-                .replace(/[^\S\r\n]+/g, ' ')
-                .replace(/[^a-zA-Z0-9 .]/g, '')
-                .replace(/^-+|-+$/g, '')
-                .replace(/- -/g, '-').trim()
-                .replace(/-+/g, '-')
-                .trim();
+            const sanitizedTitle = sanitizeIssueTitle(issueTitle);
 
             let formattedTitle = `${emoji} - ${sanitizedTitle}`;
             if (version.length > 0) {
@@ -160,15 +151,7 @@ export class IssueRepository {
                 emoji = '❓';
             }
 
-            const sanitizedTitle = issueTitle
-                .replace(/[^\p{L}\p{N}\p{P}\p{Z}^$\n]/gu, '')
-                .replace(/\u200D/g, '')
-                .replace(/[^\S\r\n]+/g, ' ')
-                .replace(/[^a-zA-Z0-9 ]/g, '')
-                .replace(/^-+|-+$/g, '')
-                .replace(/- -/g, '-').trim()
-                .replace(/-+/g, '-')
-                .trim();
+            const sanitizedTitle = sanitizePullRequestTitle(issueTitle);
 
             const formattedTitle = `[#${issueNumber}] ${emoji} - ${sanitizedTitle}`;
 
@@ -201,15 +184,7 @@ export class IssueRepository {
         try {
             const octokit = github.getOctokit(token);
 
-            const sanitizedTitle = issueTitle
-                .replace(/[^\p{L}\p{N}\p{P}\p{Z}^$\n]/gu, '')
-                .replace(/\u200D/g, '')
-                .replace(/[^\S\r\n]+/g, ' ')
-                .replace(/[^a-zA-Z0-9 ]/g, '')
-                .replace(/^-+|-+$/g, '')
-                .replace(/- -/g, '-').trim()
-                .replace(/-+/g, '-')
-                .trim();
+            const sanitizedTitle = sanitizePullRequestTitle(issueTitle);
 
             if (sanitizedTitle !== issueTitle) {
                 await octokit.rest.issues.update({
