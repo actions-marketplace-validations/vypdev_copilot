@@ -4,10 +4,9 @@ import { ConfigurationHandler } from "../../manager/description/configuration_ha
 import { GetHotfixVersionUseCase } from "../../usecase/steps/common/get_hotfix_version_use_case";
 import { GetReleaseTypeUseCase } from "../../usecase/steps/common/get_release_type_use_case";
 import { GetReleaseVersionUseCase } from "../../usecase/steps/common/get_release_version_use_case";
-import { ACTIONS, INPUT_KEYS } from "../../utils/constants";
+import { ACTIONS } from "../../utils/constants";
 import { branchesForManagement, typesForIssue } from "../../utils/label_utils";
 import { logDebugInfo, setGlobalLoggerDebug } from "../../utils/logger";
-import { extractIssueNumberFromBranch, extractIssueNumberFromPush } from "../../utils/title_utils";
 import { DEFAULT_BASE_VERSION, incrementVersion } from "../../utils/version_utils";
 import { BranchRepository } from "../repository/branch_repository";
 import { IssueRepository } from "../repository/issue_repository";
@@ -31,6 +30,7 @@ import { SizeThresholds } from "./size_thresholds";
 import { Tokens } from "./tokens";
 import { Welcome } from "./welcome";
 import { Workflows } from "./workflows";
+import { resolveExecutionIssueNumber } from "./resolve_execution_issue_number";
 
 export class Execution {
     debug: boolean = false;
@@ -229,65 +229,9 @@ export class Execution {
             throw new Error('Failed to get user from token');
         }
 
-        /**
-         * Set the issue number
-         */
-        if (this.isSingleAction) {
-            /**
-             * Single actions can run as isolated processes or as part of a workflow.
-             * In the case of a workflow, the issue number is got from the workflow.
-             * In the case of a single action, the issue number is set.
-             */
-            if (this.inputs?.[INPUT_KEYS.SINGLE_ACTION_ISSUE]) {
-                this.issueNumber = this.inputs[INPUT_KEYS.SINGLE_ACTION_ISSUE];
-                this.singleAction.issue = this.issueNumber;
-            } else if (this.isIssue) {
-                this.singleAction.isIssue = true;
-                this.issueNumber = this.issue.number;
-                this.singleAction.issue = this.issueNumber;
-            } else if (this.isPullRequest) {
-                this.singleAction.isPullRequest = true;
-                this.issueNumber = extractIssueNumberFromBranch(this.pullRequest.head);
-                this.singleAction.issue = this.issueNumber;
-            } else if (this.isPush) {
-                this.singleAction.isPush = true;
-                this.issueNumber = extractIssueNumberFromPush(this.commit.branch)
-                this.singleAction.issue = this.issueNumber;
-            } else {
-                this.singleAction.isPullRequest = await issueRepository.isPullRequest(
-                    this.owner,
-                    this.repo,
-                    this.singleAction.issue,
-                    this.tokens.token,
-                )
-                this.singleAction.isIssue = await issueRepository.isIssue(
-                    this.owner,
-                    this.repo,
-                    this.singleAction.issue,
-                    this.tokens.token,
-                )
-
-                if (this.singleAction.isIssue) {
-                    this.issueNumber = this.singleAction.issue;
-                } else if (this.singleAction.isPullRequest) {
-                    const head = await issueRepository.getHeadBranch(
-                        this.owner,
-                        this.repo,
-                        this.singleAction.issue,
-                        this.tokens.token,
-                    )
-                    if (head === undefined) {
-                        return
-                    }
-                    this.issueNumber = extractIssueNumberFromBranch(head);
-                }
-            }
-        } else if (this.isIssue) {
-            this.issueNumber = this.issue.number;
-        } else if (this.isPullRequest) {
-            this.issueNumber = extractIssueNumberFromBranch(this.pullRequest.head);
-        } else if (this.isPush) {
-            this.issueNumber = extractIssueNumberFromPush(this.commit.branch)
+        const resolvedIssueNumber = await resolveExecutionIssueNumber(this, issueRepository);
+        if (resolvedIssueNumber === undefined) {
+            return;
         }
 
         this.previousConfiguration = await new ConfigurationHandler().get(this)
