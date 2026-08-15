@@ -3,6 +3,7 @@ import * as github from "@actions/github";
 import { logDebugInfo, logError } from "../../utils/logger";
 import { IssueContentRepository } from './issue_content_repository';
 import { IssueMetadataRepository } from './issue_metadata_repository';
+import { IssueLabelRepository } from './issue_label_repository';
 import { Labels } from "../model/labels";
 import { IssueTypes } from "../model/issue_types";
 import { getRequiredLabels } from './required_labels';
@@ -13,6 +14,7 @@ export const PROGRESS_LABEL_PATTERN = /^\d+%$/;
 export class IssueRepository {
     private readonly issueContentRepository = new IssueContentRepository();
     private readonly issueMetadataRepository = new IssueMetadataRepository();
+    private readonly issueLabelRepository = new IssueLabelRepository();
 
     updateTitleIssueFormat = async (
         owner: string,
@@ -228,49 +230,9 @@ export class IssueRepository {
 
     getTitle = this.issueMetadataRepository.getTitle;
 
-    getLabels = async (
-        owner: string,
-        repository: string,
-        issueNumber: number,
-        token: string,
-    ): Promise<string[]> => {
-        if (issueNumber === -1) {
-            return [];
-        }
-        const octokit = github.getOctokit(token);
-        try {
-            const {data: labels} = await octokit.rest.issues.listLabelsOnIssue({
-                owner: owner,
-                repo: repository,
-                issue_number: issueNumber,
-            });
-            return labels.map(label => label.name);
-        } catch (error: unknown) {
-            const err = error as { status?: number };
-            if (err.status === 404) {
-                logDebugInfo(`Issue #${issueNumber} not found or no access; returning empty labels.`);
-                return [];
-            }
-            logError(`Error fetching labels for issue #${issueNumber}: ${error}`);
-            return [];
-        }
-    }
+    getLabels = this.issueLabelRepository.getLabels;
 
-    setLabels = async (
-        owner: string,
-        repository: string,
-        issueNumber: number,
-        labels: string[],
-        token: string,
-    ): Promise<void> => {
-        const octokit = github.getOctokit(token);
-        await octokit.rest.issues.setLabels({
-            owner: owner,
-            repo: repository,
-            issue_number: issueNumber,
-            labels: labels,
-        });
-    }
+    setLabels = this.issueLabelRepository.setLabels;
 
     /** Progress labels: 0%, 5%, 10%, ..., 100% (multiples of 5). */
     private static readonly PROGRESS_LABEL_PERCENTS = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100];
