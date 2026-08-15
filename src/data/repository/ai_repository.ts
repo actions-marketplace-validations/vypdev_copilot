@@ -5,6 +5,7 @@ import {
 } from '../../utils/constants';
 import { logDebugInfo, logError, logInfo } from '../../utils/logger';
 import { Ai } from '../model/ai';
+import { parseJsonFromAgentText } from './agent_json_parser';
 
 function delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -79,90 +80,6 @@ function getValidatedOpenCodeConfig(ai: Ai): OpenCodeConfig | null {
     }
     const { providerID, modelID } = ai.getOpencodeModelParts();
     return { serverUrl, providerID, modelID, model };
-}
-
-/**
- * Try to extract the first complete JSON object from text (from first `{` with balanced braces).
- * Handles being inside a double-quoted string so we don't count braces there.
- */
-function extractFirstJsonObject(text: string): string | null {
-    const start = text.indexOf('{');
-    if (start === -1) return null;
-    let depth = 1;
-    let inString = false;
-    let escape = false;
-    let quoteChar = '"';
-    for (let i = start + 1; i < text.length; i++) {
-        const c = text[i];
-        if (escape) {
-            escape = false;
-            continue;
-        }
-        if (c === '\\' && inString) {
-            escape = true;
-            continue;
-        }
-        if (inString) {
-            if (c === quoteChar) inString = false;
-            continue;
-        }
-        if (c === '"' || c === "'") {
-            inString = true;
-            quoteChar = c;
-            continue;
-        }
-        if (c === '{') depth++;
-        else if (c === '}') {
-            depth--;
-            if (depth === 0) return text.slice(start, i + 1);
-        }
-    }
-    return null;
-}
-
-/**
- * Parse JSON from agent response text safely.
- * Tries: (1) direct parse, (2) strip markdown code fence, (3) extract first JSON object from text (model often adds prose before JSON).
- * @throws Error with clear message if parsing fails
- */
-function parseJsonFromAgentText(text: string): Record<string, unknown> {
-    const trimmed = text.trim();
-    if (!trimmed) {
-        throw new Error('Agent response text is empty');
-    }
-    // 1) Direct parse
-    try {
-        return JSON.parse(trimmed) as Record<string, unknown>;
-    } catch {
-        // 2) Model may wrap JSON in ```json ... ``` or ``` ... ```
-        const withoutFence = trimmed
-            .replace(/^```(?:json)?\s*\n?/i, '')
-            .replace(/\n?```\s*$/i, '')
-            .trim();
-        try {
-            return JSON.parse(withoutFence) as Record<string, unknown>;
-        } catch {
-            // 3) Model may add prose before the JSON (e.g. "Based on my analysis... { ... }")
-            const extracted = extractFirstJsonObject(trimmed);
-            if (extracted) {
-                try {
-                    return JSON.parse(extracted) as Record<string, unknown>;
-                } catch (e) {
-                    const msg = e instanceof Error ? e.message : String(e);
-                    logDebugInfo(
-                        `OpenCode agent response (expectJson): failed to parse extracted JSON. Full text length=${trimmed.length}. Full text:\n${trimmed}`
-                    );
-                    throw new Error(`Agent response is not valid JSON: ${msg}`);
-                }
-            }
-            logDebugInfo(
-                `OpenCode agent response (expectJson): no JSON object found. length=${trimmed.length}. Full text:\n${trimmed}`
-            );
-            throw new Error(
-                `Agent response is not valid JSON: no JSON object found. Response length: ${trimmed.length} chars.`
-            );
-        }
-    }
 }
 
 /**
