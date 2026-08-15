@@ -6,6 +6,7 @@ import { IssueMetadataRepository } from './issue_metadata_repository';
 import { IssueLabelRepository } from './issue_label_repository';
 import { IssueProgressLabelRepository } from './issue_progress_label_repository';
 import { IssueLabelProvisioningRepository } from './issue_label_provisioning_repository';
+import { IssueTypeRepository } from './issue_type_repository';
 import { Labels } from "../model/labels";
 import { IssueTypes } from "../model/issue_types";
 
@@ -17,6 +18,7 @@ export class IssueRepository {
     private readonly issueLabelRepository = new IssueLabelRepository();
     private readonly issueProgressLabelRepository = new IssueProgressLabelRepository(this.issueLabelRepository);
     private readonly issueLabelProvisioningRepository = new IssueLabelProvisioningRepository();
+    private readonly issueTypeRepository = new IssueTypeRepository();
 
     updateTitleIssueFormat = async (
         owner: string,
@@ -563,168 +565,11 @@ export class IssueRepository {
 
     ensureLabels = this.issueLabelProvisioningRepository.ensureLabels;
 
-    /**
-     * List all issue types for an organization
-     */
-    listIssueTypes = async (
-        owner: string,
-        token: string,
-    ): Promise<Array<{ id: string; name: string }>> => {
-        const octokit = github.getOctokit(token);
-        const { organization } = await octokit.graphql<{
-            organization: {
-                id: string;
-                issueTypes: {
-                    nodes: { id: string; name: string }[];
-                };
-            };
-        }>(`
-            query ($owner: String!) {
-                organization(login: $owner) {
-                    id
-                    issueTypes(first: 20) {
-                        nodes {
-                            id
-                            name
-                        }
-                    }
-                }
-            }
-        `, { owner });
+    listIssueTypes = this.issueTypeRepository.listIssueTypes;
 
-        if (!organization) {
-            throw new Error(`No se pudo obtener la organización ${owner}`);
-        }
+    createIssueType = this.issueTypeRepository.createIssueType;
 
-        return organization.issueTypes.nodes;
-    }
+    ensureIssueType = this.issueTypeRepository.ensureIssueType;
 
-    /**
-     * Create an issue type for an organization
-     */
-    createIssueType = async (
-        owner: string,
-        name: string,
-        description: string,
-        color: string,
-        token: string,
-    ): Promise<string> => {
-        const octokit = github.getOctokit(token);
-        
-        // Get organization ID
-        const { organization } = await octokit.graphql<{
-            organization: {
-                id: string;
-            };
-        }>(`
-            query ($owner: String!) {
-                organization(login: $owner) {
-                    id
-                }
-            }
-        `, { owner });
-
-        if (!organization) {
-            throw new Error(`No se pudo obtener la organización ${owner}`);
-        }
-
-        const createResult = await octokit.graphql<{
-            createIssueType: {
-                issueType: { id: string };
-            };
-        }>(`
-            mutation ($ownerId: ID!, $name: String!, $description: String!, $color: IssueTypeColor!, $isEnabled: Boolean!) {
-                createIssueType(input: {
-                    ownerId: $ownerId,
-                    name: $name,
-                    description: $description,
-                    color: $color,
-                    isEnabled: $isEnabled
-                }) {
-                    issueType {
-                        id
-                    }
-                }
-            }
-        `, {
-            ownerId: organization.id,
-            name,
-            description,
-            color: color.toUpperCase(),
-            isEnabled: true,
-        });
-
-        return createResult.createIssueType.issueType.id;
-    }
-
-    /**
-     * Ensure an issue type exists, creating it if it doesn't
-     */
-    ensureIssueType = async (
-        owner: string,
-        name: string,
-        description: string,
-        color: string,
-        token: string,
-    ): Promise<{ created: boolean; existed: boolean }> => {
-        try {
-            const existingTypes = await this.listIssueTypes(owner, token);
-            const existingTypesMap = new Map(
-                existingTypes.map(type => [type.name.toLowerCase(), type])
-            );
-
-            if (existingTypesMap.has(name.toLowerCase())) {
-                return { created: false, existed: true };
-            }
-
-            await this.createIssueType(owner, name, description, color, token);
-            return { created: true, existed: false };
-        } catch (error) {
-            logError(`Error ensuring issue type "${name}": ${error}`);
-            throw error;
-        }
-    }
-
-    /**
-     * Ensure all required issue types exist based on IssueTypes configuration
-     */
-    ensureIssueTypes = async (
-        owner: string,
-        issueTypes: IssueTypes,
-        token: string,
-    ): Promise<{ created: number; existing: number; errors: string[] }> => {
-        const errors: string[] = [];
-        let created = 0;
-        let existing = 0;
-
-        // Define all required issue types
-        const requiredIssueTypes = [
-            { name: issueTypes.task, description: issueTypes.taskDescription, color: issueTypes.taskColor },
-            { name: issueTypes.bug, description: issueTypes.bugDescription, color: issueTypes.bugColor },
-            { name: issueTypes.feature, description: issueTypes.featureDescription, color: issueTypes.featureColor },
-            { name: issueTypes.documentation, description: issueTypes.documentationDescription, color: issueTypes.documentationColor },
-            { name: issueTypes.maintenance, description: issueTypes.maintenanceDescription, color: issueTypes.maintenanceColor },
-            { name: issueTypes.hotfix, description: issueTypes.hotfixDescription, color: issueTypes.hotfixColor },
-            { name: issueTypes.release, description: issueTypes.releaseDescription, color: issueTypes.releaseColor },
-            { name: issueTypes.question, description: issueTypes.questionDescription, color: issueTypes.questionColor },
-            { name: issueTypes.help, description: issueTypes.helpDescription, color: issueTypes.helpColor },
-        ];
-
-        for (const issueType of requiredIssueTypes) {
-            try {
-                const result = await this.ensureIssueType(owner, issueType.name, issueType.description, issueType.color, token);
-                if (result.created) {
-                    created++;
-                } else {
-                    existing++;
-                }
-            } catch (error: unknown) {
-                const err = error as { message?: string };
-                logError(`Error ensuring issue type "${issueType.name}": ${error}`);
-                errors.push(`Error creando tipo de Issue "${issueType.name}": ${err.message || error}`);
-            }
-        }
-
-        return { created, existing, errors };
-    }
+    ensureIssueTypes = this.issueTypeRepository.ensureIssueTypes;
 }
