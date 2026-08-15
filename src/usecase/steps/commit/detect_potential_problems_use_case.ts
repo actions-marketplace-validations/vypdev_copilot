@@ -4,20 +4,14 @@ import { Result } from "../../../data/model/result";
 import { AiRepository, OPENCODE_AGENT_PLAN } from "../../../data/repository/ai_repository";
 import { BUGBOT_MAX_COMMENTS } from "../../../utils/constants";
 import { logDebugInfo, logError, logInfo } from "../../../utils/logger";
+import { prepareBugbotFindings } from './bugbot/prepare_bugbot_findings';
 import { getTaskEmoji } from "../../../utils/task_emoji";
 import { ParamUseCase } from "../../base/param_usecase";
 import { buildBugbotPrompt } from "./bugbot/build_bugbot_prompt";
-import { deduplicateFindings } from "./bugbot/deduplicate_findings";
-import { fileMatchesIgnorePatterns } from "./bugbot/file_ignore";
-import { isSafeFindingFilePath } from "./bugbot/path_validation";
-import { applyCommentLimit } from "./bugbot/limit_comments";
 import { loadBugbotContext } from "./bugbot/load_bugbot_context_use_case";
 import { markFindingsResolved } from "./bugbot/mark_findings_resolved_use_case";
 import { publishFindings } from "./bugbot/publish_findings_use_case";
 import { BUGBOT_RESPONSE_SCHEMA } from "./bugbot/schema";
-import { meetsMinSeverity, normalizeMinSeverity } from "./bugbot/severity";
-import { sanitizeFindingIdForMarker } from "./bugbot/marker";
-import type { BugbotFinding } from "./bugbot/types";
 
 export type { BugbotFinding } from "./bugbot/types";
 
@@ -52,32 +46,27 @@ export class DetectPotentialProblemsUseCase implements ParamUseCase<Execution, R
                 schemaName: 'bugbot_findings',
             });
 
-            if (response == null || typeof response !== 'object') {
+            const prepared = prepareBugbotFindings(
+                response,
+                param.ai?.getAiIgnoreFiles?.() ?? [],
+                param.ai?.getBugbotMinSeverity?.(),
+                param.ai?.getBugbotCommentLimit?.() ?? BUGBOT_MAX_COMMENTS,
+            );
+            if (prepared === undefined) {
                 logDebugInfo('DetectPotentialProblems: No response from OpenCode.');
                 return results;
             }
 
-            const payload = response as { findings?: BugbotFinding[]; resolved_finding_ids?: string[] };
-            let findings = Array.isArray(payload.findings) ? payload.findings : [];
-            const resolvedFindingIdsRaw = Array.isArray(payload.resolved_finding_ids) ? payload.resolved_finding_ids : [];
-            const resolvedFindingIds = new Set(resolvedFindingIdsRaw);
-            const normalizedResolvedIds = new Set(resolvedFindingIdsRaw.map(sanitizeFindingIdForMarker));
+            const {
+                toPublish,
+                overflowCount,
+                overflowTitles,
+                resolvedFindingIds,
+                normalizedResolvedIds,
+            } = prepared;
+            logDebugInfo(`DetectPotentialProblems: OpenCode returned findings=${toPublish.length}, resolved_finding_ids=${resolvedFindingIds.size}.`);
 
-            logDebugInfo(`DetectPotentialProblems: OpenCode returned findings=${findings.length}, resolved_finding_ids=${resolvedFindingIdsRaw.length}. Resolved ids: ${JSON.stringify([...resolvedFindingIds])}.`);
-
-            const ignorePatterns = param.ai?.getAiIgnoreFiles?.() ?? [];
-            const minSeverity = normalizeMinSeverity(param.ai?.getBugbotMinSeverity?.());
-            findings = findings.filter(
-                (f) => f.file == null || String(f.file).trim() === '' || isSafeFindingFilePath(f.file)
-            );
-            findings = findings.filter((f) => !fileMatchesIgnorePatterns(f.file, ignorePatterns));
-            findings = findings.filter((f) => meetsMinSeverity(f.severity, minSeverity));
-            findings = deduplicateFindings(findings);
-
-            const maxComments = param.ai?.getBugbotCommentLimit?.() ?? BUGBOT_MAX_COMMENTS;
-            const { toPublish, overflowCount, overflowTitles } = applyCommentLimit(findings, maxComments);
-
-            logDebugInfo(`DetectPotentialProblems: after filters and limit — toPublish=${toPublish.length}, overflow=${overflowCount}, minSeverity applied, ignore patterns applied.`);
+            logDebugInfo(`DetectPotentialProblems: after filters and limit — toPublish=${toPublish.length}, overflow=${overflowCount}.`);
 
             if (toPublish.length === 0 && resolvedFindingIds.size === 0) {
                 logDebugInfo('DetectPotentialProblems: OpenCode returned no new findings (after filters) and no resolved ids.');
