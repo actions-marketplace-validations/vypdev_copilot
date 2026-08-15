@@ -197,7 +197,7 @@ program
       const ai = new Ai(serverUrl, model, false, false, [], false, 'low', 20);
       const aiRepository = new AiRepository();
       const fullPrompt = getCliDoPrompt({
-        projectContextInstruction: OPENCODE_PROJECT_CONTEXT_INSTRUCTION,
+        projectContextInstruction: `${OPENCODE_PROJECT_CONTEXT_INSTRUCTION}\n\nRepository identity: ${gitInfo.owner}/${gitInfo.repo}\nCurrent branch: ${getCurrentBranch()}\nTreat this repository identity as authoritative context for the request.`,
         userPrompt: prompt,
       });
       const result = await aiRepository.copilotMessage(ai, fullPrompt);

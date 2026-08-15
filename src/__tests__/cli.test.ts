@@ -120,6 +120,17 @@ describe('CLI', () => {
       logSpy.mockRestore();
     });
 
+    it('includes repository identity and current branch in the OpenCode prompt', async () => {
+      const { AiRepository } = require('../data/repository/ai_repository');
+
+      await program.parseAsync(['node', 'cli', 'do', '-p', 'refactor this']);
+
+      const instance = AiRepository.mock.results[AiRepository.mock.results.length - 1].value;
+      const prompt = instance.copilotMessage.mock.calls[0][1] as string;
+      expect(prompt).toContain('Repository identity: test-owner/test-repo');
+      expect(prompt).toContain('Current branch:');
+    });
+
     it('calls process.exit(1) when do fails', async () => {
       const { AiRepository } = require('../data/repository/ai_repository');
       AiRepository.mockImplementation(() => ({
