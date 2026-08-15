@@ -114,6 +114,24 @@ describe("createLinkedBranch", () => {
         expect(mockGraphql).toHaveBeenCalledTimes(1);
     });
 
+    it("returns error result when issue id is missing", async () => {
+        mockGraphql.mockResolvedValueOnce({
+            repository: {
+                id: "R_1",
+                issue: undefined,
+                ref: { target: { oid: "abc" } },
+            },
+        });
+
+        const result = await repo.createLinkedBranch(
+            "o", "r", "develop", "feature/1-foo", 1, undefined, "token"
+        );
+
+        expect(result).toHaveLength(1);
+        expect(result[0].success).toBe(false);
+        expect(mockGraphql).toHaveBeenCalledTimes(1);
+    });
+
     it("returns error result when graphql throws", async () => {
         mockGraphql.mockRejectedValueOnce(new Error("GraphQL error"));
 
