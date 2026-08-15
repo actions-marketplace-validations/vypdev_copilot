@@ -37,6 +37,11 @@ describe('IssueContentRepository', () => {
         expect(body).toBe('body');
     });
 
+    it('reads the strict issue description contract', async () => {
+        mockGet.mockResolvedValue({ data: { body: null } });
+        await expect(repository.getIssueDescription('owner', 'repo', 7, 'token')).resolves.toBe('');
+    });
+
     it('preserves the comment watermark contract', async () => {
         mockCreateComment.mockResolvedValue(undefined);
         mockUpdateComment.mockResolvedValue(undefined);
