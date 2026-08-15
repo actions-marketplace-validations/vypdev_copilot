@@ -1,4 +1,4 @@
-import { incrementVersion, DEFAULT_BASE_VERSION } from '../../utils/version_utils';
+import { nextHotfixVersion, nextReleaseVersion } from './version_resolution_policy';
 import { BranchRepository } from '../repository/branch_repository';
 import type { Execution } from './execution';
 import { GetHotfixVersionUseCase } from '../../usecase/steps/common/get_hotfix_version_use_case';
@@ -24,8 +24,8 @@ export async function resolveIssueBranchVersion(
             if (typeInfo?.executed && typeInfo.success) {
                 execution.release.type = typeInfo.payload['releaseType'];
                 if (execution.release.type === undefined) return false;
-                const lastTag = await branchRepository.getLatestTag() ?? DEFAULT_BASE_VERSION;
-                execution.release.version = incrementVersion(lastTag, execution.release.type);
+                const lastTag = await branchRepository.getLatestTag();
+                execution.release.version = nextReleaseVersion(lastTag, execution.release.type);
             }
         }
         execution.release.branch = `${execution.branches.releaseTree}/${execution.release.version}`;
@@ -36,9 +36,10 @@ export async function resolveIssueBranchVersion(
             execution.hotfix.baseVersion = versionInfo.payload['baseVersion'];
             execution.hotfix.version = versionInfo.payload['hotfixVersion'];
         } else {
-            const baseVersion = await branchRepository.getLatestTag() ?? DEFAULT_BASE_VERSION;
-            execution.hotfix.baseVersion = baseVersion;
-            execution.hotfix.version = incrementVersion(baseVersion, 'Patch');
+            const latestTag = await branchRepository.getLatestTag();
+            const nextVersion = nextHotfixVersion(latestTag);
+            execution.hotfix.baseVersion = nextVersion.baseVersion;
+            execution.hotfix.version = nextVersion.version;
         }
         execution.hotfix.branch = `${execution.branches.hotfixTree}/${execution.hotfix.version}`;
         execution.currentConfiguration.hotfixBranch = execution.hotfix.branch;
