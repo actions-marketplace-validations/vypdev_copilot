@@ -9,6 +9,13 @@ import { IssueRepository } from "../repository/issue_repository";
 import { ProjectRepository } from "../repository/project_repository";
 import { Ai } from "./ai";
 import { Branches } from "./branches";
+import {
+    hotfixBranch,
+    hotfixOriginBranch,
+    releaseBranch,
+    versionFromHotfixOriginBranch,
+    versionFromReleaseBranch,
+} from './branch_state_policy';
 import { Commit } from "./commit";
 import { Config } from "./config";
 import { Emoji } from "./emoji";
@@ -268,23 +275,23 @@ export class Execution {
         if (this.release.active) {
             const previousReleaseBranch = this.previousConfiguration?.releaseBranch
             if (previousReleaseBranch) {
-                this.release.version = previousReleaseBranch.split('/')[1] ?? ''
-                this.release.branch = `${this.branches.releaseTree}/${this.release.version}`;
+                this.release.version = versionFromReleaseBranch(previousReleaseBranch)
+                this.release.branch = releaseBranch(this.branches.releaseTree, this.release.version);
                 this.currentConfiguration.parentBranch = this.previousConfiguration?.parentBranch
                 this.currentConfiguration.releaseBranch = this.release.branch
             }
         } else if (this.hotfix.active) {
             const previousHotfixOriginBranch = this.previousConfiguration?.hotfixOriginBranch
             if (previousHotfixOriginBranch) {
-                this.hotfix.baseVersion = previousHotfixOriginBranch.split('/v')[1] ?? ''
-                this.hotfix.baseBranch = `tags/v${this.hotfix.baseVersion}`;
+                this.hotfix.baseVersion = versionFromHotfixOriginBranch(previousHotfixOriginBranch)
+                this.hotfix.baseBranch = hotfixOriginBranch(this.hotfix.baseVersion);
                 this.currentConfiguration.hotfixOriginBranch = this.hotfix.baseBranch;
                 this.currentConfiguration.parentBranch = this.hotfix.baseBranch
             }
             const previousHotfixBranch = this.previousConfiguration?.hotfixBranch
             if (previousHotfixBranch) {
-                this.hotfix.version = previousHotfixBranch.split('/')[1] ?? ''
-                this.hotfix.branch = `${this.branches.hotfixTree}/${this.hotfix.version}`;
+                this.hotfix.version = versionFromReleaseBranch(previousHotfixBranch)
+                this.hotfix.branch = hotfixBranch(this.branches.hotfixTree, this.hotfix.version);
                 this.currentConfiguration.hotfixBranch = this.hotfix.branch
             }
         } else {
