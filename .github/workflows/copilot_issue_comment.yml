@@ -7,7 +7,7 @@ on:
 jobs:
   copilot-issues:
     name: Copilot - Issue Comment
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, X64, Linux, coolify]
     permissions:
       contents: write
     steps:
