@@ -5,6 +5,7 @@ import { logDebugInfo, logError } from "../../utils/logger";
 import { Labels } from "../model/labels";
 import { Milestone } from "../model/milestone";
 import { IssueTypes } from "../model/issue_types";
+import { getRequiredLabels } from './required_labels';
 
 /** Matches labels that are progress percentages (e.g. "0%", "85%"). Used for setProgressLabel and syncing. */
 export const PROGRESS_LABEL_PATTERN = /^\d+%$/;
@@ -976,34 +977,7 @@ export class IssueRepository {
         let created = 0;
         let existing = 0;
 
-        // Define all required labels with their colors
-        const requiredLabels = [
-            { name: labels.branchManagementLauncherLabel, color: '0E8A16', description: 'Label to trigger branch management actions' },
-            { name: labels.bug, color: 'D73A4A', description: 'Label to indicate a bug type' },
-            { name: labels.bugfix, color: 'D73A4A', description: 'Label to manage bugfix branches' },
-            { name: labels.hotfix, color: 'B60205', description: 'Label to manage hotfix branches' },
-            { name: labels.enhancement, color: 'A2EEEF', description: 'Label to indicate an enhancement type' },
-            { name: labels.feature, color: '0E8A16', description: 'Label to manage feature branches' },
-            { name: labels.release, color: '1D76DB', description: 'Label to manage release branches' },
-            { name: labels.question, color: 'CC317C', description: 'Label to detect issues marked as questions' },
-            { name: labels.help, color: 'CC317C', description: 'Label to detect help request issues' },
-            { name: labels.deploy, color: '7057FF', description: 'Label to detect deploy actions' },
-            { name: labels.deployed, color: '0E8A16', description: 'Label to detect the deployed status' },
-            { name: labels.docs, color: 'C5DEF5', description: 'Label to manage docs branches' },
-            { name: labels.documentation, color: 'C5DEF5', description: 'Label to manage documentation branches' },
-            { name: labels.chore, color: '5319E7', description: 'Label to manage chore branches' },
-            { name: labels.maintenance, color: '5319E7', description: 'Label to manage maintenance branches' },
-            { name: labels.priorityHigh, color: 'B60205', description: 'Label to indicate a priority high' },
-            { name: labels.priorityMedium, color: 'FBBD0C', description: 'Label to indicate a priority medium' },
-            { name: labels.priorityLow, color: '0E8A16', description: 'Label to indicate a priority low' },
-            { name: labels.priorityNone, color: 'B4B4B4', description: 'Label to indicate no priority' },
-            { name: labels.sizeXxl, color: '8E44AD', description: 'Label to indicate a task of size XXL' },
-            { name: labels.sizeXl, color: '9B59B6', description: 'Label to indicate a task of size XL' },
-            { name: labels.sizeL, color: '3498DB', description: 'Label to indicate a task of size L' },
-            { name: labels.sizeM, color: '1ABC9C', description: 'Label to indicate a task of size M' },
-            { name: labels.sizeS, color: 'F39C12', description: 'Label to indicate a task of size S' },
-            { name: labels.sizeXs, color: 'E67E22', description: 'Label to indicate a task of size XS' },
-        ].filter(label => label.name && label.name.trim().length > 0); // Filter out undefined or empty labels
+        const requiredLabels = getRequiredLabels(labels);
 
         for (const label of requiredLabels) {
             try {
