@@ -18,6 +18,7 @@ import {
     buildUserRequestCommitMessage,
 } from "./commit_message_policy";
 import { runVerifyCommands } from "./verify_command_runner";
+import { hasWorkspaceChanges } from "./workspace_changes";
 
 export interface BugbotAutofixCommitResult {
     success: boolean;
@@ -27,18 +28,6 @@ export interface BugbotAutofixCommitResult {
 
 
 
-/** Returns true if there are uncommitted changes in the working tree or index. */
-async function hasChanges(): Promise<boolean> {
-    let output = "";
-    await exec.exec("git", ["status", "--porcelain"], {
-        listeners: {
-            stdout: (data: Buffer) => {
-                output += data.toString();
-            },
-        },
-    });
-    return output.trim().length > 0;
-}
 
 /**
  * Runs verify commands (if configured), then git add, commit, and push.
@@ -82,7 +71,7 @@ export async function runBugbotAutofixCommitAndPush(
         }
     }
 
-    const changed = await hasChanges();
+    const changed = await hasWorkspaceChanges();
     if (!changed) {
         logDebugInfo("No changes to commit after autofix.");
         return { success: true, committed: false };
@@ -157,7 +146,7 @@ export async function runUserRequestCommitAndPush(
         }
     }
 
-    const changed = await hasChanges();
+    const changed = await hasWorkspaceChanges();
     if (!changed) {
         logDebugInfo("No changes to commit after user request.");
         return { success: true, committed: false };

@@ -59,3 +59,7 @@ export async function listWorkspacePaths(): Promise<string[]> {
     });
     return parsePorcelainWorkspacePaths(output);
 }
+
+export async function hasWorkspaceChanges(): Promise<boolean> {
+    return (await listWorkspacePaths()).length > 0;
+}
