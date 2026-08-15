@@ -1,6 +1,6 @@
 import * as core from "@actions/core";
 import * as github from "@actions/github";
-import { logDebugInfo, logError } from "../../utils/logger";
+import { logDebugInfo } from '../../utils/logger';
 import { IssueContentRepository } from './issue_content_repository';
 import { IssueMetadataRepository } from './issue_metadata_repository';
 import { IssueLabelRepository } from './issue_label_repository';
@@ -8,6 +8,7 @@ import { IssueProgressLabelRepository } from './issue_progress_label_repository'
 import { IssueLabelProvisioningRepository } from './issue_label_provisioning_repository';
 import { IssueTypeRepository } from './issue_type_repository';
 import { IssueTypeAssignmentRepository } from './issue_type_assignment_repository';
+import { IssueAssignmentRepository } from './issue_assignment_repository';
 import { Labels } from "../model/labels";
 
 export { PROGRESS_LABEL_PATTERN } from './progress_labels';
@@ -22,6 +23,7 @@ export class IssueRepository {
     private readonly issueTypeAssignmentRepository = new IssueTypeAssignmentRepository(
         (owner, repository, issueNumber, token) => this.getId(owner, repository, issueNumber, token),
     );
+    private readonly issueAssignmentRepository = new IssueAssignmentRepository();
 
     updateTitleIssueFormat = async (
         owner: string,
@@ -326,61 +328,9 @@ export class IssueRepository {
         }
     }
 
-    getCurrentAssignees = async (
-        owner: string,
-        repository: string,
-        issueNumber: number,
-        token: string
-    ): Promise<string[]> => {
-        const octokit = github.getOctokit(token);
+    getCurrentAssignees = this.issueAssignmentRepository.getCurrentAssignees;
 
-        try {
-            const {data: issue} = await octokit.rest.issues.get({
-                owner,
-                repo: repository,
-                issue_number: issueNumber,
-            });
-
-            const assignees = issue.assignees
-            if (assignees === undefined || assignees === null) {
-                return [];
-            }
-            return assignees.map((assignee) => assignee.login);
-        } catch (error) {
-            logError(`Error getting members of issue: ${error}.`);
-            return [];
-        }
-    };
-
-    assignMembersToIssue = async (
-        owner: string,
-        repository: string,
-        issueNumber: number,
-        members: string[],
-        token: string
-    ): Promise<string[]> => {
-        const octokit = github.getOctokit(token);
-
-        try {
-            if (members.length === 0) {
-                logDebugInfo(`No members provided for assignment. Skipping operation.`);
-                return [];
-            }
-
-            const {data: updatedIssue} = await octokit.rest.issues.addAssignees({
-                owner,
-                repo: repository,
-                issue_number: issueNumber,
-                assignees: members,
-            });
-
-            const updatedAssignees = updatedIssue.assignees || [];
-            return updatedAssignees.map((assignee) => assignee.login);
-        } catch (error) {
-            logError(`Error assigning members to issue: ${error}.`);
-            return [];
-        }
-    };
+    assignMembersToIssue = this.issueAssignmentRepository.assignMembersToIssue;
 
     getIssueDescription = async (
         owner: string,
