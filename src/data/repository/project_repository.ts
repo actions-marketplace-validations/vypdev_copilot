@@ -1,5 +1,6 @@
 import * as github from "@actions/github";
 import { logDebugInfo, logError, logInfo } from "../../utils/logger";
+import { paginateCursor } from "./cursor_pagination";
 import { ProjectResult } from "../graph/project_result";
 import { ProjectDetail } from "../model/project_detail";
 
@@ -210,12 +211,7 @@ export class ProjectRepository {
         token: string
     ): Promise<boolean> => {
         const octokit = github.getOctokit(token);
-        let hasNextPage = true;
-        let endCursor: string | null = null;
-        let allItems: Array<{ content?: { id?: string } }> = [];
-
-        while (hasNextPage) {
-            const query = `
+        const query = `
     query($projectId: ID!, $after: String) {
       node(id: $projectId) {
         ... on ProjectV2 {
@@ -240,24 +236,18 @@ export class ProjectRepository {
     }
   `;
 
-            // logDebugInfo(`Query: ${query}`);
-            // logDebugInfo(`Project ID: ${project.id}`);
-            // logDebugInfo(`Content ID: ${contentId}`);
-            // logDebugInfo(`After cursor: ${endCursor}`);
-
-            type ItemsResult = { node: { items: { nodes: Array<{ content?: { id?: string } }>; pageInfo: { hasNextPage: boolean; endCursor: string | null } } } };
-            const result: ItemsResult = await octokit.graphql<ItemsResult>(query, {
-                projectId: project.id,
-                after: endCursor,
-            });
-
-            // logDebugInfo(`Result: ${JSON.stringify(result, null, 2)}`);
-
-            const items = result.node.items.nodes;
-            allItems = allItems.concat(items);
-
-            hasNextPage = result.node.items.pageInfo.hasNextPage;
-            endCursor = result.node.items.pageInfo.endCursor;
+        type ProjectItemsPage = { content?: { id?: string } };
+        const allItems: ProjectItemsPage[] = [];
+        for await (const page of paginateCursor(
+            async (cursor) => {
+                const result = await octokit.graphql<{
+                    node: { items: { nodes: ProjectItemsPage[]; pageInfo: { hasNextPage: boolean; endCursor: string | null } } };
+                }>(query, { projectId: project.id, after: cursor });
+                return result.node.items;
+            },
+            { description: `Project ${project.id} items pagination` },
+        )) {
+            allItems.push(...page.nodes);
         }
 
         return allItems.some(
