@@ -19,6 +19,7 @@ import {
 } from "./commit_message_policy";
 import { runVerifyCommands } from "./verify_command_runner";
 import { hasWorkspaceChanges } from "./workspace_changes";
+import { GitCommitRepository } from "./git_commit_repository";
 
 export interface BugbotAutofixCommitResult {
     success: boolean;
@@ -26,7 +27,9 @@ export interface BugbotAutofixCommitResult {
     error?: string;
 }
 
-
+const gitCommitRepository = new GitCommitRepository({
+    execute: (program, args) => exec.exec(program, args),
+});
 
 
 /**
@@ -80,21 +83,20 @@ export async function runBugbotAutofixCommitAndPush(
     try {
         const projectRepository = new ProjectRepository();
         const { name, email } = await projectRepository.getTokenUserDetails(execution.tokens.token);
-        await exec.exec("git", ["config", "user.name", name]);
-        await exec.exec("git", ["config", "user.email", email]);
+        await gitCommitRepository.configureAuthor(name, email);
         logDebugInfo(`Git author set to ${name} <${email}>.`);
 
         if (options?.workspacePaths) {
             if (options.workspacePaths.length === 0) {
                 return { success: false, committed: false, error: "No safe workspace paths to commit." };
             }
-            await exec.exec("git", ["add", "--", ...options.workspacePaths]);
+            await gitCommitRepository.stagePaths(options.workspacePaths);
         } else {
-            await exec.exec("git", ["add", "-A"]);
+            await gitCommitRepository.stageAll();
         }
         const commitMessage = buildBugbotCommitMessage(execution.issueNumber, targetFindingIds);
-        await exec.exec("git", ["commit", "-m", commitMessage]);
-        await exec.exec("git", ["push", "origin", branch]);
+        await gitCommitRepository.commit(commitMessage);
+        await gitCommitRepository.push(branch);
         logInfo(`Pushed commit to origin/${branch}.`);
         return { success: true, committed: true };
     } catch (err) {
@@ -155,14 +157,13 @@ export async function runUserRequestCommitAndPush(
     try {
         const projectRepository = new ProjectRepository();
         const { name, email } = await projectRepository.getTokenUserDetails(execution.tokens.token);
-        await exec.exec("git", ["config", "user.name", name]);
-        await exec.exec("git", ["config", "user.email", email]);
+        await gitCommitRepository.configureAuthor(name, email);
         logDebugInfo(`Git author set to ${name} <${email}>.`);
 
-        await exec.exec("git", ["add", "-A"]);
+        await gitCommitRepository.stageAll();
         const commitMessage = buildUserRequestCommitMessage(execution.issueNumber);
-        await exec.exec("git", ["commit", "-m", commitMessage]);
-        await exec.exec("git", ["push", "origin", branch]);
+        await gitCommitRepository.commit(commitMessage);
+        await gitCommitRepository.push(branch);
         logInfo(`Pushed commit to origin/${branch}.`);
         return { success: true, committed: true };
     } catch (err) {
