@@ -5,9 +5,9 @@ import { IssueContentRepository } from './issue_content_repository';
 import { IssueMetadataRepository } from './issue_metadata_repository';
 import { IssueLabelRepository } from './issue_label_repository';
 import { IssueProgressLabelRepository } from './issue_progress_label_repository';
+import { IssueLabelProvisioningRepository } from './issue_label_provisioning_repository';
 import { Labels } from "../model/labels";
 import { IssueTypes } from "../model/issue_types";
-import { getRequiredLabels } from './required_labels';
 
 export { PROGRESS_LABEL_PATTERN } from './progress_labels';
 
@@ -16,6 +16,7 @@ export class IssueRepository {
     private readonly issueMetadataRepository = new IssueMetadataRepository();
     private readonly issueLabelRepository = new IssueLabelRepository();
     private readonly issueProgressLabelRepository = new IssueProgressLabelRepository(this.issueLabelRepository);
+    private readonly issueLabelProvisioningRepository = new IssueLabelProvisioningRepository();
 
     updateTitleIssueFormat = async (
         owner: string,
@@ -554,121 +555,13 @@ export class IssueRepository {
         }
     }
 
-    /**
-     * List all labels for a repository
-     */
-    listLabelsForRepo = async (
-        owner: string,
-        repository: string,
-        token: string,
-    ): Promise<Array<{ name: string; color: string; description: string | null }>> => {
-        const octokit = github.getOctokit(token);
-        const { data: labels } = await octokit.rest.issues.listLabelsForRepo({
-            owner,
-            repo: repository,
-            per_page: 100,
-        });
-        return labels.map(label => ({
-            name: label.name,
-            color: label.color,
-            description: label.description,
-        }));
-    }
+    listLabelsForRepo = this.issueLabelProvisioningRepository.listLabelsForRepo;
 
-    /**
-     * Create a label in a repository
-     */
-    createLabel = async (
-        owner: string,
-        repository: string,
-        name: string,
-        color: string,
-        description: string,
-        token: string,
-    ): Promise<void> => {
-        const octokit = github.getOctokit(token);
-        await octokit.rest.issues.createLabel({
-            owner,
-            repo: repository,
-            name,
-            color,
-            description,
-        });
-    }
+    createLabel = this.issueLabelProvisioningRepository.createLabel;
 
-    /**
-     * Ensure a label exists, creating it if it doesn't
-     */
-    ensureLabel = async (
-        owner: string,
-        repository: string,
-        name: string,
-        color: string,
-        description: string,
-        token: string,
-    ): Promise<{ created: boolean; existed: boolean }> => {
-        try {
-            // Validate that name is not undefined or empty
-            if (!name || name.trim().length === 0) {
-                logDebugInfo(`Skipping label creation: name is undefined or empty`);
-                return { created: false, existed: false };
-            }
+    ensureLabel = this.issueLabelProvisioningRepository.ensureLabel;
 
-            const existingLabels = await this.listLabelsForRepo(owner, repository, token);
-            const existingLabelNames = new Set(existingLabels.map(label => label.name.toLowerCase()));
-            
-            if (existingLabelNames.has(name.toLowerCase())) {
-                return { created: false, existed: true };
-            }
-
-            try {
-                await this.createLabel(owner, repository, name, color, description, token);
-                return { created: true, existed: false };
-            } catch (error: unknown) {
-                const err = error as { status?: number; message?: string };
-                if (err.status === 422 && err.message?.includes('already exists')) {
-                    return { created: false, existed: true };
-                }
-                throw error;
-            }
-        } catch (error) {
-            logError(`Error ensuring label "${name}": ${error}`);
-            throw error;
-        }
-    }
-
-    /**
-     * Ensure all required labels exist based on Labels configuration
-     */
-    ensureLabels = async (
-        owner: string,
-        repository: string,
-        labels: Labels,
-        token: string,
-    ): Promise<{ created: number; existing: number; errors: string[] }> => {
-        const errors: string[] = [];
-        let created = 0;
-        let existing = 0;
-
-        const requiredLabels = getRequiredLabels(labels);
-
-        for (const label of requiredLabels) {
-            try {
-                const result = await this.ensureLabel(owner, repository, label.name, label.color, label.description, token);
-                if (result.created) {
-                    created++;
-                } else if (result.existed) {
-                    existing++;
-                }
-            } catch (error: unknown) {
-                const err = error as { message?: string };
-                logError(`Error ensuring label "${label.name}": ${error}`);
-                errors.push(`Error creando label "${label.name}": ${err.message || error}`);
-            }
-        }
-
-        return { created, existing, errors };
-    }
+    ensureLabels = this.issueLabelProvisioningRepository.ensureLabels;
 
     /**
      * List all issue types for an organization
