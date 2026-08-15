@@ -4,6 +4,7 @@ import { paginateCursor } from "./cursor_pagination";
 import { ProjectResult } from "../graph/project_result";
 import { ProjectDetail } from "../model/project_detail";
 import { authorizationForFileModification } from './actor_modification_policy';
+import { collectOrganizationMembers } from './project_members_policy';
 
 export class ProjectRepository {
   
@@ -561,17 +562,16 @@ export class ProjectRepository {
                 return [];
             }
 
-            const membersSet = new Set<string>();
-
-            for (const team of teams) {
-                const {data: members} = await octokit.rest.teams.listMembersInOrg({
-                    org: organization,
-                    team_slug: team.slug,
-                });
-                members.forEach((member) => membersSet.add(member.login));
-            }
-
-            return Array.from(membersSet);
+            return await collectOrganizationMembers(
+                teams,
+                async (teamSlug) => {
+                    const {data: members} = await octokit.rest.teams.listMembersInOrg({
+                        org: organization,
+                        team_slug: teamSlug,
+                    });
+                    return members;
+                },
+            );
         } catch (error) {
             logError(`Error getting all members: ${error}.`);
         }
