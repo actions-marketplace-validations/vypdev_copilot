@@ -4,7 +4,7 @@ import { paginateCursor } from "./cursor_pagination";
 import { ProjectResult } from "../graph/project_result";
 import { ProjectDetail } from "../model/project_detail";
 import { authorizationForFileModification } from './actor_modification_policy';
-import { collectOrganizationMembers } from './project_members_policy';
+import { collectOrganizationMembers, selectAvailableMembers } from './project_members_policy';
 
 export class ProjectRepository {
   
@@ -511,35 +511,22 @@ export class ProjectRepository {
                 return [];
             }
 
-            const membersSet = new Set<string>();
+            const allMembers = await collectOrganizationMembers(
+                teams,
+                async (teamSlug) => {
+                    const {data: members} = await octokit.rest.teams.listMembersInOrg({
+                        org: organization,
+                        team_slug: teamSlug,
+                    });
+                    return members;
+                },
+            );
+            const selectedMembers = selectAvailableMembers(allMembers, currentMembers, membersToAdd);
 
-            for (const team of teams) {
-                logDebugInfo(`Checking team: ${team.slug}`);
-                const {data: members} = await octokit.rest.teams.listMembersInOrg({
-                    org: organization,
-                    team_slug: team.slug,
-                });
-                logDebugInfo(`Members: ${members.length}`);
-                members.forEach((member) => membersSet.add(member.login));
-            }
-
-            const allMembers = Array.from(membersSet);
-            const availableMembers = allMembers.filter((member) => !currentMembers.includes(member));
-
-            if (availableMembers.length === 0) {
+            if (selectedMembers.length === 0) {
                 logDebugInfo(`No available members to assign for organization ${organization}.`);
-                return [];
             }
-
-            if (membersToAdd >= availableMembers.length) {
-                logDebugInfo(
-                    `Requested size (${membersToAdd}) exceeds available members (${availableMembers.length}). Returning all available members.`
-                );
-                return availableMembers;
-            }
-
-            const shuffled = availableMembers.sort(() => Math.random() - 0.5);
-            return shuffled.slice(0, membersToAdd);
+            return selectedMembers;
         } catch (error) {
             logError(`Error getting random members: ${error}.`);
         }
