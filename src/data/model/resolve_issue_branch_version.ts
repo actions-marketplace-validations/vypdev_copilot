@@ -1,6 +1,7 @@
 import { nextHotfixVersion, nextReleaseVersion } from './version_resolution_policy';
 import { applyHotfixResolution, applyReleaseResolution } from './version_resolution_application_policy';
 import { hotfixResolutionFromPayload, releaseResolutionFromPayload } from './version_resolution_result_policy';
+import { shouldAbortReleaseResolution } from './version_resolution_outcome_policy';
 import { BranchRepository } from '../repository/branch_repository';
 import type { Execution } from './execution';
 import { GetHotfixVersionUseCase } from '../../usecase/steps/common/get_hotfix_version_use_case';
@@ -27,9 +28,9 @@ export async function resolveIssueBranchVersion(
             if (typeInfo?.executed && typeInfo.success) {
                 const releaseResolution = releaseResolutionFromPayload(typeInfo.payload);
                 execution.release.type = releaseResolution.type;
-                if (execution.release.type === undefined) return false;
+                if (shouldAbortReleaseResolution(execution.release.type)) return false;
                 const lastTag = await branchRepository.getLatestTag();
-                execution.release.version = nextReleaseVersion(lastTag, execution.release.type);
+                execution.release.version = nextReleaseVersion(lastTag, execution.release.type!);
             }
         }
         const releaseState = applyReleaseResolution(execution.branches.releaseTree, execution.release.version);
