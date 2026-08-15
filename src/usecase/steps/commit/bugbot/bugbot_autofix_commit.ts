@@ -12,12 +12,12 @@ import type { Execution } from "../../../../data/model/execution";
 import {
     MAX_VERIFY_COMMANDS,
     limitVerifyCommands,
-    parseVerifyCommand,
 } from "./verify_command_policy";
 import {
     buildBugbotCommitMessage,
     buildUserRequestCommitMessage,
 } from "./commit_message_policy";
+import { runVerifyCommands } from "./verify_command_runner";
 
 export interface BugbotAutofixCommitResult {
     success: boolean;
@@ -26,34 +26,6 @@ export interface BugbotAutofixCommitResult {
 }
 
 
-/**
- * Runs verify commands in order. Returns true if all pass.
- * Commands are parsed with shell-quote (quotes supported); shell operators are not allowed.
- */
-async function runVerifyCommands(
-    commands: string[]
-): Promise<{ success: boolean; failedCommand?: string; error?: string }> {
-    for (const cmd of commands) {
-        const parsed = parseVerifyCommand(cmd);
-        if (!parsed) {
-            const msg = `Invalid verify command (use no shell operators; quotes allowed): ${cmd}`;
-            logError(msg);
-            return { success: false, failedCommand: cmd, error: msg };
-        }
-        const { program, args } = parsed;
-        try {
-            const code = await exec.exec(program, args);
-            if (code !== 0) {
-                return { success: false, failedCommand: cmd };
-            }
-        } catch (err) {
-            const msg = err instanceof Error ? err.message : String(err);
-            logError(`Verify command failed: ${cmd} - ${msg}`);
-            return { success: false, failedCommand: cmd };
-        }
-    }
-    return { success: true };
-}
 
 /** Returns true if there are uncommitted changes in the working tree or index. */
 async function hasChanges(): Promise<boolean> {
@@ -100,7 +72,7 @@ export async function runBugbotAutofixCommitAndPush(
     }
     if (verifyCommands.length > 0) {
         logInfo(`Running ${verifyCommands.length} verify command(s)...`);
-        const verify = await runVerifyCommands(verifyCommands);
+        const verify = await runVerifyCommands(verifyCommands, (program, args) => exec.exec(program, args));
         if (!verify.success) {
             return {
                 success: false,
@@ -175,7 +147,7 @@ export async function runUserRequestCommitAndPush(
     }
     if (verifyCommands.length > 0) {
         logInfo(`Running ${verifyCommands.length} verify command(s)...`);
-        const verify = await runVerifyCommands(verifyCommands);
+        const verify = await runVerifyCommands(verifyCommands, (program, args) => exec.exec(program, args));
         if (!verify.success) {
             return {
                 success: false,
