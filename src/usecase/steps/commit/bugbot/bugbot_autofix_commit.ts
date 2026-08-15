@@ -7,6 +7,7 @@
 import * as exec from "@actions/exec";
 import * as shellQuote from "shell-quote";
 import { ProjectRepository } from "../../../../data/repository/project_repository";
+import { checkoutBranch } from "./git_branch_checkout";
 import { logDebugInfo, logError, logInfo } from "../../../../utils/logger";
 import type { Execution } from "../../../../data/model/execution";
 
@@ -55,58 +56,6 @@ export interface BugbotAutofixCommitResult {
     error?: string;
 }
 
-/**
- * Returns true if there are uncommitted changes (working tree or index).
- */
-async function hasUncommittedChanges(): Promise<boolean> {
-    let output = "";
-    await exec.exec("git", ["status", "--porcelain"], {
-        listeners: {
-            stdout: (data: Buffer) => {
-                output += data.toString();
-            },
-        },
-    });
-    return output.trim().length > 0;
-}
-
-/**
- * Optionally check out the branch (when event is issue_comment and we resolved the branch from an open PR).
- * If there are uncommitted changes, stashes them before checkout and pops after so they are not lost.
- */
-async function checkoutBranchIfNeeded(branch: string): Promise<boolean> {
-    const stashMessage = "bugbot-autofix-before-checkout";
-    let didStash = false;
-    try {
-        if (await hasUncommittedChanges()) {
-            logDebugInfo("Uncommitted changes present; stashing before checkout.");
-            await exec.exec("git", ["stash", "push", "-u", "-m", stashMessage]);
-            didStash = true;
-        }
-        await exec.exec("git", ["fetch", "origin", branch]);
-        await exec.exec("git", ["checkout", branch]);
-        logInfo(`Checked out branch ${branch}.`);
-        if (didStash) {
-            try {
-                await exec.exec("git", ["stash", "pop"]);
-                logDebugInfo("Restored stashed changes after checkout.");
-            } catch (popErr) {
-                const popMsg = popErr instanceof Error ? popErr.message : String(popErr);
-                logError(`Failed to restore stashed changes after checkout: ${popMsg}`);
-                logError("Changes remain stashed; run 'git stash pop' manually to restore them.");
-                return false;
-            }
-        }
-        return true;
-    } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        logError(`Failed to checkout branch ${branch}: ${msg}`);
-        if (didStash) {
-            logError("Changes were stashed; run 'git stash pop' manually to restore them.");
-        }
-        return false;
-    }
-}
 
 /**
  * Parses a single verify command string into [program, ...args] with proper handling of quotes.
@@ -157,11 +106,17 @@ async function runVerifyCommands(
     return { success: true };
 }
 
-/**
- * Returns true if there are uncommitted changes (working tree or index).
- */
+/** Returns true if there are uncommitted changes in the working tree or index. */
 async function hasChanges(): Promise<boolean> {
-    return hasUncommittedChanges();
+    let output = "";
+    await exec.exec("git", ["status", "--porcelain"], {
+        listeners: {
+            stdout: (data: Buffer) => {
+                output += data.toString();
+            },
+        },
+    });
+    return output.trim().length > 0;
 }
 
 /**
@@ -181,7 +136,7 @@ export async function runBugbotAutofixCommitAndPush(
     }
 
     if (branchOverride) {
-        const ok = await checkoutBranchIfNeeded(branch);
+        const ok = await checkoutBranch(branch);
         if (!ok) {
             return { success: false, committed: false, error: `Failed to checkout branch ${branch}.` };
         }
@@ -264,7 +219,7 @@ export async function runUserRequestCommitAndPush(
     }
 
     if (branchOverride) {
-        const ok = await checkoutBranchIfNeeded(branch);
+        const ok = await checkoutBranch(branch);
         if (!ok) {
             return { success: false, committed: false, error: `Failed to checkout branch ${branch}.` };
         }
