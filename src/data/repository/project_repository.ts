@@ -7,6 +7,7 @@ import { authorizationForFileModification } from './actor_modification_policy';
 import { collectOrganizationMembers, selectAvailableMembers } from './project_members_policy';
 import { tagReference, tagReferencePath, releaseName } from './release_tag_policy';
 import { releasePayload, hasReleaseContent } from './release_content_policy';
+import { findTargetRelease, releaseIdAsString } from './release_transition_policy';
 
 export class ProjectRepository {
   
@@ -698,7 +699,7 @@ export class ProjectRepository {
         repo,
       });
 
-      const targetRelease = releases.find(r => r.tag_name === targetTag);
+      const targetRelease = findTargetRelease(releases, targetTag, (release) => release.tag_name);
 
       let targetReleaseId;
       if (targetRelease) {
@@ -726,7 +727,7 @@ export class ProjectRepository {
       }
 
       logInfo(`Updated release for targetTag '${targetTag}'`);
-      return targetReleaseId.toString();
+      return releaseIdAsString(targetReleaseId);
     }
 
     createRelease = async (owner: string, repo: string, version: string, title: string, changelog: string, token: string): Promise<string | undefined> => {
