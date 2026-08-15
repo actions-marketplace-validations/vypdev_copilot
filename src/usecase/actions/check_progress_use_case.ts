@@ -4,12 +4,14 @@ import { Result } from '../../data/model/result';
 import { logDebugInfo, logError, logInfo, logWarn } from '../../utils/logger';
 import { getTaskEmoji } from '../../utils/task_emoji';
 import { ParamUseCase } from '../base/param_usecase';
-import { IssueRepository, PROGRESS_LABEL_PATTERN } from '../../data/repository/issue_repository';
+import { IssueRepository } from '../../data/repository/issue_repository';
 import { BranchRepository } from '../../data/repository/branch_repository';
 import { PullRequestRepository } from '../../data/repository/pull_request_repository';
 import { AiRepository, OPENCODE_AGENT_PLAN } from '../../data/repository/ai_repository';
 import { getCheckProgressPrompt } from '../../prompts';
 import { OPENCODE_PROJECT_CONTEXT_INSTRUCTION } from '../../utils/opencode_project_context_instruction';
+import { findIssueBranch } from './find_issue_branch';
+import { syncProgressLabelsToOpenPullRequests } from './sync_progress_labels_to_open_pull_requests';
 
 const PROGRESS_RESPONSE_SCHEMA = {
     type: 'object',
@@ -100,39 +102,7 @@ export class CheckProgressUseCase implements ParamUseCase<Execution, Result[]> {
                 return results;
             }
 
-            // Get branch - use commit.branch if available, otherwise search for branch by issue number
-            let branch: string | undefined = param.commit.branch;
-            
-            // If no branch in commit, search for branch matching issue number pattern
-            if (!branch) {
-                logInfo(`📦 Searching for branch related to issue #${issueNumber}...`);
-                
-                const branchTypes = [
-                    param.branches.featureTree,
-                    param.branches.bugfixTree,
-                    param.branches.docsTree,
-                    param.branches.choreTree,
-                    param.branches.hotfixTree,
-                    param.branches.releaseTree,
-                ];
-
-                const branches = await this.branchRepository.getListOfBranches(
-                    param.owner,
-                    param.repo,
-                    param.tokens.token,
-                );
-
-                // Search for branch matching the pattern: ${type}/${issueNumber}-
-                for (const type of branchTypes) {
-                    const prefix = `${type}/${issueNumber}-`;
-                    const matchingBranch = branches.find(b => b.indexOf(prefix) > -1);
-                    if (matchingBranch) {
-                        branch = matchingBranch;
-                        logInfo(`✅ Found branch: ${branch}`);
-                        break;
-                    }
-                }
-            }
+            const branch = await findIssueBranch(param, this.branchRepository);
 
             if (!branch) {
                 logError(`Could not find branch for issue #${issueNumber}. Please ensure a branch exists with pattern: feature/${issueNumber}-*, bugfix/${issueNumber}-*, docs/${issueNumber}-*, or chore/${issueNumber}-*`);
@@ -213,7 +183,6 @@ export class CheckProgressUseCase implements ParamUseCase<Execution, Result[]> {
                 return results;
             }
 
-            const roundedProgress = Math.min(100, Math.max(0, Math.round(progress / 5) * 5));
             await this.issueRepository.setProgressLabel(
                 param.owner,
                 param.repo,
@@ -222,33 +191,15 @@ export class CheckProgressUseCase implements ParamUseCase<Execution, Result[]> {
                 param.tokens.token,
             );
 
-            const openPrNumbers = await this.pullRequestRepository.getOpenPullRequestNumbersByHeadBranch(
+            await syncProgressLabelsToOpenPullRequests(
                 param.owner,
                 param.repo,
                 branch,
+                progress,
                 param.tokens.token,
+                this.issueRepository,
+                this.pullRequestRepository,
             );
-            const newProgressLabel = `${roundedProgress}%`;
-            for (const prNumber of openPrNumbers) {
-                const prLabels = await this.issueRepository.getLabels(
-                    param.owner,
-                    param.repo,
-                    prNumber,
-                    param.tokens.token,
-                );
-                const withoutProgress = prLabels.filter((name) => !PROGRESS_LABEL_PATTERN.test(name));
-                const nextLabels = withoutProgress.includes(newProgressLabel)
-                    ? withoutProgress
-                    : [...withoutProgress, newProgressLabel];
-                await this.issueRepository.setLabels(
-                    param.owner,
-                    param.repo,
-                    prNumber,
-                    nextLabels,
-                    param.tokens.token,
-                );
-                logInfo(`Progress label set to ${newProgressLabel} on PR #${prNumber}.`);
-            }
 
             let summaryMessage = `**Analysis**: ${summary}`;
             if (progress < 100 && remaining) {
