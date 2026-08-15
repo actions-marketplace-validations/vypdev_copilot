@@ -397,6 +397,24 @@ describe("runBugbotAutofixCommitAndPush", () => {
         });
     });
 
+    it("stages only the workspace paths authorized by the autofix boundary", async () => {
+        (mockExec.mockImplementation as (fn: ExecCallback) => void)((_cmd, args, opts) => {
+            const a = args ?? [];
+            if (a[0] === "status" && opts?.listeners?.stdout) {
+                opts.listeners.stdout(Buffer.from(" M src/fix.ts\n M unrelated.ts"));
+            }
+            return Promise.resolve(0);
+        });
+
+        const result = await runBugbotAutofixCommitAndPush(baseExecution(), {
+            workspacePaths: ["src/fix.ts"],
+        });
+
+        expect(result).toEqual({ success: true, committed: true });
+        expect(mockExec).toHaveBeenCalledWith("git", ["add", "--", "src/fix.ts"]);
+        expect(mockExec).not.toHaveBeenCalledWith("git", ["add", "-A"]);
+    });
+
     it("includes targetFindingIds in commit message when provided", async () => {
         (mockExec.mockImplementation as (fn: ExecCallback) => void)((_cmd, args, opts) => {
             const a = args ?? [];

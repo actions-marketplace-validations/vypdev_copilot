@@ -72,9 +72,11 @@ export class PullRequestReviewCommentUseCase implements ParamUseCase<Execution, 
                 autofixResults.length > 0 ? autofixResults[autofixResults.length - 1] : undefined;
             if (lastAutofix?.success) {
                 logInfo("Bugbot autofix succeeded; running commit and push.");
+                const autofixPayload = lastAutofix.payload as { workspacePaths?: string[] } | undefined;
                 const commitResult = await runBugbotAutofixCommitAndPush(param, {
                     branchOverride: payload.branchOverride,
                     targetFindingIds: payload.targetFindingIds,
+                    workspacePaths: autofixPayload?.workspacePaths,
                 });
                 if (commitResult.committed && payload.context) {
                     const ids = payload.targetFindingIds;

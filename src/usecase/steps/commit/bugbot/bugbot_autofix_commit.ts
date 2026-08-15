@@ -170,7 +170,7 @@ async function hasChanges(): Promise<boolean> {
  */
 export async function runBugbotAutofixCommitAndPush(
     execution: Execution,
-    options?: { branchOverride?: string; targetFindingIds?: string[] }
+    options?: { branchOverride?: string; targetFindingIds?: string[]; workspacePaths?: string[] }
 ): Promise<BugbotAutofixCommitResult> {
     const branchOverride = options?.branchOverride;
     const targetFindingIds = options?.targetFindingIds ?? [];
@@ -223,7 +223,14 @@ export async function runBugbotAutofixCommitAndPush(
         await exec.exec("git", ["config", "user.email", email]);
         logDebugInfo(`Git author set to ${name} <${email}>.`);
 
-        await exec.exec("git", ["add", "-A"]);
+        if (options?.workspacePaths) {
+            if (options.workspacePaths.length === 0) {
+                return { success: false, committed: false, error: "No safe workspace paths to commit." };
+            }
+            await exec.exec("git", ["add", "--", ...options.workspacePaths]);
+        } else {
+            await exec.exec("git", ["add", "-A"]);
+        }
         const issueNumber = execution.issueNumber > 0 ? execution.issueNumber : undefined;
         const findingIdsPart = buildFindingIdsPartForCommit(targetFindingIds);
         const commitMessage = issueNumber

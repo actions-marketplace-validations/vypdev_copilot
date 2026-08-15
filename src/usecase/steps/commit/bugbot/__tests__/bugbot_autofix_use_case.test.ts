@@ -5,6 +5,12 @@
 import { BugbotAutofixUseCase } from "../bugbot_autofix_use_case";
 import type { BugbotContext } from "../types";
 
+const mockExec = jest.fn();
+let workspaceInspectionCount = 0;
+jest.mock("@actions/exec", () => ({
+    exec: (...args: unknown[]) => mockExec(...args),
+}));
+
 jest.mock("../../../../../utils/logger", () => ({
     logInfo: jest.fn(),
     logDebugInfo: jest.fn(),
@@ -71,6 +77,16 @@ describe("BugbotAutofixUseCase", () => {
         useCase = new BugbotAutofixUseCase();
         mockLoadBugbotContext.mockReset();
         mockCopilotMessage.mockReset();
+        workspaceInspectionCount = 0;
+        mockExec.mockImplementation(
+            async (_command: string, _args: string[], options?: { listeners?: { stdout?: (data: Buffer) => void } }) => {
+                workspaceInspectionCount += 1;
+                options?.listeners?.stdout?.(
+                    Buffer.from(workspaceInspectionCount === 1 ? "" : " M src/fix.ts\n")
+                );
+                return 0;
+            }
+        );
     });
 
     it("returns empty results when targetFindingIds is empty", async () => {
@@ -195,6 +211,57 @@ describe("BugbotAutofixUseCase", () => {
 
         expect(results).toHaveLength(1);
         expect(results[0].success).toBe(true);
-        expect(results[0].payload).toEqual(expect.objectContaining({ targetFindingIds: ["f1"] }));
+        expect(results[0].payload).toEqual(
+            expect.objectContaining({ targetFindingIds: ["f1"], workspacePaths: ["src/fix.ts"] })
+        );
+    });
+
+    it("refuses to run when the workspace was already dirty", async () => {
+        mockExec.mockImplementationOnce(
+            async (_command: string, _args: string[], options?: { listeners?: { stdout?: (data: Buffer) => void } }) => {
+                options?.listeners?.stdout?.(Buffer.from(" M preexisting.ts\n"));
+                return 0;
+            }
+        );
+
+        const results = await useCase.invoke({
+            execution: baseExecution(),
+            targetFindingIds: ["f1"],
+            userComment: "fix it",
+            context: contextWithFindings(["f1"]),
+        });
+
+        expect(results).toHaveLength(1);
+        expect(results[0].success).toBe(false);
+        expect(results[0].errors?.[0]).toContain("workspace is not clean");
+        expect(mockCopilotMessage).not.toHaveBeenCalled();
+    });
+
+    it("refuses the autofix when OpenCode modifies a sensitive path", async () => {
+        mockExec
+            .mockImplementationOnce(
+                async (_command: string, _args: string[], options?: { listeners?: { stdout?: (data: Buffer) => void } }) => {
+                    options?.listeners?.stdout?.(Buffer.from(""));
+                    return 0;
+                }
+            )
+            .mockImplementationOnce(
+                async (_command: string, _args: string[], options?: { listeners?: { stdout?: (data: Buffer) => void } }) => {
+                    options?.listeners?.stdout?.(Buffer.from(" M src/fix.ts\n?? .env\n"));
+                    return 0;
+                }
+            );
+        mockCopilotMessage.mockResolvedValue({ text: "Fixed.", sessionId: "s1" });
+
+        const results = await useCase.invoke({
+            execution: baseExecution(),
+            targetFindingIds: ["f1"],
+            userComment: "fix it",
+            context: contextWithFindings(["f1"]),
+        });
+
+        expect(results).toHaveLength(1);
+        expect(results[0].success).toBe(false);
+        expect(results[0].errors?.[0]).toContain("sensitive files were modified");
     });
 });

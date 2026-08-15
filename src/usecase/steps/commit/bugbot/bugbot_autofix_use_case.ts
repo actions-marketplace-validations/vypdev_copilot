@@ -7,6 +7,7 @@ import { Result } from "../../../../data/model/result";
 import type { BugbotContext } from "./types";
 import { buildBugbotFixPrompt } from "./build_bugbot_fix_prompt";
 import { loadBugbotContext } from "./load_bugbot_context_use_case";
+import { listWorkspacePaths, isSensitiveWorkspacePath, selectWorkspacePathsToCommit } from "./workspace_changes";
 
 const TASK_ID = "BugbotAutofixUseCase";
 
@@ -48,6 +49,35 @@ export class BugbotAutofixUseCase implements ParamUseCase<BugbotAutofixParam, Re
 
         const context = providedContext ?? (await loadBugbotContext(execution, branchOverride ? { branchOverride } : undefined));
 
+        let workspacePathsBefore: string[];
+        try {
+            workspacePathsBefore = await listWorkspacePaths();
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            logError(`Bugbot autofix: unable to inspect workspace before OpenCode: ${message}`);
+            results.push(
+                new Result({
+                    id: this.taskId,
+                    success: false,
+                    executed: true,
+                    errors: [`Unable to inspect workspace before autofix: ${message}`],
+                })
+            );
+            return results;
+        }
+        if (workspacePathsBefore.length > 0) {
+            logError(`Bugbot autofix refused because workspace is not clean: ${workspacePathsBefore.join(", ")}`);
+            results.push(
+                new Result({
+                    id: this.taskId,
+                    success: false,
+                    executed: true,
+                    errors: ["Bugbot autofix refused: workspace is not clean before OpenCode."],
+                })
+            );
+            return results;
+        }
+
         const validIds = new Set(
             Object.entries(context.existingByFindingId)
                 .filter(([, info]) => !info.resolved)
@@ -81,6 +111,51 @@ export class BugbotAutofixUseCase implements ParamUseCase<BugbotAutofixParam, Re
             return results;
         }
 
+        let workspacePathsAfter: string[];
+        try {
+            workspacePathsAfter = await listWorkspacePaths();
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            logError(`Bugbot autofix: unable to inspect workspace after OpenCode: ${message}`);
+            results.push(
+                new Result({
+                    id: this.taskId,
+                    success: false,
+                    executed: true,
+                    errors: [`Unable to inspect workspace after autofix: ${message}`],
+                })
+            );
+            return results;
+        }
+        const unsafeWorkspacePaths = workspacePathsAfter.filter(isSensitiveWorkspacePath);
+        if (unsafeWorkspacePaths.length > 0) {
+            logError(`Bugbot autofix refused sensitive workspace paths: ${unsafeWorkspacePaths.join(", ")}`);
+            results.push(
+                new Result({
+                    id: this.taskId,
+                    success: false,
+                    executed: true,
+                    errors: [
+                        `Bugbot autofix refused because sensitive files were modified: ${unsafeWorkspacePaths.join(", ")}`,
+                    ],
+                })
+            );
+            return results;
+        }
+        const workspacePaths = selectWorkspacePathsToCommit(workspacePathsBefore, workspacePathsAfter);
+        if (workspacePaths.length === 0) {
+            logError("Bugbot autofix produced no safe workspace paths to commit.");
+            results.push(
+                new Result({
+                    id: this.taskId,
+                    success: false,
+                    executed: true,
+                    errors: ["Bugbot autofix produced no safe workspace paths to commit."],
+                })
+            );
+            return results;
+        }
+
         results.push(
             new Result({
                 id: this.taskId,
@@ -89,7 +164,7 @@ export class BugbotAutofixUseCase implements ParamUseCase<BugbotAutofixParam, Re
                 steps: [
                     // `Bugbot autofix completed. OpenCode applied changes for findings: ${idsToFix.join(", ")}. Run verify commands and commit/push.`,
                 ],
-                payload: { targetFindingIds: idsToFix, context },
+                payload: { targetFindingIds: idsToFix, context, workspacePaths },
             })
         );
         return results;
