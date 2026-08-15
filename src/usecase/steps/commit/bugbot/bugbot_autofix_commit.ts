@@ -5,14 +5,15 @@
  */
 
 import * as exec from "@actions/exec";
-import * as shellQuote from "shell-quote";
 import { ProjectRepository } from "../../../../data/repository/project_repository";
 import { checkoutBranch } from "./git_branch_checkout";
 import { logDebugInfo, logError, logInfo } from "../../../../utils/logger";
 import type { Execution } from "../../../../data/model/execution";
-
-/** Maximum number of verify commands to run to avoid excessive build times. */
-const MAX_VERIFY_COMMANDS = 20;
+import {
+    MAX_VERIFY_COMMANDS,
+    limitVerifyCommands,
+    parseVerifyCommand,
+} from "./verify_command_policy";
 
 /** Max length per finding ID in commit message (avoids injection and overflow). */
 const MAX_FINDING_ID_LENGTH_COMMIT = 80;
@@ -56,26 +57,6 @@ export interface BugbotAutofixCommitResult {
     error?: string;
 }
 
-
-/**
- * Parses a single verify command string into [program, ...args] with proper handling of quotes.
- * Rejects commands that contain shell operators (;, |, &&, etc.) to prevent injection.
- * Uses shell-quote so e.g. pnpm run "test with spaces" is parsed correctly.
- */
-function parseVerifyCommand(cmd: string): { program: string; args: string[] } | null {
-    const trimmed = cmd.trim();
-    if (!trimmed) return null;
-    try {
-        const parsed = shellQuote.parse(trimmed, {});
-        const argv = parsed.filter((entry): entry is string => typeof entry === "string");
-        if (argv.length !== parsed.length || argv.length === 0) {
-            return null;
-        }
-        return { program: argv[0], args: argv.slice(1) };
-    } catch {
-        return null;
-    }
-}
 
 /**
  * Runs verify commands in order. Returns true if all pass.
@@ -142,16 +123,12 @@ export async function runBugbotAutofixCommitAndPush(
         }
     }
 
-    let verifyCommands = execution.ai?.getBugbotFixVerifyCommands?.() ?? [];
-    if (!Array.isArray(verifyCommands)) {
-        verifyCommands = [];
-    }
-    verifyCommands = verifyCommands.filter((cmd): cmd is string => typeof cmd === "string");
-    if (verifyCommands.length > MAX_VERIFY_COMMANDS) {
+    const configuredVerifyCommands = execution.ai?.getBugbotFixVerifyCommands?.() ?? [];
+    const verifyCommands = limitVerifyCommands(Array.isArray(configuredVerifyCommands) ? configuredVerifyCommands : []);
+    if (Array.isArray(configuredVerifyCommands) && configuredVerifyCommands.length > MAX_VERIFY_COMMANDS) {
         logInfo(
-            `Limiting verify commands to ${MAX_VERIFY_COMMANDS} (configured: ${verifyCommands.length}).`
+            `Limiting verify commands to ${MAX_VERIFY_COMMANDS} (configured: ${configuredVerifyCommands.length}).`
         );
-        verifyCommands = verifyCommands.slice(0, MAX_VERIFY_COMMANDS);
     }
     if (verifyCommands.length > 0) {
         logInfo(`Running ${verifyCommands.length} verify command(s)...`);
@@ -225,16 +202,12 @@ export async function runUserRequestCommitAndPush(
         }
     }
 
-    let verifyCommands = execution.ai?.getBugbotFixVerifyCommands?.() ?? [];
-    if (!Array.isArray(verifyCommands)) {
-        verifyCommands = [];
-    }
-    verifyCommands = verifyCommands.filter((cmd): cmd is string => typeof cmd === "string");
-    if (verifyCommands.length > MAX_VERIFY_COMMANDS) {
+    const configuredVerifyCommands = execution.ai?.getBugbotFixVerifyCommands?.() ?? [];
+    const verifyCommands = limitVerifyCommands(Array.isArray(configuredVerifyCommands) ? configuredVerifyCommands : []);
+    if (Array.isArray(configuredVerifyCommands) && configuredVerifyCommands.length > MAX_VERIFY_COMMANDS) {
         logInfo(
-            `Limiting verify commands to ${MAX_VERIFY_COMMANDS} (configured: ${verifyCommands.length}).`
+            `Limiting verify commands to ${MAX_VERIFY_COMMANDS} (configured: ${configuredVerifyCommands.length}).`
         );
-        verifyCommands = verifyCommands.slice(0, MAX_VERIFY_COMMANDS);
     }
     if (verifyCommands.length > 0) {
         logInfo(`Running ${verifyCommands.length} verify command(s)...`);
