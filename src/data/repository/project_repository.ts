@@ -6,6 +6,7 @@ import { ProjectDetail } from "../model/project_detail";
 import { authorizationForFileModification } from './actor_modification_policy';
 import { collectOrganizationMembers, selectAvailableMembers } from './project_members_policy';
 import { tagReference, tagReferencePath, releaseName } from './release_tag_policy';
+import { releasePayload, hasReleaseContent } from './release_content_policy';
 
 export class ProjectRepository {
   
@@ -684,7 +685,7 @@ export class ProjectRepository {
         tag: sourceTag,
       });
 
-      if (!sourceRelease.name || !sourceRelease.body) {
+      if (!hasReleaseContent(sourceRelease)) {
         logError(`The '${sourceTag}' tag does not exist in the remote repository`);
         return undefined;
       }
@@ -714,16 +715,12 @@ export class ProjectRepository {
         });
         targetReleaseId = targetRelease.id;
       } else {
-        console.log(`Creating new release for targetTag '${targetTag}'`);
-        // Create a new release for targetTag if it doesn't exist
+        logDebugInfo(`Creating new release for targetTag '${targetTag}'`);
+        const payload = releasePayload(targetTag, sourceRelease);
         const { data: newRelease } = await octokit.rest.repos.createRelease({
           owner,
           repo,
-          tag_name: targetTag,
-          name: sourceRelease.name,
-          body: sourceRelease.body,
-          draft: sourceRelease.draft,
-          prerelease: sourceRelease.prerelease,
+          ...payload,
         });
         targetReleaseId = newRelease.id;
       }
