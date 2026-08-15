@@ -1,13 +1,9 @@
 import * as github from "@actions/github";
 
 import { ConfigurationHandler } from "../../manager/description/configuration_handler";
-import { GetHotfixVersionUseCase } from "../../usecase/steps/common/get_hotfix_version_use_case";
-import { GetReleaseTypeUseCase } from "../../usecase/steps/common/get_release_type_use_case";
-import { GetReleaseVersionUseCase } from "../../usecase/steps/common/get_release_version_use_case";
 import { ACTIONS } from "../../utils/constants";
 import { branchesForManagement, typesForIssue } from "../../utils/label_utils";
 import { logDebugInfo, setGlobalLoggerDebug } from "../../utils/logger";
-import { DEFAULT_BASE_VERSION, incrementVersion } from "../../utils/version_utils";
 import { BranchRepository } from "../repository/branch_repository";
 import { IssueRepository } from "../repository/issue_repository";
 import { ProjectRepository } from "../repository/project_repository";
@@ -31,6 +27,7 @@ import { Tokens } from "./tokens";
 import { Welcome } from "./welcome";
 import { Workflows } from "./workflows";
 import { resolveExecutionIssueNumber } from "./resolve_execution_issue_number";
+import { resolveIssueBranchVersion } from './resolve_issue_branch_version';
 
 export class Execution {
     debug: boolean = false;
@@ -306,44 +303,8 @@ export class Execution {
              */
         } else if (this.isIssue) {
             const branchRepository = new BranchRepository();
-
-            if (this.release.active && this.release.version === undefined) {
-                const versionResult = await new GetReleaseVersionUseCase().invoke(this);
-                const versionInfo = versionResult[versionResult.length - 1];
-                if (versionInfo.executed && versionInfo.success) {
-                    this.release.version = versionInfo.payload['releaseVersion']
-                } else {
-                    const typeResult = await new GetReleaseTypeUseCase().invoke(this);
-                    const typeInfo = typeResult[typeResult.length - 1];
-                    if (typeInfo.executed && typeInfo.success) {
-                        this.release.type = typeInfo.payload['releaseType']
-                        if (this.release.type === undefined) {
-                            return
-                        }
-
-                        const lastTag = await branchRepository.getLatestTag() ?? DEFAULT_BASE_VERSION;
-                        this.release.version = incrementVersion(lastTag, this.release.type)
-                    }
-                }
-
-                this.release.branch = `${this.branches.releaseTree}/${this.release.version}`;
-            } else if (this.hotfix.active && this.hotfix.version === undefined) {
-                const versionResult = await new GetHotfixVersionUseCase().invoke(this);
-                const versionInfo = versionResult[versionResult.length - 1];
-                if (versionInfo.executed && versionInfo.success) {
-                    this.hotfix.baseVersion = versionInfo.payload['baseVersion']
-                    this.hotfix.version = versionInfo.payload['hotfixVersion']
-                } else {
-                    this.hotfix.baseVersion = await branchRepository.getLatestTag() ?? DEFAULT_BASE_VERSION;
-                    this.hotfix.version = incrementVersion(this.hotfix.baseVersion, 'Patch')
-                }
-
-                this.hotfix.branch = `${this.branches.hotfixTree}/${this.hotfix.version}`;
-                this.currentConfiguration.hotfixBranch = this.hotfix.branch;
-
-                this.hotfix.baseBranch = `tags/v${this.hotfix.baseVersion}`;
-                this.currentConfiguration.hotfixOriginBranch = this.hotfix.baseBranch;
-            }
+            const canContinue = await resolveIssueBranchVersion(this, branchRepository);
+            if (!canContinue) return;
         } else if (this.isPullRequest) {
             this.labels.currentPullRequestLabels = await issueRepository.getLabels(
                 this.owner,
