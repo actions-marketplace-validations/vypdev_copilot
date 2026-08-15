@@ -182,11 +182,11 @@ For the `copilot` command:
 
 ## Running OpenCode
 
-1. **GitHub Actions – managed server (easiest)**: Set `opencode-start-server: true`. The action will start an OpenCode server at the beginning of the job (`npx opencode-ai serve` on port 4096), wait until it is healthy, run the rest of the job using that server, and stop the server when the job ends. You do not need to install or run OpenCode yourself. Set the provider credentials in the job's `env` using the variable names OpenCode expects (see [Provider credentials reference](#provider-credentials-reference) above).
+1. **GitHub Actions – managed server (easiest)**: Set `opencode-start-server: true`. The action will start an OpenCode server at the beginning of the job (`pnpm dlx --yes opencode-ai serve` on port 4096), wait until it is healthy, run the rest of the job using that server, and stop the server when the job ends. You do not need to install or run OpenCode yourself. Set the provider credentials in the job's `env` using the variable names OpenCode expects (see [Provider credentials reference](#provider-credentials-reference) above).
 
 2. **Local / self-hosted**: Install OpenCode and run the server, e.g.:
    ```bash
-   npx opencode-ai serve
+   pnpm dlx --yes opencode-ai serve
    # or
    opencode serve --port 4096
    ```
@@ -260,7 +260,7 @@ See [Issues → Bugbot](/issues#bugbot-potential-problems) and [Pull Requests �
 
 2. **Shared organization server** – Deploy OpenCode on an internal or cloud server with your provider API keys. In the workflow, pass that host as `opencode-server-url` (e.g. via secret). One "master" server for all repos that use the action.
 
-3. **Managed server inside the job** – The action supports **`opencode-start-server: true`**: it starts OpenCode at the beginning of the job (`npx opencode-ai serve`), waits until it is ready, runs the flow, and stops the server at the end. No need to install or run OpenCode manually; only provider API keys as secrets. Heavier (startup time, first-time download of opencode-ai) but no external server required.
+3. **Managed server inside the job** – The action supports **`opencode-start-server: true`**: it starts OpenCode at the beginning of the job (`pnpm dlx --yes opencode-ai serve`), waits until it is ready, runs the flow, and stops the server at the end. No need to install or run OpenCode manually; only provider API keys as secrets. Heavier (startup time, first-time download of opencode-ai) but no external server required.
 
 **Summary** – You need **some** OpenCode server (yours or shared). You can use one server for many repos (org "master") and keep the default `http://localhost:4096` for local development while requiring `opencode-server-url` (or an org default) in CI.
 

@@ -59,7 +59,7 @@ describe('Ai', () => {
         false,
         'error',
         5,
-        ['npm run test'],
+        ['pnpm run test'],
       );
 
       expect(ai.getOpencodeServerUrl()).toBe('https://server');
@@ -70,7 +70,7 @@ describe('Ai', () => {
       expect(ai.getAiIncludeReasoning()).toBe(false);
       expect(ai.getBugbotMinSeverity()).toBe('error');
       expect(ai.getBugbotCommentLimit()).toBe(5);
-      expect(ai.getBugbotFixVerifyCommands()).toEqual(['npm run test']);
+      expect(ai.getBugbotFixVerifyCommands()).toEqual(['pnpm run test']);
     });
 
     it('defaults bugbotFixVerifyCommands to empty array when omitted', () => {

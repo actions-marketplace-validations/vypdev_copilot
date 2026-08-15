@@ -184,30 +184,30 @@ describe("runBugbotAutofixCommitAndPush", () => {
 
     it("runs verify commands when configured and returns failure when one fails", async () => {
         const exec = baseExecution({
-            ai: { getBugbotFixVerifyCommands: () => ["npm test"] },
+            ai: { getBugbotFixVerifyCommands: () => ["pnpm test"] },
         } as Partial<Execution>);
         mockExec.mockResolvedValueOnce(1);
 
         const result = await runBugbotAutofixCommitAndPush(exec);
 
-        expect(mockExec).toHaveBeenCalledWith("npm", ["test"]);
+        expect(mockExec).toHaveBeenCalledWith("pnpm", ["test"]);
         expect(result).toEqual({
             success: false,
             committed: false,
-            error: "Verify command failed: npm test.",
+            error: "Verify command failed: pnpm test.",
         });
     });
 
     it("rejects verify command with shell operator (command injection)", async () => {
         const exec = baseExecution({
-            ai: { getBugbotFixVerifyCommands: () => ["npm test; rm -rf /"] },
+            ai: { getBugbotFixVerifyCommands: () => ["pnpm test; rm -rf /"] },
         } as Partial<Execution>);
 
         const result = await runBugbotAutofixCommitAndPush(exec);
 
         expect(result.success).toBe(false);
         expect(result.error).toContain("Invalid verify command");
-        expect(mockExec).not.toHaveBeenCalledWith("npm", expect.any(Array));
+        expect(mockExec).not.toHaveBeenCalledWith("pnpm", expect.any(Array));
     });
 
     it("rejects empty or whitespace-only verify command (parseVerifyCommand returns null)", async () => {
@@ -219,7 +219,7 @@ describe("runBugbotAutofixCommitAndPush", () => {
             return Promise.resolve(0);
         });
         const exec = baseExecution({
-            ai: { getBugbotFixVerifyCommands: () => ["  ", "npm test"] },
+            ai: { getBugbotFixVerifyCommands: () => ["  ", "pnpm test"] },
         } as Partial<Execution>);
 
         const result = await runBugbotAutofixCommitAndPush(exec);
@@ -241,7 +241,7 @@ describe("runBugbotAutofixCommitAndPush", () => {
             return Promise.resolve(0);
         });
         const exec = baseExecution({
-            ai: { getBugbotFixVerifyCommands: () => ["npm run 'unclosed"] },
+            ai: { getBugbotFixVerifyCommands: () => ["pnpm run 'unclosed"] },
         } as Partial<Execution>);
 
         const result = await runBugbotAutofixCommitAndPush(exec);
@@ -256,11 +256,11 @@ describe("runBugbotAutofixCommitAndPush", () => {
             if (a[0] === "status" && opts?.listeners?.stdout) {
                 opts.listeners.stdout(Buffer.from(""));
             }
-            if (cmd === "npm") return Promise.reject(new Error("npm not found"));
+            if (cmd === "pnpm") return Promise.reject(new Error("pnpm not found"));
             return Promise.resolve(0);
         });
         const exec = baseExecution({
-            ai: { getBugbotFixVerifyCommands: () => ["npm test"] },
+            ai: { getBugbotFixVerifyCommands: () => ["pnpm test"] },
         } as Partial<Execution>);
 
         const result = await runBugbotAutofixCommitAndPush(exec);
@@ -282,19 +282,19 @@ describe("runBugbotAutofixCommitAndPush", () => {
             return Promise.resolve(0);
         });
         const exec = baseExecution({
-            ai: { getBugbotFixVerifyCommands: () => "npm test" as unknown as string[] },
+            ai: { getBugbotFixVerifyCommands: () => "pnpm test" as unknown as string[] },
         } as Partial<Execution>);
 
         const result = await runBugbotAutofixCommitAndPush(exec);
 
         expect(result.success).toBe(true);
         expect(result.committed).toBe(true);
-        expect(mockExec).not.toHaveBeenCalledWith("npm", expect.any(Array));
+        expect(mockExec).not.toHaveBeenCalledWith("pnpm", expect.any(Array));
     });
 
     it("parses verify command with quoted args and runs it", async () => {
         const exec = baseExecution({
-            ai: { getBugbotFixVerifyCommands: () => ['npm run "test with spaces"'] },
+            ai: { getBugbotFixVerifyCommands: () => ['pnpm run "test with spaces"'] },
         } as Partial<Execution>);
         (mockExec.mockImplementation as (fn: ExecCallback) => void)((_cmd, args, opts) => {
             const a = args ?? [];
@@ -308,11 +308,11 @@ describe("runBugbotAutofixCommitAndPush", () => {
 
         expect(result.success).toBe(true);
         expect(result.committed).toBe(false);
-        expect(mockExec).toHaveBeenCalledWith("npm", ["run", "test with spaces"]);
+        expect(mockExec).toHaveBeenCalledWith("pnpm", ["run", "test with spaces"]);
     });
 
     it("limits verify commands to 20 and logs when configured count exceeds limit", async () => {
-        const manyCommands = Array.from({ length: 25 }, () => "npm test");
+        const manyCommands = Array.from({ length: 25 }, () => "pnpm test");
         const exec = baseExecution({
             ai: { getBugbotFixVerifyCommands: () => manyCommands },
         } as Partial<Execution>);
@@ -331,10 +331,10 @@ describe("runBugbotAutofixCommitAndPush", () => {
         expect(logInfo).toHaveBeenCalledWith(
             "Limiting verify commands to 20 (configured: 25)."
         );
-        const npmTestCalls = (mockExec as jest.Mock).mock.calls.filter(
-            (call: [string, string[]]) => call[0] === "npm" && call[1]?.[0] === "test"
+        const pnpmTestCalls = (mockExec as jest.Mock).mock.calls.filter(
+            (call: [string, string[]]) => call[0] === "pnpm" && call[1]?.[0] === "test"
         );
-        expect(npmTestCalls).toHaveLength(20);
+        expect(pnpmTestCalls).toHaveLength(20);
     });
 
     it("returns success and committed false when hasChanges returns false", async () => {
@@ -641,11 +641,11 @@ describe("runUserRequestCommitAndPush", () => {
 
         expect(result.success).toBe(true);
         expect(result.committed).toBe(true);
-        expect(mockExec).not.toHaveBeenCalledWith("npm", expect.any(Array));
+        expect(mockExec).not.toHaveBeenCalledWith("pnpm", expect.any(Array));
     });
 
     it("limits verify commands to 20 in user request when configured count exceeds", async () => {
-        const manyCommands = Array.from({ length: 22 }, () => "npm run lint");
+        const manyCommands = Array.from({ length: 22 }, () => "pnpm run lint");
         (mockExec.mockImplementation as (fn: ExecCallback) => void)((_cmd, args, opts) => {
             const a = args ?? [];
             if (a[0] === "status" && opts?.listeners?.stdout) {
@@ -672,11 +672,11 @@ describe("runUserRequestCommitAndPush", () => {
             if (cmd === "git" && a[0] === "status" && opts?.listeners?.stdout) {
                 opts.listeners.stdout(Buffer.from(""));
             }
-            if (cmd === "npm") return Promise.resolve(1);
+            if (cmd === "pnpm") return Promise.resolve(1);
             return Promise.resolve(0);
         });
         const exec = baseExecution({
-            ai: { getBugbotFixVerifyCommands: () => ["npm test"] },
+            ai: { getBugbotFixVerifyCommands: () => ["pnpm test"] },
         } as Partial<Execution>);
 
         const result = await runUserRequestCommitAndPush(exec);

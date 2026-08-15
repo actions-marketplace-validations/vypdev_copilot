@@ -42,7 +42,7 @@ function baseExecution() {
         ai: {
             getOpencodeServerUrl: () => "http://localhost",
             getOpencodeModel: () => "model",
-            getBugbotFixVerifyCommands: () => ["npm test"],
+            getBugbotFixVerifyCommands: () => ["pnpm test"],
         },
     } as Parameters<BugbotAutofixUseCase["invoke"]>[0]["execution"];
 }

@@ -15,19 +15,19 @@ description: Copilot – quick read, commands, and where to find more
 ## Commands (repo root)
 
 ```bash
-nvm use 20
-npm install
-npm run build
-npm test
-npm run test:watch
-npm run test:coverage
-npm run lint
-npm run lint:fix
+nvm use 24
+pnpm install
+pnpm run build
+pnpm test
+pnpm run test:watch
+pnpm run test:coverage
+pnpm run lint
+pnpm run lint:fix
 ```
 
-- **Build**: `npm run build` → bundles `github_action.ts` and `cli.ts` into `build/`.
-- **Tests**: Jest; `npm run test:watch` / `npm run test:coverage` as needed.
-- **Lint**: ESLint + typescript-eslint on `src/`; `npm run lint:fix` to auto-fix.
+- **Build**: `pnpm run build` → bundles `github_action.ts` and `cli.ts` into `build/`.
+- **Tests**: Jest; `pnpm run test:watch` / `pnpm run test:coverage` as needed.
+- **Lint**: ESLint + typescript-eslint on `src/`; `pnpm run lint:fix` to auto-fix.
 
 ## What to ignore
 

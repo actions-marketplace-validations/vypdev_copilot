@@ -10,10 +10,10 @@ You can install the Copilot CLI **from any directory**. For example, from your h
 ```bash
 git clone https://github.com/vypdev/copilot.git
 cd copilot
-npm install . -g
+pnpm install . -g
 ```
 
-If the repo does not include the compiled `build/` folder (e.g. it is gitignored), run `npm install` and `npm run build` before `npm install . -g`.
+If the repo does not include the compiled `build/` folder (e.g. it is gitignored), run `pnpm install` and `pnpm run build` before `pnpm install . -g`.
 
 Once installed, the `copilot` command is available globally. **All Copilot CLI commands** (including `copilot setup`, `copilot check-progress -i 123`, etc.) must be run **from inside the repository** where you want Copilot to run. That repository must have a **`.env`** file in its root with **`PERSONAL_ACCESS_TOKEN`** set so the CLI can access the repo. See [CLI commands](/single-actions/workflow-and-cli).
 

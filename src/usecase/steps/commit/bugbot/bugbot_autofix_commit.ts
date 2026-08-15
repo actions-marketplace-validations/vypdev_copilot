@@ -111,7 +111,7 @@ async function checkoutBranchIfNeeded(branch: string): Promise<boolean> {
 /**
  * Parses a single verify command string into [program, ...args] with proper handling of quotes.
  * Rejects commands that contain shell operators (;, |, &&, etc.) to prevent injection.
- * Uses shell-quote so e.g. npm run "test with spaces" is parsed correctly.
+ * Uses shell-quote so e.g. pnpm run "test with spaces" is parsed correctly.
  */
 function parseVerifyCommand(cmd: string): { program: string; args: string[] } | null {
     const trimmed = cmd.trim();

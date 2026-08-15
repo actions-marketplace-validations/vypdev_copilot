@@ -46,15 +46,15 @@ describe("buildBugbotFixPrompt", () => {
             context,
             ["find-1"],
             "please fix this",
-            ["npm run build", "npm test"]
+            ["pnpm run build", "pnpm test"]
         );
         expect(prompt).toContain("test-owner");
         expect(prompt).toContain("test-repo");
         expect(prompt).toContain("feature/42-branch");
         expect(prompt).toContain("find-1");
         expect(prompt).toContain("please fix this");
-        expect(prompt).toContain("npm run build");
-        expect(prompt).toContain("npm test");
+        expect(prompt).toContain("pnpm run build");
+        expect(prompt).toContain("pnpm test");
         expect(prompt).toContain("Fix only the problems described");
     });
 
@@ -115,7 +115,7 @@ describe("buildBugbotFixPrompt", () => {
             mockContext(),
             ["find-1"],
             "fix",
-            ["npm run test", "echo `whoami`"]
+            ["pnpm run test", "echo `whoami`"]
         );
         expect(prompt).toContain("echo \\`whoami\\`");
         expect(prompt).toContain("Verify commands");
