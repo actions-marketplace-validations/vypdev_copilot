@@ -1,7 +1,7 @@
 import * as core from "@actions/core";
 import * as github from "@actions/github";
-import { getCommentWatermark } from "../../utils/comment_watermark";
 import { logDebugInfo, logError } from "../../utils/logger";
+import { IssueContentRepository } from './issue_content_repository';
 import { Labels } from "../model/labels";
 import { Milestone } from "../model/milestone";
 import { IssueTypes } from "../model/issue_types";
@@ -11,6 +11,7 @@ import { getRequiredLabels } from './required_labels';
 export const PROGRESS_LABEL_PATTERN = /^\d+%$/;
 
 export class IssueRepository {
+    private readonly issueContentRepository = new IssueContentRepository();
 
     updateTitleIssueFormat = async (
         owner: string,
@@ -216,49 +217,9 @@ export class IssueRepository {
     };
 
 
-    updateDescription = async (
-        owner: string,
-        repo: string,
-        issueNumber: number,
-        description: string,
-        token: string
-    ) => {
-        const octokit = github.getOctokit(token);
-        try {
-            await octokit.rest.issues.update({
-                owner,
-                repo,
-                issue_number: issueNumber,
-                body: description,
-            });
-        } catch (error) {
-            logError(`Error updating issue description: ${error}`);
-            throw error;
-        }
-    }
+    updateDescription = this.issueContentRepository.updateDescription;
 
-    getDescription = async (
-        owner: string,
-        repo: string,
-        issueNumber: number,
-        token: string
-    ): Promise<string | undefined> => {
-        if (issueNumber === -1) {
-            return undefined;
-        }
-        const octokit = github.getOctokit(token);
-        try {
-            const {data: issue} = await octokit.rest.issues.get({
-                owner,
-                repo,
-                issue_number: issueNumber,
-            });
-            return issue.body ?? '';
-        } catch (error) {
-            logError(`Error reading issue #${issueNumber} description: ${error}`);
-            return undefined
-        }
-    }
+    getDescription = this.issueContentRepository.getDescription;
 
     getId = async (
         owner: string,
@@ -510,82 +471,11 @@ export class IssueRepository {
         return pullRequest.data.head.ref
     };
 
-    addComment = async (
-        owner: string,
-        repository: string,
-        issueNumber: number,
-        comment: string,
-        token: string,
-        options?: { commitSha?: string },
-    ) => {
-        const watermark = getCommentWatermark(
-            options?.commitSha ? { commitSha: options.commitSha, owner, repo: repository } : undefined
-        );
-        const body = `${comment}\n\n${watermark}`;
-        const octokit = github.getOctokit(token);
-        await octokit.rest.issues.createComment({
-            owner: owner,
-            repo: repository,
-            issue_number: issueNumber,
-            body,
-        });
+    addComment = this.issueContentRepository.addComment;
 
-        logDebugInfo(`Comment added to Issue ${issueNumber}.`);
-    }
+    updateComment = this.issueContentRepository.updateComment;
 
-    updateComment = async (
-        owner: string,
-        repository: string,
-        issueNumber: number,
-        commentId: number,
-        comment: string,
-        token: string,
-        options?: { commitSha?: string },
-    ) => {
-        const watermark = getCommentWatermark(
-            options?.commitSha ? { commitSha: options.commitSha, owner, repo: repository } : undefined
-        );
-        const body = `${comment}\n\n${watermark}`;
-        const octokit = github.getOctokit(token);
-        await octokit.rest.issues.updateComment({
-            owner: owner,
-            repo: repository,
-            comment_id: commentId,
-            body,
-        });
-
-        logDebugInfo(`Comment ${commentId} updated in Issue ${issueNumber}.`);
-    }
-
-    /**
-     * Lists all comments on an issue (for bugbot: find existing findings by marker).
-     * Uses pagination to fetch every comment (default API returns only 30 per page).
-     */
-    listIssueComments = async (
-        owner: string,
-        repository: string,
-        issueNumber: number,
-        token: string,
-    ): Promise<Array<{ id: number; body: string | null; user?: { login?: string } }>> => {
-        const octokit = github.getOctokit(token);
-        const all: Array<{ id: number; body: string | null; user?: { login?: string } }> = [];
-        for await (const response of octokit.paginate.iterator(octokit.rest.issues.listComments, {
-            owner,
-            repo: repository,
-            issue_number: issueNumber,
-            per_page: 100,
-        })) {
-            const data = response.data || [];
-            for (const c of data) {
-                all.push({
-                    id: c.id,
-                    body: c.body ?? null,
-                    user: c.user as { login?: string } | undefined,
-                });
-            }
-        }
-        return all;
-    };
+    listIssueComments = this.issueContentRepository.listIssueComments;
 
     closeIssue = async (
         owner: string,
