@@ -13,23 +13,7 @@ import { OPENCODE_PROJECT_CONTEXT_INSTRUCTION } from '../../utils/opencode_proje
 import { findIssueBranch } from './find_issue_branch';
 import { syncProgressLabelsToOpenPullRequests } from './sync_progress_labels_to_open_pull_requests';
 
-const PROGRESS_RESPONSE_SCHEMA = {
-    type: 'object',
-    properties: {
-        progress: { type: 'number', description: 'Completion percentage 0-100' },
-        summary: { type: 'string', description: 'Short explanation of the assessment' },
-        remaining: { type: 'string', description: 'When progress < 100: what is left to do to reach 100%. Omit or empty when progress is 100.' },
-    },
-    required: ['progress', 'summary'],
-    additionalProperties: false,
-} as const;
-
-interface ProgressAttemptResult {
-    progress: number;
-    summary: string;
-    reasoning: string;
-    remaining: string;
-}
+import { parseProgressResponse, PROGRESS_RESPONSE_SCHEMA, type ProgressAttemptResult } from './progress_response';
 
 export class CheckProgressUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'CheckProgressUseCase';
@@ -257,7 +241,7 @@ export class CheckProgressUseCase implements ParamUseCase<Execution, Result[]> {
      * HTTP-level retries are handled by AiRepository (OPENCODE_MAX_RETRIES).
      */
     private async fetchProgressAttempt(ai: Ai, prompt: string): Promise<ProgressAttemptResult> {
-        const agentResponse = await this.aiRepository.askAgent(
+        return parseProgressResponse(await this.aiRepository.askAgent(
             ai,
             OPENCODE_AGENT_PLAN,
             prompt,
@@ -267,24 +251,7 @@ export class CheckProgressUseCase implements ParamUseCase<Execution, Result[]> {
                 schemaName: 'progress_response',
                 includeReasoning: true,
             }
-        );
-        const progress =
-            agentResponse && typeof agentResponse === 'object' && typeof (agentResponse as Record<string, unknown>).progress === 'number'
-                ? Math.min(100, Math.max(0, Math.round((agentResponse as Record<string, unknown>).progress as number)))
-                : 0;
-        const summary =
-            agentResponse && typeof agentResponse === 'object' && typeof (agentResponse as Record<string, unknown>).summary === 'string'
-                ? String((agentResponse as Record<string, unknown>).summary)
-                : 'Unable to determine progress.';
-        const reasoning =
-            agentResponse && typeof agentResponse === 'object' && typeof (agentResponse as Record<string, unknown>).reasoning === 'string'
-                ? String((agentResponse as Record<string, unknown>).reasoning).trim()
-                : '';
-        const remaining =
-            agentResponse && typeof agentResponse === 'object' && typeof (agentResponse as Record<string, unknown>).remaining === 'string'
-                ? String((agentResponse as Record<string, unknown>).remaining).trim()
-                : '';
-        return { progress, summary, reasoning, remaining };
+        ));
     }
 
     /**
