@@ -14,42 +14,10 @@ import {
     limitVerifyCommands,
     parseVerifyCommand,
 } from "./verify_command_policy";
-
-/** Max length per finding ID in commit message (avoids injection and overflow). */
-const MAX_FINDING_ID_LENGTH_COMMIT = 80;
-
-/** Max total length of the finding IDs portion in the commit message. */
-const MAX_FINDING_IDS_PART_LENGTH = 500;
-
-/**
- * Sanitizes a finding ID for safe inclusion in a git commit message.
- * Strips newlines, control chars, and limits length to avoid log injection and unexpected behavior.
- */
-function sanitizeFindingIdForCommitMessage(id: string): string {
-    const withoutNewlines = String(id).replace(/\r\n|\r|\n/g, " ");
-    const withoutControlChars = withoutNewlines.replace(/[\s\S]/g, (c) => {
-        const code = c.charCodeAt(0);
-        if (code < 32 && code !== 9) return ""; // keep tab, drop other C0 controls
-        if (code === 127) return ""; // DEL
-        return c;
-    });
-    const trimmed = withoutControlChars.trim();
-    return trimmed.length <= MAX_FINDING_ID_LENGTH_COMMIT
-        ? trimmed
-        : trimmed.slice(0, MAX_FINDING_ID_LENGTH_COMMIT);
-}
-
-/**
- * Builds the sanitized finding IDs part for the bugbot autofix commit message.
- */
-function buildFindingIdsPartForCommit(targetFindingIds: string[]): string {
-    if (targetFindingIds.length === 0) return "reported findings";
-    const sanitized = targetFindingIds.map(sanitizeFindingIdForCommitMessage).filter(Boolean);
-    if (sanitized.length === 0) return "reported findings";
-    const part = sanitized.join(", ");
-    if (part.length <= MAX_FINDING_IDS_PART_LENGTH) return part;
-    return part.slice(0, MAX_FINDING_IDS_PART_LENGTH - 3) + "...";
-}
+import {
+    buildBugbotCommitMessage,
+    buildUserRequestCommitMessage,
+} from "./commit_message_policy";
 
 export interface BugbotAutofixCommitResult {
     success: boolean;
@@ -163,11 +131,7 @@ export async function runBugbotAutofixCommitAndPush(
         } else {
             await exec.exec("git", ["add", "-A"]);
         }
-        const issueNumber = execution.issueNumber > 0 ? execution.issueNumber : undefined;
-        const findingIdsPart = buildFindingIdsPartForCommit(targetFindingIds);
-        const commitMessage = issueNumber
-            ? `fix(#${issueNumber}): bugbot autofix - resolve ${findingIdsPart}`
-            : `fix: bugbot autofix - resolve ${findingIdsPart}`;
+        const commitMessage = buildBugbotCommitMessage(execution.issueNumber, targetFindingIds);
         await exec.exec("git", ["commit", "-m", commitMessage]);
         await exec.exec("git", ["push", "origin", branch]);
         logInfo(`Pushed commit to origin/${branch}.`);
@@ -235,10 +199,7 @@ export async function runUserRequestCommitAndPush(
         logDebugInfo(`Git author set to ${name} <${email}>.`);
 
         await exec.exec("git", ["add", "-A"]);
-        const issueNumber = execution.issueNumber > 0 ? execution.issueNumber : undefined;
-        const commitMessage = issueNumber
-            ? `chore(#${issueNumber}): apply user request`
-            : "chore: apply user request";
+        const commitMessage = buildUserRequestCommitMessage(execution.issueNumber);
         await exec.exec("git", ["commit", "-m", commitMessage]);
         await exec.exec("git", ["push", "origin", branch]);
         logInfo(`Pushed commit to origin/${branch}.`);
