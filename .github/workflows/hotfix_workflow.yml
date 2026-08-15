@@ -58,7 +58,7 @@ jobs:
           [[ $err -eq 0 ]] || exit 1
 
       - name: Update version
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
@@ -89,7 +89,7 @@ jobs:
           git pull --no-ff --no-edit
 
       - name: Set up Node.js 24
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '24.x'
           cache: pnpm
