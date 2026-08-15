@@ -3,6 +3,7 @@ import { logDebugInfo, logError, logInfo } from "../../utils/logger";
 import { paginateCursor } from "./cursor_pagination";
 import { ProjectResult } from "../graph/project_result";
 import { ProjectDetail } from "../model/project_detail";
+import { authorizationForFileModification } from './actor_modification_policy';
 
 export class ProjectRepository {
   
@@ -597,21 +598,23 @@ export class ProjectRepository {
         try {
             const octokit = github.getOctokit(token);
             const { data: ownerUser } = await octokit.rest.users.getByUsername({ username: owner });
-            if (ownerUser.type === "Organization") {
-                try {
-                    await octokit.rest.orgs.checkMembershipForUser({
-                        org: owner,
-                        username: actor,
-                    });
-                    return true;
-                } catch (membershipErr: unknown) {
-                    const status = (membershipErr as { status?: number })?.status;
-                    if (status === 404) return false;
-                    logDebugInfo(`checkMembershipForUser(${owner}, ${actor}): ${membershipErr instanceof Error ? membershipErr.message : String(membershipErr)}`);
-                    return false;
-                }
+            const authorization = authorizationForFileModification(owner, actor, ownerUser.type);
+            if (authorization.kind === 'owner') {
+                return authorization.allowed;
             }
-            return actor === owner;
+
+            try {
+                await octokit.rest.orgs.checkMembershipForUser({
+                    org: authorization.organization,
+                    username: authorization.actor,
+                });
+                return true;
+            } catch (membershipErr: unknown) {
+                const status = (membershipErr as { status?: number })?.status;
+                if (status === 404) return false;
+                logDebugInfo(`checkMembershipForUser(${owner}, ${actor}): ${membershipErr instanceof Error ? membershipErr.message : String(membershipErr)}`);
+                return false;
+            }
         } catch (err) {
             logDebugInfo(`isActorAllowedToModifyFiles(${owner}, ${actor}): ${err instanceof Error ? err.message : String(err)}`);
             return false;
