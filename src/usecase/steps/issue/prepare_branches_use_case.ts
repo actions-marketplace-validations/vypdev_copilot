@@ -9,6 +9,7 @@ import { CommitPrefixBuilderUseCase } from "../common/execute_script_use_case";
 import { MoveIssueToInProgressUseCase } from "./move_issue_to_in_progress";
 import { prepareHotfixBranch } from "./prepare_hotfix_branch";
 import { prepareReleaseBranch } from "./prepare_release_branch";
+import { selectBranchPreparationStrategy } from "./branch_preparation_strategy";
 
 export class PrepareBranchesUseCase implements ParamUseCase<Execution, Result[]> {
     taskId = "PrepareBranchesUseCase";
@@ -47,12 +48,16 @@ export class PrepareBranchesUseCase implements ParamUseCase<Execution, Result[]>
             );
             branches.forEach((branch) => logDebugInfo(`- ${branch}`));
 
-            if (param.hotfix.active) {
+            const strategy = selectBranchPreparationStrategy({
+                hotfixActive: param.hotfix.active,
+                releaseActive: param.release.active,
+            });
+            if (strategy === "hotfix") {
                 return result.concat(
                     await prepareHotfixBranch(param, this.branchRepository, branches, this.taskId)
                 );
             }
-            if (param.release.active) {
+            if (strategy === "release") {
                 return result.concat(
                     await prepareReleaseBranch(param, this.branchRepository, branches, this.taskId)
                 );
