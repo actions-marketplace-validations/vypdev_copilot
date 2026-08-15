@@ -1,5 +1,5 @@
 import { nextHotfixVersion, nextReleaseVersion } from './version_resolution_policy';
-import { hotfixBranch, hotfixOriginBranch, releaseBranch } from './branch_state_policy';
+import { applyHotfixResolution, applyReleaseResolution } from './version_resolution_application_policy';
 import { hotfixResolutionFromPayload, releaseResolutionFromPayload } from './version_resolution_result_policy';
 import { BranchRepository } from '../repository/branch_repository';
 import type { Execution } from './execution';
@@ -32,7 +32,8 @@ export async function resolveIssueBranchVersion(
                 execution.release.version = nextReleaseVersion(lastTag, execution.release.type);
             }
         }
-        execution.release.branch = releaseBranch(execution.branches.releaseTree, execution.release.version);
+        const releaseState = applyReleaseResolution(execution.branches.releaseTree, execution.release.version);
+        execution.release.branch = releaseState.branch;
     } else if (execution.hotfix.active && execution.hotfix.version === undefined) {
         const versionResult = await new GetHotfixVersionUseCase().invoke(execution);
         const versionInfo = versionResult.at(-1);
@@ -46,10 +47,15 @@ export async function resolveIssueBranchVersion(
             execution.hotfix.baseVersion = nextVersion.baseVersion;
             execution.hotfix.version = nextVersion.version;
         }
-        execution.hotfix.branch = hotfixBranch(execution.branches.hotfixTree, execution.hotfix.version);
-        execution.currentConfiguration.hotfixBranch = execution.hotfix.branch;
-        execution.hotfix.baseBranch = hotfixOriginBranch(execution.hotfix.baseVersion ?? '');
-        execution.currentConfiguration.hotfixOriginBranch = execution.hotfix.baseBranch;
+        const hotfixState = applyHotfixResolution(
+            execution.branches.hotfixTree,
+            execution.hotfix.baseVersion,
+            execution.hotfix.version,
+        );
+        execution.hotfix.branch = hotfixState.branch;
+        execution.currentConfiguration.hotfixBranch = hotfixState.branch;
+        execution.hotfix.baseBranch = hotfixState.baseBranch;
+        execution.currentConfiguration.hotfixOriginBranch = hotfixState.baseBranch;
     }
     return true;
 }
