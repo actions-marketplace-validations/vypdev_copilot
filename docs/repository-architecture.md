@@ -109,6 +109,12 @@ Tag and release policies remain independent:
 
 `IssueRepository` remains a transitional facade until all relevant consumers use specific ports.
 
+### IssueRepository audit result
+
+The audit confirms that `IssueRepository` is already a composition facade rather than a single undifferentiated adapter. Its implementation delegates to independent repositories for content/comments, metadata, labels, progress labels, label provisioning, issue types, assignments, and lifecycle. The remaining title-formatting methods are issue-specific policies at the facade boundary and do not justify a second mechanical extraction without an independent application contract and caller set.
+
+The historical RepoWise duplication signal is therefore not treated as proof of semantic duplication. Further work should migrate callers to the existing specialized contracts only where that reduces a real dependency surface; no generic issue base repository is introduced.
+
 ### Pull request capabilities
 
 The current pull-request implementation contains three candidate boundaries:
@@ -200,5 +206,6 @@ The first migration slices are implemented and published:
 - Pull request lifecycle, changes and review operations are isolated in `PullRequestLifecycleRepository`, `PullRequestChangesRepository` and `PullRequestReviewRepository`.
 - `ProjectRepository` and `PullRequestRepository` remain compatibility facades composed from those adapters.
 - `loadProjectDetails` now depends on `ProjectDetailQueryPort`, not on the `ProjectRepository` class.
+- Identity, authorization, release, board, and organization callers have been migrated in published slices; `IssueRepository` has been audited and retained as a documented composition facade.
 
 The next migration boundary is caller-by-caller replacement of the remaining compatibility-facade dependencies. Each caller must be migrated together with its tests and composition path; the facades must not be removed until repository-wide search shows no production consumers.
