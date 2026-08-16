@@ -28,7 +28,7 @@ import { Welcome } from "./welcome";
 import { Workflows } from "./workflows";
 import { resolveExecutionIssueNumber } from "./resolve_execution_issue_number";
 import { resolveIssueBranchVersion } from './resolve_issue_branch_version';
-import { restorePreviousBranchState } from './previous_branch_state_policy';
+import { restorePreviousBranchState, type PreviousBranchState } from './previous_branch_state_policy';
 
 export class Execution {
     debug: boolean = false;
@@ -216,6 +216,20 @@ export class Execution {
         this.welcome = welcome;
     }
 
+    private restorePreviousBranchState(state: PreviousBranchState): void {
+        this.release.version = state.releaseVersion;
+        this.release.branch = state.releaseBranch;
+        this.hotfix.baseVersion = state.hotfixBaseVersion;
+        this.hotfix.baseBranch = state.hotfixBaseBranch;
+        this.hotfix.version = state.hotfixVersion;
+        this.hotfix.branch = state.hotfixBranch;
+        this.currentConfiguration.parentBranch = state.parentBranch;
+        this.currentConfiguration.workingBranch = state.workingBranch;
+        this.currentConfiguration.releaseBranch = state.releaseBranch;
+        this.currentConfiguration.hotfixOriginBranch = state.hotfixBaseBranch;
+        this.currentConfiguration.hotfixBranch = state.hotfixBranch;
+    }
+
     setup = async () => {
         setGlobalLoggerDebug(this.debug, this.inputs === undefined);
 
@@ -269,17 +283,7 @@ export class Execution {
             this.branches.releaseTree,
             this.branches.hotfixTree,
         );
-        this.release.version = previousState.releaseVersion;
-        this.release.branch = previousState.releaseBranch;
-        this.hotfix.baseVersion = previousState.hotfixBaseVersion;
-        this.hotfix.baseBranch = previousState.hotfixBaseBranch;
-        this.hotfix.version = previousState.hotfixVersion;
-        this.hotfix.branch = previousState.hotfixBranch;
-        this.currentConfiguration.parentBranch = previousState.parentBranch;
-        this.currentConfiguration.workingBranch = previousState.workingBranch;
-        this.currentConfiguration.releaseBranch = previousState.releaseBranch;
-        this.currentConfiguration.hotfixOriginBranch = previousState.hotfixBaseBranch;
-        this.currentConfiguration.hotfixBranch = previousState.hotfixBranch;
+        this.restorePreviousBranchState(previousState);
 
         if (this.isSingleAction) {
             /**
