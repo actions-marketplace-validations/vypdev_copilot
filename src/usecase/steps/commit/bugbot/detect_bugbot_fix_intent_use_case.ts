@@ -1,6 +1,8 @@
 import { isAgentConfigurationReady } from "../../../../data/model/agent";
 import type { Execution } from "../../../../data/model/execution";
-import { AiRepository, OPENCODE_AGENT_PLAN } from "../../../../data/repository/ai_repository";
+import { OPENCODE_AGENT_PLAN } from "../../../../data/repository/ai_repository";
+import type { FindingsQueryPort } from "../../../../data/repository/agent_ports";
+import { DefaultAgentRepositoryFactory } from "../../../../data/repository/agent_repository_factory";
 import { PullRequestRepository } from "../../../../data/repository/pull_request_repository";
 import { logDebugInfo, logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
@@ -30,7 +32,7 @@ const TASK_ID = "DetectBugbotFixIntentUseCase";
 export class DetectBugbotFixIntentUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = TASK_ID;
 
-    private aiRepository = new AiRepository();
+    private aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings();
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`);

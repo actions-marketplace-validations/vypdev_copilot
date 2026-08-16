@@ -7,7 +7,9 @@
 import { isAgentConfigurationReady } from '../../../data/model/agent';
 import { Execution } from '../../../data/model/execution';
 import { Result } from '../../../data/model/result';
-import { AiRepository, OPENCODE_AGENT_PLAN } from '../../../data/repository/ai_repository';
+import { OPENCODE_AGENT_PLAN } from '../../../data/repository/ai_repository';
+import type { FindingsQueryPort } from '../../../data/repository/agent_ports';
+import { DefaultAgentRepositoryFactory } from '../../../data/repository/agent_repository_factory';
 import { THINK_RESPONSE_SCHEMA } from '../../../data/repository/agent_response_schemas';
 import { IssueRepository } from '../../../data/repository/issue_repository';
 import { getAnswerIssueHelpPrompt } from '../../../prompts';
@@ -19,7 +21,7 @@ import { extractStructuredAnswer } from '../common/agent_answer_policy';
 
 export class AnswerIssueHelpUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'AnswerIssueHelpUseCase';
-    private aiRepository: AiRepository = new AiRepository();
+    private aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings();
     private issueRepository: IssueRepository = new IssueRepository();
 
     async invoke(param: Execution): Promise<Result[]> {

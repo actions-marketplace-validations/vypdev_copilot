@@ -1,6 +1,8 @@
 import { Execution } from "../../../data/model/execution";
 import { Result } from "../../../data/model/result";
-import { AiRepository, OPENCODE_AGENT_PLAN } from "../../../data/repository/ai_repository";
+import { OPENCODE_AGENT_PLAN } from "../../../data/repository/ai_repository";
+import type { FindingsQueryPort } from "../../../data/repository/agent_ports";
+import { DefaultAgentRepositoryFactory } from "../../../data/repository/agent_repository_factory";
 import { IssueRepository } from "../../../data/repository/issue_repository";
 import { ProjectRepository } from "../../../data/repository/project_repository";
 import { PullRequestRepository } from "../../../data/repository/pull_request_repository";
@@ -13,7 +15,7 @@ import { ParamUseCase } from "../../base/param_usecase";
 export class UpdatePullRequestDescriptionUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'UpdatePullRequestDescriptionUseCase';
 
-    private aiRepository = new AiRepository();
+    private aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings();
     private pullRequestRepository = new PullRequestRepository();
     private issueRepository = new IssueRepository();
     private projectRepository = new ProjectRepository();

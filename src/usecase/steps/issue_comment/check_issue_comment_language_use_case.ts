@@ -1,9 +1,10 @@
 import { Execution } from "../../../data/model/execution";
 import { Result } from "../../../data/model/result";
 import {
-    AiRepository,
     OPENCODE_AGENT_PLAN,
 } from "../../../data/repository/ai_repository";
+import type { FindingsQueryPort } from "../../../data/repository/agent_ports";
+import { DefaultAgentRepositoryFactory } from "../../../data/repository/agent_repository_factory";
 import {
     LANGUAGE_CHECK_RESPONSE_SCHEMA,
     TRANSLATION_RESPONSE_SCHEMA,
@@ -17,7 +18,7 @@ import { ParamUseCase } from "../../base/param_usecase";
 export class CheckIssueCommentLanguageUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'CheckIssueCommentLanguageUseCase';
 
-    private aiRepository = new AiRepository();
+    private aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings();
     private issueRepository = new IssueRepository();
     private translatedKey = `<!-- content_translated
 If you'd like this comment to be translated again, please delete the entire comment, including this message. It will then be processed as a new one.
