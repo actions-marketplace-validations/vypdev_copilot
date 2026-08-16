@@ -9,6 +9,7 @@ import { OpenCodeAgentInvoker } from './opencode_agent_invoker';
 import { buildAgentPrompt } from './agent_prompt_policy';
 import { getValidatedAgentConfiguration } from './agent_configuration_policy';
 import { executeAgentRequest } from './agent_execution_policy';
+import { interpretFixerResponse } from './agent_fixer_response_policy';
 import { interpretFindingsResponse } from './agent_findings_response_policy';
 import { extractTextFromParts } from './agent_response_parser';
 export { getSessionDiff } from './opencode_session_diff_client';
@@ -129,11 +130,7 @@ export class AiRepository implements FindingsQueryPort, FixerQueryPort {
                 cliAdapter: this.cliAdapter,
                 openCodeInvoker: this.openCodeInvoker,
                 mapCliOutput: (text) => ({ text, sessionId: 'cli' }),
-                mapServerResponse: (result) => {
-                    const text = extractTextFromParts(result.parts);
-                    if (!text) throw new Error('Empty response text');
-                    return { text, sessionId: result.sessionId };
-                },
+                mapServerResponse: (result) => interpretFixerResponse(result.parts, result.sessionId),
             });
         } catch (error: unknown) {
             const err = error instanceof Error ? error : new Error(String(error));
