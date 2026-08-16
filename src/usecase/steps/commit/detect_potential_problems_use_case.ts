@@ -1,8 +1,8 @@
 import { isAgentConfigurationReady } from '../../../data/model/agent';
 import { Execution } from '../../../data/model/execution';
 import { Result } from '../../../data/model/result';
-import { AiRepository } from '../../../data/repository/ai_repository';
 import type { FindingsQueryPort } from '../../../data/repository/agent_ports';
+import { DefaultAgentRepositoryFactory } from '../../../data/repository/agent_repository_factory';
 import { getTaskEmoji } from '../../../utils/task_emoji';
 import { logDebugInfo, logError, logInfo } from '../../../utils/logger';
 import { ParamUseCase } from '../../base/param_usecase';
@@ -16,7 +16,7 @@ export type { BugbotFinding } from './bugbot/types';
 export class DetectPotentialProblemsUseCase implements ParamUseCase<Execution, Result[]> {
     taskId = 'DetectPotentialProblemsUseCase';
 
-    constructor(private readonly aiRepository: FindingsQueryPort = new AiRepository()) {}
+    constructor(private readonly aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings()) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`);

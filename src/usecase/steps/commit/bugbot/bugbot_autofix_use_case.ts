@@ -1,7 +1,7 @@
 import { isAgentConfigurationReady } from "../../../../data/model/agent";
 import type { Execution } from "../../../../data/model/execution";
-import { AiRepository } from "../../../../data/repository/ai_repository";
 import type { FixerQueryPort } from "../../../../data/repository/agent_ports";
+import { DefaultAgentRepositoryFactory } from "../../../../data/repository/agent_repository_factory";
 import { logDebugInfo, logError, logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
 import { ParamUseCase } from "../../../base/param_usecase";
@@ -33,7 +33,7 @@ export class BugbotAutofixUseCase implements ParamUseCase<BugbotAutofixParam, Re
 
     private aiRepository: FixerQueryPort;
 
-    constructor(aiRepository: FixerQueryPort = new AiRepository()) {
+    constructor(aiRepository: FixerQueryPort = new DefaultAgentRepositoryFactory().createFixer()) {
         this.aiRepository = aiRepository;
     }
 

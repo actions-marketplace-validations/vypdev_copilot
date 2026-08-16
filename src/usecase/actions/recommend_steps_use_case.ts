@@ -1,8 +1,9 @@
 import { isAgentConfigurationReady } from '../../data/model/agent';
 import { Execution } from '../../data/model/execution';
 import { Result } from '../../data/model/result';
-import { AiRepository, OPENCODE_AGENT_PLAN } from '../../data/repository/ai_repository';
+import { OPENCODE_AGENT_PLAN } from '../../data/repository/ai_repository';
 import type { FindingsQueryPort } from '../../data/repository/agent_ports';
+import { DefaultAgentRepositoryFactory } from '../../data/repository/agent_repository_factory';
 import { IssueRepository } from '../../data/repository/issue_repository';
 import { getRecommendStepsPrompt } from '../../prompts';
 import { logDebugInfo, logError, logInfo } from '../../utils/logger';
@@ -13,9 +14,9 @@ import { ParamUseCase } from '../base/param_usecase';
 export class RecommendStepsUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'RecommendStepsUseCase';
     private issueRepository: IssueRepository = new IssueRepository();
-    private aiRepository: FindingsQueryPort = new AiRepository();
+    private aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings();
 
-    constructor(aiRepository: FindingsQueryPort = new AiRepository()) {
+    constructor(aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings()) {
         this.aiRepository = aiRepository;
     }
 
