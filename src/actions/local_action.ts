@@ -4,7 +4,7 @@ import { Ai } from '../data/model/ai';
 
 import { Execution } from '../data/model/execution';
 import { Hotfix } from '../data/model/hotfix';
-import { Images } from '../data/model/images';
+
 
 import { IssueTypes } from '../data/model/issue_types';
 import { Labels } from '../data/model/labels';
@@ -25,7 +25,7 @@ import { parseBoundedPositiveIntegerInput, parseIntegerInput } from './input_num
 import { parseDelimitedValues } from './input_values_policy';
 import { buildSizeThresholds } from './size_threshold_builder';
 import { buildBranches } from './branches_builder';
-import { buildEmoji, buildIssue, buildLocale, buildProjects, buildPullRequest, buildTokens, buildWorkflows } from './configuration_builders';
+import { buildEmoji, buildImages, buildIssue, buildLocale, buildProjects, buildPullRequest, buildTokens, buildWorkflows } from './configuration_builders';
 import { mainRun } from './common_action';
 import boxen from 'boxen';
 
@@ -467,32 +467,14 @@ export async function runLocalAction(
         buildIssue(branchManagementAlways, reopenIssueOnPush, issueDesiredAssigneesCount, additionalParams),
         buildPullRequest(pullRequestDesiredAssigneesCount, pullRequestDesiredReviewersCount, pullRequestMergeTimeout, additionalParams),
         buildEmoji(titleEmoji, branchManagementEmoji),
-        new Images(
-            imagesOnIssue,
-            imagesOnPullRequest,
-            imagesOnCommit,
-            imagesIssueAutomatic,
-            imagesIssueFeature,
-            imagesIssueBugfix,
-            imagesIssueDocs,
-            imagesIssueChore,
-            imagesIssueRelease,
-            imagesIssueHotfix,
-            imagesPullRequestAutomatic,
-            imagesPullRequestFeature,
-            imagesPullRequestBugfix,
-            imagesPullRequestRelease,
-            imagesPullRequestHotfix,
-            imagesPullRequestDocs,
-            imagesPullRequestChore,
-            imagesCommitAutomatic,
-            imagesCommitFeature,
-            imagesCommitBugfix,
-            imagesCommitRelease,
-            imagesCommitHotfix,
-            imagesCommitDocs,
-            imagesCommitChore,
-        ),
+        buildImages({
+            onIssue: imagesOnIssue,
+            onPullRequest: imagesOnPullRequest,
+            onCommit: imagesOnCommit,
+            issue: { automatic: imagesIssueAutomatic, feature: imagesIssueFeature, bugfix: imagesIssueBugfix, release: imagesIssueRelease, hotfix: imagesIssueHotfix, docs: imagesIssueDocs, chore: imagesIssueChore },
+            pullRequest: { automatic: imagesPullRequestAutomatic, feature: imagesPullRequestFeature, bugfix: imagesPullRequestBugfix, release: imagesPullRequestRelease, hotfix: imagesPullRequestHotfix, docs: imagesPullRequestDocs, chore: imagesPullRequestChore },
+            commit: { automatic: imagesCommitAutomatic, feature: imagesCommitFeature, bugfix: imagesCommitBugfix, release: imagesCommitRelease, hotfix: imagesCommitHotfix, docs: imagesCommitDocs, chore: imagesCommitChore },
+        }),
         buildTokens(token),
         new Ai(
             opencodeServerUrl,
