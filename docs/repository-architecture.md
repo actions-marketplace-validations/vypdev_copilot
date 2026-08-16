@@ -189,3 +189,16 @@ The migration is complete only when:
 - RepoWise metrics are compared against the baseline rather than optimized blindly;
 - full tests, typecheck, lint, build, and `git diff --check` pass;
 - the final tree is clean and the published SHA is verified.
+
+## Current migration status
+
+The first migration slices are implemented and published:
+
+- Release and tag operations are isolated in `RepositoryReleaseRepository`.
+- Project detail, content resolution and content linking are isolated in `ProjectBoardRepository`.
+- Organization membership, authenticated identity and actor authorization are isolated in `OrganizationRepository`, with separate ports.
+- Pull request lifecycle, changes and review operations are isolated in `PullRequestLifecycleRepository`, `PullRequestChangesRepository` and `PullRequestReviewRepository`.
+- `ProjectRepository` and `PullRequestRepository` remain compatibility facades composed from those adapters.
+- `loadProjectDetails` now depends on `ProjectDetailQueryPort`, not on the `ProjectRepository` class.
+
+The next migration boundary is caller-by-caller replacement of the remaining compatibility-facade dependencies. Each caller must be migrated together with its tests and composition path; the facades must not be removed until repository-wide search shows no production consumers.
