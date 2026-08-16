@@ -16,14 +16,14 @@ import { SingleAction } from '../data/model/single_action';
 
 import { Welcome } from '../data/model/welcome';
 import { ProjectRepository } from '../data/repository/project_repository';
-import { BUGBOT_MAX_COMMENTS, BUGBOT_MIN_SEVERITY, DEFAULT_IMAGE_CONFIG, INPUT_KEYS, OPENCODE_DEFAULT_MODEL, TITLE } from '../utils/constants';
+import { BUGBOT_MAX_COMMENTS, BUGBOT_MIN_SEVERITY, DEFAULT_IMAGE_CONFIG, INPUT_KEYS, TITLE } from '../utils/constants';
 import { logInfo } from '../utils/logger';
 import { getActionInputsWithDefaults } from '../utils/yml_utils';
 import { isEnabledInput } from './input_boolean_policy';
 import { loadProjectDetails } from './project_details_loader';
 import { parseBoundedPositiveIntegerInput, parseIntegerInput } from './input_number_policy';
 import { parseDelimitedValues } from './input_values_policy';
-import { buildAgentTasks } from './agent_configuration_builder';
+import { buildAgentTasksFromValues } from './agent_input_builder';
 import { buildSizeThresholds } from './size_threshold_builder';
 import { buildBranches } from './branches_builder';
 import { buildEmoji, buildImages, buildIssue, buildIssueTypes, buildLabels, buildLocale, buildProjects, buildPullRequest, buildTokens, buildWorkflows } from './configuration_builders';
@@ -66,13 +66,9 @@ export async function runLocalAction(
     /**
      * AI (OpenCode)
      */
-    const opencodeServerUrl = String(additionalParams[INPUT_KEYS.OPENCODE_SERVER_URL] ?? actionInputs[INPUT_KEYS.OPENCODE_SERVER_URL] ?? '').trim() || 'http://127.0.0.1:4096';
-    const opencodeModel = additionalParams[INPUT_KEYS.OPENCODE_MODEL] ?? actionInputs[INPUT_KEYS.OPENCODE_MODEL] ?? OPENCODE_DEFAULT_MODEL;
-    const agentProvider = String(additionalParams[INPUT_KEYS.AGENT_PROVIDER] ?? actionInputs[INPUT_KEYS.AGENT_PROVIDER] ?? '').trim() || 'opencode';
-    const agentTransport = String(additionalParams[INPUT_KEYS.AGENT_TRANSPORT] ?? actionInputs[INPUT_KEYS.AGENT_TRANSPORT] ?? '').trim() || 'server';
-    const agentModel = String(additionalParams[INPUT_KEYS.AGENT_MODEL] ?? actionInputs[INPUT_KEYS.AGENT_MODEL] ?? '').trim() || String(opencodeModel).trim() || OPENCODE_DEFAULT_MODEL;
-    const agentCommand = String(additionalParams[INPUT_KEYS.AGENT_COMMAND] ?? actionInputs[INPUT_KEYS.AGENT_COMMAND] ?? '');
-    const agentTasks = buildAgentTasks({ provider: agentProvider, transport: agentTransport, model: agentModel, serverUrl: opencodeServerUrl, command: agentCommand });
+    const agentTasks = buildAgentTasksFromValues({ ...actionInputs, ...additionalParams });
+    const opencodeServerUrl = agentTasks.findings.serverUrl ?? 'http://127.0.0.1:4096';
+    const opencodeModel = agentTasks.findings.model ?? '';
     const aiPullRequestDescription = isEnabledInput(additionalParams[INPUT_KEYS.AI_PULL_REQUEST_DESCRIPTION] ?? actionInputs[INPUT_KEYS.AI_PULL_REQUEST_DESCRIPTION]);
     const aiMembersOnly = isEnabledInput(additionalParams[INPUT_KEYS.AI_MEMBERS_ONLY] ?? actionInputs[INPUT_KEYS.AI_MEMBERS_ONLY]);
     const aiIncludeReasoning = isEnabledInput(additionalParams[INPUT_KEYS.AI_INCLUDE_REASONING] ?? actionInputs[INPUT_KEYS.AI_INCLUDE_REASONING]);

@@ -18,7 +18,7 @@ import { SingleAction } from '../data/model/single_action';
 import { ProjectRepository } from '../data/repository/project_repository';
 import { PublishResultUseCase } from '../usecase/steps/common/publish_resume_use_case';
 import { StoreConfigurationUseCase } from '../usecase/steps/common/store_configuration_use_case';
-import { BUGBOT_MAX_COMMENTS, BUGBOT_MIN_SEVERITY, DEFAULT_IMAGE_CONFIG, INPUT_KEYS, OPENCODE_DEFAULT_MODEL } from '../utils/constants';
+import { BUGBOT_MAX_COMMENTS, BUGBOT_MIN_SEVERITY, DEFAULT_IMAGE_CONFIG, INPUT_KEYS } from '../utils/constants';
 import { logDebugInfo, logError, logInfo } from '../utils/logger';
 import type { ManagedAgentServer } from '../data/repository/agent_ports';
 import { OpenCodeServerLifecycleAdapter } from '../data/repository/opencode_server_lifecycle_adapter';
@@ -27,7 +27,7 @@ import { mainRun } from './common_action';
 import { isEnabledInput } from './input_boolean_policy';
 import { parseBoundedPositiveIntegerInput, parseIntegerInput } from './input_number_policy';
 import { parseDelimitedValues } from './input_values_policy';
-import { buildAgentTasks } from './agent_configuration_builder';
+import { buildAgentTasksFromInputs } from './agent_input_builder';
 import { buildSizeThresholds } from './size_threshold_builder';
 import { buildBranches } from './branches_builder';
 import { buildEmoji, buildImages, buildIssue, buildIssueTypes, buildLabels, buildLocale, buildProjects, buildPullRequest, buildTokens, buildWorkflows } from './configuration_builders';
@@ -63,21 +63,9 @@ export async function runGitHubAction(): Promise<void> {
      * AI (OpenCode)
      */
     let opencodeServerUrl = getInput(INPUT_KEYS.OPENCODE_SERVER_URL) || 'http://127.0.0.1:4096';
-    const opencodeModel = getInput(INPUT_KEYS.OPENCODE_MODEL) || OPENCODE_DEFAULT_MODEL;
-    const agentProvider = getInput(INPUT_KEYS.AGENT_PROVIDER) || 'opencode';
-    const agentTransport = getInput(INPUT_KEYS.AGENT_TRANSPORT) || 'server';
-    const agentModel = getInput(INPUT_KEYS.AGENT_MODEL) || opencodeModel;
-    const agentCommand = getInput(INPUT_KEYS.AGENT_COMMAND);
-    const findingsOverrides = {
-        provider: getInput(INPUT_KEYS.FINDINGS_PROVIDER), transport: getInput(INPUT_KEYS.FINDINGS_TRANSPORT),
-        model: getInput(INPUT_KEYS.FINDINGS_MODEL), command: getInput(INPUT_KEYS.FINDINGS_COMMAND),
-    };
-    const fixerOverrides = {
-        provider: getInput(INPUT_KEYS.FIXER_PROVIDER), transport: getInput(INPUT_KEYS.FIXER_TRANSPORT),
-        model: getInput(INPUT_KEYS.FIXER_MODEL), command: getInput(INPUT_KEYS.FIXER_COMMAND),
-    };
-    const taskValues = { provider: agentProvider, transport: agentTransport, model: agentModel, serverUrl: opencodeServerUrl, command: agentCommand };
-    const requestedAgentTasks = buildAgentTasks({ ...taskValues, findings: findingsOverrides, fixer: fixerOverrides });
+    const readAgentInput = (key: string): string => getInput(key);
+    const requestedAgentTasks = buildAgentTasksFromInputs(readAgentInput);
+    const opencodeModel = requestedAgentTasks.findings.model;
     const opencodeStartServer = isEnabledInput(getInput(INPUT_KEYS.OPENCODE_START_SERVER))
         && requestedAgentTasks.findings.provider === 'opencode'
         && requestedAgentTasks.findings.transport === 'server';
@@ -92,7 +80,10 @@ export async function runGitHubAction(): Promise<void> {
     } else {
         logDebugInfo(`Using OpenCode server URL: ${opencodeServerUrl}, model: ${opencodeModel}.`);
     }
-    const agentTasks = buildAgentTasks({ ...taskValues, serverUrl: opencodeServerUrl, findings: findingsOverrides, fixer: fixerOverrides });
+    const agentTasks = buildAgentTasksFromInputs((key) =>
+        key === INPUT_KEYS.OPENCODE_SERVER_URL ? opencodeServerUrl : readAgentInput(key)
+    );
+
 
     try {
     const aiPullRequestDescription = isEnabledInput(getInput(INPUT_KEYS.AI_PULL_REQUEST_DESCRIPTION));
