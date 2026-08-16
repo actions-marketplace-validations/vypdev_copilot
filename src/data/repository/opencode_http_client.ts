@@ -88,13 +88,21 @@ export class OpenCodeHttpClient {
         phase: AgentExecutionPhase,
     ): Promise<Response> {
         let response: Response;
+        const timeoutSignal = AbortSignal.timeout(this.options.requestTimeoutMs);
+        const signal = init.signal ? AbortSignal.any([init.signal, timeoutSignal]) : timeoutSignal;
         try {
             response = await this.fetchFn(`${baseUrl}${path}`, {
                 ...init,
-                signal: init.signal ?? AbortSignal.timeout(this.options.requestTimeoutMs),
+                signal,
             });
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
+            if (init.signal?.aborted) {
+                throw new OpenCodeClientError(`OpenCode request cancelled: ${message}`, phase, 'cancelled', false);
+            }
+            if (signal.aborted) {
+                throw new OpenCodeClientError(`OpenCode request timed out after ${this.options.requestTimeoutMs}ms`, phase, 'timeout', false);
+            }
             throw new OpenCodeClientError(`OpenCode request failed: ${message}`, phase, 'network', true);
         }
         if (!response.ok) {

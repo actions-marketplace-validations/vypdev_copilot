@@ -54,4 +54,40 @@ describe('OpenCodeHttpClient', () => {
             serverUrl: 'http://server', agent: 'build', providerID: 'p', modelID: 'm', prompt: 'p',
         })).rejects.toBeInstanceOf(OpenCodeClientError);
     });
+
+    it('combines caller cancellation with the client timeout', async () => {
+        const controller = new AbortController();
+        const fetchFn = jest.fn((_url: string, init?: RequestInit) => new Promise<Response>((_, reject) => {
+            init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')), { once: true });
+        }));
+        const client = new OpenCodeHttpClient({ requestTimeoutMs: 1000, fetchFn: fetchFn as unknown as typeof fetch });
+
+        const pending = client.sendMessage({
+            serverUrl: 'http://localhost:4096',
+            agent: 'build',
+            providerID: 'provider',
+            modelID: 'model',
+            prompt: 'cancel me',
+            signal: controller.signal,
+        });
+        controller.abort();
+
+        await expect(pending).rejects.toMatchObject({ category: 'cancelled', retryable: false });
+        expect(fetchFn).toHaveBeenCalledTimes(1);
+    });
+
+    it('classifies client timeout as non-retryable', async () => {
+        const fetchFn = jest.fn((_url: string, init?: RequestInit) => new Promise<Response>((_, reject) => {
+            init?.signal?.addEventListener('abort', () => reject(new DOMException('timed out', 'TimeoutError')), { once: true });
+        }));
+        const client = new OpenCodeHttpClient({ requestTimeoutMs: 1, fetchFn: fetchFn as unknown as typeof fetch });
+
+        await expect(client.sendMessage({
+            serverUrl: 'http://localhost:4096',
+            agent: 'build',
+            providerID: 'provider',
+            modelID: 'model',
+            prompt: 'time out',
+        })).rejects.toMatchObject({ category: 'timeout', retryable: false });
+    });
 });
