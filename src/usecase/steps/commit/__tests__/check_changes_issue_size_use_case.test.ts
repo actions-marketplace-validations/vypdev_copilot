@@ -57,7 +57,7 @@ describe('CheckChangesIssueSizeUseCase', () => {
   let useCase: CheckChangesIssueSizeUseCase;
 
   beforeEach(() => {
-    useCase = new CheckChangesIssueSizeUseCase();
+    useCase = new CheckChangesIssueSizeUseCase({ setTaskSize: mockSetTaskSize } as any);
     mockGetSizeCategoryAndReason.mockReset();
     mockSetLabels.mockReset();
     mockGetOpenPullRequestNumbersByHeadBranch.mockResolvedValue([]);

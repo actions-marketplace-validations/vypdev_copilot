@@ -6,10 +6,13 @@ import { ParamUseCase } from "./base/param_usecase";
 import { CheckProgressUseCase } from "./actions/check_progress_use_case";
 import { NotifyNewCommitOnIssueUseCase } from "./steps/commit/notify_new_commit_on_issue_use_case";
 import { CheckChangesIssueSizeUseCase } from "./steps/commit/check_changes_issue_size_use_case";
-import { DetectPotentialProblemsUseCase } from "./steps/commit/detect_potential_problems_use_case";
+import { DetectPotentialProblemsUseCase } from './steps/commit/detect_potential_problems_use_case';
+import { ProjectBoardCommandPort } from '../data/repository/github_repository_ports';
 
 export class CommitUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'CommitUseCase';
+
+    constructor(private readonly projectBoardCommandPort: ProjectBoardCommandPort) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`);
@@ -26,7 +29,7 @@ export class CommitUseCase implements ParamUseCase<Execution, Result[]> {
             logDebugInfo(`Issue number: ${param.issueNumber}`);
 
             results.push(...(await new NotifyNewCommitOnIssueUseCase().invoke(param)));
-            results.push(...(await new CheckChangesIssueSizeUseCase().invoke(param)));
+            results.push(...(await new CheckChangesIssueSizeUseCase(this.projectBoardCommandPort).invoke(param)));
             results.push(...(await new CheckProgressUseCase().invoke(param)));
             results.push(...(await new DetectPotentialProblemsUseCase().invoke(param)));
         } catch (error) {

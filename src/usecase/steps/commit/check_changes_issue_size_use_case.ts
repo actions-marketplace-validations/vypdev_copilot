@@ -2,7 +2,7 @@ import { Execution } from "../../../data/model/execution";
 import { Result } from "../../../data/model/result";
 import { BranchRepository } from "../../../data/repository/branch_repository";
 import { IssueRepository } from "../../../data/repository/issue_repository";
-import { ProjectRepository } from "../../../data/repository/project_repository";
+import { ProjectBoardCommandPort } from "../../../data/repository/github_repository_ports";
 import { PullRequestRepository } from "../../../data/repository/pull_request_repository";
 import { logDebugInfo, logError, logInfo } from "../../../utils/logger";
 import { getTaskEmoji } from "../../../utils/task_emoji";
@@ -13,7 +13,7 @@ export class CheckChangesIssueSizeUseCase implements ParamUseCase<Execution, Res
 
     private branchRepository = new BranchRepository();
     private issueRepository = new IssueRepository();
-    private projectRepository = new ProjectRepository();
+    constructor(private readonly projectBoardCommandPort: ProjectBoardCommandPort) {}
     private pullRequestRepository = new PullRequestRepository();
 
     async invoke(param: Execution): Promise<Result[]> {
@@ -62,7 +62,7 @@ export class CheckChangesIssueSizeUseCase implements ParamUseCase<Execution, Res
                 );
 
                 for (const project of param.project.getProjects()) {
-                    await this.projectRepository.setTaskSize(
+                    await this.projectBoardCommandPort.setTaskSize(
                         project,
                         param.owner,
                         param.repo,
@@ -95,7 +95,7 @@ export class CheckChangesIssueSizeUseCase implements ParamUseCase<Execution, Res
                         param.tokens.token,
                     );
                     for (const project of param.project.getProjects()) {
-                        await this.projectRepository.setTaskSize(
+                        await this.projectBoardCommandPort.setTaskSize(
                             project,
                             param.owner,
                             param.repo,
