@@ -23,6 +23,7 @@ import { isEnabledInput } from './input_boolean_policy';
 import { loadProjectDetails } from './project_details_loader';
 import { parseBoundedPositiveIntegerInput, parseIntegerInput } from './input_number_policy';
 import { parseDelimitedValues } from './input_values_policy';
+import { buildAgentTasks } from './agent_configuration_builder';
 import { buildSizeThresholds } from './size_threshold_builder';
 import { buildBranches } from './branches_builder';
 import { buildEmoji, buildImages, buildIssue, buildIssueTypes, buildLabels, buildLocale, buildProjects, buildPullRequest, buildTokens, buildWorkflows } from './configuration_builders';
@@ -65,8 +66,13 @@ export async function runLocalAction(
     /**
      * AI (OpenCode)
      */
-    const opencodeServerUrl = additionalParams[INPUT_KEYS.OPENCODE_SERVER_URL] ?? actionInputs[INPUT_KEYS.OPENCODE_SERVER_URL] ?? 'http://127.0.0.1:4096';
+    const opencodeServerUrl = String(additionalParams[INPUT_KEYS.OPENCODE_SERVER_URL] ?? actionInputs[INPUT_KEYS.OPENCODE_SERVER_URL] ?? '').trim() || 'http://127.0.0.1:4096';
     const opencodeModel = additionalParams[INPUT_KEYS.OPENCODE_MODEL] ?? actionInputs[INPUT_KEYS.OPENCODE_MODEL] ?? OPENCODE_DEFAULT_MODEL;
+    const agentProvider = String(additionalParams[INPUT_KEYS.AGENT_PROVIDER] ?? actionInputs[INPUT_KEYS.AGENT_PROVIDER] ?? '').trim() || 'opencode';
+    const agentTransport = String(additionalParams[INPUT_KEYS.AGENT_TRANSPORT] ?? actionInputs[INPUT_KEYS.AGENT_TRANSPORT] ?? '').trim() || 'server';
+    const agentModel = String(additionalParams[INPUT_KEYS.AGENT_MODEL] ?? actionInputs[INPUT_KEYS.AGENT_MODEL] ?? '').trim() || String(opencodeModel).trim() || OPENCODE_DEFAULT_MODEL;
+    const agentCommand = String(additionalParams[INPUT_KEYS.AGENT_COMMAND] ?? actionInputs[INPUT_KEYS.AGENT_COMMAND] ?? '');
+    const agentTasks = buildAgentTasks({ provider: agentProvider, transport: agentTransport, model: agentModel, serverUrl: opencodeServerUrl, command: agentCommand });
     const aiPullRequestDescription = isEnabledInput(additionalParams[INPUT_KEYS.AI_PULL_REQUEST_DESCRIPTION] ?? actionInputs[INPUT_KEYS.AI_PULL_REQUEST_DESCRIPTION]);
     const aiMembersOnly = isEnabledInput(additionalParams[INPUT_KEYS.AI_MEMBERS_ONLY] ?? actionInputs[INPUT_KEYS.AI_MEMBERS_ONLY]);
     const aiIncludeReasoning = isEnabledInput(additionalParams[INPUT_KEYS.AI_INCLUDE_REASONING] ?? actionInputs[INPUT_KEYS.AI_INCLUDE_REASONING]);
@@ -486,6 +492,7 @@ export async function runLocalAction(
             bugbotSeverity,
             bugbotCommentLimit,
             bugbotFixVerifyCommands,
+            agentTasks,
         ),
         buildLabels({
             branching: { launcher: branchManagementLauncherLabel },

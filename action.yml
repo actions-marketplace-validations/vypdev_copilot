@@ -390,6 +390,18 @@ inputs:
   token:
     description: "Fine-grained personal access token for branch and project operations"
     required: true
+  agent-provider:
+    description: "Agent provider used by findings and fixer tasks: opencode, cursor, or codex."
+    default: "opencode"
+  agent-transport:
+    description: "Agent transport: server, sdk, or cli."
+    default: "server"
+  agent-model:
+    description: "Selected agent model or model identifier. Defaults to opencode-model."
+    default: ""
+  agent-command:
+    description: "Executable command for CLI agents. Required when agent-transport is cli."
+    default: ""
   opencode-server-url:
     description: "OpenCode server URL for AI operations (e.g. http://localhost:4096). OpenCode supports 75+ LLM providers."
     default: "http://localhost:4096"

@@ -26,6 +26,7 @@ import { mainRun } from './common_action';
 import { isEnabledInput } from './input_boolean_policy';
 import { parseBoundedPositiveIntegerInput, parseIntegerInput } from './input_number_policy';
 import { parseDelimitedValues } from './input_values_policy';
+import { buildAgentTasks } from './agent_configuration_builder';
 import { buildSizeThresholds } from './size_threshold_builder';
 import { buildBranches } from './branches_builder';
 import { buildEmoji, buildImages, buildIssue, buildIssueTypes, buildLabels, buildLocale, buildProjects, buildPullRequest, buildTokens, buildWorkflows } from './configuration_builders';
@@ -62,7 +63,14 @@ export async function runGitHubAction(): Promise<void> {
      */
     let opencodeServerUrl = getInput(INPUT_KEYS.OPENCODE_SERVER_URL) || 'http://127.0.0.1:4096';
     const opencodeModel = getInput(INPUT_KEYS.OPENCODE_MODEL) || OPENCODE_DEFAULT_MODEL;
-    const opencodeStartServer = isEnabledInput(getInput(INPUT_KEYS.OPENCODE_START_SERVER));
+    const agentProvider = getInput(INPUT_KEYS.AGENT_PROVIDER) || 'opencode';
+    const agentTransport = getInput(INPUT_KEYS.AGENT_TRANSPORT) || 'server';
+    const agentModel = getInput(INPUT_KEYS.AGENT_MODEL) || opencodeModel;
+    const agentCommand = getInput(INPUT_KEYS.AGENT_COMMAND);
+    const requestedAgentTasks = buildAgentTasks({ provider: agentProvider, transport: agentTransport, model: agentModel, serverUrl: opencodeServerUrl, command: agentCommand });
+    const opencodeStartServer = isEnabledInput(getInput(INPUT_KEYS.OPENCODE_START_SERVER))
+        && requestedAgentTasks.findings.provider === 'opencode'
+        && requestedAgentTasks.findings.transport === 'server';
 
     let managedOpencodeServer: ManagedOpencodeServer | undefined;
     if (opencodeStartServer) {
@@ -73,6 +81,7 @@ export async function runGitHubAction(): Promise<void> {
     } else {
         logDebugInfo(`Using OpenCode server URL: ${opencodeServerUrl}, model: ${opencodeModel}.`);
     }
+    const agentTasks = buildAgentTasks({ provider: agentProvider, transport: agentTransport, model: agentModel, serverUrl: opencodeServerUrl, command: agentCommand });
 
     try {
     const aiPullRequestDescription = isEnabledInput(getInput(INPUT_KEYS.AI_PULL_REQUEST_DESCRIPTION));
@@ -496,6 +505,7 @@ export async function runGitHubAction(): Promise<void> {
             bugbotSeverity,
             bugbotCommentLimit,
             bugbotFixVerifyCommands,
+            agentTasks,
         ),
         buildLabels({
             branching: { launcher: branchManagementLauncherLabel },

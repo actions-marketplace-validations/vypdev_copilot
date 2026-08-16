@@ -217,7 +217,13 @@ export const INPUT_KEYS = {
     // Tokens
     TOKEN: 'token',
 
-    // AI (OpenCode)
+    // Agent selection
+    AGENT_PROVIDER: 'agent-provider',
+    AGENT_TRANSPORT: 'agent-transport',
+    AGENT_MODEL: 'agent-model',
+    AGENT_COMMAND: 'agent-command',
+
+    // AI (OpenCode compatibility)
     OPENCODE_SERVER_URL: 'opencode-server-url',
     OPENCODE_MODEL: 'opencode-model',
     OPENCODE_START_SERVER: 'opencode-start-server',
