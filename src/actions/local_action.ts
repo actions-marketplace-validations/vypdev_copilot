@@ -414,15 +414,15 @@ export async function runLocalAction(
     const sizeLThresholdLines = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_L_THRESHOLD_LINES] ?? actionInputs[INPUT_KEYS.SIZE_L_THRESHOLD_LINES], 250);
     const sizeLThresholdFiles = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_L_THRESHOLD_FILES] ?? actionInputs[INPUT_KEYS.SIZE_L_THRESHOLD_FILES], 5);
     const sizeLThresholdCommits = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_L_THRESHOLD_COMMITS] ?? actionInputs[INPUT_KEYS.SIZE_L_THRESHOLD_COMMITS], 3);
-    const sizeMThresholdLines = parseInt(additionalParams[INPUT_KEYS.SIZE_M_THRESHOLD_LINES] ?? actionInputs[INPUT_KEYS.SIZE_M_THRESHOLD_LINES]) ?? 100;
-    const sizeMThresholdFiles = parseInt(additionalParams[INPUT_KEYS.SIZE_M_THRESHOLD_FILES] ?? actionInputs[INPUT_KEYS.SIZE_M_THRESHOLD_FILES]) ?? 3;
-    const sizeMThresholdCommits = parseInt(additionalParams[INPUT_KEYS.SIZE_M_THRESHOLD_COMMITS] ?? actionInputs[INPUT_KEYS.SIZE_M_THRESHOLD_COMMITS]) ?? 2;
-    const sizeSThresholdLines = parseInt(additionalParams[INPUT_KEYS.SIZE_S_THRESHOLD_LINES] ?? actionInputs[INPUT_KEYS.SIZE_S_THRESHOLD_LINES]) ?? 50;
-    const sizeSThresholdFiles = parseInt(additionalParams[INPUT_KEYS.SIZE_S_THRESHOLD_FILES] ?? actionInputs[INPUT_KEYS.SIZE_S_THRESHOLD_FILES]) ?? 2;
-    const sizeSThresholdCommits = parseInt(additionalParams[INPUT_KEYS.SIZE_S_THRESHOLD_COMMITS] ?? actionInputs[INPUT_KEYS.SIZE_S_THRESHOLD_COMMITS]) ?? 1;
-    const sizeXsThresholdLines = parseInt(additionalParams[INPUT_KEYS.SIZE_XS_THRESHOLD_LINES] ?? actionInputs[INPUT_KEYS.SIZE_XS_THRESHOLD_LINES]) ?? 25;
-    const sizeXsThresholdFiles = parseInt(additionalParams[INPUT_KEYS.SIZE_XS_THRESHOLD_FILES] ?? actionInputs[INPUT_KEYS.SIZE_XS_THRESHOLD_FILES]) ?? 1;
-    const sizeXsThresholdCommits = parseInt(additionalParams[INPUT_KEYS.SIZE_XS_THRESHOLD_COMMITS] ?? actionInputs[INPUT_KEYS.SIZE_XS_THRESHOLD_COMMITS]) ?? 1;
+    const sizeMThresholdLines = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_M_THRESHOLD_LINES] ?? actionInputs[INPUT_KEYS.SIZE_M_THRESHOLD_LINES], 100);
+    const sizeMThresholdFiles = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_M_THRESHOLD_FILES] ?? actionInputs[INPUT_KEYS.SIZE_M_THRESHOLD_FILES], 3);
+    const sizeMThresholdCommits = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_M_THRESHOLD_COMMITS] ?? actionInputs[INPUT_KEYS.SIZE_M_THRESHOLD_COMMITS], 2);
+    const sizeSThresholdLines = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_S_THRESHOLD_LINES] ?? actionInputs[INPUT_KEYS.SIZE_S_THRESHOLD_LINES], 50);
+    const sizeSThresholdFiles = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_S_THRESHOLD_FILES] ?? actionInputs[INPUT_KEYS.SIZE_S_THRESHOLD_FILES], 2);
+    const sizeSThresholdCommits = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_S_THRESHOLD_COMMITS] ?? actionInputs[INPUT_KEYS.SIZE_S_THRESHOLD_COMMITS], 1);
+    const sizeXsThresholdLines = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_XS_THRESHOLD_LINES] ?? actionInputs[INPUT_KEYS.SIZE_XS_THRESHOLD_LINES], 25);
+    const sizeXsThresholdFiles = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_XS_THRESHOLD_FILES] ?? actionInputs[INPUT_KEYS.SIZE_XS_THRESHOLD_FILES], 1);
+    const sizeXsThresholdCommits = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_XS_THRESHOLD_COMMITS] ?? actionInputs[INPUT_KEYS.SIZE_XS_THRESHOLD_COMMITS], 1);
     
     /**
      * Branches

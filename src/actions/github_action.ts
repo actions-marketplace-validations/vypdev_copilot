@@ -420,15 +420,15 @@ export async function runGitHubAction(): Promise<void> {
     const sizeLThresholdLines = parseIntegerInput(getInput(INPUT_KEYS.SIZE_L_THRESHOLD_LINES), 250);
     const sizeLThresholdFiles = parseIntegerInput(getInput(INPUT_KEYS.SIZE_L_THRESHOLD_FILES), 5);
     const sizeLThresholdCommits = parseIntegerInput(getInput(INPUT_KEYS.SIZE_L_THRESHOLD_COMMITS), 3);
-    const sizeMThresholdLines = parseInt(getInput(INPUT_KEYS.SIZE_M_THRESHOLD_LINES)) ?? 100;
-    const sizeMThresholdFiles = parseInt(getInput(INPUT_KEYS.SIZE_M_THRESHOLD_FILES)) ?? 3;
-    const sizeMThresholdCommits = parseInt(getInput(INPUT_KEYS.SIZE_M_THRESHOLD_COMMITS)) ?? 2;
-    const sizeSThresholdLines = parseInt(getInput(INPUT_KEYS.SIZE_S_THRESHOLD_LINES)) ?? 50;
-    const sizeSThresholdFiles = parseInt(getInput(INPUT_KEYS.SIZE_S_THRESHOLD_FILES)) ?? 2;
-    const sizeSThresholdCommits = parseInt(getInput(INPUT_KEYS.SIZE_S_THRESHOLD_COMMITS)) ?? 1;
-    const sizeXsThresholdLines = parseInt(getInput(INPUT_KEYS.SIZE_XS_THRESHOLD_LINES)) ?? 25;
-    const sizeXsThresholdFiles = parseInt(getInput(INPUT_KEYS.SIZE_XS_THRESHOLD_FILES)) ?? 1;
-    const sizeXsThresholdCommits = parseInt(getInput(INPUT_KEYS.SIZE_XS_THRESHOLD_COMMITS)) ?? 1;
+    const sizeMThresholdLines = parseIntegerInput(getInput(INPUT_KEYS.SIZE_M_THRESHOLD_LINES), 100);
+    const sizeMThresholdFiles = parseIntegerInput(getInput(INPUT_KEYS.SIZE_M_THRESHOLD_FILES), 3);
+    const sizeMThresholdCommits = parseIntegerInput(getInput(INPUT_KEYS.SIZE_M_THRESHOLD_COMMITS), 2);
+    const sizeSThresholdLines = parseIntegerInput(getInput(INPUT_KEYS.SIZE_S_THRESHOLD_LINES), 50);
+    const sizeSThresholdFiles = parseIntegerInput(getInput(INPUT_KEYS.SIZE_S_THRESHOLD_FILES), 2);
+    const sizeSThresholdCommits = parseIntegerInput(getInput(INPUT_KEYS.SIZE_S_THRESHOLD_COMMITS), 1);
+    const sizeXsThresholdLines = parseIntegerInput(getInput(INPUT_KEYS.SIZE_XS_THRESHOLD_LINES), 25);
+    const sizeXsThresholdFiles = parseIntegerInput(getInput(INPUT_KEYS.SIZE_XS_THRESHOLD_FILES), 1);
+    const sizeXsThresholdCommits = parseIntegerInput(getInput(INPUT_KEYS.SIZE_XS_THRESHOLD_COMMITS), 1);
     
     /**
      * Branches
