@@ -7,8 +7,8 @@ jest.mock('../../../../utils/logger', () => ({
 }));
 
 const mockMoveIssueToColumn = jest.fn();
-jest.mock('../../../../data/repository/project_repository', () => ({
-  ProjectRepository: jest.fn().mockImplementation(() => ({
+jest.mock('../../../../data/repository/project_board_repository', () => ({
+  ProjectBoardRepository: jest.fn().mockImplementation(() => ({
     moveIssueToColumn: mockMoveIssueToColumn,
   })),
 }));

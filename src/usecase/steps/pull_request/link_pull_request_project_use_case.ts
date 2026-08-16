@@ -1,6 +1,6 @@
 import { Execution } from "../../../data/model/execution";
 import { Result } from "../../../data/model/result";
-import { ProjectRepository } from "../../../data/repository/project_repository";
+import { ProjectBoardRepository } from "../../../data/repository/project_board_repository";
 import { logDebugInfo, logError, logInfo, logWarn } from "../../../utils/logger";
 import { getTaskEmoji } from "../../../utils/task_emoji";
 import { ParamUseCase } from "../../base/param_usecase";
@@ -8,7 +8,7 @@ import { ParamUseCase } from "../../base/param_usecase";
 export class LinkPullRequestProjectUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'LinkPullRequestProjectUseCase';
     
-    private projectRepository = new ProjectRepository();
+    private projectRepository = new ProjectBoardRepository();
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`)
