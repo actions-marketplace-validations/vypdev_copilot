@@ -68,7 +68,19 @@ Acceptance criteria: each source slice has focused contract tests, preserves the
 - `a954111b`: shared issue/pull-request project-priority application flow.
 - Reviewed without extraction: ProjectRepository capability boundaries, GitHub/local action composition, constructor-only configuration builders, Execution state facade, and the transactional merge workflow. These require larger contract redesigns rather than safe mechanical extraction.
 
-## Validation evidence
+### AiRepository execution results
+
+The four planned cohesive slices were implemented and published:
+
+- `3616d93e`: `agent_execution_policy.ts` centralizes typed CLI/server execution, OpenCode model resolution, and response mappers while preserving task-specific semantics.
+- `942d6c07`: `agent_findings_response_policy.ts` owns findings text/reasoning/strict-JSON interpretation for both CLI and server responses.
+- `0079442f`: `agent_fixer_response_policy.ts` owns fixer text validation and provider session preservation; CLI continues to use the explicit synthetic `cli` session.
+- `812207b9`: `isValidServerAgentConfiguration` centralizes OpenCode server configuration validation without changing facade-specific error messages.
+
+Focused and full hooks passed after every published slice. The final hook reported `189` suites, `1467` tests, and `1` skipped test. Final RepoWise measurements on `812207b9` improved `ai_repository.ts` from score `2.52`/NLOC `156` to score `3.18`/NLOC `129`; maximum CCN is `13`, maximum nesting `4`, and duplication is `30.66%`. Average repository health moved from `8.82` to `8.83`, and hotspot health from `5.06` to `5.08`.
+
+Remaining candidate: inspect `FindingsQueryPort`/`FixerQueryPort` callers and constructor dependencies for a real public contract boundary. No further extraction is justified until that inventory confirms an obsolete facade dependency.
+
 
 Each implementation slice passed focused Jest tests, `pnpm exec tsc --noEmit`,
 `pnpm run lint`, and `git diff --check`. Published commits also passed the
