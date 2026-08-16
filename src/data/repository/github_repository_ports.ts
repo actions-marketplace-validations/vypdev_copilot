@@ -42,8 +42,11 @@ export interface ProjectBoardQueryPort {
     isContentLinked(project: ProjectDetail, contentId: string, token: string): Promise<boolean>;
 }
 
-export interface ProjectBoardCommandPort {
+export interface ProjectBoardLinkPort {
     linkContentId(project: ProjectDetail, contentId: string, token: string): Promise<boolean>;
+}
+
+export interface ProjectBoardCommandPort {
     setTaskPriority(
         project: ProjectDetail,
         owner: string,
