@@ -143,6 +143,12 @@ The following shared infrastructure is allowed when it improves testability or t
 
 These components must not contain project, issue, release, or pull-request business decisions.
 
+### Infrastructure audit result
+
+The REST and GraphQL call sites were reviewed after the capability extraction. REST operations remain resource-specific Octokit calls, while GraphQL operations carry capability-specific queries and mutations. The repository already has a bounded `cursor_pagination.ts` adapter with independent tests for cursor transitions and invalid continuation states. No additional REST/GraphQL wrapper or generic pagination repository is introduced: the shared transport shape is not a shared business contract.
+
+The GitHub Action and local CLI now share input parsing policies for delimited values, booleans, integers, thresholds, counts, and bounded comment limits. Their entry-point lifecycles and composition remain separate, and local precedence (`additionalParams` -> `actionInputs` -> YAML defaults) is preserved.
+
 ## Composition target
 
 ```text
@@ -207,5 +213,8 @@ The first migration slices are implemented and published:
 - `ProjectRepository` and `PullRequestRepository` remain compatibility facades composed from those adapters.
 - `loadProjectDetails` now depends on `ProjectDetailQueryPort`, not on the `ProjectRepository` class.
 - Identity, authorization, release, board, and organization callers have been migrated in published slices; `IssueRepository` has been audited and retained as a documented composition facade.
+- REST/GraphQL/pagination have been audited without adding a cosmetic abstraction; shared Action/CLI input policies are explicit and tested while their lifecycles remain separate.
 
 The next migration boundary is caller-by-caller replacement of the remaining compatibility-facade dependencies. Each caller must be migrated together with its tests and composition path; the facades must not be removed until repository-wide search shows no production consumers.
+
+The remaining `ProjectRepository` references are limited to entry-point composition, compatibility tests, and one mixed issue-size/project-priority workflow. These are intentionally not replaced by a second aggregate object: entry points still assemble several capabilities, while the mixed workflow needs a dedicated application contract before it can be split safely. The facade therefore remains a temporary, explicitly documented boundary rather than an application-facing capability port.
