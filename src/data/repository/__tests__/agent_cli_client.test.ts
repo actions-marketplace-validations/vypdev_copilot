@@ -16,6 +16,10 @@ describe('AgentCliClient', () => {
         await expect(new AgentCliClient().execute({ command: 'missing-agent-binary', prompt: 'prompt', timeoutMs: 2000 })).rejects.toMatchObject({ category: 'process' });
     });
 
+    it('rejects output above the configured limit and terminates the process', async () => {
+        const script = "process.stdout.write('0123456789')";
+        await expect(new AgentCliClient().execute({ command: `${process.execPath} -e ${JSON.stringify(script)}`, prompt: 'ignored', timeoutMs: 5000, maxOutputBytes: 4 })).rejects.toMatchObject({ category: 'output' });
+    });
     it('honors caller cancellation', async () => {
         const controller = new AbortController();
         const pending = new AgentCliClient().execute({ command: `${process.execPath} -e ${JSON.stringify('setTimeout(() => {}, 5000)')}`, prompt: 'prompt', timeoutMs: 5000, signal: controller.signal });

@@ -7,7 +7,11 @@ export interface AgentCliRequest {
     timeoutMs: number;
     signal?: AbortSignal;
     cwd?: string;
+    maxOutputBytes?: number;
 }
+
+const DEFAULT_MAX_OUTPUT_BYTES = 4 * 1024 * 1024;
+const MAX_STDERR_BYTES = 8 * 1024;
 
 export class AgentCliError extends Error {
     constructor(
@@ -38,9 +42,18 @@ export class AgentCliClient {
             const child = spawn(executable, args, { cwd: request.cwd, stdio: ['pipe', 'pipe', 'pipe'], shell: false });
             let stdout = '';
             let stderr = '';
+            let outputBytes = 0;
             let settled = false;
-            const timer = setTimeout(() => {
+            const maxOutputBytes = request.maxOutputBytes ?? DEFAULT_MAX_OUTPUT_BYTES;
+            const terminate = () => {
+                if (child.exitCode !== null) return;
                 child.kill('SIGTERM');
+                setImmediate(() => {
+                    if (child.exitCode === null) child.kill('SIGKILL');
+                });
+            };
+            const timer = setTimeout(() => {
+                terminate();
                 finishReject(new AgentCliError(`Agent CLI timed out after ${request.timeoutMs}ms.`, 'timeout'));
             }, request.timeoutMs);
             const finishResolve = (value: string) => {
@@ -58,13 +71,24 @@ export class AgentCliClient {
                 reject(error);
             };
             const abort = () => {
-                child.kill('SIGTERM');
+                terminate();
                 finishReject(new AgentCliError('Agent CLI execution was cancelled.', 'cancelled'));
+            };
+            const appendStdout = (chunk: Buffer) => {
+                outputBytes += chunk.byteLength;
+                if (outputBytes > maxOutputBytes) {
+                    terminate();
+                    finishReject(new AgentCliError(`Agent CLI output exceeded the ${maxOutputBytes}-byte limit.`, 'output'));
+                    return;
+                }
+                stdout += chunk.toString();
             };
             if (request.signal?.aborted) return abort();
             request.signal?.addEventListener('abort', abort, { once: true });
-            child.stdout.on('data', (chunk: Buffer) => { stdout += chunk.toString(); });
-            child.stderr.on('data', (chunk: Buffer) => { stderr += chunk.toString(); });
+            child.stdout.on('data', appendStdout);
+            child.stderr.on('data', (chunk: Buffer) => {
+                if (stderr.length < MAX_STDERR_BYTES) stderr += chunk.toString().slice(0, MAX_STDERR_BYTES - stderr.length);
+            });
             child.once('error', (error) => finishReject(new AgentCliError(`Unable to start agent CLI: ${error.message}`, 'process')));
             child.once('close', (code) => {
                 if (code !== 0) {
