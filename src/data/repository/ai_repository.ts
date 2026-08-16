@@ -6,7 +6,7 @@ import { AgentCliClient } from './agent_cli_client';
 import { ProviderCliAdapter } from './provider_cli_adapter';
 import { OpenCodeHttpClient } from './opencode_http_client';
 import type { AgentCliPort, AgentQueryOptions, FindingsQueryPort, FixerQueryPort, OpenCodeClientPort } from './agent_ports';
-import { withOpenCodeRetry } from './opencode_retry';
+import { OpenCodeAgentInvoker } from './opencode_agent_invoker';
 import { buildAgentPrompt } from './agent_prompt_policy';
 import { getValidatedAgentConfiguration } from './agent_configuration_policy';
 import { resolveOpenCodeModelReference } from './opencode_model_reference_policy';
@@ -21,14 +21,14 @@ export type AskAgentOptions = AgentQueryOptions;
 
 export class AiRepository implements FindingsQueryPort, FixerQueryPort {
     private readonly cliAdapter: ProviderCliAdapter;
-    private readonly openCodeClient: OpenCodeClientPort;
+    private readonly openCodeInvoker: OpenCodeAgentInvoker;
 
     constructor(
         cliClient: AgentCliPort = new AgentCliClient(),
         openCodeClient: OpenCodeClientPort = new OpenCodeHttpClient({ requestTimeoutMs: OPENCODE_REQUEST_TIMEOUT_MS }),
     ) {
         this.cliAdapter = new ProviderCliAdapter(cliClient);
-        this.openCodeClient = openCodeClient;
+        this.openCodeInvoker = new OpenCodeAgentInvoker(openCodeClient);
     }
     /**
      * Ask an OpenCode agent (e.g. Plan) to perform a task. All calls use strict response (expectJson + schema).
@@ -70,15 +70,13 @@ export class AiRepository implements FindingsQueryPort, FixerQueryPort {
         const serverUrl = taskConfiguration.serverUrl;
         const model = taskConfiguration.model;
         try {
-            return await withOpenCodeRetry(async () => {
-                const client = this.openCodeClient;
-                const { parts } = await client.sendMessage({
-                    serverUrl,
-                    providerID: providerId,
-                    modelID: modelId,
-                    agent: agentId,
-                    prompt: promptText,
-                });
+            return await this.openCodeInvoker.invoke({
+                serverUrl,
+                providerID: providerId,
+                modelID: modelId,
+                agent: agentId,
+                prompt: promptText,
+            }, `agent ${agentId}`, ({ parts }) => {
                 const text = extractTextFromParts(parts);
                 if (!text) throw new Error('Empty response text');
                 const reasoning = options.includeReasoning ? extractReasoningFromParts(parts) : '';
@@ -92,7 +90,7 @@ export class AiRepository implements FindingsQueryPort, FixerQueryPort {
                     return parsed;
                 }
                 return text;
-            }, `agent ${agentId}`);
+            });
         } catch (error: unknown) {
             const err = error instanceof Error ? error : new Error(String(error));
             const cause = err instanceof Error && (err as Error & { cause?: unknown }).cause;
@@ -132,22 +130,17 @@ export class AiRepository implements FindingsQueryPort, FixerQueryPort {
         const serverUrl = taskConfiguration.serverUrl;
         const model = taskConfiguration.model;
         try {
-            return await withOpenCodeRetry(
-                async () => {
-                    const client = this.openCodeClient;
-                    const result = await client.sendMessage({
-                        serverUrl,
-                        providerID: providerId,
-                        modelID: modelId,
-                        agent: OPENCODE_AGENT_BUILD,
-                        prompt,
-                    });
-                    const text = extractTextFromParts(result.parts);
-                    if (!text) throw new Error('Empty response text');
-                    return { text, sessionId: result.sessionId };
-                },
-                `agent ${OPENCODE_AGENT_BUILD}`
-            );
+            return await this.openCodeInvoker.invoke({
+                serverUrl,
+                providerID: providerId,
+                modelID: modelId,
+                agent: OPENCODE_AGENT_BUILD,
+                prompt,
+            }, `agent ${OPENCODE_AGENT_BUILD}`, (result) => {
+                const text = extractTextFromParts(result.parts);
+                if (!text) throw new Error('Empty response text');
+                return { text, sessionId: result.sessionId };
+            });
         } catch (error: unknown) {
             const err = error instanceof Error ? error : new Error(String(error));
             logError(`Error querying OpenCode build agent (${model}): ${err.message}`);
