@@ -4,11 +4,11 @@ import { Ai } from '../ai';
 describe('Ai', () => {
     it('exposes task-specific provider configuration without coupling consumers to OpenCode', () => {
         const ai = new Ai('http://opencode:4096', 'opencode/model', true, false, [], false, 'low', 10, [], {
-            findings: { provider: 'codex', transport: 'sdk', model: 'gpt-5-codex' },
+            findings: { provider: 'codex', transport: 'cli', model: 'gpt-5-codex', command: 'codex' },
             fixer: { provider: 'cursor', transport: 'cli', model: 'cursor-agent', command: 'cursor-agent' },
         });
 
-        expect(ai.getAgentConfiguration('findings')).toEqual({ provider: 'codex', transport: 'sdk', model: 'gpt-5-codex' });
+        expect(ai.getAgentConfiguration('findings')).toEqual({ provider: 'codex', transport: 'cli', model: 'gpt-5-codex', command: 'codex' });
         expect(ai.getAgentConfiguration('fixer')).toEqual({ provider: 'cursor', transport: 'cli', model: 'cursor-agent', command: 'cursor-agent' });
     });
 

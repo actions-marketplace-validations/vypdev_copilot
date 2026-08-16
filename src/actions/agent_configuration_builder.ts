@@ -9,7 +9,7 @@ export interface AgentTaskConfigurationValues {
 }
 
 const PROVIDERS: readonly AgentProvider[] = ['opencode', 'cursor', 'codex'];
-const TRANSPORTS: readonly AgentTransport[] = ['server', 'sdk', 'cli'];
+const TRANSPORTS: readonly AgentTransport[] = ['server', 'cli'];
 
 function resolveProvider(value: string): AgentProvider {
     if (PROVIDERS.includes(value as AgentProvider)) return value as AgentProvider;

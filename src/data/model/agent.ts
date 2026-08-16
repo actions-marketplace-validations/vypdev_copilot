@@ -1,5 +1,5 @@
 export type AgentProvider = 'opencode' | 'codex' | 'cursor';
-export type AgentTransport = 'server' | 'sdk' | 'cli';
+export type AgentTransport = 'server' | 'cli';
 export type AgentTask = 'findings' | 'fixer';
 
 export interface AgentConfiguration {

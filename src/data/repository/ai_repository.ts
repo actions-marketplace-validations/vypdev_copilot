@@ -20,9 +20,6 @@ function ensureNoTrailingSlash(url: string): string {
 
 function getValidatedAgentConfiguration(ai: Ai, task: 'findings' | 'fixer') {
     const configuration = ai.getAgentConfiguration(task);
-    if (configuration.transport === 'sdk') {
-        throw new Error(`Agent SDK transport is not implemented for ${configuration.provider}. Use server or cli.`);
-    }
     if (configuration.transport === 'server' && configuration.provider !== 'opencode') {
         throw new Error(`Agent server transport is not implemented for ${configuration.provider}. Use cli.`);
     }
