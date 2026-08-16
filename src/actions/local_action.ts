@@ -24,6 +24,7 @@ import { logInfo } from '../utils/logger';
 import { getActionInputsWithDefaults } from '../utils/yml_utils';
 import { isEnabledInput } from './input_boolean_policy';
 import { loadProjectDetails } from './project_details_loader';
+import { parseIntegerInput } from './input_number_policy';
 import { parseDelimitedValues } from './input_values_policy';
 import { mainRun } from './common_action';
 import boxen from 'boxen';
@@ -404,9 +405,9 @@ export async function runLocalAction(
     /**
      * Size Thresholds
      */
-    const sizeXxlThresholdLines = parseInt(additionalParams[INPUT_KEYS.SIZE_XXL_THRESHOLD_LINES] ?? actionInputs[INPUT_KEYS.SIZE_XXL_THRESHOLD_LINES]) ?? 1000;
-    const sizeXxlThresholdFiles = parseInt(additionalParams[INPUT_KEYS.SIZE_XXL_THRESHOLD_FILES] ?? actionInputs[INPUT_KEYS.SIZE_XXL_THRESHOLD_FILES]) ?? 20;
-    const sizeXxlThresholdCommits = parseInt(additionalParams[INPUT_KEYS.SIZE_XXL_THRESHOLD_COMMITS] ?? actionInputs[INPUT_KEYS.SIZE_XXL_THRESHOLD_COMMITS]) ?? 10;
+    const sizeXxlThresholdLines = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_XXL_THRESHOLD_LINES] ?? actionInputs[INPUT_KEYS.SIZE_XXL_THRESHOLD_LINES], 1000);
+    const sizeXxlThresholdFiles = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_XXL_THRESHOLD_FILES] ?? actionInputs[INPUT_KEYS.SIZE_XXL_THRESHOLD_FILES], 20);
+    const sizeXxlThresholdCommits = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_XXL_THRESHOLD_COMMITS] ?? actionInputs[INPUT_KEYS.SIZE_XXL_THRESHOLD_COMMITS], 10);
     const sizeXlThresholdLines = parseInt(additionalParams[INPUT_KEYS.SIZE_XL_THRESHOLD_LINES] ?? actionInputs[INPUT_KEYS.SIZE_XL_THRESHOLD_LINES]) ?? 500;
     const sizeXlThresholdFiles = parseInt(additionalParams[INPUT_KEYS.SIZE_XL_THRESHOLD_FILES] ?? actionInputs[INPUT_KEYS.SIZE_XL_THRESHOLD_FILES]) ?? 10;
     const sizeXlThresholdCommits = parseInt(additionalParams[INPUT_KEYS.SIZE_XL_THRESHOLD_COMMITS] ?? actionInputs[INPUT_KEYS.SIZE_XL_THRESHOLD_COMMITS]) ?? 5;

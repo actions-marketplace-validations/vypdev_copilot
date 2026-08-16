@@ -27,6 +27,7 @@ import { startOpencodeServer, type ManagedOpencodeServer } from '../utils/openco
 import { loadProjectDetails } from './project_details_loader';
 import { mainRun } from './common_action';
 import { isEnabledInput } from './input_boolean_policy';
+import { parseIntegerInput } from './input_number_policy';
 import { parseDelimitedValues } from './input_values_policy';
 
 export async function runGitHubAction(): Promise<void> {
@@ -410,9 +411,9 @@ export async function runGitHubAction(): Promise<void> {
     /**
      * Size Thresholds
      */
-    const sizeXxlThresholdLines = parseInt(getInput(INPUT_KEYS.SIZE_XXL_THRESHOLD_LINES)) ?? 1000;
-    const sizeXxlThresholdFiles = parseInt(getInput(INPUT_KEYS.SIZE_XXL_THRESHOLD_FILES)) ?? 20;
-    const sizeXxlThresholdCommits = parseInt(getInput(INPUT_KEYS.SIZE_XXL_THRESHOLD_COMMITS)) ?? 10;
+    const sizeXxlThresholdLines = parseIntegerInput(getInput(INPUT_KEYS.SIZE_XXL_THRESHOLD_LINES), 1000);
+    const sizeXxlThresholdFiles = parseIntegerInput(getInput(INPUT_KEYS.SIZE_XXL_THRESHOLD_FILES), 20);
+    const sizeXxlThresholdCommits = parseIntegerInput(getInput(INPUT_KEYS.SIZE_XXL_THRESHOLD_COMMITS), 10);
     const sizeXlThresholdLines = parseInt(getInput(INPUT_KEYS.SIZE_XL_THRESHOLD_LINES)) ?? 500;
     const sizeXlThresholdFiles = parseInt(getInput(INPUT_KEYS.SIZE_XL_THRESHOLD_FILES)) ?? 10;
     const sizeXlThresholdCommits = parseInt(getInput(INPUT_KEYS.SIZE_XL_THRESHOLD_COMMITS)) ?? 5;
