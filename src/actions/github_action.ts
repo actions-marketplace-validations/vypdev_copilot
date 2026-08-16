@@ -1,20 +1,20 @@
 import * as core from '@actions/core';
 import { Ai } from '../data/model/ai';
 
-import { Emoji } from '../data/model/emoji';
+
 import { Execution } from '../data/model/execution';
 import { Hotfix } from '../data/model/hotfix';
 import { Images } from '../data/model/images';
-import { Issue } from '../data/model/issue';
+
 import { IssueTypes } from '../data/model/issue_types';
 import { Labels } from '../data/model/labels';
 import { Locale } from '../data/model/locale';
-import { PullRequest } from '../data/model/pull_request';
+
 import { Release } from '../data/model/release';
 import { Result } from '../data/model/result';
 import { SingleAction } from '../data/model/single_action';
 
-import { Tokens } from '../data/model/tokens';
+
 import { ProjectRepository } from '../data/repository/project_repository';
 import { PublishResultUseCase } from '../usecase/steps/common/publish_resume_use_case';
 import { StoreConfigurationUseCase } from '../usecase/steps/common/store_configuration_use_case';
@@ -28,7 +28,7 @@ import { parseBoundedPositiveIntegerInput, parseIntegerInput } from './input_num
 import { parseDelimitedValues } from './input_values_policy';
 import { buildSizeThresholds } from './size_threshold_builder';
 import { buildBranches } from './branches_builder';
-import { buildLocale, buildProjects, buildWorkflows } from './configuration_builders';
+import { buildEmoji, buildIssue, buildLocale, buildProjects, buildPullRequest, buildTokens, buildWorkflows } from './configuration_builders';
 
 export async function runGitHubAction(): Promise<void> {
     const projectRepository = new ProjectRepository();
@@ -474,20 +474,9 @@ export async function runGitHubAction(): Promise<void> {
             singleActionChangelog,
         ),
         commitPrefixBuilder,
-        new Issue(
-            branchManagementAlways,
-            reopenIssueOnPush,
-            issueDesiredAssigneesCount
-        ),
-        new PullRequest(
-            pullRequestDesiredAssigneesCount,
-            pullRequestDesiredReviewersCount,
-            pullRequestMergeTimeout,
-        ),
-        new Emoji(
-            titleEmoji,
-            branchManagementEmoji,
-        ),
+        buildIssue(branchManagementAlways, reopenIssueOnPush, issueDesiredAssigneesCount),
+        buildPullRequest(pullRequestDesiredAssigneesCount, pullRequestDesiredReviewersCount, pullRequestMergeTimeout),
+        buildEmoji(titleEmoji, branchManagementEmoji),
         new Images(
             imagesOnIssue,
             imagesOnPullRequest,
@@ -514,9 +503,7 @@ export async function runGitHubAction(): Promise<void> {
             imagesCommitDocs,
             imagesCommitChore,
         ),
-        new Tokens(
-            token,
-        ),
+        buildTokens(token),
         new Ai(
             opencodeServerUrl,
             opencodeModel,

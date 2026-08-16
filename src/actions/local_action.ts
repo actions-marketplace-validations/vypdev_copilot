@@ -1,19 +1,19 @@
 import chalk from 'chalk';
 import { Ai } from '../data/model/ai';
 
-import { Emoji } from '../data/model/emoji';
+
 import { Execution } from '../data/model/execution';
 import { Hotfix } from '../data/model/hotfix';
 import { Images } from '../data/model/images';
-import { Issue } from '../data/model/issue';
+
 import { IssueTypes } from '../data/model/issue_types';
 import { Labels } from '../data/model/labels';
 import { Locale } from '../data/model/locale';
-import { PullRequest } from '../data/model/pull_request';
+
 import { Release } from '../data/model/release';
 import { SingleAction } from '../data/model/single_action';
 
-import { Tokens } from '../data/model/tokens';
+
 import { Welcome } from '../data/model/welcome';
 import { ProjectRepository } from '../data/repository/project_repository';
 import { BUGBOT_MAX_COMMENTS, BUGBOT_MIN_SEVERITY, DEFAULT_IMAGE_CONFIG, INPUT_KEYS, OPENCODE_DEFAULT_MODEL, TITLE } from '../utils/constants';
@@ -25,7 +25,7 @@ import { parseBoundedPositiveIntegerInput, parseIntegerInput } from './input_num
 import { parseDelimitedValues } from './input_values_policy';
 import { buildSizeThresholds } from './size_threshold_builder';
 import { buildBranches } from './branches_builder';
-import { buildLocale, buildProjects, buildWorkflows } from './configuration_builders';
+import { buildEmoji, buildIssue, buildLocale, buildProjects, buildPullRequest, buildTokens, buildWorkflows } from './configuration_builders';
 import { mainRun } from './common_action';
 import boxen from 'boxen';
 
@@ -464,22 +464,9 @@ export async function runLocalAction(
             singleActionChangelog,
         ),
         commitPrefixBuilder,
-        new Issue(
-            branchManagementAlways,
-            reopenIssueOnPush,
-            issueDesiredAssigneesCount,
-            additionalParams,
-        ),
-        new PullRequest(
-            pullRequestDesiredAssigneesCount,
-            pullRequestDesiredReviewersCount,
-            pullRequestMergeTimeout,
-            additionalParams,
-        ),
-        new Emoji(
-            titleEmoji,
-            branchManagementEmoji,
-        ),
+        buildIssue(branchManagementAlways, reopenIssueOnPush, issueDesiredAssigneesCount, additionalParams),
+        buildPullRequest(pullRequestDesiredAssigneesCount, pullRequestDesiredReviewersCount, pullRequestMergeTimeout, additionalParams),
+        buildEmoji(titleEmoji, branchManagementEmoji),
         new Images(
             imagesOnIssue,
             imagesOnPullRequest,
@@ -506,9 +493,7 @@ export async function runLocalAction(
             imagesCommitDocs,
             imagesCommitChore,
         ),
-        new Tokens(
-            token,
-        ),
+        buildTokens(token),
         new Ai(
             opencodeServerUrl,
             opencodeModel,
