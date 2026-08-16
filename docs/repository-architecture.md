@@ -161,7 +161,7 @@ use case
 
 Composition factories may assemble concrete adapters in entry points. Use cases must not instantiate concrete transport repositories.
 
-During migration, a legacy facade may delegate to specialized adapters:
+During migration, a legacy facade may delegate to specialized adapters. That facade has now been retired for Projects:
 
 ```text
 ProjectRepository (temporary facade)
@@ -170,7 +170,7 @@ ProjectRepository (temporary facade)
   -> RepositoryReleaseRepository
 ```
 
-The facade is not the final application contract.
+The facade was not the final application contract and is no longer part of the production source tree.
 
 ## Migration order
 
@@ -210,11 +210,9 @@ The first migration slices are implemented and published:
 - Project detail, content resolution and content linking are isolated in `ProjectBoardRepository`.
 - Organization membership, authenticated identity and actor authorization are isolated in `OrganizationRepository`, with separate ports.
 - Pull request lifecycle, changes and review operations are isolated in `PullRequestLifecycleRepository`, `PullRequestChangesRepository` and `PullRequestReviewRepository`.
-- `ProjectRepository` and `PullRequestRepository` remain compatibility facades composed from those adapters.
+- `PullRequestRepository` remains a compatibility facade composed from specialized adapters; the former `ProjectRepository` facade has been removed after its production consumers were migrated.
 - `loadProjectDetails` now depends on `ProjectDetailQueryPort`, not on the `ProjectRepository` class.
 - Identity, authorization, release, board, and organization callers have been migrated in published slices; `IssueRepository` has been audited and retained as a documented composition facade.
 - REST/GraphQL/pagination have been audited without adding a cosmetic abstraction; shared Action/CLI input policies are explicit and tested while their lifecycles remain separate.
 
-The next migration boundary is caller-by-caller replacement of the remaining compatibility-facade dependencies. Each caller must be migrated together with its tests and composition path; the facades must not be removed until repository-wide search shows no production consumers.
-
-The remaining `ProjectRepository` references are limited to entry-point composition, compatibility tests, and one mixed issue-size/project-priority workflow. These are intentionally not replaced by a second aggregate object: entry points still assemble several capabilities, while the mixed workflow needs a dedicated application contract before it can be split safely. The facade therefore remains a temporary, explicitly documented boundary rather than an application-facing capability port.
+The Project migration is complete: entry points compose `ProjectBoardRepository`, commit-size checks receive `ProjectBoardCommandPort`, and no production consumer or compatibility test depends on `ProjectRepository`. The remaining repository migrations follow the same caller-by-caller rule: migrate callers and tests first, then remove obsolete facades only after repository-wide search confirms that no production consumer remains.

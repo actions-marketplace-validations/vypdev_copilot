@@ -28,12 +28,6 @@ jest.mock('../../../../data/repository/branch_repository', () => ({
 }));
 
 const mockMoveIssueToColumn = jest.fn();
-jest.mock('../../../../data/repository/project_repository', () => ({
-  ProjectRepository: jest.fn().mockImplementation(() => ({
-    moveIssueToColumn: mockMoveIssueToColumn,
-  })),
-}));
-
 const mockMoveIssueInvoke = jest.fn();
 jest.mock('../move_issue_to_in_progress', () => ({
   MoveIssueToInProgressUseCase: jest.fn().mockImplementation(() => ({

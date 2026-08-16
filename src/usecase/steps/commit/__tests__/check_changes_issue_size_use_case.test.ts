@@ -23,11 +23,6 @@ jest.mock('../../../../data/repository/issue_repository', () => ({
     getLabels: mockGetLabels,
   })),
 }));
-jest.mock('../../../../data/repository/project_repository', () => ({
-  ProjectRepository: jest.fn().mockImplementation(() => ({
-    setTaskSize: mockSetTaskSize,
-  })),
-}));
 jest.mock('../../../../data/repository/pull_request_repository', () => ({
   PullRequestRepository: jest.fn().mockImplementation(() => ({
     getOpenPullRequestNumbersByHeadBranch: mockGetOpenPullRequestNumbersByHeadBranch,
