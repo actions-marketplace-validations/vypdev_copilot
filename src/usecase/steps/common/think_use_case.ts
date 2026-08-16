@@ -9,6 +9,7 @@ import { logDebugInfo, logError, logInfo } from '../../../utils/logger';
 import { OPENCODE_PROJECT_CONTEXT_INSTRUCTION } from '../../../utils/opencode_project_context_instruction';
 import { ParamUseCase } from '../../base/param_usecase';
 import { extractStructuredAnswer } from './agent_answer_policy';
+import { extractMentionQuestion, getThinkCommentBody } from './think_input_policy';
 
 export class ThinkUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'ThinkUseCase';
@@ -21,12 +22,12 @@ export class ThinkUseCase implements ParamUseCase<Execution, Result[]> {
         logInfo('Think: processing comment (AI Q&A).');
 
         try {
-            const commentBody =
-                param.issue.isIssueComment
-                    ? (param.issue.commentBody ?? '')
-                    : param.pullRequest.isPullRequestReviewComment
-                      ? (param.pullRequest.commentBody ?? '')
-                      : '';
+            const commentBody = getThinkCommentBody({
+                issueCommentBody: param.issue.commentBody,
+                pullRequestReviewCommentBody: param.pullRequest.commentBody,
+                isIssueComment: param.issue.isIssueComment,
+                isPullRequestReviewComment: param.pullRequest.isPullRequestReviewComment,
+            });
 
             if (!commentBody.trim()) {
                 results.push(
@@ -75,8 +76,7 @@ export class ThinkUseCase implements ParamUseCase<Execution, Result[]> {
                 return results;
             }
 
-            const escapedUsername = param.tokenUser.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const question = commentBody.replace(new RegExp(`@${escapedUsername}`, 'gi'), '').trim();
+            const question = extractMentionQuestion(commentBody, param.tokenUser);
             if (!question) {
                 results.push(
                     new Result({
