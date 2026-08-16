@@ -9,7 +9,6 @@ import { Issue } from '../data/model/issue';
 import { IssueTypes } from '../data/model/issue_types';
 import { Labels } from '../data/model/labels';
 import { Locale } from '../data/model/locale';
-import { ProjectDetail } from '../data/model/project_detail';
 import { Projects } from '../data/model/projects';
 import { PullRequest } from '../data/model/pull_request';
 import { Release } from '../data/model/release';
@@ -25,6 +24,7 @@ import { StoreConfigurationUseCase } from '../usecase/steps/common/store_configu
 import { BUGBOT_MAX_COMMENTS, BUGBOT_MIN_SEVERITY, DEFAULT_IMAGE_CONFIG, INPUT_KEYS, OPENCODE_DEFAULT_MODEL } from '../utils/constants';
 import { logDebugInfo, logError, logInfo } from '../utils/logger';
 import { startOpencodeServer, type ManagedOpencodeServer } from '../utils/opencode_server';
+import { loadProjectDetails } from './project_details_loader';
 import { mainRun } from './common_action';
 import { parseDelimitedValues } from './input_values_policy';
 
@@ -96,11 +96,7 @@ export async function runGitHubAction(): Promise<void> {
     const projectIdsInput: string = getInput(INPUT_KEYS.PROJECT_IDS);
     const projectIds: string[] = parseDelimitedValues(projectIdsInput);
 
-    const projects: ProjectDetail[] = []
-    for (const projectId of projectIds) {        
-        const detail = await projectRepository.getProjectDetail(projectId, token)
-        projects.push(detail)
-    }
+    const projects = await loadProjectDetails(projectRepository, projectIds, token);
 
     const projectColumnIssueCreated = getInput(INPUT_KEYS.PROJECT_COLUMN_ISSUE_CREATED)
     const projectColumnPullRequestCreated = getInput(INPUT_KEYS.PROJECT_COLUMN_PULL_REQUEST_CREATED)

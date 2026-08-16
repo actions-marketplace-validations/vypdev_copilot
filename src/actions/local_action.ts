@@ -9,7 +9,6 @@ import { Issue } from '../data/model/issue';
 import { IssueTypes } from '../data/model/issue_types';
 import { Labels } from '../data/model/labels';
 import { Locale } from '../data/model/locale';
-import { ProjectDetail } from '../data/model/project_detail';
 import { Projects } from '../data/model/projects';
 import { PullRequest } from '../data/model/pull_request';
 import { Release } from '../data/model/release';
@@ -23,6 +22,7 @@ import { ProjectRepository } from '../data/repository/project_repository';
 import { BUGBOT_MAX_COMMENTS, BUGBOT_MIN_SEVERITY, DEFAULT_IMAGE_CONFIG, INPUT_KEYS, OPENCODE_DEFAULT_MODEL, TITLE } from '../utils/constants';
 import { logInfo } from '../utils/logger';
 import { getActionInputsWithDefaults } from '../utils/yml_utils';
+import { loadProjectDetails } from './project_details_loader';
 import { parseDelimitedValues } from './input_values_policy';
 import { mainRun } from './common_action';
 import boxen from 'boxen';
@@ -90,11 +90,7 @@ export async function runLocalAction(
     const projectIdsInput: string = additionalParams[INPUT_KEYS.PROJECT_IDS] ?? actionInputs[INPUT_KEYS.PROJECT_IDS];
     const projectIds: string[] = parseDelimitedValues(projectIdsInput);
 
-    const projects: ProjectDetail[] = []
-    for (const projectId of projectIds) {        
-        const detail = await projectRepository.getProjectDetail(projectId, token)
-        projects.push(detail)
-    }
+    const projects = await loadProjectDetails(projectRepository, projectIds, token);
 
     const projectColumnIssueCreated = additionalParams[INPUT_KEYS.PROJECT_COLUMN_ISSUE_CREATED] ?? actionInputs[INPUT_KEYS.PROJECT_COLUMN_ISSUE_CREATED]
     const projectColumnPullRequestCreated = additionalParams[INPUT_KEYS.PROJECT_COLUMN_PULL_REQUEST_CREATED] ?? actionInputs[INPUT_KEYS.PROJECT_COLUMN_PULL_REQUEST_CREATED]
