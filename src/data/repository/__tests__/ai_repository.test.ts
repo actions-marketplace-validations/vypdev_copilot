@@ -6,7 +6,8 @@
  */
 
 import { OPENCODE_MAX_RETRIES, OPENCODE_RETRY_DELAY_MS } from '../../../utils/constants';
-import { AiRepository, getSessionDiff } from '../ai_repository';
+import { AiRepository } from '../ai_repository';
+import { getSessionDiff } from '../opencode_session_diff_client';
 import { Ai } from '../../model/ai';
 
 jest.mock('../../../utils/logger', () => ({

@@ -12,8 +12,6 @@ import { executeAgentRequest } from './agent_execution_policy';
 import { interpretFixerResponse } from './agent_fixer_response_policy';
 import { interpretFindingsResponse } from './agent_findings_response_policy';
 import { extractTextFromParts } from './agent_response_parser';
-export { getSessionDiff } from './opencode_session_diff_client';
-export type { OpenCodeFileDiff } from './opencode_session_diff_client';
 export { LANGUAGE_CHECK_RESPONSE_SCHEMA, THINK_RESPONSE_SCHEMA, TRANSLATION_RESPONSE_SCHEMA } from './agent_response_schemas';
 
 export const OPENCODE_AGENT_PLAN = 'build';
