@@ -1,6 +1,6 @@
 import { Execution } from '../../../data/model/execution';
 import { Result } from '../../../data/model/result';
-import { ProjectRepository } from '../../../data/repository/project_repository';
+import { ProjectBoardRepository } from '../../../data/repository/project_board_repository';
 import { logDebugInfo, logError } from '../../../utils/logger';
 
 interface PrioritySizeParam {
@@ -33,7 +33,7 @@ export async function runPrioritySizeCheck(
     param: Execution | PrioritySizeParam,
     taskId: string,
     contentNumber: number,
-    projectRepository: PriorityProjectRepository = new ProjectRepository(),
+    projectRepository: PriorityProjectRepository = new ProjectBoardRepository(),
 ): Promise<Result[]> {
     const typedParam = param as unknown as PrioritySizeParam;
     const result: Result[] = [];
