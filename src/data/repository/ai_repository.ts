@@ -9,7 +9,7 @@ import type { AgentCliPort, AgentQueryOptions, FindingsQueryPort, FixerQueryPort
 import { OpenCodeAgentInvoker } from './opencode_agent_invoker';
 import { buildAgentPrompt } from './agent_prompt_policy';
 import { getValidatedAgentConfiguration } from './agent_configuration_policy';
-import { resolveOpenCodeModelReference } from './opencode_model_reference_policy';
+import { executeAgentRequest } from './agent_execution_policy';
 import { extractReasoningFromParts, extractTextFromParts } from './agent_response_parser';
 export { getSessionDiff } from './opencode_session_diff_client';
 export type { OpenCodeFileDiff } from './opencode_session_diff_client';
@@ -66,36 +66,33 @@ export class AiRepository implements FindingsQueryPort, FixerQueryPort {
             logError('Missing required AI configuration for findings server transport.');
             return undefined;
         }
-        const { providerId, modelId } = resolveOpenCodeModelReference(taskConfiguration.model);
-        const serverUrl = taskConfiguration.serverUrl;
-        const model = taskConfiguration.model;
         try {
-            return await this.openCodeInvoker.invoke({
-                serverUrl,
-                providerID: providerId,
-                modelID: modelId,
-                agent: agentId,
+            return await executeAgentRequest({
+                configuration: taskConfiguration,
                 prompt: promptText,
-            }, `agent ${agentId}`, ({ parts }) => {
-                const text = extractTextFromParts(parts);
-                if (!text) throw new Error('Empty response text');
-                const reasoning = options.includeReasoning ? extractReasoningFromParts(parts) : '';
-                if (options.expectJson && options.schema) {
-                    logInfo(`OpenCode agent response (expectJson=true) length=${text.length}`);
-                    logDebugInfo(`OpenCode agent response (full text, no truncation) length=${text.length}:\n${text}`);
-                    const parsed = parseJsonFromAgentText(text);
-                    if (options.includeReasoning && reasoning) {
-                        return { ...parsed, reasoning };
+                agent: agentId,
+                timeoutMs: OPENCODE_REQUEST_TIMEOUT_MS,
+                cliAdapter: this.cliAdapter,
+                openCodeInvoker: this.openCodeInvoker,
+                mapCliOutput: (output) => options.expectJson && options.schema ? parseJsonFromAgentText(output) : output,
+                mapServerResponse: ({ parts }) => {
+                    const text = extractTextFromParts(parts);
+                    if (!text) throw new Error('Empty response text');
+                    const reasoning = options.includeReasoning ? extractReasoningFromParts(parts) : '';
+                    if (options.expectJson && options.schema) {
+                        logInfo(`OpenCode agent response (expectJson=true) length=${text.length}`);
+                        logDebugInfo(`OpenCode agent response (full text, no truncation) length=${text.length}:\\n${text}`);
+                        const parsed = parseJsonFromAgentText(text);
+                        return options.includeReasoning && reasoning ? { ...parsed, reasoning } : parsed;
                     }
-                    return parsed;
-                }
-                return text;
+                    return text;
+                },
             });
         } catch (error: unknown) {
             const err = error instanceof Error ? error : new Error(String(error));
-            const cause = err instanceof Error && (err as Error & { cause?: unknown }).cause;
+            const cause = (err as Error & { cause?: unknown }).cause;
             const detail = cause != null ? ` (${cause instanceof Error ? cause.message : String(cause)})` : '';
-            logError(`Error querying OpenCode agent ${agentId} (${model}): ${err.message}${detail}`);
+            logError(`Error querying OpenCode agent ${agentId} (${taskConfiguration.model}): ${err.message}${detail}`);
             return undefined;
         }
     };
@@ -126,24 +123,24 @@ export class AiRepository implements FindingsQueryPort, FixerQueryPort {
             logError('Missing required AI configuration for fixer server transport.');
             return undefined;
         }
-        const { providerId, modelId } = resolveOpenCodeModelReference(taskConfiguration.model);
-        const serverUrl = taskConfiguration.serverUrl;
-        const model = taskConfiguration.model;
         try {
-            return await this.openCodeInvoker.invoke({
-                serverUrl,
-                providerID: providerId,
-                modelID: modelId,
-                agent: OPENCODE_AGENT_BUILD,
+            return await executeAgentRequest({
+                configuration: taskConfiguration,
                 prompt,
-            }, `agent ${OPENCODE_AGENT_BUILD}`, (result) => {
-                const text = extractTextFromParts(result.parts);
-                if (!text) throw new Error('Empty response text');
-                return { text, sessionId: result.sessionId };
+                agent: OPENCODE_AGENT_BUILD,
+                timeoutMs: OPENCODE_REQUEST_TIMEOUT_MS,
+                cliAdapter: this.cliAdapter,
+                openCodeInvoker: this.openCodeInvoker,
+                mapCliOutput: (text) => ({ text, sessionId: 'cli' }),
+                mapServerResponse: (result) => {
+                    const text = extractTextFromParts(result.parts);
+                    if (!text) throw new Error('Empty response text');
+                    return { text, sessionId: result.sessionId };
+                },
             });
         } catch (error: unknown) {
             const err = error instanceof Error ? error : new Error(String(error));
-            logError(`Error querying OpenCode build agent (${model}): ${err.message}`);
+            logError(`Error querying OpenCode build agent (${taskConfiguration.model}): ${err.message}`);
             return undefined;
         }
     };
