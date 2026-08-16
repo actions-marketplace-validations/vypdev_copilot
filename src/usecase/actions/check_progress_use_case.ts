@@ -15,6 +15,7 @@ import { OPENCODE_PROJECT_CONTEXT_INSTRUCTION } from '../../utils/opencode_proje
 import { findIssueBranch } from './find_issue_branch';
 import { syncProgressLabelsToOpenPullRequests } from './sync_progress_labels_to_open_pull_requests';
 import { buildProgressSummaryMessage } from './progress_summary_builder';
+import { validateProgressPrerequisites } from './progress_prerequisite_policy';
 
 import { parseProgressResponse, PROGRESS_RESPONSE_SCHEMA, type ProgressAttemptResult } from './progress_response';
 
@@ -94,8 +95,9 @@ export class CheckProgressUseCase implements ParamUseCase<Execution, Result[]> {
 
             const branch = await findIssueBranch(param, this.branchRepository);
 
-            if (!branch) {
-                logError(`Could not find branch for issue #${issueNumber}. Please ensure a branch exists with pattern: feature/${issueNumber}-*, bugfix/${issueNumber}-*, docs/${issueNumber}-*, or chore/${issueNumber}-*`);
+            const branchError = validateProgressPrerequisites({ agentReady: true, issueNumber, branch });
+            if (branchError) {
+                logError(branchError);
                 results.push(
                     new Result({
                         id: this.taskId,
@@ -109,17 +111,18 @@ export class CheckProgressUseCase implements ParamUseCase<Execution, Result[]> {
                 return results;
             }
 
+            const resolvedBranch = branch as string;
             // Get development (parent) branch – we pass this so the OpenCode agent can compute the diff
             const developmentBranch = param.branches.development || 'develop';
 
-            logInfo(`📦 Progress will be assessed from workspace diff: base branch "${developmentBranch}", current branch "${branch}" (OpenCode agent will run git diff).`);
+            logInfo(`📦 Progress will be assessed from workspace diff: base branch "${developmentBranch}", current branch "${resolvedBranch}" (OpenCode agent will run git diff).`);
 
             const prompt = getCheckProgressPrompt({
                 projectContextInstruction: OPENCODE_PROJECT_CONTEXT_INSTRUCTION,
                 issueNumber: String(issueNumber),
                 issueDescription,
                 baseBranch: developmentBranch,
-                currentBranch: branch,
+                currentBranch: resolvedBranch,
             });
 
             logDebugInfo(`CheckProgress: prompt length=${prompt.length}, issue description length=${issueDescription.length}.`);
@@ -165,7 +168,7 @@ export class CheckProgressUseCase implements ParamUseCase<Execution, Result[]> {
                             summary,
                             reasoning: reasoning || undefined,
                             issueNumber,
-                            branch,
+                            branch: resolvedBranch,
                             developmentBranch,
                         },
                     })
@@ -184,7 +187,7 @@ export class CheckProgressUseCase implements ParamUseCase<Execution, Result[]> {
             await syncProgressLabelsToOpenPullRequests(
                 param.owner,
                 param.repo,
-                branch,
+                resolvedBranch,
                 progress,
                 param.tokens.token,
                 this.issueRepository,
@@ -210,7 +213,7 @@ export class CheckProgressUseCase implements ParamUseCase<Execution, Result[]> {
                         reasoning: reasoning || undefined,
                         remaining: progress < 100 && remaining ? remaining : undefined,
                         issueNumber,
-                        branch,
+                        branch: resolvedBranch,
                         developmentBranch
                     }
                 })
