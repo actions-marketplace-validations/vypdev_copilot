@@ -1,6 +1,6 @@
 # Hotspot Refactoring Plan
 
-Status: executing
+Status: completed
 Baseline: `976df3ed7ef4e41f294bef5a25980245921722fa`
 
 ## Objective
@@ -67,6 +67,21 @@ The next cycle targets composition and dependency direction rather than line cou
 12. Clean generated artifacts, document measured results, verify exact local/remote SHA, and select the next hotspot boundary.
 
 Acceptance criteria: no application/use-case module constructs concrete transport adapters; `FindingsQueryPort` and `FixerQueryPort` remain separate; composition is explicit and testable; no compatibility shim is added solely to preserve an old import; every slice has focused tests, full gates, and an independently published commit.
+
+### AiRepository composition cycle results
+
+The composition cycle was completed and published in these slices:
+
+- `f75c292d`: introduced `DefaultAgentRepositoryFactory` with injected CLI/OpenCode ports and separate findings/fixer capability views.
+- `d93e97b6`: migrated the first cohesive group of findings/fixer use cases to the composition boundary.
+- `ed3f38b5`: removed concrete `AiRepository` dependencies from the remaining findings callers.
+- `04056e50`: migrated the CLI composition root to the fixer capability.
+- `a3d74d76`: isolated agent task identifiers in `agent_task_policy.ts`.
+- `eaa7be01`: removed the obsolete `getSessionDiff` re-export from `AiRepository`; the read-only client is consumed directly by its own tests.
+
+The complete final hook passed with `190` suites, `1468` tests, and `1` skipped test. Final RepoWise measurements at `eaa7be01` report `ai_repository.ts` at score `3.18`, NLOC `127`, maximum CCN `13`, maximum nesting `4`, and `31.11%` duplication. Hotspot health is `5.03`, average repository health is `8.79`, and risk is `1.8` (`low`). The score and complexity remained stable while the facade lost composition-only exports and callers; this confirms a dependency-direction improvement without cosmetic partitioning.
+
+The working tree was cleaned of generated `build/`, `.claude/`, and `.vscode/` artifacts. `HEAD` and `origin/master` are both `eaa7be0174e4239e1fc495444b2cb351c322121e`.
 
 ## AiRepository hotspot sequence
 
