@@ -1,3 +1,4 @@
+import { isAgentConfigurationReady } from "../../../../data/model/agent";
 import type { Execution } from "../../../../data/model/execution";
 import { AiRepository, OPENCODE_AGENT_PLAN } from "../../../../data/repository/ai_repository";
 import { PullRequestRepository } from "../../../../data/repository/pull_request_repository";
@@ -36,7 +37,7 @@ export class DetectBugbotFixIntentUseCase implements ParamUseCase<Execution, Res
 
         const results: Result[] = [];
 
-        if (!param.ai?.getOpencodeModel() || !param.ai?.getOpencodeServerUrl()) {
+        if (!isAgentConfigurationReady(param.ai?.getAgentConfiguration('findings'))) {
             logInfo("OpenCode not configured; skipping bugbot fix intent detection.");
             return results;
         }

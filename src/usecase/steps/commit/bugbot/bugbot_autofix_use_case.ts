@@ -1,3 +1,4 @@
+import { isAgentConfigurationReady } from "../../../../data/model/agent";
 import type { Execution } from "../../../../data/model/execution";
 import { AiRepository } from "../../../../data/repository/ai_repository";
 import { logDebugInfo, logError, logInfo } from "../../../../utils/logger";
@@ -42,7 +43,7 @@ export class BugbotAutofixUseCase implements ParamUseCase<BugbotAutofixParam, Re
             return results;
         }
 
-        if (!execution.ai?.getOpencodeServerUrl() || !execution.ai?.getOpencodeModel()) {
+        if (!isAgentConfigurationReady(execution.ai?.getAgentConfiguration('fixer'))) {
             logDebugInfo("OpenCode not configured; skipping autofix.");
             return results;
         }

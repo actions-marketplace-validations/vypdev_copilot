@@ -185,6 +185,6 @@ describe('runLocalAction', () => {
 
     const execution = mockMainRun.mock.calls[0][0];
     expect(execution.tokens.token).toBe('from-action-inputs');
-    expect(execution.ai.getOpencodeServerUrl()).toBe('http://custom-opencode:4096');
+    expect(execution.ai.getAgentConfiguration('findings').serverUrl).toBe('http://custom-opencode:4096');
   });
 });

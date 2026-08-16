@@ -28,8 +28,12 @@ function baseExecution(overrides: Record<string, unknown> = {}) {
         currentConfiguration: { parentBranch: "develop" },
         branches: { development: "develop" },
         ai: {
-            getOpencodeServerUrl: () => "http://localhost",
-            getOpencodeModel: () => "model",
+            getAgentConfiguration: (task: 'findings' | 'fixer') => ({
+                provider: 'opencode',
+                transport: 'server',
+                model: 'model',
+                serverUrl: task === 'fixer' ? 'http://localhost' : 'http://localhost',
+            }),
         },
         ...overrides,
     } as Parameters<DoUserRequestUseCase["invoke"]>[0]["execution"];
@@ -45,9 +49,8 @@ describe("DoUserRequestUseCase", () => {
 
     it("returns empty results when OpenCode not configured", async () => {
         const exec = baseExecution();
-        (exec as { ai?: { getOpencodeServerUrl: () => string; getOpencodeModel: () => string } }).ai = {
-            getOpencodeServerUrl: () => "",
-            getOpencodeModel: () => "model",
+        (exec as { ai?: { getAgentConfiguration: (task: 'findings' | 'fixer') => { provider: 'opencode'; transport: 'server'; model: string; serverUrl?: string } } }).ai = {
+            getAgentConfiguration: () => ({ provider: 'opencode', transport: 'server', model: 'model', serverUrl: '' }),
         };
 
         const results = await useCase.invoke({

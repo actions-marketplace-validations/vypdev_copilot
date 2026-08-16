@@ -1,3 +1,4 @@
+import { isAgentConfigurationReady } from '../../../data/model/agent';
 import { Execution } from '../../../data/model/execution';
 import { Result } from '../../../data/model/result';
 import { AiRepository, OPENCODE_AGENT_PLAN, THINK_RESPONSE_SCHEMA } from '../../../data/repository/ai_repository';
@@ -60,7 +61,7 @@ export class ThinkUseCase implements ParamUseCase<Execution, Result[]> {
                 return results;
             }
 
-            if (!param.ai.getOpencodeModel()?.trim() || !param.ai.getOpencodeServerUrl()?.trim()) {
+            if (!isAgentConfigurationReady(param.ai?.getAgentConfiguration('findings'))) {
                 results.push(
                     new Result({
                         id: this.taskId,

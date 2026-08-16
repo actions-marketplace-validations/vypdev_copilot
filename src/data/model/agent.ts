@@ -14,3 +14,9 @@ export interface AgentTaskConfiguration {
     findings: AgentConfiguration;
     fixer: AgentConfiguration;
 }
+
+export function isAgentConfigurationReady(configuration: AgentConfiguration | undefined): boolean {
+    if (!configuration?.model.trim()) return false;
+    if (configuration.transport === 'server') return Boolean(configuration.serverUrl?.trim());
+    return Boolean(configuration.command?.trim());
+}

@@ -47,7 +47,7 @@ function baseExecution(overrides: Partial<Execution> = {}): Execution {
             commentId: 1,
         },
         pullRequest: { isPullRequestReviewComment: false, commentBody: "", number: 0 },
-        ai: { getOpencodeModel: () => "model", getOpencodeServerUrl: () => "http://localhost" },
+        ai: { getAgentConfiguration: () => ({ provider: 'opencode', transport: 'server', model: 'model', serverUrl: 'http://localhost' }) },
         ...overrides,
     } as unknown as Execution;
 }
@@ -80,7 +80,7 @@ describe("DetectBugbotFixIntentUseCase", () => {
 
     it("returns empty results when OpenCode not configured", async () => {
         const param = baseExecution({
-            ai: { getOpencodeModel: () => "", getOpencodeServerUrl: () => "http://x" } as Execution["ai"],
+            ai: { getAgentConfiguration: () => ({ provider: 'opencode', transport: 'server', model: '', serverUrl: 'http://x' }) } as unknown as Execution["ai"],
         });
 
         const results = await useCase.invoke(param);

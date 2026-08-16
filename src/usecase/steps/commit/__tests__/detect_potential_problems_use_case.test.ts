@@ -133,8 +133,7 @@ describe('DetectPotentialProblemsUseCase', () => {
 
   it('uses default ignore patterns and comment limit when ai has no getAiIgnoreFiles nor getBugbotCommentLimit', async () => {
     const minimalAi = {
-      getOpencodeModel: () => 'opencode/model',
-      getOpencodeServerUrl: () => 'http://localhost:4096',
+      getAgentConfiguration: () => ({ provider: 'opencode', transport: 'server', model: 'opencode/model', serverUrl: 'http://localhost:4096' }),
       getBugbotMinSeverity: () => 'low',
     } as unknown as Execution['ai'];
     const param = baseParam({ ai: minimalAi });

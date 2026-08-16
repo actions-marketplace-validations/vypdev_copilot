@@ -1,4 +1,5 @@
 import * as github from "@actions/github";
+import { isAgentConfigurationReady } from "../../../data/model/agent";
 import { Execution } from "../../../data/model/execution";
 import { Result } from "../../../data/model/result";
 import { AiRepository, OPENCODE_AGENT_PLAN } from "../../../data/repository/ai_repository";
@@ -25,7 +26,7 @@ export class DetectPotentialProblemsUseCase implements ParamUseCase<Execution, R
 
         const results: Result[] = [];
         try {
-            if (!param.ai?.getOpencodeModel() || !param.ai?.getOpencodeServerUrl()) {
+            if (!isAgentConfigurationReady(param.ai?.getAgentConfiguration('findings'))) {
                 logDebugInfo('OpenCode not configured; skipping potential problems detection.');
                 return results;
             }

@@ -1,4 +1,5 @@
 import { Ai } from '../../data/model/ai';
+import { isAgentConfigurationReady } from '../../data/model/agent';
 import { Execution } from '../../data/model/execution';
 import { Result } from '../../data/model/result';
 import { logDebugInfo, logError, logInfo, logWarn } from '../../utils/logger';
@@ -29,15 +30,15 @@ export class CheckProgressUseCase implements ParamUseCase<Execution, Result[]> {
 
         try {
             // Check if AI configuration is available
-            if (!param.ai || !param.ai.getOpencodeModel() || !param.ai.getOpencodeServerUrl()) {
-                logError(`Missing required AI configuration. Please provide OPENCODE_SERVER_URL and OPENCODE_MODEL.`);
+            if (!isAgentConfigurationReady(param.ai?.getAgentConfiguration('findings'))) {
+                logError(`Missing required agent configuration. Provide a model and a valid server URL or CLI command.`);
                 results.push(
                     new Result({
                         id: this.taskId,
                         success: false,
                         executed: true,
                         errors: [
-                            `Missing required AI configuration. Please provide OPENCODE_SERVER_URL and OPENCODE_MODEL.`,
+                            `Missing required agent configuration. Provide a model and a valid server URL or CLI command.`,
                         ],
                     })
                 );

@@ -4,6 +4,7 @@
  * Caller is responsible for permission check and for running commit/push after success.
  */
 
+import { isAgentConfigurationReady } from "../../../data/model/agent";
 import type { Execution } from "../../../data/model/execution";
 import { AiRepository } from "../../../data/repository/ai_repository";
 import { getUserRequestPrompt } from "../../../prompts";
@@ -33,7 +34,7 @@ export class DoUserRequestUseCase implements ParamUseCase<DoUserRequestParam, Re
         const results: Result[] = [];
         const { execution, userComment } = param;
 
-        if (!execution.ai?.getOpencodeServerUrl() || !execution.ai?.getOpencodeModel()) {
+        if (!isAgentConfigurationReady(execution.ai?.getAgentConfiguration('fixer'))) {
             logInfo("OpenCode not configured; skipping user request.");
             return results;
         }

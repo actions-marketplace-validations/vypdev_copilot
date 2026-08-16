@@ -97,7 +97,7 @@ describe('CheckProgressUseCase', () => {
     expect(results).toHaveLength(1);
     expect(results[0].success).toBe(false);
     expect(results[0].errors).toContain(
-      'Missing required AI configuration. Please provide OPENCODE_SERVER_URL and OPENCODE_MODEL.'
+      'Missing required agent configuration. Provide a model and a valid server URL or CLI command.'
     );
     expect(mockAskAgent).not.toHaveBeenCalled();
   });
@@ -110,7 +110,7 @@ describe('CheckProgressUseCase', () => {
 
     expect(results[0].success).toBe(false);
     expect(results[0].errors).toContain(
-      'Missing required AI configuration. Please provide OPENCODE_SERVER_URL and OPENCODE_MODEL.'
+      'Missing required agent configuration. Provide a model and a valid server URL or CLI command.'
     );
     expect(mockAskAgent).not.toHaveBeenCalled();
   });

@@ -40,11 +40,10 @@ function baseExecution() {
         currentConfiguration: { parentBranch: "develop" },
         branches: { development: "develop" },
         ai: {
-            getOpencodeServerUrl: () => "http://localhost",
-            getOpencodeModel: () => "model",
+            getAgentConfiguration: () => ({ provider: 'opencode', transport: 'server', model: 'model', serverUrl: 'http://localhost' }),
             getBugbotFixVerifyCommands: () => ["pnpm test"],
         },
-    } as Parameters<BugbotAutofixUseCase["invoke"]>[0]["execution"];
+    } as unknown as Parameters<BugbotAutofixUseCase["invoke"]>[0]["execution"];
 }
 
 function contextWithFindings(ids: string[]) {
@@ -104,8 +103,8 @@ describe("BugbotAutofixUseCase", () => {
     it("returns empty results when OpenCode not configured", async () => {
         const exec = baseExecution();
         (exec as { ai?: unknown }).ai = {
-            getOpencodeServerUrl: () => "",
-            getOpencodeModel: () => "model",
+            getAgentConfiguration: () => ({ provider: 'opencode', transport: 'server', model: 'model', serverUrl: '' }),
+            getBugbotFixVerifyCommands: () => ["pnpm test"],
         };
 
         const results = await useCase.invoke({

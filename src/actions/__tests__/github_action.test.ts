@@ -112,7 +112,7 @@ describe('runGitHubAction', () => {
     expect(startOpencodeServer).toHaveBeenCalledWith({ cwd: process.cwd() });
     expect(mockStop).toHaveBeenCalledTimes(1);
     const execution = mockMainRun.mock.calls[0][0];
-    expect(execution.ai.getOpencodeServerUrl()).toBe('http://started:4096');
+    expect(execution.ai.getAgentConfiguration('findings').serverUrl).toBe('http://started:4096');
   });
 
   it('calls setFailed and stops server when mainRun throws', async () => {

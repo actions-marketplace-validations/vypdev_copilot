@@ -1,3 +1,4 @@
+import { isAgentConfigurationReady } from '../../data/model/agent';
 import { Execution } from '../../data/model/execution';
 import { Result } from '../../data/model/result';
 import { AiRepository, OPENCODE_AGENT_PLAN } from '../../data/repository/ai_repository';
@@ -19,7 +20,7 @@ export class RecommendStepsUseCase implements ParamUseCase<Execution, Result[]> 
         const results: Result[] = [];
 
         try {
-            if (!param.ai?.getOpencodeModel() || !param.ai?.getOpencodeServerUrl()) {
+            if (!isAgentConfigurationReady(param.ai?.getAgentConfiguration('findings'))) {
                 results.push(
                     new Result({
                         id: this.taskId,
