@@ -14,6 +14,7 @@ const HEALTH_PATH = '/global/health';
 const POLL_INTERVAL_MS = 500;
 const STARTUP_TIMEOUT_MS = 120000; // 2 min (first pnpm dlx download can be slow)
 const OPENCODE_CONFIG_FILENAME = 'opencode.json';
+const OPENCODE_PACKAGE_VERSION = '1.18.18';
 /** Provider request timeout in ms (10 min). OpenCode default is 5 min; we need longer for plan agent. */
 const OPENCODE_PROVIDER_TIMEOUT_MS = 600_000;
 
@@ -115,7 +116,7 @@ export async function startOpencodeServer(options?: {
 
   const child = spawn(
     'pnpm',
-    ['dlx', '--yes', 'opencode-ai', 'serve', '--port', String(port), '--hostname', hostname],
+    ['dlx', '--yes', `opencode-ai@${OPENCODE_PACKAGE_VERSION}`, 'serve', '--port', String(port), '--hostname', hostname],
     {
       cwd,
       env: { ...process.env, OPENCODE_CLIENT: 'copilot' },
@@ -125,8 +126,14 @@ export async function startOpencodeServer(options?: {
   );
 
   const stop = async (): Promise<void> => {
-    await stopOpencodeServer(child);
-    await removeOpencodeConfigIfCreated(configResult);
+    try {
+      await stopOpencodeServer(child);
+    } finally {
+      process.removeListener('exit', onExit);
+      process.removeListener('SIGINT', onExit);
+      process.removeListener('SIGTERM', onExit);
+      await removeOpencodeConfigIfCreated(configResult);
+    }
   };
 
   // Ensure we don't leave the process running if our process exits
