@@ -11,7 +11,7 @@ import { logError, logInfo } from './utils/logger';
 import { getCliDoPrompt } from './prompts';
 import { Ai } from './data/model/ai';
 import { OPENCODE_PROJECT_CONTEXT_INSTRUCTION } from './utils/opencode_project_context_instruction';
-import { AiRepository } from './data/repository/ai_repository';
+import { DefaultAgentRepositoryFactory } from './data/repository/agent_repository_factory';
 import { buildAgentTasks } from './actions/agent_configuration_builder';
 import { runAgentAuthenticationPreflight } from './data/repository/agent_authentication_preflight';
 
@@ -232,7 +232,7 @@ program
 
     try {
       const ai = new Ai(serverUrl, model, false, false, [], false, 'low', 20, [], agentTasks);
-      const aiRepository = new AiRepository();
+      const aiRepository = new DefaultAgentRepositoryFactory().createFixer();
       const fullPrompt = getCliDoPrompt({
         projectContextInstruction: `${OPENCODE_PROJECT_CONTEXT_INSTRUCTION}\n\nRepository identity: ${gitInfo.owner}/${gitInfo.repo}\nCurrent branch: ${getCurrentBranch()}\nTreat this repository identity as authoritative context for the request.`,
         userPrompt: prompt,
