@@ -389,8 +389,8 @@ export class BranchRepository {
         workflow: string,
         inputs: Record<string, unknown>,
         token: string,
-    ) => {
-        return this.workflowRepository.executeWorkflow(owner, repository, branch, workflow, inputs, token);
+    ): Promise<void> => {
+        await this.workflowRepository.executeWorkflow(owner, repository, branch, workflow, inputs, token);
     };
 
     mergeBranch = async (
