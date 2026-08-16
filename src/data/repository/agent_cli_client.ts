@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { parseAgentCommand } from './agent_command_parser';
 
 export interface AgentCliRequest {
     command: string;
@@ -20,14 +21,19 @@ export class AgentCliError extends Error {
 }
 
 function splitCommand(command: string): string[] {
-    const tokens = command.match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g)?.map((token) => token.replace(/^(['"])(.*)\1$/, '$2')) ?? [];
-    if (!tokens.length) throw new AgentCliError('Agent CLI command must not be empty.', 'configuration');
-    return tokens;
+    const parsed = parseAgentCommand(command);
+    return [parsed.executable, ...parsed.args];
 }
 
 export class AgentCliClient {
     async execute(request: AgentCliRequest): Promise<string> {
-        const [executable, ...args] = splitCommand(request.command);
+        let executable: string;
+        let args: string[];
+        try {
+            [executable, ...args] = splitCommand(request.command);
+        } catch (error: unknown) {
+            throw new AgentCliError(error instanceof Error ? error.message : String(error), 'configuration');
+        }
         return new Promise((resolve, reject) => {
             const child = spawn(executable, args, { cwd: request.cwd, stdio: ['pipe', 'pipe', 'pipe'], shell: false });
             let stdout = '';
