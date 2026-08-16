@@ -1,4 +1,4 @@
-import { buildEmoji, buildImages, buildIssue, buildLabels, buildLocale, buildProjects, buildPullRequest, buildTokens, buildWorkflows } from '../configuration_builders';
+import { buildEmoji, buildImages, buildIssue, buildIssueTypes, buildLabels, buildLocale, buildProjects, buildPullRequest, buildTokens, buildWorkflows } from '../configuration_builders';
 
 describe('configuration builders', () => {
     it('builds locale and workflows', () => {
@@ -69,5 +69,15 @@ describe('configuration builders', () => {
         expect(labels.isBug).toBe(false);
         expect(labels.sizeLabels).toEqual(['XXL', 'XL', 'L', 'M', 'S', 'XS']);
         expect(labels.priorityHigh).toBe('P0');
+    });
+
+    it('maps issue types from named definitions', () => {
+        const definition = (name: string) => ({ name, description: `${name} description`, color: `${name}-color` });
+        const issueTypes = buildIssueTypes({ task: definition('task'), bug: definition('bug'), feature: definition('feature'), documentation: definition('documentation'), maintenance: definition('maintenance'), hotfix: definition('hotfix'), release: definition('release'), question: definition('question'), help: definition('help') });
+
+        expect(issueTypes.task).toBe('task');
+        expect(issueTypes.taskDescription).toBe('task description');
+        expect(issueTypes.releaseColor).toBe('release-color');
+        expect(issueTypes.help).toBe('help');
     });
 });

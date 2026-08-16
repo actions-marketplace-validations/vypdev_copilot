@@ -1,6 +1,7 @@
 import { Emoji } from '../data/model/emoji';
 import { Issue } from '../data/model/issue';
 import { Images } from '../data/model/images';
+import { IssueTypes } from '../data/model/issue_types';
 import { Labels } from '../data/model/labels';
 import { Locale } from '../data/model/locale';
 import { PullRequest } from '../data/model/pull_request';
@@ -34,6 +35,14 @@ export interface LabelValues {
     priorities: { high: string; medium: string; low: string; none: string };
     sizes: { xxl: string; xl: string; l: string; m: string; s: string; xs: string };
 }
+
+export interface IssueTypeDefinition {
+    name: string;
+    description: string;
+    color: string;
+}
+
+export type IssueTypeConfigurationValues = Record<'task' | 'bug' | 'feature' | 'documentation' | 'maintenance' | 'hotfix' | 'release' | 'question' | 'help', IssueTypeDefinition>;
 
 export interface ProjectConfigurationValues {
     projects: ProjectDetail[];
@@ -104,6 +113,20 @@ export function buildLabels(values: LabelValues): Labels {
         values.sizes.m,
         values.sizes.s,
         values.sizes.xs,
+    );
+}
+
+export function buildIssueTypes(values: IssueTypeConfigurationValues): IssueTypes {
+    return new IssueTypes(
+        values.task.name, values.task.description, values.task.color,
+        values.bug.name, values.bug.description, values.bug.color,
+        values.feature.name, values.feature.description, values.feature.color,
+        values.documentation.name, values.documentation.description, values.documentation.color,
+        values.maintenance.name, values.maintenance.description, values.maintenance.color,
+        values.hotfix.name, values.hotfix.description, values.hotfix.color,
+        values.release.name, values.release.description, values.release.color,
+        values.question.name, values.question.description, values.question.color,
+        values.help.name, values.help.description, values.help.color,
     );
 }
 

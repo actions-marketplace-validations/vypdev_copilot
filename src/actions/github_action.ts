@@ -28,7 +28,7 @@ import { parseBoundedPositiveIntegerInput, parseIntegerInput } from './input_num
 import { parseDelimitedValues } from './input_values_policy';
 import { buildSizeThresholds } from './size_threshold_builder';
 import { buildBranches } from './branches_builder';
-import { buildEmoji, buildImages, buildIssue, buildLabels, buildLocale, buildProjects, buildPullRequest, buildTokens, buildWorkflows } from './configuration_builders';
+import { buildEmoji, buildImages, buildIssue, buildIssueTypes, buildLabels, buildLocale, buildProjects, buildPullRequest, buildTokens, buildWorkflows } from './configuration_builders';
 
 export async function runGitHubAction(): Promise<void> {
     const projectRepository = new ProjectRepository();
@@ -503,35 +503,17 @@ export async function runGitHubAction(): Promise<void> {
             priorities: { high: priorityHighLabel, medium: priorityMediumLabel, low: priorityLowLabel, none: priorityNoneLabel },
             sizes: { xxl: sizeXxlLabel, xl: sizeXlLabel, l: sizeLLabel, m: sizeMLabel, s: sizeSLabel, xs: sizeXsLabel },
         }),
-        new IssueTypes(
-            issueTypeTask,
-            issueTypeTaskDescription,
-            issueTypeTaskColor,
-            issueTypeBug,
-            issueTypeBugDescription,
-            issueTypeBugColor,
-            issueTypeFeature,
-            issueTypeFeatureDescription,
-            issueTypeFeatureColor,
-            issueTypeDocumentation,
-            issueTypeDocumentationDescription,
-            issueTypeDocumentationColor,
-            issueTypeMaintenance,
-            issueTypeMaintenanceDescription,
-            issueTypeMaintenanceColor,
-            issueTypeHotfix,
-            issueTypeHotfixDescription,
-            issueTypeHotfixColor,
-            issueTypeRelease,
-            issueTypeReleaseDescription,
-            issueTypeReleaseColor,
-            issueTypeQuestion,
-            issueTypeQuestionDescription,
-            issueTypeQuestionColor,
-            issueTypeHelp,
-            issueTypeHelpDescription,
-            issueTypeHelpColor,
-        ),
+        buildIssueTypes({
+            task: { name: issueTypeTask, description: issueTypeTaskDescription, color: issueTypeTaskColor },
+            bug: { name: issueTypeBug, description: issueTypeBugDescription, color: issueTypeBugColor },
+            feature: { name: issueTypeFeature, description: issueTypeFeatureDescription, color: issueTypeFeatureColor },
+            documentation: { name: issueTypeDocumentation, description: issueTypeDocumentationDescription, color: issueTypeDocumentationColor },
+            maintenance: { name: issueTypeMaintenance, description: issueTypeMaintenanceDescription, color: issueTypeMaintenanceColor },
+            hotfix: { name: issueTypeHotfix, description: issueTypeHotfixDescription, color: issueTypeHotfixColor },
+            release: { name: issueTypeRelease, description: issueTypeReleaseDescription, color: issueTypeReleaseColor },
+            question: { name: issueTypeQuestion, description: issueTypeQuestionDescription, color: issueTypeQuestionColor },
+            help: { name: issueTypeHelp, description: issueTypeHelpDescription, color: issueTypeHelpColor },
+        }),
         buildLocale(issueLocale, pullRequestLocale),
         buildSizeThresholds({
             xxl: { lines: sizeXxlThresholdLines, files: sizeXxlThresholdFiles, commits: sizeXxlThresholdCommits },
