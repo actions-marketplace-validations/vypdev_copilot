@@ -1,7 +1,7 @@
 import { Execution } from "../../../data/model/execution";
 import { Result } from "../../../data/model/result";
 import { IssueRepository } from "../../../data/repository/issue_repository";
-import { ProjectRepository } from "../../../data/repository/project_repository";
+import { OrganizationRepository } from "../../../data/repository/organization_repository";
 import { logDebugInfo, logError, logInfo } from "../../../utils/logger";
 import { getTaskEmoji } from "../../../utils/task_emoji";
 import { ParamUseCase } from "../../base/param_usecase";
@@ -10,7 +10,7 @@ export class AssignMemberToIssueUseCase implements ParamUseCase<Execution, Resul
     taskId: string = 'AssignMemberToIssueUseCase';
     
     private issueRepository = new IssueRepository();
-    private projectRepository = new ProjectRepository();
+    private projectRepository = new OrganizationRepository();
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`);

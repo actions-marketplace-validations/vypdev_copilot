@@ -8,8 +8,8 @@ jest.mock('../../../../utils/logger', () => ({
 
 const mockGetAllMembers = jest.fn();
 const mockGetRandomMembers = jest.fn();
-jest.mock('../../../../data/repository/project_repository', () => ({
-  ProjectRepository: jest.fn().mockImplementation(() => ({
+jest.mock('../../../../data/repository/organization_repository', () => ({
+  OrganizationRepository: jest.fn().mockImplementation(() => ({
     getAllMembers: mockGetAllMembers,
     getRandomMembers: mockGetRandomMembers,
   })),

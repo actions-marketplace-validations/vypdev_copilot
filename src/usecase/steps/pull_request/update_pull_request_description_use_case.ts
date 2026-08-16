@@ -4,7 +4,7 @@ import { OPENCODE_AGENT_PLAN } from "../../../data/repository/agent_task_policy"
 import type { FindingsQueryPort } from "../../../data/repository/agent_ports";
 import { DefaultAgentRepositoryFactory } from "../../../data/repository/agent_repository_factory";
 import { IssueRepository } from "../../../data/repository/issue_repository";
-import { ProjectRepository } from "../../../data/repository/project_repository";
+import { OrganizationRepository } from "../../../data/repository/organization_repository";
 import { PullRequestRepository } from "../../../data/repository/pull_request_repository";
 import { getUpdatePullRequestDescriptionPrompt } from "../../../prompts";
 import { logDebugInfo, logError, logInfo } from "../../../utils/logger";
@@ -18,7 +18,7 @@ export class UpdatePullRequestDescriptionUseCase implements ParamUseCase<Executi
     private aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings();
     private pullRequestRepository = new PullRequestRepository();
     private issueRepository = new IssueRepository();
-    private projectRepository = new ProjectRepository();
+    private projectRepository = new OrganizationRepository();
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId} (AI PR description).`);
