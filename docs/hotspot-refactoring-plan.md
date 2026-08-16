@@ -81,7 +81,7 @@ The composition cycle was completed and published in these slices:
 
 The complete final hook passed with `190` suites, `1468` tests, and `1` skipped test. Final RepoWise measurements at `eaa7be01` report `ai_repository.ts` at score `3.18`, NLOC `127`, maximum CCN `13`, maximum nesting `4`, and `31.11%` duplication. Hotspot health is `5.03`, average repository health is `8.79`, and risk is `1.8` (`low`). The score and complexity remained stable while the facade lost composition-only exports and callers; this confirms a dependency-direction improvement without cosmetic partitioning.
 
-The working tree was cleaned of generated `build/`, `.claude/`, and `.vscode/` artifacts. `HEAD` and `origin/master` are both `eaa7be0174e4239e1fc495444b2cb351c322121e`.
+The working tree was cleaned of generated `build/`, `.claude/`, and `.vscode/` artifacts before the documentation commit. RepoWise was measured at `eaa7be01`; the final documentation publication is verified separately after this commit.
 
 ## AiRepository hotspot sequence
 
