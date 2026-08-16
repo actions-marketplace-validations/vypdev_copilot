@@ -7,7 +7,7 @@ import { OpenCodeHttpClient } from './opencode_http_client';
 import type { AgentCliPort, AgentQueryOptions, FindingsQueryPort, FixerQueryPort, OpenCodeClientPort } from './agent_ports';
 import { OpenCodeAgentInvoker } from './opencode_agent_invoker';
 import { buildAgentPrompt } from './agent_prompt_policy';
-import { getValidatedAgentConfiguration } from './agent_configuration_policy';
+import { getValidatedAgentConfiguration, isValidServerAgentConfiguration } from './agent_configuration_policy';
 import { executeAgentRequest } from './agent_execution_policy';
 import { interpretFixerResponse } from './agent_fixer_response_policy';
 import { interpretFindingsResponse } from './agent_findings_response_policy';
@@ -63,7 +63,7 @@ export class AiRepository implements FindingsQueryPort, FixerQueryPort {
                 return undefined;
             }
         }
-        if (taskConfiguration.provider !== 'opencode' || !taskConfiguration.serverUrl || !taskConfiguration.model.trim()) {
+        if (!isValidServerAgentConfiguration(taskConfiguration)) {
             logError('Missing required AI configuration for findings server transport.');
             return undefined;
         }
@@ -117,7 +117,7 @@ export class AiRepository implements FindingsQueryPort, FixerQueryPort {
                 return undefined;
             }
         }
-        if (taskConfiguration.provider !== 'opencode' || !taskConfiguration.serverUrl || !taskConfiguration.model.trim()) {
+        if (!isValidServerAgentConfiguration(taskConfiguration)) {
             logError('Missing required AI configuration for fixer server transport.');
             return undefined;
         }

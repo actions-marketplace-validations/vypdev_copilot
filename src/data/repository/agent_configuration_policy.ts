@@ -1,4 +1,11 @@
-import type { AgentTask, AgentTaskConfiguration } from '../model/agent';
+import type { AgentConfiguration, AgentTask, AgentTaskConfiguration } from '../model/agent';
+
+export function isValidServerAgentConfiguration(configuration: AgentConfiguration): boolean {
+    return configuration.transport === 'server'
+        && configuration.provider === 'opencode'
+        && Boolean(configuration.serverUrl?.trim())
+        && Boolean(configuration.model.trim());
+}
 
 export function getValidatedAgentConfiguration(
     configuration: AgentTaskConfiguration[AgentTask],
