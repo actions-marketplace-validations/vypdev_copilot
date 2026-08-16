@@ -22,6 +22,7 @@ import { ProjectRepository } from '../data/repository/project_repository';
 import { BUGBOT_MAX_COMMENTS, BUGBOT_MIN_SEVERITY, DEFAULT_IMAGE_CONFIG, INPUT_KEYS, OPENCODE_DEFAULT_MODEL, TITLE } from '../utils/constants';
 import { logInfo } from '../utils/logger';
 import { getActionInputsWithDefaults } from '../utils/yml_utils';
+import { isEnabledInput } from './input_boolean_policy';
 import { loadProjectDetails } from './project_details_loader';
 import { parseDelimitedValues } from './input_values_policy';
 import { mainRun } from './common_action';
@@ -38,7 +39,7 @@ export async function runLocalAction(
     /**
      * Debug
      */
-    const debug = (additionalParams[INPUT_KEYS.DEBUG] ?? actionInputs[INPUT_KEYS.DEBUG]) == 'true'
+    const debug = isEnabledInput(additionalParams[INPUT_KEYS.DEBUG] ?? actionInputs[INPUT_KEYS.DEBUG]);
 
     /**
      * Welcome
@@ -100,9 +101,9 @@ export async function runLocalAction(
     /**
      * Images
      */
-    const imagesOnIssue = (additionalParams[INPUT_KEYS.IMAGES_ON_ISSUE] ?? actionInputs[INPUT_KEYS.IMAGES_ON_ISSUE]) === 'true';
-    const imagesOnPullRequest = (additionalParams[INPUT_KEYS.IMAGES_ON_PULL_REQUEST] ?? actionInputs[INPUT_KEYS.IMAGES_ON_PULL_REQUEST]) === 'true';
-    const imagesOnCommit = (additionalParams[INPUT_KEYS.IMAGES_ON_COMMIT] ?? actionInputs[INPUT_KEYS.IMAGES_ON_COMMIT]) === 'true';
+    const imagesOnIssue = isEnabledInput(additionalParams[INPUT_KEYS.IMAGES_ON_ISSUE] ?? actionInputs[INPUT_KEYS.IMAGES_ON_ISSUE]);
+    const imagesOnPullRequest = isEnabledInput(additionalParams[INPUT_KEYS.IMAGES_ON_PULL_REQUEST] ?? actionInputs[INPUT_KEYS.IMAGES_ON_PULL_REQUEST]);
+    const imagesOnCommit = isEnabledInput(additionalParams[INPUT_KEYS.IMAGES_ON_COMMIT] ?? actionInputs[INPUT_KEYS.IMAGES_ON_COMMIT]);
 
     const imagesIssueAutomaticInput: string = additionalParams[INPUT_KEYS.IMAGES_ISSUE_AUTOMATIC] ?? actionInputs[INPUT_KEYS.IMAGES_ISSUE_AUTOMATIC];
     const imagesIssueAutomatic: string[] = imagesIssueAutomaticInput

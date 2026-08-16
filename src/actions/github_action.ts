@@ -26,6 +26,7 @@ import { logDebugInfo, logError, logInfo } from '../utils/logger';
 import { startOpencodeServer, type ManagedOpencodeServer } from '../utils/opencode_server';
 import { loadProjectDetails } from './project_details_loader';
 import { mainRun } from './common_action';
+import { isEnabledInput } from './input_boolean_policy';
 import { parseDelimitedValues } from './input_values_policy';
 
 export async function runGitHubAction(): Promise<void> {
@@ -36,7 +37,7 @@ export async function runGitHubAction(): Promise<void> {
     /**
      * Debug
      */
-    const debug = getInput(INPUT_KEYS.DEBUG) == 'true';
+    const debug = isEnabledInput(getInput(INPUT_KEYS.DEBUG));
     if (debug) {
         logInfo('Debug mode is enabled. Full logs will be included in the report.');
     }
@@ -60,7 +61,7 @@ export async function runGitHubAction(): Promise<void> {
      */
     let opencodeServerUrl = getInput(INPUT_KEYS.OPENCODE_SERVER_URL) || 'http://127.0.0.1:4096';
     const opencodeModel = getInput(INPUT_KEYS.OPENCODE_MODEL) || OPENCODE_DEFAULT_MODEL;
-    const opencodeStartServer = getInput(INPUT_KEYS.OPENCODE_START_SERVER) === 'true';
+    const opencodeStartServer = isEnabledInput(getInput(INPUT_KEYS.OPENCODE_START_SERVER));
 
     let managedOpencodeServer: ManagedOpencodeServer | undefined;
     if (opencodeStartServer) {
@@ -106,9 +107,9 @@ export async function runGitHubAction(): Promise<void> {
     /**
      * Images
      */
-    const imagesOnIssue = getInput(INPUT_KEYS.IMAGES_ON_ISSUE) === 'true';
-    const imagesOnPullRequest = getInput(INPUT_KEYS.IMAGES_ON_PULL_REQUEST) === 'true';
-    const imagesOnCommit = getInput(INPUT_KEYS.IMAGES_ON_COMMIT) === 'true';
+    const imagesOnIssue = isEnabledInput(getInput(INPUT_KEYS.IMAGES_ON_ISSUE));
+    const imagesOnPullRequest = isEnabledInput(getInput(INPUT_KEYS.IMAGES_ON_PULL_REQUEST));
+    const imagesOnCommit = isEnabledInput(getInput(INPUT_KEYS.IMAGES_ON_COMMIT));
 
     const imagesIssueAutomaticInput: string = getInput(INPUT_KEYS.IMAGES_ISSUE_AUTOMATIC);
     const imagesIssueAutomatic: string[] = imagesIssueAutomaticInput
