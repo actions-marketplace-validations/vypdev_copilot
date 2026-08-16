@@ -26,6 +26,7 @@ import { BUGBOT_MAX_COMMENTS, BUGBOT_MIN_SEVERITY, DEFAULT_IMAGE_CONFIG, INPUT_K
 import { logDebugInfo, logError, logInfo } from '../utils/logger';
 import { startOpencodeServer, type ManagedOpencodeServer } from '../utils/opencode_server';
 import { mainRun } from './common_action';
+import { parseDelimitedValues } from './input_values_policy';
 
 export async function runGitHubAction(): Promise<void> {
     const projectRepository = new ProjectRepository();
@@ -76,10 +77,7 @@ export async function runGitHubAction(): Promise<void> {
     const aiMembersOnly = getInput(INPUT_KEYS.AI_MEMBERS_ONLY) === 'true';
     const aiIncludeReasoning = getInput(INPUT_KEYS.AI_INCLUDE_REASONING) === 'true';
     const aiIgnoreFilesInput: string = getInput(INPUT_KEYS.AI_IGNORE_FILES);
-    const aiIgnoreFiles: string[] = aiIgnoreFilesInput
-        .split(',')
-        .map(path => path.trim())
-        .filter(path => path.length > 0);
+    const aiIgnoreFiles: string[] = parseDelimitedValues(aiIgnoreFilesInput);
     const bugbotSeverity = getInput(INPUT_KEYS.BUGBOT_SEVERITY) || BUGBOT_MIN_SEVERITY;
     const bugbotCommentLimitRaw = parseInt(getInput(INPUT_KEYS.BUGBOT_COMMENT_LIMIT), 10);
     const bugbotCommentLimit =
@@ -96,10 +94,7 @@ export async function runGitHubAction(): Promise<void> {
      * Projects Details
      */
     const projectIdsInput: string = getInput(INPUT_KEYS.PROJECT_IDS);
-    const projectIds: string[] = projectIdsInput
-        .split(',')
-        .map(id => id.trim())
-        .filter(id => id.length > 0);
+    const projectIds: string[] = parseDelimitedValues(projectIdsInput);
 
     const projects: ProjectDetail[] = []
     for (const projectId of projectIds) {        

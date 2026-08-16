@@ -23,6 +23,7 @@ import { ProjectRepository } from '../data/repository/project_repository';
 import { BUGBOT_MAX_COMMENTS, BUGBOT_MIN_SEVERITY, DEFAULT_IMAGE_CONFIG, INPUT_KEYS, OPENCODE_DEFAULT_MODEL, TITLE } from '../utils/constants';
 import { logInfo } from '../utils/logger';
 import { getActionInputsWithDefaults } from '../utils/yml_utils';
+import { parseDelimitedValues } from './input_values_policy';
 import { mainRun } from './common_action';
 import boxen from 'boxen';
 
@@ -68,10 +69,7 @@ export async function runLocalAction(
     const aiMembersOnly = (additionalParams[INPUT_KEYS.AI_MEMBERS_ONLY] ?? actionInputs[INPUT_KEYS.AI_MEMBERS_ONLY]) === 'true';
     const aiIncludeReasoning = (additionalParams[INPUT_KEYS.AI_INCLUDE_REASONING] ?? actionInputs[INPUT_KEYS.AI_INCLUDE_REASONING]) === 'true';
     const aiIgnoreFilesInput: string = additionalParams[INPUT_KEYS.AI_IGNORE_FILES] ?? actionInputs[INPUT_KEYS.AI_IGNORE_FILES];
-    const aiIgnoreFiles: string[] = aiIgnoreFilesInput
-        .split(',')
-        .map(path => path.trim())
-        .filter(path => path.length > 0);
+    const aiIgnoreFiles: string[] = parseDelimitedValues(aiIgnoreFilesInput);
     const bugbotSeverity = (additionalParams[INPUT_KEYS.BUGBOT_SEVERITY] ?? actionInputs[INPUT_KEYS.BUGBOT_SEVERITY]) || BUGBOT_MIN_SEVERITY;
     const bugbotCommentLimitRaw = additionalParams[INPUT_KEYS.BUGBOT_COMMENT_LIMIT] ?? actionInputs[INPUT_KEYS.BUGBOT_COMMENT_LIMIT];
     const bugbotCommentLimitNum = typeof bugbotCommentLimitRaw === 'number' ? bugbotCommentLimitRaw : parseInt(String(bugbotCommentLimitRaw ?? ''), 10);
@@ -90,10 +88,7 @@ export async function runLocalAction(
      * Projects Details
      */
     const projectIdsInput: string = additionalParams[INPUT_KEYS.PROJECT_IDS] ?? actionInputs[INPUT_KEYS.PROJECT_IDS];
-    const projectIds: string[] = projectIdsInput
-        .split(',')
-        .map(id => id.trim())
-        .filter(id => id.length > 0);
+    const projectIds: string[] = parseDelimitedValues(projectIdsInput);
 
     const projects: ProjectDetail[] = []
     for (const projectId of projectIds) {        
