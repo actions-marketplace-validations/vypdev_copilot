@@ -13,6 +13,7 @@ import { Ai } from './data/model/ai';
 import { OPENCODE_PROJECT_CONTEXT_INSTRUCTION } from './utils/opencode_project_context_instruction';
 import { AiRepository } from './data/repository/ai_repository';
 import { buildAgentTasks } from './actions/agent_configuration_builder';
+import { runAgentAuthenticationPreflight } from './data/repository/agent_authentication_preflight';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -197,6 +198,15 @@ program
       serverUrl,
       command: agentCommand,
     });
+    const authPreflight = runAgentAuthenticationPreflight(agentTasks.findings);
+    if (authPreflight.check.status === 'missing') {
+      const message = `❌ ${authPreflight.check.message}`;
+      if (authPreflight.shouldFail) {
+        console.error(message);
+        return;
+      }
+      if (authPreflight.mode === 'warn') console.warn(`⚠️ ${authPreflight.check.message}`);
+    }
     const outputFormat = cleanArg(options.output) || 'text';
 
     if (agentTasks.findings.transport === 'server' && !serverUrl) {
