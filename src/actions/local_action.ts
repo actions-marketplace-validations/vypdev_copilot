@@ -67,9 +67,9 @@ export async function runLocalAction(
      */
     const opencodeServerUrl = additionalParams[INPUT_KEYS.OPENCODE_SERVER_URL] ?? actionInputs[INPUT_KEYS.OPENCODE_SERVER_URL] ?? 'http://127.0.0.1:4096';
     const opencodeModel = additionalParams[INPUT_KEYS.OPENCODE_MODEL] ?? actionInputs[INPUT_KEYS.OPENCODE_MODEL] ?? OPENCODE_DEFAULT_MODEL;
-    const aiPullRequestDescription = (additionalParams[INPUT_KEYS.AI_PULL_REQUEST_DESCRIPTION] ?? actionInputs[INPUT_KEYS.AI_PULL_REQUEST_DESCRIPTION]) === 'true';
-    const aiMembersOnly = (additionalParams[INPUT_KEYS.AI_MEMBERS_ONLY] ?? actionInputs[INPUT_KEYS.AI_MEMBERS_ONLY]) === 'true';
-    const aiIncludeReasoning = (additionalParams[INPUT_KEYS.AI_INCLUDE_REASONING] ?? actionInputs[INPUT_KEYS.AI_INCLUDE_REASONING]) === 'true';
+    const aiPullRequestDescription = isEnabledInput(additionalParams[INPUT_KEYS.AI_PULL_REQUEST_DESCRIPTION] ?? actionInputs[INPUT_KEYS.AI_PULL_REQUEST_DESCRIPTION]);
+    const aiMembersOnly = isEnabledInput(additionalParams[INPUT_KEYS.AI_MEMBERS_ONLY] ?? actionInputs[INPUT_KEYS.AI_MEMBERS_ONLY]);
+    const aiIncludeReasoning = isEnabledInput(additionalParams[INPUT_KEYS.AI_INCLUDE_REASONING] ?? actionInputs[INPUT_KEYS.AI_INCLUDE_REASONING]);
     const aiIgnoreFilesInput: string = additionalParams[INPUT_KEYS.AI_IGNORE_FILES] ?? actionInputs[INPUT_KEYS.AI_IGNORE_FILES];
     const aiIgnoreFiles: string[] = parseDelimitedValues(aiIgnoreFilesInput);
     const bugbotSeverity = (additionalParams[INPUT_KEYS.BUGBOT_SEVERITY] ?? actionInputs[INPUT_KEYS.BUGBOT_SEVERITY]) || BUGBOT_MIN_SEVERITY;
@@ -443,8 +443,8 @@ export async function runLocalAction(
     /**
      * Issue
      */
-    const branchManagementAlways = (additionalParams[INPUT_KEYS.BRANCH_MANAGEMENT_ALWAYS] ?? actionInputs[INPUT_KEYS.BRANCH_MANAGEMENT_ALWAYS]) === 'true';
-    const reopenIssueOnPush = (additionalParams[INPUT_KEYS.REOPEN_ISSUE_ON_PUSH] ?? actionInputs[INPUT_KEYS.REOPEN_ISSUE_ON_PUSH]) === 'true';
+    const branchManagementAlways = isEnabledInput(additionalParams[INPUT_KEYS.BRANCH_MANAGEMENT_ALWAYS] ?? actionInputs[INPUT_KEYS.BRANCH_MANAGEMENT_ALWAYS]);
+    const reopenIssueOnPush = isEnabledInput(additionalParams[INPUT_KEYS.REOPEN_ISSUE_ON_PUSH] ?? actionInputs[INPUT_KEYS.REOPEN_ISSUE_ON_PUSH]);
     const issueDesiredAssigneesCount = parseIntegerInput(additionalParams[INPUT_KEYS.DESIRED_ASSIGNEES_COUNT] ?? actionInputs[INPUT_KEYS.DESIRED_ASSIGNEES_COUNT], 0);
 
     /**

@@ -75,9 +75,9 @@ export async function runGitHubAction(): Promise<void> {
     }
 
     try {
-    const aiPullRequestDescription = getInput(INPUT_KEYS.AI_PULL_REQUEST_DESCRIPTION) === 'true';
-    const aiMembersOnly = getInput(INPUT_KEYS.AI_MEMBERS_ONLY) === 'true';
-    const aiIncludeReasoning = getInput(INPUT_KEYS.AI_INCLUDE_REASONING) === 'true';
+    const aiPullRequestDescription = isEnabledInput(getInput(INPUT_KEYS.AI_PULL_REQUEST_DESCRIPTION));
+    const aiMembersOnly = isEnabledInput(getInput(INPUT_KEYS.AI_MEMBERS_ONLY));
+    const aiIncludeReasoning = isEnabledInput(getInput(INPUT_KEYS.AI_INCLUDE_REASONING));
     const aiIgnoreFilesInput: string = getInput(INPUT_KEYS.AI_IGNORE_FILES);
     const aiIgnoreFiles: string[] = parseDelimitedValues(aiIgnoreFilesInput);
     const bugbotSeverity = getInput(INPUT_KEYS.BUGBOT_SEVERITY) || BUGBOT_MIN_SEVERITY;
@@ -453,8 +453,8 @@ export async function runGitHubAction(): Promise<void> {
     /**
      * Issue
      */
-    const branchManagementAlways = getInput(INPUT_KEYS.BRANCH_MANAGEMENT_ALWAYS) === 'true';
-    const reopenIssueOnPush = getInput(INPUT_KEYS.REOPEN_ISSUE_ON_PUSH) === 'true';
+    const branchManagementAlways = isEnabledInput(getInput(INPUT_KEYS.BRANCH_MANAGEMENT_ALWAYS));
+    const reopenIssueOnPush = isEnabledInput(getInput(INPUT_KEYS.REOPEN_ISSUE_ON_PUSH));
     const issueDesiredAssigneesCount = parseIntegerInput(getInput(INPUT_KEYS.DESIRED_ASSIGNEES_COUNT), 0);
 
     /**
