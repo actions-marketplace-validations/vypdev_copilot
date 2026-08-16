@@ -1,6 +1,6 @@
 import * as core from '@actions/core';
 import { Ai } from '../data/model/ai';
-import { Branches } from '../data/model/branches';
+
 import { Emoji } from '../data/model/emoji';
 import { Execution } from '../data/model/execution';
 import { Hotfix } from '../data/model/hotfix';
@@ -29,6 +29,7 @@ import { isEnabledInput } from './input_boolean_policy';
 import { parseBoundedPositiveIntegerInput, parseIntegerInput } from './input_number_policy';
 import { parseDelimitedValues } from './input_values_policy';
 import { buildSizeThresholds } from './size_threshold_builder';
+import { buildBranches } from './branches_builder';
 
 export async function runGitHubAction(): Promise<void> {
     const projectRepository = new ProjectRepository();
@@ -593,16 +594,16 @@ export async function runGitHubAction(): Promise<void> {
             s: { lines: sizeSThresholdLines, files: sizeSThresholdFiles, commits: sizeSThresholdCommits },
             xs: { lines: sizeXsThresholdLines, files: sizeXsThresholdFiles, commits: sizeXsThresholdCommits },
         }),
-        new Branches(
-            mainBranch,
-            developmentBranch,
+        buildBranches({
+            main: mainBranch,
+            development: developmentBranch,
             featureTree,
             bugfixTree,
             hotfixTree,
             releaseTree,
             docsTree,
             choreTree,
-        ),
+        }),
         new Release(),
         new Hotfix(),
         new Workflows(

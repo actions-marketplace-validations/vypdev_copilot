@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 import { Ai } from '../data/model/ai';
-import { Branches } from '../data/model/branches';
+
 import { Emoji } from '../data/model/emoji';
 import { Execution } from '../data/model/execution';
 import { Hotfix } from '../data/model/hotfix';
@@ -26,6 +26,7 @@ import { loadProjectDetails } from './project_details_loader';
 import { parseBoundedPositiveIntegerInput, parseIntegerInput } from './input_number_policy';
 import { parseDelimitedValues } from './input_values_policy';
 import { buildSizeThresholds } from './size_threshold_builder';
+import { buildBranches } from './branches_builder';
 import { mainRun } from './common_action';
 import boxen from 'boxen';
 
@@ -585,16 +586,16 @@ export async function runLocalAction(
             s: { lines: sizeSThresholdLines, files: sizeSThresholdFiles, commits: sizeSThresholdCommits },
             xs: { lines: sizeXsThresholdLines, files: sizeXsThresholdFiles, commits: sizeXsThresholdCommits },
         }),
-        new Branches(
-            mainBranch,
-            developmentBranch,
+        buildBranches({
+            main: mainBranch,
+            development: developmentBranch,
             featureTree,
             bugfixTree,
             hotfixTree,
             releaseTree,
             docsTree,
             choreTree,
-        ),
+        }),
         new Release(),
         new Hotfix(),
         new Workflows(
