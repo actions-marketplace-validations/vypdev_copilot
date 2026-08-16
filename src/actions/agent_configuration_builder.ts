@@ -10,6 +10,11 @@ export interface AgentTaskConfigurationValues {
 
 const PROVIDERS: readonly AgentProvider[] = ['opencode', 'cursor', 'codex'];
 const TRANSPORTS: readonly AgentTransport[] = ['server', 'cli'];
+const DEFAULT_COMMANDS: Readonly<Record<AgentProvider, string>> = {
+    opencode: 'opencode',
+    cursor: 'cursor-agent',
+    codex: 'codex',
+};
 
 function resolveProvider(value: string): AgentProvider {
     if (PROVIDERS.includes(value as AgentProvider)) return value as AgentProvider;
@@ -27,16 +32,18 @@ export function buildAgentTasks(values: AgentTaskConfigurationValues): AgentTask
     const model = values.model.trim();
     if (!model) throw new Error('Agent model must not be empty.');
     const serverUrl = values.serverUrl?.trim();
-    const command = values.command?.trim();
+    const command = values.command?.trim() || DEFAULT_COMMANDS[provider];
+    if (transport === 'server' && provider !== 'opencode') {
+        throw new Error(`Agent server transport is only supported by opencode. Use cli for ${provider}.`);
+    }
     if (transport === 'server' && !serverUrl) throw new Error('Agent server transport requires a server URL.');
-    if (transport === 'cli' && !command) throw new Error('Agent CLI transport requires a command.');
 
     const configuration = {
         provider,
         transport,
         model,
         ...(serverUrl ? { serverUrl } : {}),
-        ...(command ? { command } : {}),
+        ...(transport === 'cli' ? { command } : {}),
     };
     return { findings: configuration, fixer: configuration };
 }
