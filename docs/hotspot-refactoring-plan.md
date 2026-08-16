@@ -47,6 +47,20 @@ gate, and its own published commit.
 - No RepoWise reports, editor configuration, or generated analysis artifacts
   are committed.
 
+## Execution log
+
+- `16144df4`: centralized OpenCode model reference parsing.
+- `3bf32fc9`: isolated OpenCode invocation, including transport and response-interpretation retry semantics.
+- `a954111b`: shared issue/pull-request project-priority application flow.
+- Reviewed without extraction: ProjectRepository capability boundaries, GitHub/local action composition, constructor-only configuration builders, Execution state facade, and the transactional merge workflow. These require larger contract redesigns rather than safe mechanical extraction.
+
+## Validation evidence
+
+Each implementation slice passed focused Jest tests, `pnpm exec tsc --noEmit`,
+`pnpm run lint`, and `git diff --check`. Published commits also passed the
+repository pre-commit suite/build hook. Generated `build/`, `.vscode/`, `.claude/`,
+and RepoWise index artifacts remain uncommitted.
+
 ## Explicit non-goals
 
 - No abstraction whose only purpose is reducing NLOC.
