@@ -47,7 +47,21 @@ gate, and its own published commit.
 - No RepoWise reports, editor configuration, or generated analysis artifacts
   are committed.
 
-## Execution log
+## AiRepository hotspot sequence
+
+Baseline at `16ea1274`: focused Ai/OpenCode tests pass (`32/32`), typecheck passes, and RepoWise reports `src/data/repository/ai_repository.ts` as the current worst performer (`2.52`).
+
+Planned cohesive slices:
+
+1. Extract a typed agent execution boundary for shared CLI/server transport selection while preserving task-specific response mapping.
+2. Extract findings response interpretation (text, reasoning, strict JSON) as a pure policy with direct tests.
+3. Extract fixer response/session mapping as a separate typed policy; do not conflate CLI's synthetic session with server sessions.
+4. Centralize server configuration/model resolution at the composition boundary without changing validation or error contracts.
+5. Re-read public ports and callers, remove obsolete facade-only dependencies, and retain `AiRepository` only as a compatibility adapter.
+6. Run full gates and refresh RepoWise on the published SHA; compare hotspot health, NLOC/CCN, and worst-performer movement.
+
+Acceptance criteria: each source slice has focused contract tests, preserves the existing `FindingsQueryPort`/`FixerQueryPort` behavior, passes full pnpm gates, is committed and pushed independently, and does not introduce a wrapper whose only purpose is reducing NLOC.
+
 
 - `16144df4`: centralized OpenCode model reference parsing.
 - `3bf32fc9`: isolated OpenCode invocation, including transport and response-interpretation retry semantics.
