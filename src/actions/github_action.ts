@@ -14,8 +14,7 @@ import { PullRequest } from '../data/model/pull_request';
 import { Release } from '../data/model/release';
 import { Result } from '../data/model/result';
 import { SingleAction } from '../data/model/single_action';
-import { SizeThreshold } from '../data/model/size_threshold';
-import { SizeThresholds } from '../data/model/size_thresholds';
+
 import { Tokens } from '../data/model/tokens';
 import { Workflows } from '../data/model/workflows';
 import { ProjectRepository } from '../data/repository/project_repository';
@@ -29,6 +28,7 @@ import { mainRun } from './common_action';
 import { isEnabledInput } from './input_boolean_policy';
 import { parseBoundedPositiveIntegerInput, parseIntegerInput } from './input_number_policy';
 import { parseDelimitedValues } from './input_values_policy';
+import { buildSizeThresholds } from './size_threshold_builder';
 
 export async function runGitHubAction(): Promise<void> {
     const projectRepository = new ProjectRepository();
@@ -585,38 +585,14 @@ export async function runGitHubAction(): Promise<void> {
             issueTypeHelpColor,
         ),
         new Locale(issueLocale, pullRequestLocale),
-        new SizeThresholds(
-            new SizeThreshold(
-                sizeXxlThresholdLines,
-                sizeXxlThresholdFiles,
-                sizeXxlThresholdCommits,
-            ),
-            new SizeThreshold(
-                sizeXlThresholdLines,
-                sizeXlThresholdFiles,
-                sizeXlThresholdCommits,
-            ),
-            new SizeThreshold(
-                sizeLThresholdLines,
-                sizeLThresholdFiles,
-                sizeLThresholdCommits,
-            ),
-            new SizeThreshold(
-                sizeMThresholdLines,
-                sizeMThresholdFiles,
-                sizeMThresholdCommits,
-            ),
-            new SizeThreshold(
-                sizeSThresholdLines,
-                sizeSThresholdFiles,
-                sizeSThresholdCommits,
-            ),
-            new SizeThreshold(
-                sizeXsThresholdLines,
-                sizeXsThresholdFiles,
-                sizeXsThresholdCommits,
-            ),
-        ),
+        buildSizeThresholds({
+            xxl: { lines: sizeXxlThresholdLines, files: sizeXxlThresholdFiles, commits: sizeXxlThresholdCommits },
+            xl: { lines: sizeXlThresholdLines, files: sizeXlThresholdFiles, commits: sizeXlThresholdCommits },
+            l: { lines: sizeLThresholdLines, files: sizeLThresholdFiles, commits: sizeLThresholdCommits },
+            m: { lines: sizeMThresholdLines, files: sizeMThresholdFiles, commits: sizeMThresholdCommits },
+            s: { lines: sizeSThresholdLines, files: sizeSThresholdFiles, commits: sizeSThresholdCommits },
+            xs: { lines: sizeXsThresholdLines, files: sizeXsThresholdFiles, commits: sizeXsThresholdCommits },
+        }),
         new Branches(
             mainBranch,
             developmentBranch,
