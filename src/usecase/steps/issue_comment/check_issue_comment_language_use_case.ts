@@ -2,10 +2,12 @@ import { Execution } from "../../../data/model/execution";
 import { Result } from "../../../data/model/result";
 import {
     AiRepository,
-    LANGUAGE_CHECK_RESPONSE_SCHEMA,
     OPENCODE_AGENT_PLAN,
-    TRANSLATION_RESPONSE_SCHEMA,
 } from "../../../data/repository/ai_repository";
+import {
+    LANGUAGE_CHECK_RESPONSE_SCHEMA,
+    TRANSLATION_RESPONSE_SCHEMA,
+} from "../../../data/repository/agent_response_schemas";
 import { IssueRepository } from "../../../data/repository/issue_repository";
 import { getCheckCommentLanguagePrompt, getTranslateCommentPrompt } from "../../../prompts";
 import { logDebugInfo, logInfo } from "../../../utils/logger";

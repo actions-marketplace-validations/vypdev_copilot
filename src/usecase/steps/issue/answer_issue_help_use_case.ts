@@ -7,7 +7,8 @@
 import { isAgentConfigurationReady } from '../../../data/model/agent';
 import { Execution } from '../../../data/model/execution';
 import { Result } from '../../../data/model/result';
-import { AiRepository, OPENCODE_AGENT_PLAN, THINK_RESPONSE_SCHEMA } from '../../../data/repository/ai_repository';
+import { AiRepository, OPENCODE_AGENT_PLAN } from '../../../data/repository/ai_repository';
+import { THINK_RESPONSE_SCHEMA } from '../../../data/repository/agent_response_schemas';
 import { IssueRepository } from '../../../data/repository/issue_repository';
 import { getAnswerIssueHelpPrompt } from '../../../prompts';
 import { logDebugInfo, logError, logInfo } from '../../../utils/logger';

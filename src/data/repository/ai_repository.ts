@@ -8,6 +8,7 @@ import { OpenCodeHttpClient } from './opencode_http_client';
 import type { AgentCliPort, AgentQueryOptions, FindingsQueryPort, FixerQueryPort, OpenCodeClientPort } from './agent_ports';
 import { withOpenCodeRetry } from './opencode_retry';
 import { buildAgentPrompt } from './agent_prompt_policy';
+export { LANGUAGE_CHECK_RESPONSE_SCHEMA, THINK_RESPONSE_SCHEMA, TRANSLATION_RESPONSE_SCHEMA } from './agent_response_schemas';
 
 function createTimeoutSignal(ms: number): AbortSignal {
     const controller = new AbortController();
@@ -56,51 +57,6 @@ export const OPENCODE_AGENT_PLAN = 'build';
 
 /** OpenCode agent with write/edit/bash for development (e.g. copilot when run locally). */
 export const OPENCODE_AGENT_BUILD = 'build';
-
-/** JSON schema for translation responses: translatedText (required), optional reason if translation failed. */
-export const TRANSLATION_RESPONSE_SCHEMA = {
-    type: 'object',
-    properties: {
-        translatedText: {
-            type: 'string',
-            description: 'The text translated to the requested locale. Required. Must not be empty.',
-        },
-        reason: {
-            type: 'string',
-            description:
-                'Optional: reason why translation could not be produced or was partial (e.g. ambiguous input).',
-        },
-    },
-    required: ['translatedText'],
-    additionalProperties: false,
-} as const;
-
-/** JSON schema for Think (Q&A) responses: single answer field. */
-export const THINK_RESPONSE_SCHEMA = {
-    type: 'object',
-    properties: {
-        answer: {
-            type: 'string',
-            description: 'The concise answer to the user question. Required.',
-        },
-    },
-    required: ['answer'],
-    additionalProperties: false,
-} as const;
-
-/** JSON schema for language check: done (already in locale) or must_translate. */
-export const LANGUAGE_CHECK_RESPONSE_SCHEMA = {
-    type: 'object',
-    properties: {
-        status: {
-            type: 'string',
-            enum: ['done', 'must_translate'],
-            description: 'done if text is in the requested locale, must_translate otherwise.',
-        },
-    },
-    required: ['status'],
-    additionalProperties: false,
-} as const;
 
 export type AskAgentOptions = AgentQueryOptions;
 
