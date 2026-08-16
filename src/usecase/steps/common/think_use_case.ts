@@ -8,6 +8,7 @@ import { getThinkPrompt } from '../../../prompts';
 import { logDebugInfo, logError, logInfo } from '../../../utils/logger';
 import { OPENCODE_PROJECT_CONTEXT_INSTRUCTION } from '../../../utils/opencode_project_context_instruction';
 import { ParamUseCase } from '../../base/param_usecase';
+import { extractStructuredAnswer } from './agent_answer_policy';
 
 export class ThinkUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'ThinkUseCase';
@@ -117,12 +118,7 @@ export class ThinkUseCase implements ParamUseCase<Execution, Result[]> {
                 schema: THINK_RESPONSE_SCHEMA as unknown as Record<string, unknown>,
                 schemaName: 'think_response',
             });
-            const answer =
-                response != null &&
-                typeof response === 'object' &&
-                typeof (response as Record<string, unknown>).answer === 'string'
-                    ? ((response as Record<string, unknown>).answer as string).trim()
-                    : '';
+            const answer = extractStructuredAnswer(response);
 
             logDebugInfo(`Think: OpenCode response received. Answer length=${answer.length}. Full answer:\n${answer}`);
 

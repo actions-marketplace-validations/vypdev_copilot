@@ -15,6 +15,7 @@ import { logDebugInfo, logError, logInfo } from '../../../utils/logger';
 import { OPENCODE_PROJECT_CONTEXT_INSTRUCTION } from '../../../utils/opencode_project_context_instruction';
 import { getTaskEmoji } from '../../../utils/task_emoji';
 import { ParamUseCase } from '../../base/param_usecase';
+import { extractStructuredAnswer } from '../common/agent_answer_policy';
 
 export class AnswerIssueHelpUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'AnswerIssueHelpUseCase';
@@ -100,12 +101,7 @@ export class AnswerIssueHelpUseCase implements ParamUseCase<Execution, Result[]>
                 schemaName: 'think_response',
             });
 
-            const answer =
-                response != null &&
-                typeof response === 'object' &&
-                typeof (response as Record<string, unknown>).answer === 'string'
-                    ? ((response as Record<string, unknown>).answer as string).trim()
-                    : '';
+            const answer = extractStructuredAnswer(response);
 
             logDebugInfo(`AnswerIssueHelp: OpenCode response. Answer length=${answer.length}. Full answer:\n${answer}`);
 
