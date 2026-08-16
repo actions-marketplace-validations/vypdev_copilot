@@ -27,7 +27,7 @@ import { startOpencodeServer, type ManagedOpencodeServer } from '../utils/openco
 import { loadProjectDetails } from './project_details_loader';
 import { mainRun } from './common_action';
 import { isEnabledInput } from './input_boolean_policy';
-import { parseIntegerInput } from './input_number_policy';
+import { parseBoundedPositiveIntegerInput, parseIntegerInput } from './input_number_policy';
 import { parseDelimitedValues } from './input_values_policy';
 
 export async function runGitHubAction(): Promise<void> {
@@ -81,11 +81,11 @@ export async function runGitHubAction(): Promise<void> {
     const aiIgnoreFilesInput: string = getInput(INPUT_KEYS.AI_IGNORE_FILES);
     const aiIgnoreFiles: string[] = parseDelimitedValues(aiIgnoreFilesInput);
     const bugbotSeverity = getInput(INPUT_KEYS.BUGBOT_SEVERITY) || BUGBOT_MIN_SEVERITY;
-    const bugbotCommentLimitRaw = parseInt(getInput(INPUT_KEYS.BUGBOT_COMMENT_LIMIT), 10);
-    const bugbotCommentLimit =
-        Number.isNaN(bugbotCommentLimitRaw) || bugbotCommentLimitRaw < 1
-            ? BUGBOT_MAX_COMMENTS
-            : Math.min(bugbotCommentLimitRaw, 200);
+    const bugbotCommentLimit = parseBoundedPositiveIntegerInput(
+        getInput(INPUT_KEYS.BUGBOT_COMMENT_LIMIT),
+        BUGBOT_MAX_COMMENTS,
+        200,
+    );
     const bugbotFixVerifyCommandsInput = getInput(INPUT_KEYS.BUGBOT_FIX_VERIFY_COMMANDS);
     const bugbotFixVerifyCommands = bugbotFixVerifyCommandsInput
         .split(',')

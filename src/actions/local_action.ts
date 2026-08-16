@@ -24,7 +24,7 @@ import { logInfo } from '../utils/logger';
 import { getActionInputsWithDefaults } from '../utils/yml_utils';
 import { isEnabledInput } from './input_boolean_policy';
 import { loadProjectDetails } from './project_details_loader';
-import { parseIntegerInput } from './input_number_policy';
+import { parseBoundedPositiveIntegerInput, parseIntegerInput } from './input_number_policy';
 import { parseDelimitedValues } from './input_values_policy';
 import { mainRun } from './common_action';
 import boxen from 'boxen';
@@ -74,11 +74,7 @@ export async function runLocalAction(
     const aiIgnoreFiles: string[] = parseDelimitedValues(aiIgnoreFilesInput);
     const bugbotSeverity = (additionalParams[INPUT_KEYS.BUGBOT_SEVERITY] ?? actionInputs[INPUT_KEYS.BUGBOT_SEVERITY]) || BUGBOT_MIN_SEVERITY;
     const bugbotCommentLimitRaw = additionalParams[INPUT_KEYS.BUGBOT_COMMENT_LIMIT] ?? actionInputs[INPUT_KEYS.BUGBOT_COMMENT_LIMIT];
-    const bugbotCommentLimitNum = typeof bugbotCommentLimitRaw === 'number' ? bugbotCommentLimitRaw : parseInt(String(bugbotCommentLimitRaw ?? ''), 10);
-    const bugbotCommentLimit =
-        Number.isNaN(bugbotCommentLimitNum) || bugbotCommentLimitNum < 1
-            ? BUGBOT_MAX_COMMENTS
-            : Math.min(bugbotCommentLimitNum, 200);
+    const bugbotCommentLimit = parseBoundedPositiveIntegerInput(bugbotCommentLimitRaw, BUGBOT_MAX_COMMENTS, 200);
     const bugbotFixVerifyCommandsInput =
         additionalParams[INPUT_KEYS.BUGBOT_FIX_VERIFY_COMMANDS] ?? actionInputs[INPUT_KEYS.BUGBOT_FIX_VERIFY_COMMANDS] ?? '';
     const bugbotFixVerifyCommands = String(bugbotFixVerifyCommandsInput)
