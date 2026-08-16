@@ -33,6 +33,22 @@ describe('AiRepository', () => {
     (global as unknown as { fetch: typeof fetch }).fetch = mockFetch;
   });
 
+  it('uses injected CLI port for findings without creating an HTTP adapter', async () => {
+    const cli = { execute: jest.fn().mockResolvedValue('{"findings":[]}') };
+    const http = { sendMessage: jest.fn() };
+    const ai = new Ai('http://unused', 'model', false, false, [], false, 'low', 20, [], {
+      findings: { provider: 'cursor', transport: 'cli', model: 'cursor', command: 'cursor-agent' },
+      fixer: { provider: 'cursor', transport: 'cli', model: 'cursor', command: 'cursor-agent' },
+    });
+    const injectedRepo = new AiRepository(cli, http);
+
+    const result = await injectedRepo.askAgent(ai, 'findings', 'inspect', { expectJson: true, schema: { type: 'object' } });
+
+    expect(result).toEqual({ findings: [] });
+    expect(cli.execute).toHaveBeenCalledTimes(1);
+    expect(http.sendMessage).not.toHaveBeenCalled();
+  });
+
   afterEach(() => {
     jest.runOnlyPendingTimers();
     jest.useRealTimers();

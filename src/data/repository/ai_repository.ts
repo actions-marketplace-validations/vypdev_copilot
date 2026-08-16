@@ -2,8 +2,9 @@ import { OPENCODE_REQUEST_TIMEOUT_MS } from '../../utils/constants';
 import { logDebugInfo, logError, logInfo } from '../../utils/logger';
 import { Ai } from '../model/ai';
 import { parseJsonFromAgentText } from './agent_json_parser';
-import { OpenCodeHttpClient } from './opencode_http_client';
 import { AgentCliClient } from './agent_cli_client';
+import { OpenCodeHttpClient } from './opencode_http_client';
+import type { AgentCliPort, OpenCodeClientPort } from './agent_ports';
 import { withOpenCodeRetry } from './opencode_retry';
 import { buildAgentPrompt } from './agent_prompt_policy';
 
@@ -181,6 +182,16 @@ export async function getSessionDiff(
 }
 
 export class AiRepository {
+    private readonly cliClient: AgentCliPort;
+    private readonly openCodeClient: OpenCodeClientPort;
+
+    constructor(
+        cliClient: AgentCliPort = new AgentCliClient(),
+        openCodeClient: OpenCodeClientPort = new OpenCodeHttpClient({ requestTimeoutMs: OPENCODE_REQUEST_TIMEOUT_MS }),
+    ) {
+        this.cliClient = cliClient;
+        this.openCodeClient = openCodeClient;
+    }
     /**
      * Ask an OpenCode agent (e.g. Plan) to perform a task. All calls use strict response (expectJson + schema).
      * Single retry system: HTTP failures and parse failures both retry up to OPENCODE_MAX_RETRIES.
@@ -204,7 +215,7 @@ export class AiRepository {
         const taskConfiguration = getValidatedAgentConfiguration(ai, 'findings');
         if (taskConfiguration.transport === 'cli') {
             try {
-                const output = await new AgentCliClient().execute({ command: taskConfiguration.command!, prompt: promptText, timeoutMs: OPENCODE_REQUEST_TIMEOUT_MS });
+                const output = await this.cliClient.execute({ command: taskConfiguration.command!, prompt: promptText, timeoutMs: OPENCODE_REQUEST_TIMEOUT_MS });
                 if (options.expectJson && options.schema) return parseJsonFromAgentText(output);
                 return output;
             } catch (error: unknown) {
@@ -214,7 +225,7 @@ export class AiRepository {
         }
         try {
             return await withOpenCodeRetry(async () => {
-                const client = new OpenCodeHttpClient({ requestTimeoutMs: OPENCODE_REQUEST_TIMEOUT_MS });
+                const client = this.openCodeClient;
                 const { parts } = await client.sendMessage({
                     serverUrl,
                     providerID,
@@ -256,7 +267,7 @@ export class AiRepository {
         const taskConfiguration = getValidatedAgentConfiguration(ai, 'fixer');
         if (taskConfiguration.transport === 'cli') {
             try {
-                const text = await new AgentCliClient().execute({ command: taskConfiguration.command!, prompt, timeoutMs: OPENCODE_REQUEST_TIMEOUT_MS });
+                const text = await this.cliClient.execute({ command: taskConfiguration.command!, prompt, timeoutMs: OPENCODE_REQUEST_TIMEOUT_MS });
                 return { text, sessionId: 'cli' };
             } catch (error: unknown) {
                 logError(`Error querying ${taskConfiguration.provider} CLI fixer: ${error instanceof Error ? error.message : String(error)}`);
@@ -269,7 +280,7 @@ export class AiRepository {
         try {
             return await withOpenCodeRetry(
                 async () => {
-                    const client = new OpenCodeHttpClient({ requestTimeoutMs: OPENCODE_REQUEST_TIMEOUT_MS });
+                    const client = this.openCodeClient;
                     const result = await client.sendMessage({
                         serverUrl,
                         providerID,
