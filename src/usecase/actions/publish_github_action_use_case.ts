@@ -1,6 +1,6 @@
 import { Execution } from "../../data/model/execution";
 import { Result } from "../../data/model/result";
-import { ProjectRepository } from "../../data/repository/project_repository";
+import { RepositoryReleaseRepository } from "../../data/repository/repository_release_repository";
 import { INPUT_KEYS } from "../../utils/constants";
 import { logError, logInfo } from "../../utils/logger";
 import { getTaskEmoji } from "../../utils/task_emoji";
@@ -10,7 +10,7 @@ import { ParamUseCase } from "../base/param_usecase";
 export class PublishGithubActionUseCase  implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'PublishGithubActionUseCase';
     
-    private projectRepository = new ProjectRepository();
+    private projectRepository = new RepositoryReleaseRepository();
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`);

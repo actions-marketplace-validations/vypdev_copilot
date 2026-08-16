@@ -14,8 +14,8 @@ jest.mock('../../../utils/task_emoji', () => ({
 }));
 
 const mockCreateRelease = jest.fn();
-jest.mock('../../../data/repository/project_repository', () => ({
-  ProjectRepository: jest.fn().mockImplementation(() => ({
+jest.mock('../../../data/repository/repository_release_repository', () => ({
+  RepositoryReleaseRepository: jest.fn().mockImplementation(() => ({
     createRelease: mockCreateRelease,
   })),
 }));
