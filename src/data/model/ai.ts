@@ -29,8 +29,8 @@ export class Ai {
         bugbotCommentLimit: number,
         bugbotFixVerifyCommands: string[] = [],
         agentTasks: AgentTaskConfiguration = {
-            findings: { provider: 'opencode', transport: 'server', model: opencodeModel || OPENCODE_DEFAULT_MODEL, serverUrl: opencodeServerUrl },
-            fixer: { provider: 'opencode', transport: 'server', model: opencodeModel || OPENCODE_DEFAULT_MODEL, serverUrl: opencodeServerUrl },
+            findings: { provider: 'opencode', transport: 'server', model: opencodeModel, serverUrl: opencodeServerUrl },
+            fixer: { provider: 'opencode', transport: 'server', model: opencodeModel, serverUrl: opencodeServerUrl },
         }
     ) {
         this.opencodeServerUrl = opencodeServerUrl;

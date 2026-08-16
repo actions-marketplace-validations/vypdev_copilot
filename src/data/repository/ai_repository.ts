@@ -18,25 +18,6 @@ function ensureNoTrailingSlash(url: string): string {
     return url.replace(/\/+$/, '') || url;
 }
 
-/** Result of validating AI config for OpenCode calls. null when invalid. */
-interface OpenCodeConfig {
-    serverUrl: string;
-    providerID: string;
-    modelID: string;
-    model: string;
-}
-
-function getValidatedOpenCodeConfig(ai: Ai): OpenCodeConfig | null {
-    const serverUrl = ai.getOpencodeServerUrl();
-    const model = ai.getOpencodeModel();
-    if (!serverUrl?.trim() || !model?.trim()) {
-        logError('Missing required AI configuration: opencode-server-url and opencode-model');
-        return null;
-    }
-    const { providerID, modelID } = ai.getOpencodeModelParts();
-    return { serverUrl, providerID, modelID, model };
-}
-
 function getValidatedAgentConfiguration(ai: Ai, task: 'findings' | 'fixer') {
     const configuration = ai.getAgentConfiguration(task);
     if (configuration.transport === 'sdk') {
@@ -202,9 +183,6 @@ export class AiRepository {
         prompt: string,
         options: AskAgentOptions = {}
     ): Promise<string | Record<string, unknown> | undefined> => {
-        const config = getValidatedOpenCodeConfig(ai);
-        if (!config) return undefined;
-        const { serverUrl, providerID, modelID, model } = config;
         const schemaName = options.schemaName ?? 'response';
         const promptText = buildAgentPrompt(
             prompt,
@@ -222,6 +200,19 @@ export class AiRepository {
                 logError(`Error querying ${taskConfiguration.provider} CLI: ${error instanceof Error ? error.message : String(error)}`);
                 return undefined;
             }
+        }
+        if (taskConfiguration.provider !== 'opencode' || !taskConfiguration.serverUrl || !taskConfiguration.model.trim()) {
+            logError('Missing required AI configuration for findings server transport.');
+            return undefined;
+        }
+        const modelReference = taskConfiguration.model.trim();
+        const separator = modelReference.indexOf('/');
+        const providerID = separator > 0 ? modelReference.slice(0, separator) : 'opencode';
+        const modelID = separator > 0 ? modelReference.slice(separator + 1).trim() : modelReference;
+        const serverUrl = taskConfiguration.serverUrl;
+        const model = taskConfiguration.model;
+        if (!modelID.trim()) {
+            throw new Error(`OpenCode model must use provider/model format for findings.`);
         }
         try {
             return await withOpenCodeRetry(async () => {
@@ -274,9 +265,19 @@ export class AiRepository {
                 return undefined;
             }
         }
-        const config = getValidatedOpenCodeConfig(ai);
-        if (!config) return undefined;
-        const { serverUrl, providerID, modelID, model } = config;
+        if (taskConfiguration.provider !== 'opencode' || !taskConfiguration.serverUrl || !taskConfiguration.model.trim()) {
+            logError('Missing required AI configuration for fixer server transport.');
+            return undefined;
+        }
+        const modelReference = taskConfiguration.model.trim();
+        const separator = modelReference.indexOf('/');
+        const providerID = separator > 0 ? modelReference.slice(0, separator) : 'opencode';
+        const modelID = separator > 0 ? modelReference.slice(separator + 1).trim() : modelReference;
+        const serverUrl = taskConfiguration.serverUrl;
+        const model = taskConfiguration.model;
+        if (!modelID.trim()) {
+            throw new Error('OpenCode model must use provider/model format for fixer.');
+        }
         try {
             return await withOpenCodeRetry(
                 async () => {

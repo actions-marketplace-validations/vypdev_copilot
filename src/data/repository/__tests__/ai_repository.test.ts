@@ -36,7 +36,7 @@ describe('AiRepository', () => {
   it('uses injected CLI port for findings without creating an HTTP adapter', async () => {
     const cli = { execute: jest.fn().mockResolvedValue('{"findings":[]}') };
     const http = { sendMessage: jest.fn() };
-    const ai = new Ai('http://unused', 'model', false, false, [], false, 'low', 20, [], {
+    const ai = new Ai('', '', false, false, [], false, 'low', 20, [], {
       findings: { provider: 'cursor', transport: 'cli', model: 'cursor', command: 'cursor-agent' },
       fixer: { provider: 'cursor', transport: 'cli', model: 'cursor', command: 'cursor-agent' },
     });
