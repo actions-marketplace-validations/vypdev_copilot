@@ -8,7 +8,13 @@ import { OpenCodeHttpClient } from './opencode_http_client';
 import type { AgentCliPort, AgentQueryOptions, FindingsQueryPort, FixerQueryPort, OpenCodeClientPort } from './agent_ports';
 import { withOpenCodeRetry } from './opencode_retry';
 import { buildAgentPrompt } from './agent_prompt_policy';
+import { getValidatedAgentConfiguration } from './agent_configuration_policy';
+import { extractReasoningFromParts, extractTextFromParts } from './agent_response_parser';
 export { LANGUAGE_CHECK_RESPONSE_SCHEMA, THINK_RESPONSE_SCHEMA, TRANSLATION_RESPONSE_SCHEMA } from './agent_response_schemas';
+
+export const OPENCODE_AGENT_PLAN = 'build';
+export const OPENCODE_AGENT_BUILD = 'build';
+export type AskAgentOptions = AgentQueryOptions;
 
 function createTimeoutSignal(ms: number): AbortSignal {
     const controller = new AbortController();
@@ -19,46 +25,6 @@ function createTimeoutSignal(ms: number): AbortSignal {
 function ensureNoTrailingSlash(url: string): string {
     return url.replace(/\/+$/, '') || url;
 }
-
-function getValidatedAgentConfiguration(ai: Ai, task: 'findings' | 'fixer') {
-    const configuration = ai.getAgentConfiguration(task);
-    if (configuration.transport === 'server' && configuration.provider !== 'opencode') {
-        throw new Error(`Agent server transport is not implemented for ${configuration.provider}. Use cli.`);
-    }
-    if (configuration.transport === 'cli' && !configuration.command?.trim()) {
-        throw new Error(`Agent CLI command is required for ${configuration.provider}.`);
-    }
-    return configuration;
-}
-
-
-function extractPartsByType(parts: unknown, type: string, joinWith: string): string {
-    if (!Array.isArray(parts)) return '';
-    return (parts as Array<{ type?: string; text?: string }>)
-        .filter((p) => p?.type === type && typeof p.text === 'string')
-        .map((p) => p.text as string)
-        .join(joinWith)
-        .trim();
-}
-
-
-/** Extract plain text from OpenCode message response parts (type === 'text'). */
-function extractTextFromParts(parts: unknown): string {
-    return extractPartsByType(parts, 'text', '');
-}
-
-/** Extract reasoning from OpenCode message parts (type === 'reasoning'). */
-function extractReasoningFromParts(parts: unknown): string {
-    return extractPartsByType(parts, 'reasoning', '\n\n');
-}
-
-/** Default OpenCode agent for analysis/planning (read-only, no file edits). Changed to build to support diffs. */
-export const OPENCODE_AGENT_PLAN = 'build';
-
-/** OpenCode agent with write/edit/bash for development (e.g. copilot when run locally). */
-export const OPENCODE_AGENT_BUILD = 'build';
-
-export type AskAgentOptions = AgentQueryOptions;
 
 /** File diff from OpenCode GET /session/:id/diff */
 export interface OpenCodeFileDiff {
@@ -135,7 +101,7 @@ export class AiRepository implements FindingsQueryPort, FixerQueryPort {
             options.schema,
             schemaName,
         );
-        const taskConfiguration = getValidatedAgentConfiguration(ai, 'findings');
+        const taskConfiguration = getValidatedAgentConfiguration(ai.getAgentConfiguration('findings'), 'findings');
         if (taskConfiguration.transport === 'cli') {
             try {
                 const output = await this.cliAdapter.execute({
@@ -204,7 +170,7 @@ export class AiRepository implements FindingsQueryPort, FixerQueryPort {
         ai: Ai,
         prompt: string
     ): Promise<{ text: string; sessionId: string } | undefined> => {
-        const taskConfiguration = getValidatedAgentConfiguration(ai, 'fixer');
+        const taskConfiguration = getValidatedAgentConfiguration(ai.getAgentConfiguration('fixer'), 'fixer');
         if (taskConfiguration.transport === 'cli') {
             try {
                 const text = await this.cliAdapter.execute({
