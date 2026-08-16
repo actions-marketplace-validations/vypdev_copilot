@@ -1,4 +1,5 @@
 import { OPENCODE_DEFAULT_MODEL } from '../../utils/constants';
+import { AgentTask, AgentTaskConfiguration } from './agent';
 
 /**
  * AI configuration for OpenCode-backed analysis.
@@ -15,6 +16,7 @@ export class Ai {
     private bugbotMinSeverity: string;
     private bugbotCommentLimit: number;
     private bugbotFixVerifyCommands: string[];
+    private agentTasks: AgentTaskConfiguration;
 
     constructor(
         opencodeServerUrl: string,
@@ -25,7 +27,11 @@ export class Ai {
         aiIncludeReasoning: boolean,
         bugbotMinSeverity: string,
         bugbotCommentLimit: number,
-        bugbotFixVerifyCommands: string[] = []
+        bugbotFixVerifyCommands: string[] = [],
+        agentTasks: AgentTaskConfiguration = {
+            findings: { provider: 'opencode', transport: 'server', model: opencodeModel || OPENCODE_DEFAULT_MODEL, serverUrl: opencodeServerUrl },
+            fixer: { provider: 'opencode', transport: 'server', model: opencodeModel || OPENCODE_DEFAULT_MODEL, serverUrl: opencodeServerUrl },
+        }
     ) {
         this.opencodeServerUrl = opencodeServerUrl;
         this.opencodeModel = opencodeModel;
@@ -36,6 +42,7 @@ export class Ai {
         this.bugbotMinSeverity = bugbotMinSeverity;
         this.bugbotCommentLimit = bugbotCommentLimit;
         this.bugbotFixVerifyCommands = bugbotFixVerifyCommands;
+        this.agentTasks = agentTasks;
     }
 
     getOpencodeServerUrl(): string {
@@ -72,6 +79,10 @@ export class Ai {
 
     getBugbotFixVerifyCommands(): string[] {
         return this.bugbotFixVerifyCommands;
+    }
+
+    getAgentConfiguration(task: AgentTask): AgentTaskConfiguration[AgentTask] {
+        return this.agentTasks[task];
     }
 
     /**

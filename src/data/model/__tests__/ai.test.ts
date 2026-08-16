@@ -2,6 +2,22 @@ import { OPENCODE_DEFAULT_MODEL } from '../../../utils/constants';
 import { Ai } from '../ai';
 
 describe('Ai', () => {
+    it('exposes task-specific provider configuration without coupling consumers to OpenCode', () => {
+        const ai = new Ai('http://opencode:4096', 'opencode/model', true, false, [], false, 'low', 10, [], {
+            findings: { provider: 'codex', transport: 'sdk', model: 'gpt-5-codex' },
+            fixer: { provider: 'cursor', transport: 'cli', model: 'cursor-agent', command: 'cursor-agent' },
+        });
+
+        expect(ai.getAgentConfiguration('findings')).toEqual({ provider: 'codex', transport: 'sdk', model: 'gpt-5-codex' });
+        expect(ai.getAgentConfiguration('fixer')).toEqual({ provider: 'cursor', transport: 'cli', model: 'cursor-agent', command: 'cursor-agent' });
+    });
+
+    it('defaults both bugbot tasks to the legacy OpenCode server', () => {
+        const ai = new Ai('http://opencode:4096', 'opencode/model', true, false, [], false, 'low', 10);
+
+        expect(ai.getAgentConfiguration('findings')).toEqual({ provider: 'opencode', transport: 'server', model: 'opencode/model', serverUrl: 'http://opencode:4096' });
+        expect(ai.getAgentConfiguration('fixer')).toEqual({ provider: 'opencode', transport: 'server', model: 'opencode/model', serverUrl: 'http://opencode:4096' });
+    });
   const defaultArgs: [
     string,
     string,
