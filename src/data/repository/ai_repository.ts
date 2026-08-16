@@ -1,7 +1,6 @@
 import { OPENCODE_REQUEST_TIMEOUT_MS } from '../../utils/constants';
 import { logDebugInfo, logError, logInfo } from '../../utils/logger';
 import { Ai } from '../model/ai';
-import { parseJsonFromAgentText } from './agent_json_parser';
 import { AgentCliClient } from './agent_cli_client';
 import { ProviderCliAdapter } from './provider_cli_adapter';
 import { OpenCodeHttpClient } from './opencode_http_client';
@@ -10,7 +9,8 @@ import { OpenCodeAgentInvoker } from './opencode_agent_invoker';
 import { buildAgentPrompt } from './agent_prompt_policy';
 import { getValidatedAgentConfiguration } from './agent_configuration_policy';
 import { executeAgentRequest } from './agent_execution_policy';
-import { extractReasoningFromParts, extractTextFromParts } from './agent_response_parser';
+import { interpretFindingsResponse } from './agent_findings_response_policy';
+import { extractTextFromParts } from './agent_response_parser';
 export { getSessionDiff } from './opencode_session_diff_client';
 export type { OpenCodeFileDiff } from './opencode_session_diff_client';
 export { LANGUAGE_CHECK_RESPONSE_SCHEMA, THINK_RESPONSE_SCHEMA, TRANSLATION_RESPONSE_SCHEMA } from './agent_response_schemas';
@@ -55,7 +55,7 @@ export class AiRepository implements FindingsQueryPort, FixerQueryPort {
                     prompt: promptText,
                     timeoutMs: OPENCODE_REQUEST_TIMEOUT_MS,
                 });
-                if (options.expectJson && options.schema) return parseJsonFromAgentText(output);
+                if (options.expectJson && options.schema) return interpretFindingsResponse(output, options);
                 return output;
             } catch (error: unknown) {
                 logError(`Error querying ${taskConfiguration.provider} CLI: ${error instanceof Error ? error.message : String(error)}`);
@@ -74,18 +74,15 @@ export class AiRepository implements FindingsQueryPort, FixerQueryPort {
                 timeoutMs: OPENCODE_REQUEST_TIMEOUT_MS,
                 cliAdapter: this.cliAdapter,
                 openCodeInvoker: this.openCodeInvoker,
-                mapCliOutput: (output) => options.expectJson && options.schema ? parseJsonFromAgentText(output) : output,
+                mapCliOutput: (output) => interpretFindingsResponse(output, options),
                 mapServerResponse: ({ parts }) => {
-                    const text = extractTextFromParts(parts);
-                    if (!text) throw new Error('Empty response text');
-                    const reasoning = options.includeReasoning ? extractReasoningFromParts(parts) : '';
+                    const result = interpretFindingsResponse(parts, options);
                     if (options.expectJson && options.schema) {
+                        const text = extractTextFromParts(parts);
                         logInfo(`OpenCode agent response (expectJson=true) length=${text.length}`);
                         logDebugInfo(`OpenCode agent response (full text, no truncation) length=${text.length}:\\n${text}`);
-                        const parsed = parseJsonFromAgentText(text);
-                        return options.includeReasoning && reasoning ? { ...parsed, reasoning } : parsed;
                     }
-                    return text;
+                    return result;
                 },
             });
         } catch (error: unknown) {
