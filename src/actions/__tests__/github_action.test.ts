@@ -1,6 +1,6 @@
 /**
  * Unit tests for runGitHubAction.
- * Mocks @actions/core, ProjectRepository, mainRun, and finish flow.
+ * Mocks @actions/core, the project-board adapter, mainRun, and finish flow.
  */
 
 import * as core from '@actions/core';

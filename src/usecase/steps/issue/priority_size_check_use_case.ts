@@ -18,7 +18,7 @@ interface PrioritySizeParam {
     tokens: { token: string };
 }
 
-interface PriorityProjectRepository {
+interface ProjectBoardPriorityPort {
     setTaskPriority(
         project: { title: string; publicUrl: string },
         owner: string,
@@ -33,7 +33,7 @@ export async function runPrioritySizeCheck(
     param: Execution | PrioritySizeParam,
     taskId: string,
     contentNumber: number,
-    projectRepository: PriorityProjectRepository = new ProjectBoardRepository(),
+    projectRepository: ProjectBoardPriorityPort = new ProjectBoardRepository(),
 ): Promise<Result[]> {
     const typedParam = param as unknown as PrioritySizeParam;
     const result: Result[] = [];

@@ -1,6 +1,6 @@
 /**
  * Unit tests for runLocalAction.
- * Mocks getActionInputsWithDefaults, ProjectRepository, mainRun, chalk, boxen.
+ * Mocks getActionInputsWithDefaults, the project-board adapter, mainRun, chalk, boxen.
  */
 
 jest.mock('chalk', () => ({
