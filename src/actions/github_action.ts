@@ -20,7 +20,8 @@ import { PublishResultUseCase } from '../usecase/steps/common/publish_resume_use
 import { StoreConfigurationUseCase } from '../usecase/steps/common/store_configuration_use_case';
 import { BUGBOT_MAX_COMMENTS, BUGBOT_MIN_SEVERITY, DEFAULT_IMAGE_CONFIG, INPUT_KEYS, OPENCODE_DEFAULT_MODEL } from '../utils/constants';
 import { logDebugInfo, logError, logInfo } from '../utils/logger';
-import { startOpencodeServer, type ManagedOpencodeServer } from '../utils/opencode_server';
+import type { ManagedAgentServer } from '../data/repository/agent_ports';
+import { OpenCodeServerLifecycleAdapter } from '../data/repository/opencode_server_lifecycle_adapter';
 import { loadProjectDetails } from './project_details_loader';
 import { mainRun } from './common_action';
 import { isEnabledInput } from './input_boolean_policy';
@@ -72,10 +73,11 @@ export async function runGitHubAction(): Promise<void> {
         && requestedAgentTasks.findings.provider === 'opencode'
         && requestedAgentTasks.findings.transport === 'server';
 
-    let managedOpencodeServer: ManagedOpencodeServer | undefined;
+    const lifecycle: OpenCodeServerLifecycleAdapter = new OpenCodeServerLifecycleAdapter();
+    let managedOpencodeServer: ManagedAgentServer | undefined;
     if (opencodeStartServer) {
         logInfo('Starting managed OpenCode server...');
-        managedOpencodeServer = await startOpencodeServer({ cwd: process.cwd() });
+        managedOpencodeServer = await lifecycle.start({ cwd: process.cwd() });
         opencodeServerUrl = managedOpencodeServer.url;
         logInfo(`OpenCode server started at ${opencodeServerUrl}.`);
     } else {
