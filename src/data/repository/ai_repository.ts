@@ -3,6 +3,7 @@ import { logDebugInfo, logError, logInfo } from '../../utils/logger';
 import { Ai } from '../model/ai';
 import { parseJsonFromAgentText } from './agent_json_parser';
 import { AgentCliClient } from './agent_cli_client';
+import { ProviderCliAdapter } from './provider_cli_adapter';
 import { OpenCodeHttpClient } from './opencode_http_client';
 import type { AgentCliPort, AgentQueryOptions, FindingsQueryPort, FixerQueryPort, OpenCodeClientPort } from './agent_ports';
 import { withOpenCodeRetry } from './opencode_retry';
@@ -151,14 +152,14 @@ export async function getSessionDiff(
 }
 
 export class AiRepository implements FindingsQueryPort, FixerQueryPort {
-    private readonly cliClient: AgentCliPort;
+    private readonly cliAdapter: ProviderCliAdapter;
     private readonly openCodeClient: OpenCodeClientPort;
 
     constructor(
         cliClient: AgentCliPort = new AgentCliClient(),
         openCodeClient: OpenCodeClientPort = new OpenCodeHttpClient({ requestTimeoutMs: OPENCODE_REQUEST_TIMEOUT_MS }),
     ) {
-        this.cliClient = cliClient;
+        this.cliAdapter = new ProviderCliAdapter(cliClient);
         this.openCodeClient = openCodeClient;
     }
     /**
@@ -181,7 +182,11 @@ export class AiRepository implements FindingsQueryPort, FixerQueryPort {
         const taskConfiguration = getValidatedAgentConfiguration(ai, 'findings');
         if (taskConfiguration.transport === 'cli') {
             try {
-                const output = await this.cliClient.execute({ command: taskConfiguration.command!, prompt: promptText, timeoutMs: OPENCODE_REQUEST_TIMEOUT_MS });
+                const output = await this.cliAdapter.execute({
+                    configuration: taskConfiguration,
+                    prompt: promptText,
+                    timeoutMs: OPENCODE_REQUEST_TIMEOUT_MS,
+                });
                 if (options.expectJson && options.schema) return parseJsonFromAgentText(output);
                 return output;
             } catch (error: unknown) {
@@ -246,7 +251,11 @@ export class AiRepository implements FindingsQueryPort, FixerQueryPort {
         const taskConfiguration = getValidatedAgentConfiguration(ai, 'fixer');
         if (taskConfiguration.transport === 'cli') {
             try {
-                const text = await this.cliClient.execute({ command: taskConfiguration.command!, prompt, timeoutMs: OPENCODE_REQUEST_TIMEOUT_MS });
+                const text = await this.cliAdapter.execute({
+                    configuration: taskConfiguration,
+                    prompt,
+                    timeoutMs: OPENCODE_REQUEST_TIMEOUT_MS,
+                });
                 return { text, sessionId: 'cli' };
             } catch (error: unknown) {
                 logError(`Error querying ${taskConfiguration.provider} CLI fixer: ${error instanceof Error ? error.message : String(error)}`);
