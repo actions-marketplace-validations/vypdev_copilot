@@ -162,6 +162,14 @@ program
   .option('--agent-transport <transport>', 'Agent transport (server|cli)', process.env.AGENT_TRANSPORT || 'server')
   .option('--agent-model <model>', 'Selected agent model', process.env.AGENT_MODEL)
   .option('--agent-command <command>', 'CLI executable for the selected agent', process.env.AGENT_COMMAND)
+  .option('--findings-provider <provider>', 'Findings agent provider', process.env.FINDINGS_PROVIDER)
+  .option('--findings-transport <transport>', 'Findings agent transport', process.env.FINDINGS_TRANSPORT)
+  .option('--findings-model <model>', 'Findings agent model', process.env.FINDINGS_MODEL)
+  .option('--findings-command <command>', 'Findings CLI executable', process.env.FINDINGS_COMMAND)
+  .option('--fixer-provider <provider>', 'Fixer agent provider', process.env.FIXER_PROVIDER)
+  .option('--fixer-transport <transport>', 'Fixer agent transport', process.env.FIXER_TRANSPORT)
+  .option('--fixer-model <model>', 'Fixer agent model', process.env.FIXER_MODEL)
+  .option('--fixer-command <command>', 'Fixer CLI executable', process.env.FIXER_COMMAND)
   .option('--output <format>', 'Output format (text|json)', 'text')
   .action(async (options) => {
     const gitInfo = getGitInfo();
@@ -197,6 +205,14 @@ program
       model: agentModel,
       serverUrl,
       command: agentCommand,
+      findings: {
+        provider: cleanArg(options.findingsProvider), transport: cleanArg(options.findingsTransport),
+        model: cleanArg(options.findingsModel), command: cleanArg(options.findingsCommand),
+      },
+      fixer: {
+        provider: cleanArg(options.fixerProvider), transport: cleanArg(options.fixerTransport),
+        model: cleanArg(options.fixerModel), command: cleanArg(options.fixerCommand),
+      },
     });
     const authPreflight = runAgentAuthenticationPreflight(agentTasks.findings);
     if (authPreflight.check.status === 'missing') {

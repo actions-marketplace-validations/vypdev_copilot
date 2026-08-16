@@ -402,6 +402,30 @@ inputs:
   agent-command:
     description: "Executable command for CLI agents. Required when agent-transport is cli."
     default: ""
+  findings-provider:
+    description: "Optional provider override for findings."
+    default: ""
+  findings-transport:
+    description: "Optional transport override for findings."
+    default: ""
+  findings-model:
+    description: "Optional model override for findings."
+    default: ""
+  findings-command:
+    description: "Optional CLI command override for findings."
+    default: ""
+  fixer-provider:
+    description: "Optional provider override for fixer."
+    default: ""
+  fixer-transport:
+    description: "Optional transport override for fixer."
+    default: ""
+  fixer-model:
+    description: "Optional model override for fixer."
+    default: ""
+  fixer-command:
+    description: "Optional CLI command override for fixer."
+    default: ""
   opencode-server-url:
     description: "OpenCode server URL for AI operations (e.g. http://localhost:4096). OpenCode supports 75+ LLM providers."
     default: "http://localhost:4096"

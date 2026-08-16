@@ -15,6 +15,16 @@ describe('buildAgentTasks', () => {
         });
     });
 
+    it('supports independent findings and fixer configuration', () => {
+        const tasks = buildAgentTasks({
+            provider: 'opencode', transport: 'server', model: 'server-model', serverUrl: 'http://localhost',
+            fixer: { provider: 'codex', transport: 'cli', model: 'codex-model' },
+        });
+        expect(tasks.findings.provider).toBe('opencode');
+        expect(tasks.fixer.provider).toBe('codex');
+        expect(tasks.fixer.command).toBe('codex');
+    });
+
     it('rejects unknown providers and transports', () => {
         expect(() => buildAgentTasks({ provider: 'unknown', transport: 'server', model: 'model' })).toThrow('Unsupported agent provider');
         expect(() => buildAgentTasks({ provider: 'codex', transport: 'unknown', model: 'model' })).toThrow('Unsupported agent transport');

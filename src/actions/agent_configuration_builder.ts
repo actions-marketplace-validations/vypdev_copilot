@@ -1,4 +1,4 @@
-import type { AgentProvider, AgentTaskConfiguration, AgentTransport } from '../data/model/agent';
+import type { AgentConfiguration, AgentProvider, AgentTaskConfiguration, AgentTransport } from '../data/model/agent';
 
 export interface AgentTaskConfigurationValues {
     provider: string;
@@ -6,6 +6,11 @@ export interface AgentTaskConfigurationValues {
     model: string;
     serverUrl?: string;
     command?: string;
+}
+
+export interface AgentTasksConfigurationValues extends AgentTaskConfigurationValues {
+    findings?: Partial<AgentTaskConfigurationValues>;
+    fixer?: Partial<AgentTaskConfigurationValues>;
 }
 
 const PROVIDERS: readonly AgentProvider[] = ['opencode', 'cursor', 'codex'];
@@ -26,7 +31,7 @@ function resolveTransport(value: string): AgentTransport {
     throw new Error(`Unsupported agent transport "${value}". Supported transports: ${TRANSPORTS.join(', ')}.`);
 }
 
-export function buildAgentTasks(values: AgentTaskConfigurationValues): AgentTaskConfiguration {
+function buildConfiguration(values: AgentTaskConfigurationValues): AgentConfiguration {
     const provider = resolveProvider(values.provider.trim().toLowerCase());
     const transport = resolveTransport(values.transport.trim().toLowerCase());
     const model = values.model.trim();
@@ -37,13 +42,15 @@ export function buildAgentTasks(values: AgentTaskConfigurationValues): AgentTask
         throw new Error(`Agent server transport is only supported by opencode. Use cli for ${provider}.`);
     }
     if (transport === 'server' && !serverUrl) throw new Error('Agent server transport requires a server URL.');
+    return { provider, transport, model, ...(serverUrl ? { serverUrl } : {}), ...(transport === 'cli' ? { command } : {}) };
+}
 
-    const configuration = {
-        provider,
-        transport,
-        model,
-        ...(serverUrl ? { serverUrl } : {}),
-        ...(transport === 'cli' ? { command } : {}),
-    };
-    return { findings: configuration, fixer: configuration };
+function mergeTaskValues(values: AgentTaskConfigurationValues, overrides?: Partial<AgentTaskConfigurationValues>): AgentTaskConfigurationValues {
+    return { ...values, ...Object.fromEntries(Object.entries(overrides ?? {}).filter(([, value]) => typeof value === 'string' && value.trim().length > 0)) };
+}
+
+export function buildAgentTasks(values: AgentTasksConfigurationValues): AgentTaskConfiguration {
+    const findings = buildConfiguration(mergeTaskValues(values, values.findings));
+    const fixer = buildConfiguration(mergeTaskValues(values, values.fixer));
+    return { findings, fixer };
 }

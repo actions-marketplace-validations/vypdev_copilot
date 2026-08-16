@@ -68,7 +68,16 @@ export async function runGitHubAction(): Promise<void> {
     const agentTransport = getInput(INPUT_KEYS.AGENT_TRANSPORT) || 'server';
     const agentModel = getInput(INPUT_KEYS.AGENT_MODEL) || opencodeModel;
     const agentCommand = getInput(INPUT_KEYS.AGENT_COMMAND);
-    const requestedAgentTasks = buildAgentTasks({ provider: agentProvider, transport: agentTransport, model: agentModel, serverUrl: opencodeServerUrl, command: agentCommand });
+    const findingsOverrides = {
+        provider: getInput(INPUT_KEYS.FINDINGS_PROVIDER), transport: getInput(INPUT_KEYS.FINDINGS_TRANSPORT),
+        model: getInput(INPUT_KEYS.FINDINGS_MODEL), command: getInput(INPUT_KEYS.FINDINGS_COMMAND),
+    };
+    const fixerOverrides = {
+        provider: getInput(INPUT_KEYS.FIXER_PROVIDER), transport: getInput(INPUT_KEYS.FIXER_TRANSPORT),
+        model: getInput(INPUT_KEYS.FIXER_MODEL), command: getInput(INPUT_KEYS.FIXER_COMMAND),
+    };
+    const taskValues = { provider: agentProvider, transport: agentTransport, model: agentModel, serverUrl: opencodeServerUrl, command: agentCommand };
+    const requestedAgentTasks = buildAgentTasks({ ...taskValues, findings: findingsOverrides, fixer: fixerOverrides });
     const opencodeStartServer = isEnabledInput(getInput(INPUT_KEYS.OPENCODE_START_SERVER))
         && requestedAgentTasks.findings.provider === 'opencode'
         && requestedAgentTasks.findings.transport === 'server';
@@ -83,7 +92,7 @@ export async function runGitHubAction(): Promise<void> {
     } else {
         logDebugInfo(`Using OpenCode server URL: ${opencodeServerUrl}, model: ${opencodeModel}.`);
     }
-    const agentTasks = buildAgentTasks({ provider: agentProvider, transport: agentTransport, model: agentModel, serverUrl: opencodeServerUrl, command: agentCommand });
+    const agentTasks = buildAgentTasks({ ...taskValues, serverUrl: opencodeServerUrl, findings: findingsOverrides, fixer: fixerOverrides });
 
     try {
     const aiPullRequestDescription = isEnabledInput(getInput(INPUT_KEYS.AI_PULL_REQUEST_DESCRIPTION));
