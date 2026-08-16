@@ -9,6 +9,7 @@ import { IssueRepository } from '../../data/repository/issue_repository';
 import { BranchRepository } from '../../data/repository/branch_repository';
 import { PullRequestRepository } from '../../data/repository/pull_request_repository';
 import { AiRepository, OPENCODE_AGENT_PLAN } from '../../data/repository/ai_repository';
+import type { FindingsQueryPort } from '../../data/repository/agent_ports';
 import { getCheckProgressPrompt } from '../../prompts';
 import { OPENCODE_PROJECT_CONTEXT_INSTRUCTION } from '../../utils/opencode_project_context_instruction';
 import { findIssueBranch } from './find_issue_branch';
@@ -21,8 +22,11 @@ export class CheckProgressUseCase implements ParamUseCase<Execution, Result[]> {
     private issueRepository: IssueRepository = new IssueRepository();
     private branchRepository: BranchRepository = new BranchRepository();
     private pullRequestRepository: PullRequestRepository = new PullRequestRepository();
-    private aiRepository: AiRepository = new AiRepository();
+    private aiRepository: FindingsQueryPort = new AiRepository();
 
+    constructor(aiRepository: FindingsQueryPort = new AiRepository()) {
+        this.aiRepository = aiRepository;
+    }
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`);
 

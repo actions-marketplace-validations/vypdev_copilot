@@ -1,9 +1,21 @@
+import type { Ai } from '../model/ai';
 import type {
     AgentExecutionRequest,
     AgentExecutionResult,
     FindingsResult,
     FixerResult,
 } from '../model/agent_execution';
+
+export interface AgentQueryOptions {
+    expectJson?: boolean;
+    schema?: Record<string, unknown>;
+    schemaName?: string;
+    includeReasoning?: boolean;
+}
+
+export interface FindingsQueryPort {
+    askAgent(ai: Ai, agentId: string, prompt: string, options?: AgentQueryOptions): Promise<string | Record<string, unknown> | undefined>;
+}
 
 export interface AgentCliPort {
     execute(request: {

@@ -3,6 +3,7 @@ import { isAgentConfigurationReady } from "../../../data/model/agent";
 import { Execution } from "../../../data/model/execution";
 import { Result } from "../../../data/model/result";
 import { AiRepository, OPENCODE_AGENT_PLAN } from "../../../data/repository/ai_repository";
+import type { FindingsQueryPort } from "../../../data/repository/agent_ports";
 import { BUGBOT_MAX_COMMENTS } from "../../../utils/constants";
 import { logDebugInfo, logError, logInfo } from "../../../utils/logger";
 import { prepareBugbotFindings } from './bugbot/prepare_bugbot_findings';
@@ -19,7 +20,11 @@ export type { BugbotFinding } from "./bugbot/types";
 export class DetectPotentialProblemsUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'DetectPotentialProblemsUseCase';
 
-    private aiRepository = new AiRepository();
+    private aiRepository: FindingsQueryPort = new AiRepository();
+
+    constructor(aiRepository: FindingsQueryPort = new AiRepository()) {
+        this.aiRepository = aiRepository;
+    }
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`);

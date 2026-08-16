@@ -4,7 +4,7 @@ import { Ai } from '../model/ai';
 import { parseJsonFromAgentText } from './agent_json_parser';
 import { AgentCliClient } from './agent_cli_client';
 import { OpenCodeHttpClient } from './opencode_http_client';
-import type { AgentCliPort, OpenCodeClientPort } from './agent_ports';
+import type { AgentCliPort, AgentQueryOptions, FindingsQueryPort, OpenCodeClientPort } from './agent_ports';
 import { withOpenCodeRetry } from './opencode_retry';
 import { buildAgentPrompt } from './agent_prompt_policy';
 
@@ -101,16 +101,7 @@ export const LANGUAGE_CHECK_RESPONSE_SCHEMA = {
     additionalProperties: false,
 } as const;
 
-export interface AskAgentOptions {
-    /** Request JSON response and parse it. If schema provided, include it in the prompt. */
-    expectJson?: boolean;
-    /** JSON schema for the response (used when expectJson is true to guide the model). */
-    schema?: Record<string, unknown>;
-    schemaName?: string;
-    /** When true, include OpenCode agent reasoning (type "reasoning" parts) in the returned object as "reasoning". */
-    includeReasoning?: boolean;
-}
-
+export type AskAgentOptions = AgentQueryOptions;
 
 /** File diff from OpenCode GET /session/:id/diff */
 export interface OpenCodeFileDiff {
@@ -159,7 +150,7 @@ export async function getSessionDiff(
     }, 'session diff');
 }
 
-export class AiRepository {
+export class AiRepository implements FindingsQueryPort {
     private readonly cliClient: AgentCliPort;
     private readonly openCodeClient: OpenCodeClientPort;
 
