@@ -3,6 +3,7 @@ import { logDebugInfo, logError, logInfo } from '../../utils/logger';
 import { Ai } from '../model/ai';
 import { parseJsonFromAgentText } from './agent_json_parser';
 import { withOpenCodeRetry } from './opencode_retry';
+import { buildAgentPrompt } from './agent_prompt_policy';
 
 function createTimeoutSignal(ms: number): AbortSignal {
     const controller = new AbortController();
@@ -302,10 +303,12 @@ export class AiRepository {
         if (!config) return undefined;
         const { serverUrl, providerID, modelID, model } = config;
         const schemaName = options.schemaName ?? 'response';
-        const promptText =
-            options.expectJson && options.schema
-                ? `Respond with a single JSON object that strictly conforms to this schema (name: ${schemaName}). No other text or markdown.\n\nSchema: ${JSON.stringify(options.schema)}\n\nUser request:\n${prompt}`
-                : prompt;
+        const promptText = buildAgentPrompt(
+            prompt,
+            options.expectJson ?? false,
+            options.schema,
+            schemaName,
+        );
         try {
             return await withOpenCodeRetry(async () => {
                 const { text, parts } = await opencodeMessageWithAgentRaw(serverUrl, {
