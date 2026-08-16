@@ -14,6 +14,7 @@ import { getCheckProgressPrompt } from '../../prompts';
 import { OPENCODE_PROJECT_CONTEXT_INSTRUCTION } from '../../utils/opencode_project_context_instruction';
 import { findIssueBranch } from './find_issue_branch';
 import { syncProgressLabelsToOpenPullRequests } from './sync_progress_labels_to_open_pull_requests';
+import { buildProgressSummaryMessage } from './progress_summary_builder';
 
 import { parseProgressResponse, PROGRESS_RESPONSE_SCHEMA, type ProgressAttemptResult } from './progress_response';
 
@@ -190,16 +191,7 @@ export class CheckProgressUseCase implements ParamUseCase<Execution, Result[]> {
                 this.pullRequestRepository,
             );
 
-            let summaryMessage = `**Analysis**: ${summary}`;
-            if (progress < 100 && remaining) {
-                summaryMessage += `\n\n## 🤷 What's left to reach 100%\n\n${remaining}`;
-            }
-            if (reasoning) {
-                const truncationNote = this.isReasoningLikelyTruncated(reasoning)
-                    ? '\n\n_Reasoning may be truncated by the model._'
-                    : '';
-                summaryMessage += `\n\n## 🧠 Reasoning\n${reasoning}${truncationNote}`;
-            }
+            const summaryMessage = buildProgressSummaryMessage({ summary, progress, remaining, reasoning });
 
             const steps: string[] = [
                 `Progress updated to: ${progress}%`,
@@ -257,19 +249,6 @@ export class CheckProgressUseCase implements ParamUseCase<Execution, Result[]> {
                 includeReasoning: true,
             }
         ));
-    }
-
-    /**
-     * Returns true if the reasoning text looks truncated (e.g. ends with ":" or trailing spaces,
-     * or no sentence-ending punctuation), so we can append a note in the comment.
-     */
-    private isReasoningLikelyTruncated(reasoning: string): boolean {
-        const t = reasoning.trim();
-        if (t.length === 0) return false;
-        const lastChar = t.slice(-1);
-        const sentenceEnd = /[.!?\n]$/;
-        const endsWithColonOrSpace = /[:\s]$/.test(t);
-        return endsWithColonOrSpace || !sentenceEnd.test(lastChar);
     }
 }
 
