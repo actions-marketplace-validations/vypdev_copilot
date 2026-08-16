@@ -18,7 +18,7 @@ import { SingleAction } from '../data/model/single_action';
 import { ProjectRepository } from '../data/repository/project_repository';
 import { PublishResultUseCase } from '../usecase/steps/common/publish_resume_use_case';
 import { StoreConfigurationUseCase } from '../usecase/steps/common/store_configuration_use_case';
-import { BUGBOT_MAX_COMMENTS, BUGBOT_MIN_SEVERITY, DEFAULT_IMAGE_CONFIG, INPUT_KEYS } from '../utils/constants';
+import { BUGBOT_MAX_COMMENTS, BUGBOT_MIN_SEVERITY, INPUT_KEYS } from '../utils/constants';
 import { logDebugInfo, logError, logInfo } from '../utils/logger';
 import type { ManagedAgentServer } from '../data/repository/agent_ports';
 import { OpenCodeServerLifecycleAdapter } from '../data/repository/opencode_server_lifecycle_adapter';
@@ -28,6 +28,7 @@ import { isEnabledInput } from './input_boolean_policy';
 import { parseBoundedPositiveIntegerInput, parseIntegerInput } from './input_number_policy';
 import { parseDelimitedValues } from './input_values_policy';
 import { buildAgentTasksFromInputs } from './agent_input_builder';
+import { buildImageConfiguration } from './image_configuration_builder';
 import { buildSizeThresholds } from './size_threshold_builder';
 import { buildBranches } from './branches_builder';
 import { buildEmoji, buildImages, buildIssue, buildIssueTypes, buildLabels, buildLocale, buildProjects, buildPullRequest, buildTokens, buildWorkflows } from './configuration_builders';
@@ -119,220 +120,7 @@ export async function runGitHubAction(): Promise<void> {
     /**
      * Images
      */
-    const imagesOnIssue = isEnabledInput(getInput(INPUT_KEYS.IMAGES_ON_ISSUE));
-    const imagesOnPullRequest = isEnabledInput(getInput(INPUT_KEYS.IMAGES_ON_PULL_REQUEST));
-    const imagesOnCommit = isEnabledInput(getInput(INPUT_KEYS.IMAGES_ON_COMMIT));
-
-    const imagesIssueAutomaticInput: string = getInput(INPUT_KEYS.IMAGES_ISSUE_AUTOMATIC);
-    const imagesIssueAutomatic: string[] = imagesIssueAutomaticInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesIssueAutomatic.length === 0) {
-        imagesIssueAutomatic.push(...DEFAULT_IMAGE_CONFIG.issue.automatic);
-    }
-
-    const imagesIssueFeatureInput: string = getInput(INPUT_KEYS.IMAGES_ISSUE_FEATURE);
-    const imagesIssueFeature: string[] = imagesIssueFeatureInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesIssueFeature.length === 0) {
-        imagesIssueFeature.push(...DEFAULT_IMAGE_CONFIG.issue.feature);
-    }
-
-    const imagesIssueBugfixInput: string = getInput(INPUT_KEYS.IMAGES_ISSUE_BUGFIX);
-    const imagesIssueBugfix: string[] = imagesIssueBugfixInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesIssueBugfix.length === 0) {
-        imagesIssueBugfix.push(...DEFAULT_IMAGE_CONFIG.issue.bugfix);
-    }
-
-    const imagesIssueDocsInput: string = getInput(INPUT_KEYS.IMAGES_ISSUE_DOCS);
-    const imagesIssueDocs: string[] = imagesIssueDocsInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesIssueDocs.length === 0) {
-        imagesIssueDocs.push(...DEFAULT_IMAGE_CONFIG.issue.docs);
-    }
-
-    const imagesIssueChoreInput: string = getInput(INPUT_KEYS.IMAGES_ISSUE_CHORE);
-    const imagesIssueChore: string[] = imagesIssueChoreInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesIssueChore.length === 0) {
-        imagesIssueChore.push(...DEFAULT_IMAGE_CONFIG.issue.chore);
-    }
-
-    const imagesIssueReleaseInput: string = getInput(INPUT_KEYS.IMAGES_ISSUE_RELEASE);
-    const imagesIssueRelease: string[] = imagesIssueReleaseInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesIssueRelease.length === 0) {
-        imagesIssueRelease.push(...DEFAULT_IMAGE_CONFIG.issue.release);
-    }
-
-    const imagesIssueHotfixInput: string = getInput(INPUT_KEYS.IMAGES_ISSUE_HOTFIX);
-    const imagesIssueHotfix: string[] = imagesIssueHotfixInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesIssueHotfix.length === 0) {
-        imagesIssueHotfix.push(...DEFAULT_IMAGE_CONFIG.issue.hotfix);
-    }
-
-    const imagesPullRequestAutomaticInput: string = getInput(INPUT_KEYS.IMAGES_PULL_REQUEST_AUTOMATIC);
-    const imagesPullRequestAutomatic: string[] = imagesPullRequestAutomaticInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesPullRequestAutomatic.length === 0) {
-        imagesPullRequestAutomatic.push(...DEFAULT_IMAGE_CONFIG.pullRequest.automatic);
-    }
-
-    const imagesPullRequestFeatureInput: string = getInput(INPUT_KEYS.IMAGES_PULL_REQUEST_FEATURE);
-    const imagesPullRequestFeature: string[] = imagesPullRequestFeatureInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesPullRequestFeature.length === 0) {
-        imagesPullRequestFeature.push(...DEFAULT_IMAGE_CONFIG.pullRequest.feature);
-    }
-
-    const imagesPullRequestBugfixInput: string = getInput(INPUT_KEYS.IMAGES_PULL_REQUEST_BUGFIX);
-    const imagesPullRequestBugfix: string[] = imagesPullRequestBugfixInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesPullRequestBugfix.length === 0) {
-        imagesPullRequestBugfix.push(...DEFAULT_IMAGE_CONFIG.pullRequest.bugfix);
-    }
-
-    const imagesPullRequestReleaseInput: string = getInput(INPUT_KEYS.IMAGES_PULL_REQUEST_RELEASE);
-    const imagesPullRequestRelease: string[] = imagesPullRequestReleaseInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesPullRequestRelease.length === 0) {
-        imagesPullRequestRelease.push(...DEFAULT_IMAGE_CONFIG.pullRequest.release);
-    }
-
-    const imagesPullRequestHotfixInput: string = getInput(INPUT_KEYS.IMAGES_PULL_REQUEST_HOTFIX);
-    const imagesPullRequestHotfix: string[] = imagesPullRequestHotfixInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesPullRequestHotfix.length === 0) {
-        imagesPullRequestHotfix.push(...DEFAULT_IMAGE_CONFIG.pullRequest.hotfix);
-    }
-
-    const imagesPullRequestDocsInput: string = getInput(INPUT_KEYS.IMAGES_PULL_REQUEST_DOCS);
-    const imagesPullRequestDocs: string[] = imagesPullRequestDocsInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesPullRequestDocs.length === 0) {
-        imagesPullRequestDocs.push(...DEFAULT_IMAGE_CONFIG.pullRequest.docs);
-    }
-
-    const imagesPullRequestChoreInput: string = getInput(INPUT_KEYS.IMAGES_PULL_REQUEST_CHORE);
-    const imagesPullRequestChore: string[] = imagesPullRequestChoreInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesPullRequestChore.length === 0) {
-        imagesPullRequestChore.push(...DEFAULT_IMAGE_CONFIG.pullRequest.chore);
-    }
-
-    const imagesCommitAutomaticInput: string = getInput(INPUT_KEYS.IMAGES_COMMIT_AUTOMATIC);
-    const imagesCommitAutomatic: string[] = imagesCommitAutomaticInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesCommitAutomatic.length === 0) {
-        imagesCommitAutomatic.push(...DEFAULT_IMAGE_CONFIG.commit.automatic);
-    }
-
-    const imagesCommitFeatureInput: string = getInput(INPUT_KEYS.IMAGES_COMMIT_FEATURE);
-    const imagesCommitFeature: string[] = imagesCommitFeatureInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesCommitFeature.length === 0) {
-        imagesCommitFeature.push(...DEFAULT_IMAGE_CONFIG.commit.feature);
-    }
-
-    const imagesCommitBugfixInput: string = getInput(INPUT_KEYS.IMAGES_COMMIT_BUGFIX);
-    const imagesCommitBugfix: string[] = imagesCommitBugfixInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesCommitBugfix.length === 0) {
-        imagesCommitBugfix.push(...DEFAULT_IMAGE_CONFIG.commit.bugfix);
-    }
-
-    const imagesCommitReleaseInput: string = getInput(INPUT_KEYS.IMAGES_COMMIT_RELEASE);
-    const imagesCommitRelease: string[] = imagesCommitReleaseInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesCommitRelease.length === 0) {
-        imagesCommitRelease.push(...DEFAULT_IMAGE_CONFIG.commit.release);
-    }
-
-    const imagesCommitHotfixInput: string = getInput(INPUT_KEYS.IMAGES_COMMIT_HOTFIX);
-    const imagesCommitHotfix: string[] = imagesCommitHotfixInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesCommitHotfix.length === 0) {
-        imagesCommitHotfix.push(...DEFAULT_IMAGE_CONFIG.commit.hotfix);
-    }
-
-    const imagesCommitDocsInput: string = getInput(INPUT_KEYS.IMAGES_COMMIT_DOCS);
-    const imagesCommitDocs: string[] = imagesCommitDocsInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesCommitDocs.length === 0) {
-        imagesCommitDocs.push(...DEFAULT_IMAGE_CONFIG.commit.docs);
-    }
-
-    const imagesCommitChoreInput: string = getInput(INPUT_KEYS.IMAGES_COMMIT_CHORE);
-    const imagesCommitChore: string[] = imagesCommitChoreInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesCommitChore.length === 0) {
-        imagesCommitChore.push(...DEFAULT_IMAGE_CONFIG.commit.chore);
-    }
-
+    const imageConfiguration = buildImageConfiguration(getInput);
     /**
      * Workflows
      */
@@ -489,12 +277,12 @@ export async function runGitHubAction(): Promise<void> {
         buildPullRequest(pullRequestDesiredAssigneesCount, pullRequestDesiredReviewersCount, pullRequestMergeTimeout),
         buildEmoji(titleEmoji, branchManagementEmoji),
         buildImages({
-            onIssue: imagesOnIssue,
-            onPullRequest: imagesOnPullRequest,
-            onCommit: imagesOnCommit,
-            issue: { automatic: imagesIssueAutomatic, feature: imagesIssueFeature, bugfix: imagesIssueBugfix, release: imagesIssueRelease, hotfix: imagesIssueHotfix, docs: imagesIssueDocs, chore: imagesIssueChore },
-            pullRequest: { automatic: imagesPullRequestAutomatic, feature: imagesPullRequestFeature, bugfix: imagesPullRequestBugfix, release: imagesPullRequestRelease, hotfix: imagesPullRequestHotfix, docs: imagesPullRequestDocs, chore: imagesPullRequestChore },
-            commit: { automatic: imagesCommitAutomatic, feature: imagesCommitFeature, bugfix: imagesCommitBugfix, release: imagesCommitRelease, hotfix: imagesCommitHotfix, docs: imagesCommitDocs, chore: imagesCommitChore },
+            onIssue: imageConfiguration.onIssue,
+            onPullRequest: imageConfiguration.onPullRequest,
+            onCommit: imageConfiguration.onCommit,
+            issue: imageConfiguration.issue,
+            pullRequest: imageConfiguration.pullRequest,
+            commit: imageConfiguration.commit,
         }),
         buildTokens(token),
         new Ai(
