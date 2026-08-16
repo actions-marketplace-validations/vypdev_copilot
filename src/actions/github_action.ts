@@ -6,7 +6,7 @@ import { Execution } from '../data/model/execution';
 import { Hotfix } from '../data/model/hotfix';
 
 
-import { IssueTypes } from '../data/model/issue_types';
+
 
 import { Locale } from '../data/model/locale';
 
