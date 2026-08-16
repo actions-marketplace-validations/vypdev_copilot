@@ -1,6 +1,7 @@
 import { Emoji } from '../data/model/emoji';
 import { Issue } from '../data/model/issue';
 import { Images } from '../data/model/images';
+import { Labels } from '../data/model/labels';
 import { Locale } from '../data/model/locale';
 import { PullRequest } from '../data/model/pull_request';
 import { Projects } from '../data/model/projects';
@@ -25,6 +26,13 @@ export interface ImageConfigurationValues {
     issue: ImageScopeValues;
     pullRequest: ImageScopeValues;
     commit: ImageScopeValues;
+}
+
+export interface LabelValues {
+    branching: { launcher: string };
+    workflow: { bug: string; bugfix: string; hotfix: string; enhancement: string; feature: string; release: string; question: string; help: string; deploy: string; deployed: string; docs: string; documentation: string; chore: string; maintenance: string };
+    priorities: { high: string; medium: string; low: string; none: string };
+    sizes: { xxl: string; xl: string; l: string; m: string; s: string; xs: string };
 }
 
 export interface ProjectConfigurationValues {
@@ -67,6 +75,36 @@ export function buildEmoji(emojiLabeledTitle: boolean, branchManagementEmoji: st
 
 export function buildTokens(token: string): Tokens {
     return new Tokens(token);
+}
+
+export function buildLabels(values: LabelValues): Labels {
+    return new Labels(
+        values.branching.launcher,
+        values.workflow.bug,
+        values.workflow.bugfix,
+        values.workflow.hotfix,
+        values.workflow.enhancement,
+        values.workflow.feature,
+        values.workflow.release,
+        values.workflow.question,
+        values.workflow.help,
+        values.workflow.deploy,
+        values.workflow.deployed,
+        values.workflow.docs,
+        values.workflow.documentation,
+        values.workflow.chore,
+        values.workflow.maintenance,
+        values.priorities.high,
+        values.priorities.medium,
+        values.priorities.low,
+        values.priorities.none,
+        values.sizes.xxl,
+        values.sizes.xl,
+        values.sizes.l,
+        values.sizes.m,
+        values.sizes.s,
+        values.sizes.xs,
+    );
 }
 
 export function buildImages(values: ImageConfigurationValues): Images {

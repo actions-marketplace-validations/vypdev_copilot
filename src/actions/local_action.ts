@@ -25,7 +25,7 @@ import { parseBoundedPositiveIntegerInput, parseIntegerInput } from './input_num
 import { parseDelimitedValues } from './input_values_policy';
 import { buildSizeThresholds } from './size_threshold_builder';
 import { buildBranches } from './branches_builder';
-import { buildEmoji, buildImages, buildIssue, buildLocale, buildProjects, buildPullRequest, buildTokens, buildWorkflows } from './configuration_builders';
+import { buildEmoji, buildImages, buildIssue, buildLabels, buildLocale, buildProjects, buildPullRequest, buildTokens, buildWorkflows } from './configuration_builders';
 import { mainRun } from './common_action';
 import boxen from 'boxen';
 
@@ -487,33 +487,12 @@ export async function runLocalAction(
             bugbotCommentLimit,
             bugbotFixVerifyCommands,
         ),
-        new Labels(
-            branchManagementLauncherLabel,
-            bugLabel,
-            bugfixLabel,
-            hotfixLabel,
-            enhancementLabel,
-            featureLabel,
-            releaseLabel,
-            questionLabel,
-            helpLabel,
-            deployLabel,
-            deployedLabel,
-            docsLabel,
-            documentationLabel,
-            choreLabel,
-            maintenanceLabel,
-            priorityHighLabel,
-            priorityMediumLabel,
-            priorityLowLabel,
-            priorityNoneLabel,
-            sizeXxlLabel,
-            sizeXlLabel,
-            sizeLLabel,
-            sizeMLabel,
-            sizeSLabel,
-            sizeXsLabel,
-        ),
+        buildLabels({
+            branching: { launcher: branchManagementLauncherLabel },
+            workflow: { bug: bugLabel, bugfix: bugfixLabel, hotfix: hotfixLabel, enhancement: enhancementLabel, feature: featureLabel, release: releaseLabel, question: questionLabel, help: helpLabel, deploy: deployLabel, deployed: deployedLabel, docs: docsLabel, documentation: documentationLabel, chore: choreLabel, maintenance: maintenanceLabel },
+            priorities: { high: priorityHighLabel, medium: priorityMediumLabel, low: priorityLowLabel, none: priorityNoneLabel },
+            sizes: { xxl: sizeXxlLabel, xl: sizeXlLabel, l: sizeLLabel, m: sizeMLabel, s: sizeSLabel, xs: sizeXsLabel },
+        }),
         new IssueTypes(
             issueTypeTask,
             issueTypeTaskDescription,

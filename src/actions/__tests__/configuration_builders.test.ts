@@ -1,4 +1,4 @@
-import { buildEmoji, buildImages, buildIssue, buildLocale, buildProjects, buildPullRequest, buildTokens, buildWorkflows } from '../configuration_builders';
+import { buildEmoji, buildImages, buildIssue, buildLabels, buildLocale, buildProjects, buildPullRequest, buildTokens, buildWorkflows } from '../configuration_builders';
 
 describe('configuration builders', () => {
     it('builds locale and workflows', () => {
@@ -55,5 +55,19 @@ describe('configuration builders', () => {
         expect(images.issueFeatureGifs).toEqual(['issue-feature']);
         expect(images.pullRequestAutomaticActions).toEqual(['pr-automatic']);
         expect(images.commitChoreGifs).toEqual(['commit-chore']);
+    });
+
+    it('maps labels by branching, workflow, priority, and size groups', () => {
+        const labels = buildLabels({
+            branching: { launcher: 'branched' },
+            workflow: { bug: 'bug', bugfix: 'bugfix', hotfix: 'hotfix', enhancement: 'enhancement', feature: 'feature', release: 'release', question: 'question', help: 'help', deploy: 'deploy', deployed: 'deployed', docs: 'docs', documentation: 'documentation', chore: 'chore', maintenance: 'maintenance' },
+            priorities: { high: 'P0', medium: 'P1', low: 'P2', none: 'none' },
+            sizes: { xxl: 'XXL', xl: 'XL', l: 'L', m: 'M', s: 'S', xs: 'XS' },
+        });
+
+        expect(labels.branchManagementLauncherLabel).toBe('branched');
+        expect(labels.isBug).toBe(false);
+        expect(labels.sizeLabels).toEqual(['XXL', 'XL', 'L', 'M', 'S', 'XS']);
+        expect(labels.priorityHigh).toBe('P0');
     });
 });
