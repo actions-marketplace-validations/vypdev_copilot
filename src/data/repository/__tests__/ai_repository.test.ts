@@ -24,6 +24,8 @@ function createAi(serverUrl = 'http://localhost:4096', model = 'opencode/kimi-k2
 describe('AiRepository', () => {
   let repo: AiRepository;
 
+
+
   beforeEach(() => {
     jest.useFakeTimers();
     repo = new AiRepository();

@@ -3,6 +3,7 @@ import { logDebugInfo, logError, logInfo } from '../../utils/logger';
 import { Ai } from '../model/ai';
 import { parseJsonFromAgentText } from './agent_json_parser';
 import { OpenCodeHttpClient } from './opencode_http_client';
+import { AgentCliClient } from './agent_cli_client';
 import { withOpenCodeRetry } from './opencode_retry';
 import { buildAgentPrompt } from './agent_prompt_policy';
 
@@ -35,9 +36,21 @@ function getValidatedOpenCodeConfig(ai: Ai): OpenCodeConfig | null {
     return { serverUrl, providerID, modelID, model };
 }
 
-/**
- * Extract text from OpenCode message parts by type (e.g. 'text', 'reasoning'), joined with separator.
- */
+function getValidatedAgentConfiguration(ai: Ai, task: 'findings' | 'fixer') {
+    const configuration = ai.getAgentConfiguration(task);
+    if (configuration.transport === 'sdk') {
+        throw new Error(`Agent SDK transport is not implemented for ${configuration.provider}. Use server or cli.`);
+    }
+    if (configuration.transport === 'server' && configuration.provider !== 'opencode') {
+        throw new Error(`Agent server transport is not implemented for ${configuration.provider}. Use cli.`);
+    }
+    if (configuration.transport === 'cli' && !configuration.command?.trim()) {
+        throw new Error(`Agent CLI command is required for ${configuration.provider}.`);
+    }
+    return configuration;
+}
+
+
 function extractPartsByType(parts: unknown, type: string, joinWith: string): string {
     if (!Array.isArray(parts)) return '';
     return (parts as Array<{ type?: string; text?: string }>)
@@ -188,6 +201,17 @@ export class AiRepository {
             options.schema,
             schemaName,
         );
+        const taskConfiguration = getValidatedAgentConfiguration(ai, 'findings');
+        if (taskConfiguration.transport === 'cli') {
+            try {
+                const output = await new AgentCliClient().execute({ command: taskConfiguration.command!, prompt: promptText, timeoutMs: OPENCODE_REQUEST_TIMEOUT_MS });
+                if (options.expectJson && options.schema) return parseJsonFromAgentText(output);
+                return output;
+            } catch (error: unknown) {
+                logError(`Error querying ${taskConfiguration.provider} CLI: ${error instanceof Error ? error.message : String(error)}`);
+                return undefined;
+            }
+        }
         try {
             return await withOpenCodeRetry(async () => {
                 const client = new OpenCodeHttpClient({ requestTimeoutMs: OPENCODE_REQUEST_TIMEOUT_MS });
@@ -229,6 +253,16 @@ export class AiRepository {
         ai: Ai,
         prompt: string
     ): Promise<{ text: string; sessionId: string } | undefined> => {
+        const taskConfiguration = getValidatedAgentConfiguration(ai, 'fixer');
+        if (taskConfiguration.transport === 'cli') {
+            try {
+                const text = await new AgentCliClient().execute({ command: taskConfiguration.command!, prompt, timeoutMs: OPENCODE_REQUEST_TIMEOUT_MS });
+                return { text, sessionId: 'cli' };
+            } catch (error: unknown) {
+                logError(`Error querying ${taskConfiguration.provider} CLI fixer: ${error instanceof Error ? error.message : String(error)}`);
+                return undefined;
+            }
+        }
         const config = getValidatedOpenCodeConfig(ai);
         if (!config) return undefined;
         const { serverUrl, providerID, modelID, model } = config;
