@@ -47,25 +47,6 @@ function extractPartsByType(parts: unknown, type: string, joinWith: string): str
         .trim();
 }
 
-/** Parse response as JSON; on empty or invalid body throw a clear error with context. Logs full body (no truncation). */
-async function parseJsonResponse<T>(res: Response, context: string): Promise<T> {
-    const raw = await res.text();
-    logDebugInfo(`OpenCode response [${context}] status=${res.status} bodyLength=${raw.length}. Full body:\n${raw}`);
-    if (!raw || !raw.trim()) {
-        throw new Error(
-            `${context}: empty response body (status ${res.status}). The server may have returned nothing or closed the connection early.`
-        );
-    }
-    try {
-        return JSON.parse(raw) as T;
-    } catch (parseError) {
-        const err = new Error(
-            `${context}: invalid JSON (status ${res.status}). Body length: ${raw.length} chars. See debug log for full body.`
-        );
-        if (parseError instanceof Error && 'cause' in err) (err as Error & { cause: unknown }).cause = parseError;
-        throw err;
-    }
-}
 
 /** Extract plain text from OpenCode message response parts (type === 'text'). */
 function extractTextFromParts(parts: unknown): string {
@@ -75,29 +56,6 @@ function extractTextFromParts(parts: unknown): string {
 /** Extract reasoning from OpenCode message parts (type === 'reasoning'). */
 function extractReasoningFromParts(parts: unknown): string {
     return extractPartsByType(parts, 'reasoning', '\n\n');
-}
-
-/**
- * Log OpenCode message parts: summary line and full text of each part (no truncation).
- */
-function logPartsForDebug(parts: unknown[], context: string): void {
-    if (!Array.isArray(parts) || parts.length === 0) {
-        logDebugInfo(`${context}: 0 parts`);
-        return;
-    }
-    const summary = (parts as Array<{ type?: string; text?: string }>).map((p, i) => {
-        const type = p?.type ?? '(missing type)';
-        const len = typeof p?.text === 'string' ? p.text.length : 0;
-        return `[${i}] type=${type} length=${len}`;
-    }).join(' | ');
-    logDebugInfo(`${context}: ${parts.length} part(s) — ${summary}`);
-    (parts as Array<{ type?: string; text?: string }>).forEach((p, i) => {
-        const type = p?.type ?? '(missing type)';
-        const text = typeof p?.text === 'string' ? p.text : '';
-        if (text) {
-            logDebugInfo(`OpenCode part [${i}] type=${type} full text:\n${text}`);
-        }
-    });
 }
 
 /** Default OpenCode agent for analysis/planning (read-only, no file edits). Changed to build to support diffs. */
@@ -161,86 +119,6 @@ export interface AskAgentOptions {
     includeReasoning?: boolean;
 }
 
-interface OpenCodeAgentMessageResult {
-    text: string;
-    parts: unknown[];
-    sessionId: string;
-}
-
-/**
- * Send a message to an OpenCode agent (e.g. "plan", "build") and wait for the full response.
- * Raw call: no retries. Callers (askAgent, copilotMessage) wrap in withOpenCodeRetry.
- */
-async function opencodeMessageWithAgentRaw(
-    baseUrl: string,
-    options: {
-        providerID: string;
-        modelID: string;
-        agent: string;
-        promptText: string;
-    }
-): Promise<OpenCodeAgentMessageResult> {
-    logInfo(
-        `OpenCode request [agent ${options.agent}] model=${options.providerID}/${options.modelID} promptLength=${options.promptText.length}`
-    );
-    logInfo(`OpenCode sending prompt (full):\n${options.promptText}`);
-    logDebugInfo(`OpenCode prompt (full, no truncation):\n${options.promptText}`);
-    logDebugInfo(
-        `OpenCode message body: agent=${options.agent}, model=${options.providerID}/${options.modelID}, parts[0].text length=${options.promptText.length}`
-    );
-    const base = ensureNoTrailingSlash(baseUrl);
-    const signal = createTimeoutSignal(OPENCODE_REQUEST_TIMEOUT_MS);
-    const sessionBody = { title: 'copilot' };
-    logDebugInfo(`OpenCode session create body: ${JSON.stringify(sessionBody)}`);
-    const createRes = await fetch(`${base}/session`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(sessionBody),
-        signal,
-    });
-    if (!createRes.ok) {
-        const err = await createRes.text();
-        throw new Error(`OpenCode session create failed: ${createRes.status} ${err}`);
-    }
-    const session = await parseJsonResponse<{ id?: string; data?: { id?: string } }>(
-        createRes,
-        'OpenCode session.create'
-    );
-    const sessionId = session?.id ?? session?.data?.id;
-    if (!sessionId) {
-        throw new Error('OpenCode session.create did not return session id');
-    }
-    const body: Record<string, unknown> = {
-        agent: options.agent,
-        model: { providerID: options.providerID, modelID: options.modelID },
-        parts: [{ type: 'text', text: options.promptText }],
-    };
-    logDebugInfo(`OpenCode POST /session/${sessionId}/message body (keys): agent, model, parts (${(body.parts as unknown[]).length} part(s))`);
-    const timeoutMin = Math.round(OPENCODE_REQUEST_TIMEOUT_MS / 60_000);
-    logInfo(`OpenCode: waiting for agent "${options.agent}" message response (client timeout: ${timeoutMin} min)...`);
-    const messageRes = await fetch(`${base}/session/${sessionId}/message`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-        signal,
-    });
-    if (!messageRes.ok) {
-        const err = await messageRes.text();
-        throw new Error(`OpenCode message failed (agent=${options.agent}): ${messageRes.status} ${err}`);
-    }
-    const messageData = await parseJsonResponse<{ parts?: unknown[]; data?: { parts?: unknown[] } }>(
-        messageRes,
-        `OpenCode agent "${options.agent}" message`
-    );
-    const parts = messageData?.parts ?? messageData?.data?.parts ?? [];
-    const partsArray = Array.isArray(parts) ? parts : [];
-    logPartsForDebug(partsArray, `OpenCode agent "${options.agent}" message parts`);
-    const text = extractTextFromParts(partsArray);
-    logInfo(
-        `OpenCode response [agent ${options.agent}] responseLength=${text.length} sessionId=${sessionId}`
-    );
-    return { text, parts: partsArray, sessionId };
-}
 
 /** File diff from OpenCode GET /session/:id/diff */
 export interface OpenCodeFileDiff {
