@@ -21,14 +21,19 @@ jest.mock('../../../utils/setup_files', () => ({
   hasValidSetupToken: (...args: unknown[]) => mockHasValidSetupToken(...args),
 }));
 
-const mockGetUserFromToken = jest.fn();
 const mockGetDefaultBranch = jest.fn();
 const mockCreateTag = jest.fn();
-jest.mock('../../../data/repository/project_repository', () => ({
-  ProjectRepository: jest.fn().mockImplementation(() => ({
-    getUserFromToken: mockGetUserFromToken,
+jest.mock('../../../data/repository/repository_release_repository', () => ({
+  RepositoryReleaseRepository: jest.fn().mockImplementation(() => ({
     getDefaultBranch: mockGetDefaultBranch,
     createTag: mockCreateTag,
+  })),
+}));
+
+const mockGetUserFromToken = jest.fn();
+jest.mock('../../../data/repository/organization_repository', () => ({
+  OrganizationRepository: jest.fn().mockImplementation(() => ({
+    getUserFromToken: mockGetUserFromToken,
   })),
 }));
 

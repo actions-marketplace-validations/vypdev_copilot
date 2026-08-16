@@ -1,7 +1,8 @@
 import { Execution } from "../../data/model/execution";
 import { BranchRepository } from "../../data/repository/branch_repository";
 import { IssueRepository } from "../../data/repository/issue_repository";
-import { ProjectRepository } from "../../data/repository/project_repository";
+import { RepositoryReleaseRepository } from "../../data/repository/repository_release_repository";
+import { OrganizationRepository } from "../../data/repository/organization_repository";
 import { Result } from "../../data/model/result";
 import { ParamUseCase } from "../base/param_usecase";
 import { DEFAULT_INITIAL_TAG } from "../../utils/version_utils";
@@ -126,8 +127,8 @@ export class InitialSetupUseCase implements ParamUseCase<Execution, Result[]> {
     private async verifyGitHubAccess(param: Execution): Promise<{ success: boolean; user?: string; errors: string[] }> {
         const errors: string[] = [];
         try {
-            const projectRepository = new ProjectRepository();
-            const user = await projectRepository.getUserFromToken(param.tokens.token);
+            const organizationRepository = new OrganizationRepository();
+            const user = await organizationRepository.getUserFromToken(param.tokens.token);
             return { success: true, user, errors: [] };
         } catch (error) {
             logError(`Error verifying GitHub access: ${error}`);
@@ -205,15 +206,15 @@ export class InitialSetupUseCase implements ParamUseCase<Execution, Result[]> {
             }
 
             logInfo(`🏷️  No version tags found. Creating default tag ${DEFAULT_INITIAL_TAG}...`);
-            const projectRepository = new ProjectRepository();
-            const defaultBranch = await projectRepository.getDefaultBranch(param.owner, param.repo, param.tokens.token);
+            const releaseRepository = new RepositoryReleaseRepository();
+            const defaultBranch = await releaseRepository.getDefaultBranch(param.owner, param.repo, param.tokens.token);
             if (!defaultBranch) {
                 const msg = 'Could not get default branch to create initial version tag.';
                 logError(msg);
                 return { error: msg };
             }
 
-            const sha = await projectRepository.createTag(
+            const sha = await releaseRepository.createTag(
                 param.owner,
                 param.repo,
                 defaultBranch,
