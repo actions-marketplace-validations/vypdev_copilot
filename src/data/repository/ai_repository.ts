@@ -10,68 +10,13 @@ import { withOpenCodeRetry } from './opencode_retry';
 import { buildAgentPrompt } from './agent_prompt_policy';
 import { getValidatedAgentConfiguration } from './agent_configuration_policy';
 import { extractReasoningFromParts, extractTextFromParts } from './agent_response_parser';
+export { getSessionDiff } from './opencode_session_diff_client';
+export type { OpenCodeFileDiff } from './opencode_session_diff_client';
 export { LANGUAGE_CHECK_RESPONSE_SCHEMA, THINK_RESPONSE_SCHEMA, TRANSLATION_RESPONSE_SCHEMA } from './agent_response_schemas';
 
 export const OPENCODE_AGENT_PLAN = 'build';
 export const OPENCODE_AGENT_BUILD = 'build';
 export type AskAgentOptions = AgentQueryOptions;
-
-function createTimeoutSignal(ms: number): AbortSignal {
-    const controller = new AbortController();
-    setTimeout(() => controller.abort(new Error(`OpenCode request timeout after ${ms}ms`)), ms);
-    return controller.signal;
-}
-
-function ensureNoTrailingSlash(url: string): string {
-    return url.replace(/\/+$/, '') || url;
-}
-
-/** File diff from OpenCode GET /session/:id/diff */
-export interface OpenCodeFileDiff {
-    path?: string;
-    file?: string;
-    [key: string]: unknown;
-}
-
-/**
- * Get the diff for an OpenCode session (files changed by the agent).
- * Call after opencodeMessageWithAgent when using the "build" agent so the user can see what was edited.
- * Wrapped with retries (OPENCODE_MAX_RETRIES).
- */
-export async function getSessionDiff(
-    baseUrl: string,
-    sessionId: string
-): Promise<OpenCodeFileDiff[]> {
-    return withOpenCodeRetry(async () => {
-        logInfo(`OpenCode request [session diff] sessionId=${sessionId}`);
-        const base = ensureNoTrailingSlash(baseUrl);
-        const signal = createTimeoutSignal(OPENCODE_REQUEST_TIMEOUT_MS);
-        const res = await fetch(`${base}/session/${sessionId}/diff`, { method: 'GET', signal });
-        if (!res.ok) {
-            logInfo(`OpenCode response [session diff] fileCount=0 (status ${res.status})`);
-            return [];
-        }
-        const raw = await res.text();
-        if (!raw?.trim()) {
-            logInfo('OpenCode response [session diff] fileCount=0 (empty body)');
-            return [];
-        }
-        let data: OpenCodeFileDiff[] | { data?: OpenCodeFileDiff[] };
-        try {
-            data = JSON.parse(raw) as OpenCodeFileDiff[] | { data?: OpenCodeFileDiff[] };
-        } catch {
-            logInfo('OpenCode response [session diff] fileCount=0 (invalid JSON)');
-            return [];
-        }
-        const list = Array.isArray(data)
-            ? data
-            : Array.isArray((data as { data?: OpenCodeFileDiff[] }).data)
-                ? (data as { data: OpenCodeFileDiff[] }).data
-                : [];
-        logInfo(`OpenCode response [session diff] fileCount=${list.length}`);
-        return list;
-    }, 'session diff');
-}
 
 export class AiRepository implements FindingsQueryPort, FixerQueryPort {
     private readonly cliAdapter: ProviderCliAdapter;
