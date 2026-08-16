@@ -1,15 +1,14 @@
 import * as github from "@actions/github";
-import { logDebugInfo, logError, logInfo } from "../../utils/logger";
+import { logDebugInfo, logError } from '../../utils/logger';
 import { paginateCursor } from "./cursor_pagination";
 import { ProjectResult } from "../graph/project_result";
 import { ProjectDetail } from "../model/project_detail";
 import { authorizationForFileModification } from './actor_modification_policy';
 import { collectOrganizationMembers, selectAvailableMembers } from './project_members_policy';
-import { tagReference, tagReferencePath, releaseName } from './release_tag_policy';
-import { releasePayload, hasReleaseContent } from './release_content_policy';
-import { findTargetRelease, releaseIdAsString } from './release_transition_policy';
+import { RepositoryReleaseRepository } from './repository_release_repository';
 
 export class ProjectRepository {
+    private readonly releaseRepository = new RepositoryReleaseRepository();
   
     private readonly priorityLabel = "Priority"  
     private readonly sizeLabel = "Size"
@@ -623,178 +622,13 @@ export class ProjectRepository {
         return { name, email };
     };
 
-    private findTag = async (owner: string, repo: string, tag: string, token: string): Promise<{ object: { sha: string } } | undefined> => {
-      const octokit = github.getOctokit(token);
-      try {
-        const { data: foundTag } = await octokit.rest.git.getRef({
-          owner,
-          repo,
-          ref: tagReference(tag),
-        });
-        return foundTag;
-      } catch {
-        return undefined;
-      }
-    }
+    updateTag = this.releaseRepository.updateTag;
 
-    private getTagSHA = async (owner: string, repo: string, tag: string, token: string): Promise<string | undefined> => {
-      const foundTag = await this.findTag(owner, repo, tag, token);
-      if (!foundTag) {
-        logError(`The '${tag}' tag does not exist in the remote repository`);
-        return undefined;
-      }
-      return foundTag.object.sha;
-    }
+    updateRelease = this.releaseRepository.updateRelease;
 
-    updateTag = async (owner: string, repo: string, sourceTag: string, targetTag: string, token: string): Promise<void> => {
-      const sourceTagSHA = await this.getTagSHA(owner, repo, sourceTag, token);
-      if (!sourceTagSHA) {
-        logError(`The '${sourceTag}' tag does not exist in the remote repository`);
-        return;
-      }
+    createRelease = this.releaseRepository.createRelease;
 
-      const foundTargetTag = await this.findTag(owner, repo, targetTag, token);
-      const refName = tagReference(targetTag);
+    getDefaultBranch = this.releaseRepository.getDefaultBranch;
 
-      const octokit = github.getOctokit(token);
-      if (foundTargetTag) {
-        logDebugInfo(`Updating the '${targetTag}' tag to point to the '${sourceTag}' tag`);
-        await octokit.rest.git.updateRef({
-          owner,
-          repo,
-          ref: refName,
-          sha: sourceTagSHA,
-          force: true,
-        });
-      } else {
-        logDebugInfo(`Creating the '${targetTag}' tag from the '${sourceTag}' tag`);
-        await octokit.rest.git.createRef({
-          owner,
-          repo,
-          ref: tagReferencePath(targetTag),
-          sha: sourceTagSHA,
-        });
-      }
-    }
-    
-    updateRelease = async (owner: string, repo: string, sourceTag: string, targetTag: string, token: string): Promise<string | undefined> => {
-      // Get the release associated with sourceTag
-      const octokit = github.getOctokit(token);
-      const { data: sourceRelease } = await octokit.rest.repos.getReleaseByTag({
-        owner,
-        repo,
-        tag: sourceTag,
-      });
-
-      if (!hasReleaseContent(sourceRelease)) {
-        logError(`The '${sourceTag}' tag does not exist in the remote repository`);
-        return undefined;
-      }
-
-      logDebugInfo(`Found release for sourceTag '${sourceTag}': ${sourceRelease.name}`);
-
-      // Check if there is a release for targetTag
-      const { data: releases } = await octokit.rest.repos.listReleases({
-        owner,
-        repo,
-      });
-
-      const targetRelease = findTargetRelease(releases, targetTag, (release) => release.tag_name);
-
-      let targetReleaseId;
-      if (targetRelease) {
-        logDebugInfo(`Updating release for targetTag '${targetTag}'`);
-        // Update the target release with the content from the source release
-        await octokit.rest.repos.updateRelease({
-          owner,
-          repo,
-          release_id: targetRelease.id,
-          name: sourceRelease.name,
-          body: sourceRelease.body,
-          draft: sourceRelease.draft,
-          prerelease: sourceRelease.prerelease,
-        });
-        targetReleaseId = targetRelease.id;
-      } else {
-        logDebugInfo(`Creating new release for targetTag '${targetTag}'`);
-        const payload = releasePayload(targetTag, sourceRelease);
-        const { data: newRelease } = await octokit.rest.repos.createRelease({
-          owner,
-          repo,
-          ...payload,
-        });
-        targetReleaseId = newRelease.id;
-      }
-
-      logInfo(`Updated release for targetTag '${targetTag}'`);
-      return releaseIdAsString(targetReleaseId);
-    }
-
-    createRelease = async (owner: string, repo: string, version: string, title: string, changelog: string, token: string): Promise<string | undefined> => {
-      try {
-        const octokit = github.getOctokit(token);
-        
-        const { data: release } = await octokit.rest.repos.createRelease({
-          owner,
-          repo,
-          tag_name: version,
-          name: releaseName(version, title),
-          body: changelog,
-          draft: false,
-          prerelease: false,
-        });
-
-        return release.html_url;
-      } catch (error) {
-        logError(`Error creating release: ${error}`);
-        return undefined;
-      }
-    }
-
-    getDefaultBranch = async (owner: string, repo: string, token: string): Promise<string | undefined> => {
-      try {
-        const octokit = github.getOctokit(token);
-        const { data } = await octokit.rest.repos.get({ owner, repo });
-        const branch = data.default_branch;
-        logDebugInfo(`Default branch for ${owner}/${repo}: ${branch}`);
-        return branch;
-      } catch (error) {
-        logError(`Error getting default branch for ${owner}/${repo}: ${error}`);
-        return undefined;
-      }
-    };
-
-    createTag = async (owner: string, repo: string, branch: string, tag: string, token: string): Promise<string | undefined> => {
-      const octokit = github.getOctokit(token);
-      
-      try {
-        // Check if tag already exists
-        const existingTag = await this.findTag(owner, repo, tag, token);
-        if (existingTag) {
-          logInfo(`Tag '${tag}' already exists in repository ${owner}/${repo}`);
-          return existingTag.object.sha;
-        }
-
-        // Get the latest commit SHA from the specified branch
-        const { data: ref } = await octokit.rest.git.getRef({
-          owner,
-          repo,
-          ref: `heads/${branch}`,
-        });
-
-        // Create the tag
-        await octokit.rest.git.createRef({
-          owner,
-          repo,
-          ref: `refs/tags/${tag}`,
-          sha: ref.object.sha,
-        });
-
-        logInfo(`Created tag '${tag}' in repository ${owner}/${repo} from branch '${branch}'`);
-        return ref.object.sha;
-      } catch (error) {
-        logError(`Error creating tag '${tag}': ${JSON.stringify(error, null, 2)}`);
-        return undefined;
-      }
-    }
+    createTag = this.releaseRepository.createTag;
 }
