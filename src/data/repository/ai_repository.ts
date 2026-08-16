@@ -9,6 +9,7 @@ import type { AgentCliPort, AgentQueryOptions, FindingsQueryPort, FixerQueryPort
 import { withOpenCodeRetry } from './opencode_retry';
 import { buildAgentPrompt } from './agent_prompt_policy';
 import { getValidatedAgentConfiguration } from './agent_configuration_policy';
+import { resolveOpenCodeModelReference } from './opencode_model_reference_policy';
 import { extractReasoningFromParts, extractTextFromParts } from './agent_response_parser';
 export { getSessionDiff } from './opencode_session_diff_client';
 export type { OpenCodeFileDiff } from './opencode_session_diff_client';
@@ -65,22 +66,16 @@ export class AiRepository implements FindingsQueryPort, FixerQueryPort {
             logError('Missing required AI configuration for findings server transport.');
             return undefined;
         }
-        const modelReference = taskConfiguration.model.trim();
-        const separator = modelReference.indexOf('/');
-        const providerID = separator > 0 ? modelReference.slice(0, separator) : 'opencode';
-        const modelID = separator > 0 ? modelReference.slice(separator + 1).trim() : modelReference;
+        const { providerId, modelId } = resolveOpenCodeModelReference(taskConfiguration.model);
         const serverUrl = taskConfiguration.serverUrl;
         const model = taskConfiguration.model;
-        if (!modelID.trim()) {
-            throw new Error(`OpenCode model must use provider/model format for findings.`);
-        }
         try {
             return await withOpenCodeRetry(async () => {
                 const client = this.openCodeClient;
                 const { parts } = await client.sendMessage({
                     serverUrl,
-                    providerID,
-                    modelID,
+                    providerID: providerId,
+                    modelID: modelId,
                     agent: agentId,
                     prompt: promptText,
                 });
@@ -133,23 +128,17 @@ export class AiRepository implements FindingsQueryPort, FixerQueryPort {
             logError('Missing required AI configuration for fixer server transport.');
             return undefined;
         }
-        const modelReference = taskConfiguration.model.trim();
-        const separator = modelReference.indexOf('/');
-        const providerID = separator > 0 ? modelReference.slice(0, separator) : 'opencode';
-        const modelID = separator > 0 ? modelReference.slice(separator + 1).trim() : modelReference;
+        const { providerId, modelId } = resolveOpenCodeModelReference(taskConfiguration.model);
         const serverUrl = taskConfiguration.serverUrl;
         const model = taskConfiguration.model;
-        if (!modelID.trim()) {
-            throw new Error('OpenCode model must use provider/model format for fixer.');
-        }
         try {
             return await withOpenCodeRetry(
                 async () => {
                     const client = this.openCodeClient;
                     const result = await client.sendMessage({
                         serverUrl,
-                        providerID,
-                        modelID,
+                        providerID: providerId,
+                        modelID: modelId,
                         agent: OPENCODE_AGENT_BUILD,
                         prompt,
                     });
