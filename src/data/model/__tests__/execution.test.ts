@@ -28,8 +28,8 @@ const mockGetReleaseVersionInvoke = jest.fn();
 const mockGetReleaseTypeInvoke = jest.fn();
 const mockGetHotfixVersionInvoke = jest.fn();
 
-jest.mock('../../repository/project_repository', () => ({
-  ProjectRepository: jest.fn().mockImplementation(() => ({
+jest.mock('../../repository/organization_repository', () => ({
+  OrganizationRepository: jest.fn().mockImplementation(() => ({
     getUserFromToken: mockGetUserFromToken,
   })),
 }));

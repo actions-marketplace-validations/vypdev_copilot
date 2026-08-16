@@ -6,7 +6,7 @@ import { branchesForManagement, typesForIssue } from "../../utils/label_utils";
 import { logDebugInfo, setGlobalLoggerDebug } from "../../utils/logger";
 import { BranchRepository } from "../repository/branch_repository";
 import { IssueRepository } from "../repository/issue_repository";
-import { ProjectRepository } from "../repository/project_repository";
+import { OrganizationRepository } from "../repository/organization_repository";
 import { Ai } from "./ai";
 import { Branches } from "./branches";
 import { Commit } from "./commit";
@@ -234,9 +234,9 @@ export class Execution {
         setGlobalLoggerDebug(this.debug, this.inputs === undefined);
 
         const issueRepository = new IssueRepository();
-        const projectRepository = new ProjectRepository();
+        const organizationRepository = new OrganizationRepository();
 
-        this.tokenUser = await projectRepository.getUserFromToken(this.tokens.token);
+        this.tokenUser = await organizationRepository.getUserFromToken(this.tokens.token);
         if (!this.tokenUser) {
             throw new Error('Failed to get user from token');
         }

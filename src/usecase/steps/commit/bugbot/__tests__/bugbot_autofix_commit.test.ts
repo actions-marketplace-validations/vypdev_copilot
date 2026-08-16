@@ -22,8 +22,8 @@ jest.mock("../../../../../utils/logger", () => ({
 }));
 
 const mockGetTokenUserDetails = jest.fn();
-jest.mock("../../../../../data/repository/project_repository", () => ({
-    ProjectRepository: jest.fn().mockImplementation(() => ({
+jest.mock("../../../../../data/repository/organization_repository", () => ({
+    OrganizationRepository: jest.fn().mockImplementation(() => ({
         getTokenUserDetails: mockGetTokenUserDetails,
     })),
 }));

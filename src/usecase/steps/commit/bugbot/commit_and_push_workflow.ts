@@ -1,5 +1,5 @@
 import * as exec from '@actions/exec';
-import { ProjectRepository } from '../../../../data/repository/project_repository';
+import { OrganizationRepository } from '../../../../data/repository/organization_repository';
 import type { Execution } from '../../../../data/model/execution';
 import { logDebugInfo, logError, logInfo } from '../../../../utils/logger';
 import { checkoutBranch } from './git_branch_checkout';
@@ -69,8 +69,8 @@ export async function runCommitAndPushWorkflow(
     }
 
     try {
-        const projectRepository = new ProjectRepository();
-        const { name, email } = await projectRepository.getTokenUserDetails(execution.tokens.token);
+        const organizationRepository = new OrganizationRepository();
+        const { name, email } = await organizationRepository.getTokenUserDetails(execution.tokens.token);
         await gitCommitRepository.configureAuthor(name, email);
         logDebugInfo(`Git author set to ${name} <${email}>.`);
         if (options.workspacePaths) {

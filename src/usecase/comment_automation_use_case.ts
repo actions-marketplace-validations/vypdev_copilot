@@ -14,7 +14,7 @@ import {
     canRunDoUserRequest,
 } from "./steps/commit/bugbot/bugbot_fix_intent_payload";
 import { DoUserRequestUseCase } from "./steps/commit/user_request_use_case";
-import { ProjectRepository } from "../data/repository/project_repository";
+import { OrganizationRepository } from "../data/repository/organization_repository";
 
 export interface CommentAutomationOptions {
     taskId: string;
@@ -44,8 +44,8 @@ export async function runCommentAutomation(
         logInfo("Bugbot fix intent: no payload from intent detection.");
     }
 
-    const projectRepository = new ProjectRepository();
-    const allowedToModifyFiles = await projectRepository.isActorAllowedToModifyFiles(
+    const organizationRepository = new OrganizationRepository();
+    const allowedToModifyFiles = await organizationRepository.isActorAllowedToModifyFiles(
         param.owner,
         param.actor,
         param.tokens.token
