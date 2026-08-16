@@ -449,14 +449,14 @@ export async function runLocalAction(
      */
     const branchManagementAlways = (additionalParams[INPUT_KEYS.BRANCH_MANAGEMENT_ALWAYS] ?? actionInputs[INPUT_KEYS.BRANCH_MANAGEMENT_ALWAYS]) === 'true';
     const reopenIssueOnPush = (additionalParams[INPUT_KEYS.REOPEN_ISSUE_ON_PUSH] ?? actionInputs[INPUT_KEYS.REOPEN_ISSUE_ON_PUSH]) === 'true';
-    const issueDesiredAssigneesCount = parseInt(additionalParams[INPUT_KEYS.DESIRED_ASSIGNEES_COUNT] ?? actionInputs[INPUT_KEYS.DESIRED_ASSIGNEES_COUNT]) ?? 0;
+    const issueDesiredAssigneesCount = parseIntegerInput(additionalParams[INPUT_KEYS.DESIRED_ASSIGNEES_COUNT] ?? actionInputs[INPUT_KEYS.DESIRED_ASSIGNEES_COUNT], 0);
 
     /**
      * Pull Request
      */
-    const pullRequestDesiredAssigneesCount = parseInt(additionalParams[INPUT_KEYS.PULL_REQUEST_DESIRED_ASSIGNEES_COUNT] ?? actionInputs[INPUT_KEYS.PULL_REQUEST_DESIRED_ASSIGNEES_COUNT]) ?? 0;
-    const pullRequestDesiredReviewersCount = parseInt(additionalParams[INPUT_KEYS.PULL_REQUEST_DESIRED_REVIEWERS_COUNT] ?? actionInputs[INPUT_KEYS.PULL_REQUEST_DESIRED_REVIEWERS_COUNT]) ?? 0;
-    const pullRequestMergeTimeout = parseInt(additionalParams[INPUT_KEYS.PULL_REQUEST_MERGE_TIMEOUT] ?? actionInputs[INPUT_KEYS.PULL_REQUEST_MERGE_TIMEOUT]) ?? 0;
+    const pullRequestDesiredAssigneesCount = parseIntegerInput(additionalParams[INPUT_KEYS.PULL_REQUEST_DESIRED_ASSIGNEES_COUNT] ?? actionInputs[INPUT_KEYS.PULL_REQUEST_DESIRED_ASSIGNEES_COUNT], 0);
+    const pullRequestDesiredReviewersCount = parseIntegerInput(additionalParams[INPUT_KEYS.PULL_REQUEST_DESIRED_REVIEWERS_COUNT] ?? actionInputs[INPUT_KEYS.PULL_REQUEST_DESIRED_REVIEWERS_COUNT], 0);
+    const pullRequestMergeTimeout = parseIntegerInput(additionalParams[INPUT_KEYS.PULL_REQUEST_MERGE_TIMEOUT] ?? actionInputs[INPUT_KEYS.PULL_REQUEST_MERGE_TIMEOUT], 0);
 
     const execution = new Execution(
         debug,

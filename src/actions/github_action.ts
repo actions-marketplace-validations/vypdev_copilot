@@ -455,14 +455,14 @@ export async function runGitHubAction(): Promise<void> {
      */
     const branchManagementAlways = getInput(INPUT_KEYS.BRANCH_MANAGEMENT_ALWAYS) === 'true';
     const reopenIssueOnPush = getInput(INPUT_KEYS.REOPEN_ISSUE_ON_PUSH) === 'true';
-    const issueDesiredAssigneesCount = parseInt(getInput(INPUT_KEYS.DESIRED_ASSIGNEES_COUNT)) ?? 0;
+    const issueDesiredAssigneesCount = parseIntegerInput(getInput(INPUT_KEYS.DESIRED_ASSIGNEES_COUNT), 0);
 
     /**
      * Pull Request
      */
-    const pullRequestDesiredAssigneesCount = parseInt(getInput(INPUT_KEYS.PULL_REQUEST_DESIRED_ASSIGNEES_COUNT)) ?? 0;
-    const pullRequestDesiredReviewersCount = parseInt(getInput(INPUT_KEYS.PULL_REQUEST_DESIRED_REVIEWERS_COUNT)) ?? 0;
-    const pullRequestMergeTimeout = parseInt(getInput(INPUT_KEYS.PULL_REQUEST_MERGE_TIMEOUT)) ?? 0;
+    const pullRequestDesiredAssigneesCount = parseIntegerInput(getInput(INPUT_KEYS.PULL_REQUEST_DESIRED_ASSIGNEES_COUNT), 0);
+    const pullRequestDesiredReviewersCount = parseIntegerInput(getInput(INPUT_KEYS.PULL_REQUEST_DESIRED_REVIEWERS_COUNT), 0);
+    const pullRequestMergeTimeout = parseIntegerInput(getInput(INPUT_KEYS.PULL_REQUEST_MERGE_TIMEOUT), 0);
 
     const execution = new Execution(
         debug,
