@@ -7,7 +7,7 @@
 import { isAgentConfigurationReady } from '../../../data/model/agent';
 import { Execution } from '../../../data/model/execution';
 import { Result } from '../../../data/model/result';
-import { OPENCODE_AGENT_PLAN } from '../../../data/repository/ai_repository';
+import { OPENCODE_AGENT_PLAN } from '../../../data/repository/agent_task_policy';
 import type { FindingsQueryPort } from '../../../data/repository/agent_ports';
 import { DefaultAgentRepositoryFactory } from '../../../data/repository/agent_repository_factory';
 import { THINK_RESPONSE_SCHEMA } from '../../../data/repository/agent_response_schemas';

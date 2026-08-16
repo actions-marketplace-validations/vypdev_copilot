@@ -1,6 +1,6 @@
 import { isAgentConfigurationReady } from "../../../../data/model/agent";
 import type { Execution } from "../../../../data/model/execution";
-import { OPENCODE_AGENT_PLAN } from "../../../../data/repository/ai_repository";
+import { OPENCODE_AGENT_PLAN } from "../../../../data/repository/agent_task_policy";
 import type { FindingsQueryPort } from "../../../../data/repository/agent_ports";
 import { DefaultAgentRepositoryFactory } from "../../../../data/repository/agent_repository_factory";
 import { PullRequestRepository } from "../../../../data/repository/pull_request_repository";

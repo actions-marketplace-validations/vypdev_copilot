@@ -8,7 +8,7 @@ import { ParamUseCase } from '../base/param_usecase';
 import { IssueRepository } from '../../data/repository/issue_repository';
 import { BranchRepository } from '../../data/repository/branch_repository';
 import { PullRequestRepository } from '../../data/repository/pull_request_repository';
-import { OPENCODE_AGENT_PLAN } from '../../data/repository/ai_repository';
+import { OPENCODE_AGENT_PLAN } from '../../data/repository/agent_task_policy';
 import type { FindingsQueryPort } from '../../data/repository/agent_ports';
 import { DefaultAgentRepositoryFactory } from '../../data/repository/agent_repository_factory';
 import { getCheckProgressPrompt } from '../../prompts';

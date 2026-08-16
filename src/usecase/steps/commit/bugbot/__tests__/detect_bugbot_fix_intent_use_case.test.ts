@@ -189,7 +189,7 @@ describe("DetectBugbotFixIntentUseCase", () => {
         expect(mockGetPullRequestReviewCommentBody).toHaveBeenCalledWith("o", "r", 50, 999, "t");
         expect(mockAskAgent).toHaveBeenCalledWith(
             expect.anything(),
-            "plan",
+            "build",
             expect.stringContaining("Parent body"),
             expect.anything()
         );
