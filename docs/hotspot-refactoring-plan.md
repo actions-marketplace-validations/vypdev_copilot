@@ -47,6 +47,27 @@ gate, and its own published commit.
 - No RepoWise reports, editor configuration, or generated analysis artifacts
   are committed.
 
+## AiRepository composition cycle
+
+Baseline at `9fed65d9`: focused Ai/OpenCode tests pass (`38/38`), typecheck passes, and RepoWise reports `ai_repository.ts` at score `3.18`, NLOC `129`, max CCN `13`, max nesting `4`, and `30.66%` duplication.
+
+The next cycle targets composition and dependency direction rather than line count:
+
+1. Inventory every concrete `AiRepository` construction and classify callers by composition root, use case, test, or CLI entrypoint.
+2. Define a typed `AgentRepositoryFactory` port at the composition boundary; keep findings and fixer ports separate.
+3. Add RED contract tests proving independent factory-created repositories use injected CLI/OpenCode dependencies.
+4. Implement the infrastructure factory without changing provider behavior or session semantics.
+5. Migrate findings use cases from concrete defaults to the factory/port boundary.
+6. Migrate fixer use cases from concrete defaults to the factory/port boundary.
+7. Migrate CLI composition explicitly, preserving its input/configuration lifecycle.
+8. Remove obsolete direct concrete imports from application use cases and validate the dependency graph.
+9. Review `getSessionDiff` as a separate read-only session capability and define its port if callers justify it.
+10. Add composition/error integration tests for missing configuration, CLI failure, server failure, and independent instances.
+11. Run complete gates, reindex RepoWise on the published SHA, and compare hotspot and coupling metrics.
+12. Clean generated artifacts, document measured results, verify exact local/remote SHA, and select the next hotspot boundary.
+
+Acceptance criteria: no application/use-case module constructs concrete transport adapters; `FindingsQueryPort` and `FixerQueryPort` remain separate; composition is explicit and testable; no compatibility shim is added solely to preserve an old import; every slice has focused tests, full gates, and an independently published commit.
+
 ## AiRepository hotspot sequence
 
 Baseline at `16ea1274`: focused Ai/OpenCode tests pass (`32/32`), typecheck passes, and RepoWise reports `src/data/repository/ai_repository.ts` as the current worst performer (`2.52`).
