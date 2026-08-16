@@ -12,7 +12,7 @@ import { IssueAssignmentRepository } from './issue_assignment_repository';
 import { IssueLifecycleRepository } from './issue_lifecycle_repository';
 import { sanitizeIssueTitle, sanitizePullRequestTitle } from './issue_title_policy';
 import { Labels } from "../model/labels";
-
+import { resolveIssueTitleEmoji, resolvePullRequestTitleEmoji } from './issue_emoji_policy';
 export { PROGRESS_LABEL_PATTERN } from './progress_labels';
 
 export class IssueRepository {
@@ -42,39 +42,7 @@ export class IssueRepository {
         try {
             const octokit = github.getOctokit(token);
 
-            let emoji = '🤖';
-
-            const branched = branchManagementAlways || labels.containsBranchedLabel
-
-            if (labels.isHotfix && branched) {
-                emoji = `🔥${branchManagementEmoji}`;
-            } else if (labels.isRelease && branched) {
-                emoji = `🚀${branchManagementEmoji}`;
-            } else if ((labels.isBugfix || labels.isBug) && branched) {
-                emoji = `🐛${branchManagementEmoji}`;
-            } else if ((labels.isFeature || labels.isEnhancement) && branched) {
-                emoji = `✨${branchManagementEmoji}`;
-            } else if ((labels.isDocs || labels.isDocumentation) && branched) {
-                emoji = `📝${branchManagementEmoji}`;
-            } else if ((labels.isChore || labels.isMaintenance) && branched) {
-                emoji = `🔧${branchManagementEmoji}`;
-            } else if (labels.isHotfix) {
-                emoji = '🔥';
-            } else if (labels.isRelease) {
-                emoji = '🚀';
-            } else if ((labels.isDocs || labels.isDocumentation)) {
-                emoji = '📝';
-            } else if (labels.isChore || labels.isMaintenance) {
-                emoji = '🔧';
-            } else if (labels.isBugfix || labels.isBug) {
-                emoji = '🐛';
-            } else if (labels.isFeature || labels.isEnhancement) {
-                emoji = '✨';
-            } else if (labels.isHelp) {
-                emoji = '🆘';
-            } else if (labels.isQuestion) {
-                emoji = '❓';
-            }
+            const emoji = resolveIssueTitleEmoji(labels, branchManagementAlways, branchManagementEmoji);
 
             const sanitizedTitle = sanitizeIssueTitle(issueTitle);
 
@@ -117,39 +85,7 @@ export class IssueRepository {
         try {
             const octokit = github.getOctokit(token);
 
-            let emoji = '🤖';
-
-            const branched = branchManagementAlways || labels.containsBranchedLabel
-
-            if (labels.isHotfix && branched) {
-                emoji = `🔥${branchManagementEmoji}`;
-            } else if (labels.isRelease && branched) {
-                emoji = `🚀${branchManagementEmoji}`;
-            } else if ((labels.isBugfix || labels.isBug) && branched) {
-                emoji = `🐛${branchManagementEmoji}`;
-            } else if ((labels.isFeature || labels.isEnhancement) && branched) {
-                emoji = `✨${branchManagementEmoji}`;
-            } else if ((labels.isDocs || labels.isDocumentation) && branched) {
-                emoji = `📝${branchManagementEmoji}`;
-            } else if ((labels.isChore || labels.isMaintenance) && branched) {
-                emoji = `🔧${branchManagementEmoji}`;
-            } else if (labels.isHotfix) {
-                emoji = '🔥';
-            } else if (labels.isRelease) {
-                emoji = '🚀';
-            } else if (labels.isBugfix || labels.isBug) {
-                emoji = '🐛';
-            } else if (labels.isFeature || labels.isEnhancement) {
-                emoji = '✨';
-            } else if (labels.isDocs || labels.isDocumentation) {
-                emoji = '📝';
-            } else if (labels.isChore || labels.isMaintenance) {
-                emoji = '🔧';
-            } else if (labels.isHelp) {
-                emoji = '🆘';
-            } else if (labels.isQuestion) {
-                emoji = '❓';
-            }
+            const emoji = resolvePullRequestTitleEmoji(labels, branchManagementAlways, branchManagementEmoji);
 
             const sanitizedTitle = sanitizePullRequestTitle(issueTitle);
 
