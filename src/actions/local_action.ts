@@ -9,14 +9,12 @@ import { Issue } from '../data/model/issue';
 import { IssueTypes } from '../data/model/issue_types';
 import { Labels } from '../data/model/labels';
 import { Locale } from '../data/model/locale';
-import { Projects } from '../data/model/projects';
 import { PullRequest } from '../data/model/pull_request';
 import { Release } from '../data/model/release';
 import { SingleAction } from '../data/model/single_action';
 
 import { Tokens } from '../data/model/tokens';
 import { Welcome } from '../data/model/welcome';
-import { Workflows } from '../data/model/workflows';
 import { ProjectRepository } from '../data/repository/project_repository';
 import { BUGBOT_MAX_COMMENTS, BUGBOT_MIN_SEVERITY, DEFAULT_IMAGE_CONFIG, INPUT_KEYS, OPENCODE_DEFAULT_MODEL, TITLE } from '../utils/constants';
 import { logInfo } from '../utils/logger';
@@ -27,6 +25,7 @@ import { parseBoundedPositiveIntegerInput, parseIntegerInput } from './input_num
 import { parseDelimitedValues } from './input_values_policy';
 import { buildSizeThresholds } from './size_threshold_builder';
 import { buildBranches } from './branches_builder';
+import { buildLocale, buildProjects, buildWorkflows } from './configuration_builders';
 import { mainRun } from './common_action';
 import boxen from 'boxen';
 
@@ -577,7 +576,7 @@ export async function runLocalAction(
             issueTypeHelpDescription,
             issueTypeHelpColor,
         ),
-        new Locale(issueLocale, pullRequestLocale),
+        buildLocale(issueLocale, pullRequestLocale),
         buildSizeThresholds({
             xxl: { lines: sizeXxlThresholdLines, files: sizeXxlThresholdFiles, commits: sizeXxlThresholdCommits },
             xl: { lines: sizeXlThresholdLines, files: sizeXlThresholdFiles, commits: sizeXlThresholdCommits },
@@ -598,17 +597,14 @@ export async function runLocalAction(
         }),
         new Release(),
         new Hotfix(),
-        new Workflows(
-            releaseWorkflow,
-            hotfixWorkflow,
-        ),
-        new Projects(
+        buildWorkflows(releaseWorkflow, hotfixWorkflow),
+        buildProjects({
             projects,
-            projectColumnIssueCreated,
-            projectColumnPullRequestCreated,
-            projectColumnIssueInProgress,
-            projectColumnPullRequestInProgress,
-        ),
+            issueCreated: projectColumnIssueCreated,
+            pullRequestCreated: projectColumnPullRequestCreated,
+            issueInProgress: projectColumnIssueInProgress,
+            pullRequestInProgress: projectColumnPullRequestInProgress,
+        }),
         new Welcome(welcomeTitle, welcomeMessages),
         additionalParams,
     )

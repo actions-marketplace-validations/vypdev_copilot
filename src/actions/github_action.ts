@@ -9,14 +9,12 @@ import { Issue } from '../data/model/issue';
 import { IssueTypes } from '../data/model/issue_types';
 import { Labels } from '../data/model/labels';
 import { Locale } from '../data/model/locale';
-import { Projects } from '../data/model/projects';
 import { PullRequest } from '../data/model/pull_request';
 import { Release } from '../data/model/release';
 import { Result } from '../data/model/result';
 import { SingleAction } from '../data/model/single_action';
 
 import { Tokens } from '../data/model/tokens';
-import { Workflows } from '../data/model/workflows';
 import { ProjectRepository } from '../data/repository/project_repository';
 import { PublishResultUseCase } from '../usecase/steps/common/publish_resume_use_case';
 import { StoreConfigurationUseCase } from '../usecase/steps/common/store_configuration_use_case';
@@ -30,6 +28,7 @@ import { parseBoundedPositiveIntegerInput, parseIntegerInput } from './input_num
 import { parseDelimitedValues } from './input_values_policy';
 import { buildSizeThresholds } from './size_threshold_builder';
 import { buildBranches } from './branches_builder';
+import { buildLocale, buildProjects, buildWorkflows } from './configuration_builders';
 
 export async function runGitHubAction(): Promise<void> {
     const projectRepository = new ProjectRepository();
@@ -585,7 +584,7 @@ export async function runGitHubAction(): Promise<void> {
             issueTypeHelpDescription,
             issueTypeHelpColor,
         ),
-        new Locale(issueLocale, pullRequestLocale),
+        buildLocale(issueLocale, pullRequestLocale),
         buildSizeThresholds({
             xxl: { lines: sizeXxlThresholdLines, files: sizeXxlThresholdFiles, commits: sizeXxlThresholdCommits },
             xl: { lines: sizeXlThresholdLines, files: sizeXlThresholdFiles, commits: sizeXlThresholdCommits },
@@ -606,17 +605,14 @@ export async function runGitHubAction(): Promise<void> {
         }),
         new Release(),
         new Hotfix(),
-        new Workflows(
-            releaseWorkflow,
-            hotfixWorkflow,
-        ),
-        new Projects(
+        buildWorkflows(releaseWorkflow, hotfixWorkflow),
+        buildProjects({
             projects,
-            projectColumnIssueCreated,
-            projectColumnPullRequestCreated,
-            projectColumnIssueInProgress,
-            projectColumnPullRequestInProgress,
-        ),
+            issueCreated: projectColumnIssueCreated,
+            pullRequestCreated: projectColumnPullRequestCreated,
+            issueInProgress: projectColumnIssueInProgress,
+            pullRequestInProgress: projectColumnPullRequestInProgress,
+        }),
         undefined,
         undefined,
     )
