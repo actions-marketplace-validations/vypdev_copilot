@@ -7,7 +7,7 @@ import { Hotfix } from '../data/model/hotfix';
 
 
 import { IssueTypes } from '../data/model/issue_types';
-import { Labels } from '../data/model/labels';
+
 import { Locale } from '../data/model/locale';
 
 import { Release } from '../data/model/release';
