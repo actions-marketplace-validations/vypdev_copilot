@@ -15,7 +15,7 @@ import { Result } from '../data/model/result';
 import { SingleAction } from '../data/model/single_action';
 
 
-import { ProjectRepository } from '../data/repository/project_repository';
+import { ProjectBoardRepository } from '../data/repository/project_board_repository';
 import { PublishResultUseCase } from '../usecase/steps/common/publish_resume_use_case';
 import { StoreConfigurationUseCase } from '../usecase/steps/common/store_configuration_use_case';
 import { BUGBOT_MAX_COMMENTS, BUGBOT_MIN_SEVERITY, INPUT_KEYS } from '../utils/constants';
@@ -34,7 +34,7 @@ import { buildBranches } from './branches_builder';
 import { buildEmoji, buildImages, buildIssue, buildIssueTypes, buildLabels, buildLocale, buildProjects, buildPullRequest, buildTokens, buildWorkflows } from './configuration_builders';
 
 export async function runGitHubAction(): Promise<void> {
-    const projectRepository = new ProjectRepository();
+    const projectRepository = new ProjectBoardRepository();
 
     logInfo('GitHub Action: runGitHubAction started.');
 

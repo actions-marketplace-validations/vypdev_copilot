@@ -26,8 +26,8 @@ jest.mock('../common_action', () => ({
 }));
 
 const mockGetProjectDetail = jest.fn();
-jest.mock('../../data/repository/project_repository', () => ({
-  ProjectRepository: jest.fn().mockImplementation(() => ({
+jest.mock('../../data/repository/project_board_repository', () => ({
+  ProjectBoardRepository: jest.fn().mockImplementation(() => ({
     getProjectDetail: mockGetProjectDetail,
   })),
 }));
