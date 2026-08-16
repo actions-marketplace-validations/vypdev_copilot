@@ -355,17 +355,22 @@ export class AiRepository {
         if (!config) return undefined;
         const { serverUrl, providerID, modelID, model } = config;
         try {
-            const result = await withOpenCodeRetry(
-                () =>
-                    opencodeMessageWithAgentRaw(serverUrl, {
+            return await withOpenCodeRetry(
+                async () => {
+                    const client = new OpenCodeHttpClient({ requestTimeoutMs: OPENCODE_REQUEST_TIMEOUT_MS });
+                    const result = await client.sendMessage({
+                        serverUrl,
                         providerID,
                         modelID,
                         agent: OPENCODE_AGENT_BUILD,
-                        promptText: prompt,
-                    }),
+                        prompt,
+                    });
+                    const text = extractTextFromParts(result.parts);
+                    if (!text) throw new Error('Empty response text');
+                    return { text, sessionId: result.sessionId };
+                },
                 `agent ${OPENCODE_AGENT_BUILD}`
             );
-            return { text: result.text, sessionId: result.sessionId };
         } catch (error: unknown) {
             const err = error instanceof Error ? error : new Error(String(error));
             logError(`Error querying OpenCode build agent (${model}): ${err.message}`);
