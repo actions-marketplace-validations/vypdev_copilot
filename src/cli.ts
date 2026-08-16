@@ -12,6 +12,7 @@ import { getCliDoPrompt } from './prompts';
 import { Ai } from './data/model/ai';
 import { OPENCODE_PROJECT_CONTEXT_INSTRUCTION } from './utils/opencode_project_context_instruction';
 import { AiRepository } from './data/repository/ai_repository';
+import { buildAgentTasks } from './actions/agent_configuration_builder';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -156,10 +157,13 @@ program
   .option('-d, --debug', 'Debug mode', false)
   .option('--opencode-server-url <url>', 'OpenCode server URL', process.env.OPENCODE_SERVER_URL || 'http://127.0.0.1:4096')
   .option('--opencode-model <model>', 'OpenCode model', process.env.OPENCODE_MODEL)
+  .option('--agent-provider <provider>', 'Agent provider (opencode|cursor|codex)', process.env.AGENT_PROVIDER || 'opencode')
+  .option('--agent-transport <transport>', 'Agent transport (server|cli)', process.env.AGENT_TRANSPORT || 'server')
+  .option('--agent-model <model>', 'Selected agent model', process.env.AGENT_MODEL)
+  .option('--agent-command <command>', 'CLI executable for the selected agent', process.env.AGENT_COMMAND)
   .option('--output <format>', 'Output format (text|json)', 'text')
-  .action(async (options) => {    
+  .action(async (options) => {
     const gitInfo = getGitInfo();
-    
     if ('error' in gitInfo) {
       logError(gitInfo.error);
       process.exit(1);
@@ -182,19 +186,26 @@ program
 
     const serverUrl = cleanArg(options.opencodeServerUrl) || process.env.OPENCODE_SERVER_URL || 'http://127.0.0.1:4096';
     const model = cleanArg(options.opencodeModel) || process.env.OPENCODE_MODEL || OPENCODE_DEFAULT_MODEL;
-    // Handle subagents flag: default is true, can be disabled with --no-use-subagents
-    // Commander.js sets useSubagents to false when --no-use-subagents is used
-    const _useSubAgents = options.useSubagents !== false;
-    const _maxConcurrentSubAgents = parseInt(cleanArg(options.maxConcurrentSubagents)) || 5;
+    const agentProvider = cleanArg(options.agentProvider) || process.env.AGENT_PROVIDER || 'opencode';
+    const agentTransport = cleanArg(options.agentTransport) || process.env.AGENT_TRANSPORT || 'server';
+    const agentModel = cleanArg(options.agentModel) || process.env.AGENT_MODEL || model;
+    const agentCommand = cleanArg(options.agentCommand) || process.env.AGENT_COMMAND;
+    const agentTasks = buildAgentTasks({
+      provider: agentProvider,
+      transport: agentTransport,
+      model: agentModel,
+      serverUrl,
+      command: agentCommand,
+    });
     const outputFormat = cleanArg(options.output) || 'text';
 
-    if (!serverUrl) {
-      console.log('❌ OpenCode server URL required. Set OPENCODE_SERVER_URL or use --opencode-server-url');
+    if (agentTasks.findings.transport === 'server' && !serverUrl) {
+      console.log('❌ OpenCode server URL required for server transport. Set OPENCODE_SERVER_URL or use --opencode-server-url');
       return;
     }
 
     try {
-      const ai = new Ai(serverUrl, model, false, false, [], false, 'low', 20);
+      const ai = new Ai(serverUrl, model, false, false, [], false, 'low', 20, [], agentTasks);
       const aiRepository = new AiRepository();
       const fullPrompt = getCliDoPrompt({
         projectContextInstruction: `${OPENCODE_PROJECT_CONTEXT_INSTRUCTION}\n\nRepository identity: ${gitInfo.owner}/${gitInfo.repo}\nCurrent branch: ${getCurrentBranch()}\nTreat this repository identity as authoritative context for the request.`,
