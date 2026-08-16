@@ -108,12 +108,19 @@ export class OpenCodeHttpClient {
     }
 
     private async readJson<T>(response: Response, context: string): Promise<T> {
-        let payload: unknown;
+        let raw: string;
         try {
-            payload = await response.json();
+            raw = await response.text();
+        } catch {
+            throw new OpenCodeClientError(`${context} returned an unreadable body`, 'parse', 'malformed_response', false, response.status);
+        }
+        if (!raw.trim()) {
+            throw new OpenCodeClientError(`${context} returned an empty body`, 'parse', 'malformed_response', false, response.status);
+        }
+        try {
+            return JSON.parse(raw) as T;
         } catch {
             throw new OpenCodeClientError(`${context} returned invalid JSON`, 'parse', 'malformed_response', false, response.status);
         }
-        return payload as T;
     }
 }

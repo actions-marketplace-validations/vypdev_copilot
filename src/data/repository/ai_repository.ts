@@ -2,6 +2,7 @@ import { OPENCODE_REQUEST_TIMEOUT_MS } from '../../utils/constants';
 import { logDebugInfo, logError, logInfo } from '../../utils/logger';
 import { Ai } from '../model/ai';
 import { parseJsonFromAgentText } from './agent_json_parser';
+import { OpenCodeHttpClient } from './opencode_http_client';
 import { withOpenCodeRetry } from './opencode_retry';
 import { buildAgentPrompt } from './agent_prompt_policy';
 
@@ -311,12 +312,15 @@ export class AiRepository {
         );
         try {
             return await withOpenCodeRetry(async () => {
-                const { text, parts } = await opencodeMessageWithAgentRaw(serverUrl, {
+                const client = new OpenCodeHttpClient({ requestTimeoutMs: OPENCODE_REQUEST_TIMEOUT_MS });
+                const { parts } = await client.sendMessage({
+                    serverUrl,
                     providerID,
                     modelID,
                     agent: agentId,
-                    promptText,
+                    prompt: promptText,
                 });
+                const text = extractTextFromParts(parts);
                 if (!text) throw new Error('Empty response text');
                 const reasoning = options.includeReasoning ? extractReasoningFromParts(parts) : '';
                 if (options.expectJson && options.schema) {
