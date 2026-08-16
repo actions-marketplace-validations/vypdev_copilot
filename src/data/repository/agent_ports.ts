@@ -17,6 +17,10 @@ export interface FindingsQueryPort {
     askAgent(ai: Ai, agentId: string, prompt: string, options?: AgentQueryOptions): Promise<string | Record<string, unknown> | undefined>;
 }
 
+export interface FixerQueryPort {
+    copilotMessage(ai: Ai, prompt: string): Promise<{ text: string; sessionId: string } | undefined>;
+}
+
 export interface AgentCliPort {
     execute(request: {
         command: string;

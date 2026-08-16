@@ -4,7 +4,7 @@ import { Ai } from '../model/ai';
 import { parseJsonFromAgentText } from './agent_json_parser';
 import { AgentCliClient } from './agent_cli_client';
 import { OpenCodeHttpClient } from './opencode_http_client';
-import type { AgentCliPort, AgentQueryOptions, FindingsQueryPort, OpenCodeClientPort } from './agent_ports';
+import type { AgentCliPort, AgentQueryOptions, FindingsQueryPort, FixerQueryPort, OpenCodeClientPort } from './agent_ports';
 import { withOpenCodeRetry } from './opencode_retry';
 import { buildAgentPrompt } from './agent_prompt_policy';
 
@@ -150,7 +150,7 @@ export async function getSessionDiff(
     }, 'session diff');
 }
 
-export class AiRepository implements FindingsQueryPort {
+export class AiRepository implements FindingsQueryPort, FixerQueryPort {
     private readonly cliClient: AgentCliPort;
     private readonly openCodeClient: OpenCodeClientPort;
 
