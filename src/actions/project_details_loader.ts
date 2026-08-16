@@ -1,8 +1,8 @@
 import type { ProjectDetail } from '../data/model/project_detail';
-import type { ProjectRepository } from '../data/repository/project_repository';
+import type { ProjectDetailQueryPort } from '../data/repository/github_repository_ports';
 
 export async function loadProjectDetails(
-    projectRepository: Pick<ProjectRepository, 'getProjectDetail'>,
+    projectRepository: ProjectDetailQueryPort,
     projectIds: string[],
     token: string,
 ): Promise<ProjectDetail[]> {

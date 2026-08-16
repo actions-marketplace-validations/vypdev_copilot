@@ -37,8 +37,11 @@ export interface RepositoryReleasePort {
     ): Promise<string | undefined>;
 }
 
-export interface ProjectBoardQueryPort {
+export interface ProjectDetailQueryPort {
     getProjectDetail(projectId: string, token: string): Promise<ProjectDetail>;
+}
+
+export interface ProjectBoardQueryPort extends ProjectDetailQueryPort {
     isContentLinked(project: ProjectDetail, contentId: string, token: string): Promise<boolean>;
 }
 
