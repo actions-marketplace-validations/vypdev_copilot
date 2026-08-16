@@ -76,7 +76,10 @@ export class ProjectBoardRepository implements ProjectBoardQueryPort, ProjectBoa
             const projectQuery = `query($projectId: ID!, $cursor: String) { node(id: $projectId) { ... on ProjectV2 { items(first: 100, after: $cursor) { pageInfo { hasNextPage endCursor } nodes { id content { ... on Issue { id } ... on PullRequest { id } } } } } } }`;
             type ProjectItemsResponse = { node: { items?: { nodes: Array<{ id: string; content?: { id?: string } }>; pageInfo: { hasNextPage: boolean; endCursor: string | null } } } | null };
             const projectResult: ProjectItemsResponse = await octokit.graphql<ProjectItemsResponse>(projectQuery, { projectId: project.id, cursor });
-            if (projectResult.node === null) throw new Error(`Project not found or invalid project ID. The project ID must be the GraphQL node ID from the API (e.g. PVT_...), not the project number.`);
+            if (projectResult.node === null) {
+                logError(`Project not found for ID "${project.id}". Ensure the project is loaded via getProjectDetail (GraphQL node ID), not the project number.`);
+                throw new Error(`Project not found or invalid project ID. The project ID must be the GraphQL node ID from the API (e.g. PVT_...), not the project number.`);
+            }
             const items = projectResult.node.items?.nodes ?? [];
             totalItemsChecked += items.length;
             const foundItem: { id: string; content?: { id?: string } } | undefined = items.find((item: { id: string; content?: { id?: string } }) => item.content?.id === contentId);
@@ -86,7 +89,10 @@ export class ProjectBoardRepository implements ProjectBoardQueryPort, ProjectBoa
             if (hasNextPage && endCursor) cursor = endCursor;
             else { if (hasNextPage) logError(`Project items pagination: hasNextPage is true but endCursor is null (page ${pageCount}, ${totalItemsChecked} items so far). Cannot fetch more.`); cursor = null; }
         } while (cursor);
-        if (projectItemId === undefined) throw new Error(`Issue or pull request #${issueOrPullRequestNumber} is not in the project yet (checked ${totalItemsChecked} items). Link it to the project first, or wait for the board to sync.`);
+        if (projectItemId === undefined) {
+            logError(`Issue or PR #${issueOrPullRequestNumber} not found in project after checking ${totalItemsChecked} items (${pageCount} page(s)). Link it to the project first, or wait for the board to sync.`);
+            throw new Error(`Issue or pull request #${issueOrPullRequestNumber} is not in the project yet (checked ${totalItemsChecked} items). Link it to the project first, or wait for the board to sync.`);
+        }
         return projectItemId;
     };
 
