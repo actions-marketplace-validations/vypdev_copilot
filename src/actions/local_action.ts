@@ -15,9 +15,10 @@ import { SingleAction } from '../data/model/single_action';
 
 
 import { Welcome } from '../data/model/welcome';
-import { ProjectBoardRepository } from '../data/repository/project/project_board_repository';
 import { BUGBOT_MAX_COMMENTS, BUGBOT_MIN_SEVERITY, INPUT_KEYS, TITLE } from '../utils/constants';
 import { logInfo } from '../utils/logger';
+import { RepositoryFactory } from '../infrastructure/composition/repository_factory';
+
 import { getActionInputsWithDefaults } from '../utils/yml_utils';
 import { isEnabledInput } from './input_boolean_policy';
 import { loadProjectDetails } from './project_details_loader';
@@ -35,7 +36,7 @@ export async function runLocalAction(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Params shape is dynamic (CLI/action inputs)
     additionalParams: any
 ): Promise<void> {
-    const projectRepository = new ProjectBoardRepository();
+    const projectRepository = new RepositoryFactory().createProjectBoardRepository();
 
     const actionInputs = getActionInputsWithDefaults();
     

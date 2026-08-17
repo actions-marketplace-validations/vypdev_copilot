@@ -1,5 +1,5 @@
 import * as github from "@actions/github";
-import type { GithubBranchClient, GithubBranchComparisonClient, GithubBranchMergeClient, GithubClientPort, GithubGraphqlClient, GithubIssueAssignmentClient, GithubIssueContentClient, GithubIssueLabelProvisioningClient, GithubIssueLabelsClient, GithubIssueLifecycleClient, GithubIssueMetadataClient, GithubIssueTitleClient, GithubOrganizationClient, GithubPullRequestChangesClient, GithubPullRequestLifecycleClient, GithubPullRequestReviewClient, GithubWorkflowClient } from "../../data/repository/github/github_client_port";
+import type { GithubBranchClient, GithubBranchComparisonClient, GithubBranchMergeClient, GithubClientPort, GithubGraphqlClient, GithubProjectClient, GithubReleaseClient, GithubIssueAssignmentClient, GithubIssueContentClient, GithubIssueLabelProvisioningClient, GithubIssueLabelsClient, GithubIssueLifecycleClient, GithubIssueMetadataClient, GithubIssueTitleClient, GithubOrganizationClient, GithubPullRequestChangesClient, GithubPullRequestLifecycleClient, GithubPullRequestReviewClient, GithubWorkflowClient } from "../../data/repository/github/github_client_port";
 
 export type OctokitClient = ReturnType<typeof github.getOctokit>;
 
@@ -26,6 +26,12 @@ export class OctokitPullRequestLifecycleClientAdapter implements GithubClientPor
 }
 export class OctokitIssueLifecycleClientAdapter implements GithubClientPort<GithubIssueLifecycleClient> {
     getClient(token: string): GithubIssueLifecycleClient { return github.getOctokit(token) as unknown as GithubIssueLifecycleClient; }
+}
+export class OctokitReleaseClientAdapter implements GithubClientPort<GithubReleaseClient> {
+    getClient(token: string): GithubReleaseClient { return github.getOctokit(token) as unknown as GithubReleaseClient; }
+}
+export class OctokitProjectClientAdapter implements GithubClientPort<GithubProjectClient> {
+    getClient(token: string): GithubProjectClient { return github.getOctokit(token) as unknown as GithubProjectClient; }
 }
 export class OctokitIssueContentClientAdapter implements GithubClientPort<GithubIssueContentClient> {
     getClient(token: string): GithubIssueContentClient { return github.getOctokit(token) as unknown as GithubIssueContentClient; }

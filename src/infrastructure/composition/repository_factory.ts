@@ -16,7 +16,7 @@ import { PullRequestReviewRepository } from "../../data/repository/pull_request/
 import { PullRequestReviewThreadRepository } from "../../data/repository/pull_request/pull_request_review_thread_repository";
 import { PullRequestRepository } from "../../data/repository/pull_request_repository";
 import { RepositoryReleaseRepository } from "../../data/repository/release/repository_release_repository";
-import { OctokitBranchClientAdapter, OctokitBranchMergeClientAdapter, OctokitBranchComparisonClientAdapter, OctokitClientAdapter, OctokitGraphqlClientAdapter, OctokitIssueAssignmentClientAdapter, OctokitIssueContentClientAdapter, OctokitIssueLabelProvisioningClientAdapter, OctokitIssueLabelsClientAdapter, OctokitIssueLifecycleClientAdapter, OctokitIssueMetadataClientAdapter, OctokitIssueTitleClientAdapter, OctokitOrganizationClientAdapter, OctokitPullRequestChangesClientAdapter, OctokitPullRequestLifecycleClientAdapter, OctokitPullRequestReviewClientAdapter, OctokitWorkflowClientAdapter } from "../github/octokit_client";
+import { OctokitBranchClientAdapter, OctokitBranchMergeClientAdapter, OctokitBranchComparisonClientAdapter, OctokitClientAdapter, OctokitGraphqlClientAdapter, OctokitIssueAssignmentClientAdapter, OctokitIssueContentClientAdapter, OctokitIssueLabelProvisioningClientAdapter, OctokitIssueLabelsClientAdapter, OctokitIssueLifecycleClientAdapter, OctokitIssueMetadataClientAdapter, OctokitIssueTitleClientAdapter, OctokitOrganizationClientAdapter, OctokitProjectClientAdapter, OctokitPullRequestChangesClientAdapter, OctokitReleaseClientAdapter, OctokitPullRequestLifecycleClientAdapter, OctokitPullRequestReviewClientAdapter, OctokitWorkflowClientAdapter } from "../github/octokit_client";
 import { IssueUseCase } from "../../application/usecases/issue_use_case";
 import { PullRequestUseCase } from "../../application/usecases/pull_request_use_case";
 import { InitialSetupUseCase } from "../../application/usecases/actions/initial_setup_use_case";
@@ -142,7 +142,7 @@ export class RepositoryFactory {
     }
 
     createProjectBoardRepository(): ProjectBoardRepository {
-        return new ProjectBoardRepository();
+        return new ProjectBoardRepository(new OctokitProjectClientAdapter(), new OctokitGraphqlClientAdapter());
     }
 
     createPullRequestRepository(): PullRequestRepository {
@@ -166,6 +166,6 @@ export class RepositoryFactory {
     }
 
     createRepositoryReleaseRepository(): RepositoryReleaseRepository {
-        return new RepositoryReleaseRepository();
+        return new RepositoryReleaseRepository(new OctokitReleaseClientAdapter());
     }
 }

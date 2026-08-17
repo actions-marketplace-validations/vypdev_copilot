@@ -1,4 +1,4 @@
-import * as github from "@actions/github";
+import type { GithubClientPort, GithubReleaseClient } from "../github/github_client_port";
 import { logDebugInfo, logError, logInfo } from "../../../utils/logger";
 import { hasReleaseContent, releasePayload } from "../release_content_policy";
 import { findTargetRelease, releaseIdAsString } from "../release_transition_policy";
@@ -7,13 +7,15 @@ import type { RepositoryReleasePort } from "../../../application/ports/repositor
 
 /** Adapter for GitHub repository tags, releases, and default-branch metadata. */
 export class RepositoryReleaseRepository implements RepositoryReleasePort {
+    constructor(private readonly githubClient: GithubClientPort<GithubReleaseClient>) {}
+
     private findTag = async (
         owner: string,
         repository: string,
         tag: string,
         token: string,
     ): Promise<{ object: { sha: string } } | undefined> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         try {
             const { data: foundTag } = await octokit.rest.git.getRef({
                 owner,
@@ -54,7 +56,7 @@ export class RepositoryReleaseRepository implements RepositoryReleasePort {
         }
 
         const foundTargetTag = await this.findTag(owner, repository, targetTag, token);
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         if (foundTargetTag) {
             logDebugInfo(`Updating the '${targetTag}' tag to point to the '${sourceTag}' tag`);
             await octokit.rest.git.updateRef({
@@ -82,7 +84,7 @@ export class RepositoryReleaseRepository implements RepositoryReleasePort {
         targetTag: string,
         token: string,
     ): Promise<string | undefined> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         const { data: sourceRelease } = await octokit.rest.repos.getReleaseByTag({
             owner,
             repo: repository,
@@ -130,7 +132,7 @@ export class RepositoryReleaseRepository implements RepositoryReleasePort {
         token: string,
     ): Promise<string | undefined> => {
         try {
-            const octokit = github.getOctokit(token);
+            const octokit = this.githubClient.getClient(token);
             const { data: release } = await octokit.rest.repos.createRelease({
                 owner,
                 repo: repository,
@@ -153,7 +155,7 @@ export class RepositoryReleaseRepository implements RepositoryReleasePort {
         token: string,
     ): Promise<string | undefined> => {
         try {
-            const octokit = github.getOctokit(token);
+            const octokit = this.githubClient.getClient(token);
             const { data } = await octokit.rest.repos.get({ owner, repo: repository });
             logDebugInfo(`Default branch for ${owner}/${repository}: ${data.default_branch}`);
             return data.default_branch;
@@ -170,7 +172,7 @@ export class RepositoryReleaseRepository implements RepositoryReleasePort {
         tag: string,
         token: string,
     ): Promise<string | undefined> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         try {
             const existingTag = await this.findTag(owner, repository, tag, token);
             if (existingTag) {
