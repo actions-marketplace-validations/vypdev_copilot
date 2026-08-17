@@ -16,6 +16,7 @@ import { UpdatePullRequestDescriptionUseCase } from "./steps/pull_request/update
 import type { IssueDescriptionQueryPort } from "../ports/issue_ports";
 import type { OrganizationMembersPort } from "../ports/organization_ports";
 import type { PullRequestDescriptionCommandPort } from "../ports/pull_request_ports";
+import type { IssueTitlePort } from "../ports/issue_ports";
 
 export class PullRequestUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'PullRequestUseCase';
@@ -23,6 +24,7 @@ export class PullRequestUseCase implements ParamUseCase<Execution, Result[]> {
         private readonly projectBoardPriorityPort: ProjectBoardPriorityPort,
         private readonly pullRequestDescriptionCommandPort: PullRequestDescriptionCommandPort,
         private readonly issueDescriptionQueryPort: IssueDescriptionQueryPort,
+        private readonly issueTitlePort: IssueTitlePort,
         private readonly organizationMembersPort: OrganizationMembersPort,
     ) {}
 
@@ -39,7 +41,7 @@ export class PullRequestUseCase implements ParamUseCase<Execution, Result[]> {
                 /**
                  * Update title
                  */
-                results.push(...await new UpdateTitleUseCase().invoke(param));
+                results.push(...await new UpdateTitleUseCase(this.issueTitlePort).invoke(param));
 
                 /**
                  * Assignees

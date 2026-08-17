@@ -37,7 +37,7 @@ describe('UpdateTitleUseCase', () => {
   let useCase: UpdateTitleUseCase;
 
   beforeEach(() => {
-    useCase = new UpdateTitleUseCase();
+    useCase = new UpdateTitleUseCase({ getTitle: mockGetTitle, updateTitleIssueFormat: mockUpdateTitleIssueFormat, updateTitlePullRequestFormat: mockUpdateTitlePullRequestFormat });
     mockGetTitle.mockReset();
     mockUpdateTitleIssueFormat.mockReset();
     mockUpdateTitlePullRequestFormat.mockReset();
