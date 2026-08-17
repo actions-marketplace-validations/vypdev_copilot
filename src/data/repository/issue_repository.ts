@@ -1,7 +1,7 @@
 import * as core from "@actions/core";
 import * as github from "@actions/github";
 import { logDebugInfo } from '../../utils/logger';
-import { IssueContentRepository } from './issue_content_repository';
+import { IssueContentRepository } from './issue/issue_content_repository';
 import { IssueMetadataRepository } from './issue_metadata_repository';
 import { IssueLabelRepository } from './issue_label_repository';
 import { IssueProgressLabelRepository } from './issue_progress_label_repository';

@@ -1,4 +1,4 @@
-import { IssueContentRepository } from '../issue_content_repository';
+import { IssueContentRepository } from "./issue_content_repository";
 
 const mockUpdate = jest.fn();
 const mockGet = jest.fn();

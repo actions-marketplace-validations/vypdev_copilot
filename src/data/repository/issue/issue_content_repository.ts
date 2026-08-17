@@ -1,6 +1,6 @@
 import * as github from "@actions/github";
-import { getCommentWatermark } from "../../utils/comment_watermark";
-import { logDebugInfo, logError } from "../../utils/logger";
+import { getCommentWatermark } from "../../../utils/comment_watermark";
+import { logDebugInfo, logError } from "../../../utils/logger";
 
 export interface IssueComment {
     id: number;
