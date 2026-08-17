@@ -10,6 +10,7 @@ import { buildBugbotPrompt } from './bugbot/build_bugbot_prompt';
 import { loadBugbotContext } from './bugbot/load_bugbot_context_use_case';
 import { applyDetectedFindings, prepareDetectedFindings } from './bugbot/apply_detected_findings';
 import { queryBugbotFindings } from './bugbot/query_bugbot_findings';
+import { RepositoryFactory } from '../../../../infrastructure/composition/repository_factory';
 
 export type { BugbotFinding } from './bugbot/types';
 
@@ -31,7 +32,11 @@ export class DetectPotentialProblemsUseCase implements ParamUseCase<Execution, R
                 return results;
             }
 
-            const context = await loadBugbotContext(param);
+            const repositoryFactory = new RepositoryFactory();
+            const context = await loadBugbotContext(param, undefined, {
+                issue: repositoryFactory.createIssueRepository(),
+                pullRequest: repositoryFactory.createPullRequestRepository(),
+            });
             const prompt = buildBugbotPrompt(param, context);
             logInfo('Detecting potential problems via OpenCode (agent computes changes and checks resolved)...');
             const prepared = prepareDetectedFindings(

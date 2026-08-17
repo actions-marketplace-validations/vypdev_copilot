@@ -13,6 +13,7 @@ import { buildBugbotFixIntentPrompt } from "./build_bugbot_fix_intent_prompt";
 import { extractTitleFromBody } from "./marker";
 import { loadBugbotContext, type LoadBugbotContextOptions } from "./load_bugbot_context_use_case";
 import { BUGBOT_FIX_INTENT_RESPONSE_SCHEMA } from "./schema";
+import { RepositoryFactory } from "../../../../../infrastructure/composition/repository_factory";
 
 export interface BugbotFixIntent {
     isFixRequest: boolean;
@@ -80,7 +81,11 @@ export class DetectBugbotFixIntentUseCase implements ParamUseCase<Execution, Res
         const options: LoadBugbotContextOptions | undefined = branchOverride
             ? { branchOverride }
             : undefined;
-        const context = await loadBugbotContext(param, options);
+        const repositoryFactory = new RepositoryFactory();
+        const context = await loadBugbotContext(param, options, {
+            issue: repositoryFactory.createIssueRepository(),
+            pullRequest: repositoryFactory.createPullRequestRepository(),
+        });
 
         const unresolvedWithBody = context.unresolvedFindingsWithBody ?? [];
         if (unresolvedWithBody.length === 0) {

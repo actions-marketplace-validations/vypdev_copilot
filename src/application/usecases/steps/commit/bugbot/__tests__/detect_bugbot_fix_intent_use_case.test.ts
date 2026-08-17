@@ -126,7 +126,8 @@ describe("DetectBugbotFixIntentUseCase", () => {
 
         expect(mockLoadBugbotContext).toHaveBeenCalledWith(
             expect.anything(),
-            expect.objectContaining({ branchOverride: "feature/42-pr" })
+            expect.objectContaining({ branchOverride: "feature/42-pr" }),
+            expect.objectContaining({ issue: expect.anything(), pullRequest: expect.anything() })
         );
     });
 

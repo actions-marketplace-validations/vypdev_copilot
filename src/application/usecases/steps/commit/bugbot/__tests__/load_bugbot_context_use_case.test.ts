@@ -2,7 +2,7 @@
  * Unit tests for loadBugbotContext: issue/PR comment parsing, open PRs, previousFindingsBlock, prContext.
  */
 
-import { loadBugbotContext } from "../load_bugbot_context_use_case";
+import { loadBugbotContext as loadBugbotContextImpl, type LoadBugbotContextOptions } from "../load_bugbot_context_use_case";
 import type { Execution } from "../../../../../../data/model/execution";
 
 jest.mock("../../../../../../utils/logger", () => ({
@@ -31,6 +31,25 @@ jest.mock("../../../../../../data/repository/pull_request_repository", () => ({
         getFilesWithFirstDiffLine: mockGetFilesWithFirstDiffLine,
     })),
 }));
+
+import type { BugbotContextPorts } from "../../../../../../application/ports/bugbot_ports";
+
+const testPorts: BugbotContextPorts = {
+    issue: { listIssueComments: mockListIssueComments },
+    pullRequest: {
+        getHeadBranchForIssue: jest.fn(),
+        getPullRequestReviewCommentBody: jest.fn(),
+        getOpenPullRequestNumbersByHeadBranch: mockGetOpenPullRequestNumbersByHeadBranch,
+        listPullRequestReviewComments: mockListPullRequestReviewComments,
+        getPullRequestHeadSha: mockGetPullRequestHeadSha,
+        getChangedFiles: mockGetChangedFiles,
+        getFilesWithFirstDiffLine: mockGetFilesWithFirstDiffLine,
+    },
+};
+
+function loadBugbotContext(param: Execution, options?: LoadBugbotContextOptions) {
+    return loadBugbotContextImpl(param, options, testPorts);
+}
 
 function baseParam(overrides: Partial<Execution> = {}): Execution {
     return {

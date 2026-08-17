@@ -10,6 +10,7 @@ import type { BugbotContext } from "./types";
 import { buildBugbotFixPrompt } from "./build_bugbot_fix_prompt";
 import { loadBugbotContext } from "./load_bugbot_context_use_case";
 import { listWorkspacePaths, isSensitiveWorkspacePath, selectWorkspacePathsToCommit } from "./workspace_changes";
+import { RepositoryFactory } from "../../../../../infrastructure/composition/repository_factory";
 
 const TASK_ID = "BugbotAutofixUseCase";
 
@@ -53,7 +54,12 @@ export class BugbotAutofixUseCase implements ParamUseCase<BugbotAutofixParam, Re
             return results;
         }
 
-        const context = providedContext ?? (await loadBugbotContext(execution, branchOverride ? { branchOverride } : undefined));
+        const repositoryFactory = new RepositoryFactory();
+        const context = providedContext ?? (await loadBugbotContext(
+            execution,
+            branchOverride ? { branchOverride } : undefined,
+            { issue: repositoryFactory.createIssueRepository(), pullRequest: repositoryFactory.createPullRequestRepository() },
+        ));
 
         let workspacePathsBefore: string[];
         try {

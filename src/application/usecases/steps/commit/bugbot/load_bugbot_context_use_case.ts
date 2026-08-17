@@ -3,8 +3,7 @@
  */
 
 import type { Execution } from "../../../../../data/model/execution";
-import { IssueRepository } from "../../../../../data/repository/issue_repository";
-import { PullRequestRepository } from "../../../../../data/repository/pull_request_repository";
+import type { BugbotContextPorts, BugbotPullRequestContextPort } from "../../../../../application/ports/bugbot_ports";
 import type { BugbotContext } from "./types";
 import {
     buildPreviousFindingsBlock,
@@ -31,7 +30,7 @@ function emptyBugbotContext(): BugbotContext {
 }
 
 async function loadOpenPullRequestComments(
-    repository: PullRequestRepository,
+    repository: BugbotPullRequestContextPort,
     owner: string,
     repo: string,
     openPrNumbers: number[],
@@ -48,7 +47,7 @@ async function loadOpenPullRequestComments(
 }
 
 async function loadPullRequestContext(
-    repository: PullRequestRepository,
+    repository: BugbotPullRequestContextPort,
     owner: string,
     repo: string,
     openPrNumber: number | undefined,
@@ -70,7 +69,8 @@ async function loadPullRequestContext(
 
 export async function loadBugbotContext(
     param: Execution,
-    options?: LoadBugbotContextOptions
+    options: LoadBugbotContextOptions | undefined,
+    ports: BugbotContextPorts
 ): Promise<BugbotContext> {
     const issueNumber = param.issueNumber;
     const headBranch = (options?.branchOverride ?? param.commit.branch)?.trim();
@@ -83,17 +83,15 @@ export async function loadBugbotContext(
         return emptyBugbotContext();
     }
 
-    const issueRepository = new IssueRepository();
-    const pullRequestRepository = new PullRequestRepository();
-    const issueComments = await issueRepository.listIssueComments(owner, repo, issueNumber, token);
-    const openPrNumbers = await pullRequestRepository.getOpenPullRequestNumbersByHeadBranch(
+    const issueComments = await ports.issue.listIssueComments(owner, repo, issueNumber, token);
+    const openPrNumbers = await ports.pullRequest.getOpenPullRequestNumbersByHeadBranch(
         owner,
         repo,
         headBranch,
         token
     );
     const pullRequestComments = await loadOpenPullRequestComments(
-        pullRequestRepository,
+        ports.pullRequest,
         owner,
         repo,
         openPrNumbers,
@@ -107,7 +105,7 @@ export async function loadBugbotContext(
     );
     const previousFindingsBlock = buildPreviousFindingsBlock(previousFindings);
     const prContext = await loadPullRequestContext(
-        pullRequestRepository,
+        ports.pullRequest,
         owner,
         repo,
         openPrNumbers[0],
