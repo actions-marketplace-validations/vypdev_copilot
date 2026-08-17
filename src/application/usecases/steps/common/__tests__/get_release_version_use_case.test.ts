@@ -19,7 +19,7 @@ describe('GetReleaseVersionUseCase', () => {
   let useCase: GetReleaseVersionUseCase;
 
   beforeEach(() => {
-    useCase = new GetReleaseVersionUseCase();
+    useCase = new GetReleaseVersionUseCase({ getDescription: mockGetDescription });
     mockGetDescription.mockReset();
   });
 

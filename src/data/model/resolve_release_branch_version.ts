@@ -6,12 +6,14 @@ import { BranchRepository } from '../repository/branch_repository';
 import type { Execution } from './execution';
 import { GetReleaseTypeUseCase } from '../../application/usecases/steps/common/get_release_type_use_case';
 import { GetReleaseVersionUseCase } from '../../application/usecases/steps/common/get_release_version_use_case';
+import type { IssueDescriptionQueryPort } from '../../application/ports/issue_ports';
 
 export async function resolveReleaseBranchVersion(
     execution: Execution,
     branchRepository: BranchRepository,
+    issueDescriptionPort: IssueDescriptionQueryPort,
 ): Promise<boolean> {
-    const versionResult = await new GetReleaseVersionUseCase().invoke(execution);
+    const versionResult = await new GetReleaseVersionUseCase(issueDescriptionPort).invoke(execution);
     const versionInfo = versionResult.at(-1);
     if (versionInfo?.executed && versionInfo.success) {
         execution.release.version = releaseResolutionFromPayload(versionInfo.payload).version;

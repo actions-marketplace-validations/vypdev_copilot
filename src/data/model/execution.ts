@@ -291,7 +291,7 @@ export class Execution {
              */
         } else if (this.isIssue) {
             const branchRepository = new BranchRepository();
-            const canContinue = await resolveIssueBranchVersion(this, branchRepository);
+            const canContinue = await resolveIssueBranchVersion(this, branchRepository, issueRepository);
             if (!canContinue) return;
         } else if (this.isPullRequest) {
             this.labels.currentPullRequestLabels = await issueRepository.getLabels(
