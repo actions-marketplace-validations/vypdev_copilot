@@ -15,6 +15,11 @@ export interface IssueTitlePort {
     updateTitlePullRequestFormat(owner: string, repository: string, pullRequestTitle: string, issueTitle: string, issueNumber: number, pullRequestNumber: number, branchManagementAlways: boolean, branchManagementEmoji: string, labels: Labels, token: string): Promise<string | undefined>;
 }
 
+export interface IssueClosurePort {
+    closeIssue(owner: string, repository: string, issueNumber: number, token: string): Promise<boolean>;
+    addComment(owner: string, repository: string, issueNumber: number, comment: string, token: string): Promise<void>;
+}
+
 export interface IssueLabelsPort {
     getLabels(owner: string, repository: string, issueNumber: number, token: string): Promise<string[]>;
     setLabels(owner: string, repository: string, issueNumber: number, labels: string[], token: string): Promise<void>;

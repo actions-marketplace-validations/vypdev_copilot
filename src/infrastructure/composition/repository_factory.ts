@@ -54,6 +54,7 @@ export class RepositoryFactory {
             this.createPullRequestRepository(),
             this.createIssueRepository(),
             this.createIssueRepository(),
+            this.createIssueRepository(),
             this.createOrganizationRepository(),
         );
     }

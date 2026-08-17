@@ -29,7 +29,7 @@ describe('CloseIssueAfterMergingUseCase', () => {
   let useCase: CloseIssueAfterMergingUseCase;
 
   beforeEach(() => {
-    useCase = new CloseIssueAfterMergingUseCase();
+    useCase = new CloseIssueAfterMergingUseCase({ closeIssue: mockCloseIssue, addComment: mockAddComment });
     mockCloseIssue.mockReset();
     mockAddComment.mockReset();
   });
