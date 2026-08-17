@@ -26,7 +26,7 @@ export class RepositoryFactory {
     }
 
     createIssueUseCase(): IssueUseCase {
-        return new IssueUseCase(this.createProjectBoardRepository());
+        return new IssueUseCase(this.createProjectBoardRepository(), this.createOrganizationRepository());
     }
     createPullRequestUseCase(): PullRequestUseCase {
         return new PullRequestUseCase(this.createProjectBoardRepository());

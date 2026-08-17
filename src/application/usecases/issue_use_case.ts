@@ -18,17 +18,21 @@ import { RemoveIssueBranchesUseCase } from "./steps/issue/remove_issue_branches_
 import { RemoveNotNeededBranchesUseCase } from "./steps/issue/remove_not_needed_branches_use_case";
 import { UpdateIssueTypeUseCase } from "./steps/issue/update_issue_type_use_case";
 import type { ProjectBoardPriorityPort } from "./steps/issue/priority_size_check_use_case";
+import type { OrganizationMembersPort } from "../ports/organization_ports";
 
 export class IssueUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'IssueUseCase';
-    constructor(private readonly projectBoardPriorityPort: ProjectBoardPriorityPort) {}
+    constructor(
+        private readonly projectBoardPriorityPort: ProjectBoardPriorityPort,
+        private readonly organizationMembersPort: OrganizationMembersPort,
+    ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`)
 
         const results: Result[] = []
 
-        const permissionResult = await new CheckPermissionsUseCase().invoke(param);
+        const permissionResult = await new CheckPermissionsUseCase(this.organizationMembersPort).invoke(param);
         const lastAction = permissionResult[permissionResult.length - 1];
         if (!lastAction.success && lastAction.executed) {
             results.push(...permissionResult)

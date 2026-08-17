@@ -34,7 +34,7 @@ describe('CheckPermissionsUseCase', () => {
   let useCase: CheckPermissionsUseCase;
 
   beforeEach(() => {
-    useCase = new CheckPermissionsUseCase();
+    useCase = new CheckPermissionsUseCase({ getAllMembers: mockGetAllMembers, getRandomMembers: jest.fn() });
     mockGetAllMembers.mockReset();
   });
 
