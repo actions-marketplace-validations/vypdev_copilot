@@ -1,46 +1,29 @@
 import * as github from "@actions/github";
-import type { GithubClientPort, GithubGraphqlClient, GithubOrganizationClient, GithubPullRequestChangesClient, GithubPullRequestLifecycleClient, GithubPullRequestReviewClient, GithubWorkflowClient } from "../../data/repository/github/github_client_port";
+import type { GithubClientPort, GithubGraphqlClient, GithubIssueLifecycleClient, GithubOrganizationClient, GithubPullRequestChangesClient, GithubPullRequestLifecycleClient, GithubPullRequestReviewClient, GithubWorkflowClient } from "../../data/repository/github/github_client_port";
 
 export type OctokitClient = ReturnType<typeof github.getOctokit>;
 
 export class OctokitClientAdapter implements GithubClientPort<OctokitClient> {
-    getClient(token: string): OctokitClient {
-        return github.getOctokit(token);
-    }
+    getClient(token: string): OctokitClient { return github.getOctokit(token); }
 }
-
 export class OctokitWorkflowClientAdapter implements GithubClientPort<GithubWorkflowClient> {
-    getClient(token: string): GithubWorkflowClient {
-        return github.getOctokit(token) as unknown as GithubWorkflowClient;
-    }
+    getClient(token: string): GithubWorkflowClient { return github.getOctokit(token) as unknown as GithubWorkflowClient; }
 }
-
 export class OctokitOrganizationClientAdapter implements GithubClientPort<GithubOrganizationClient> {
-    getClient(token: string): GithubOrganizationClient {
-        return github.getOctokit(token) as unknown as GithubOrganizationClient;
-    }
+    getClient(token: string): GithubOrganizationClient { return github.getOctokit(token) as unknown as GithubOrganizationClient; }
 }
-
 export class OctokitPullRequestChangesClientAdapter implements GithubClientPort<GithubPullRequestChangesClient> {
-    getClient(token: string): GithubPullRequestChangesClient {
-        return github.getOctokit(token) as unknown as GithubPullRequestChangesClient;
-    }
+    getClient(token: string): GithubPullRequestChangesClient { return github.getOctokit(token) as unknown as GithubPullRequestChangesClient; }
 }
-
 export class OctokitGraphqlClientAdapter implements GithubClientPort<GithubGraphqlClient> {
-    getClient(token: string): GithubGraphqlClient {
-        return github.getOctokit(token) as unknown as GithubGraphqlClient;
-    }
+    getClient(token: string): GithubGraphqlClient { return github.getOctokit(token) as unknown as GithubGraphqlClient; }
 }
-
 export class OctokitPullRequestReviewClientAdapter implements GithubClientPort<GithubPullRequestReviewClient> {
-    getClient(token: string): GithubPullRequestReviewClient {
-        return github.getOctokit(token) as unknown as GithubPullRequestReviewClient;
-    }
+    getClient(token: string): GithubPullRequestReviewClient { return github.getOctokit(token) as unknown as GithubPullRequestReviewClient; }
 }
-
 export class OctokitPullRequestLifecycleClientAdapter implements GithubClientPort<GithubPullRequestLifecycleClient> {
-    getClient(token: string): GithubPullRequestLifecycleClient {
-        return github.getOctokit(token) as unknown as GithubPullRequestLifecycleClient;
-    }
+    getClient(token: string): GithubPullRequestLifecycleClient { return github.getOctokit(token) as unknown as GithubPullRequestLifecycleClient; }
+}
+export class OctokitIssueLifecycleClientAdapter implements GithubClientPort<GithubIssueLifecycleClient> {
+    getClient(token: string): GithubIssueLifecycleClient { return github.getOctokit(token) as unknown as GithubIssueLifecycleClient; }
 }

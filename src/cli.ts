@@ -4,7 +4,7 @@ import { execSync } from 'child_process';
 import { Command } from 'commander';
 import * as dotenv from 'dotenv';
 import { runLocalAction } from './actions/local_action';
-import { IssueRepository } from './data/repository/issue_repository';
+import { RepositoryFactory } from './infrastructure/composition/repository_factory';
 import { ACTIONS, ERRORS, INPUT_KEYS, OPENCODE_DEFAULT_MODEL, TITLE } from './utils/constants';
 import { getSetupToken, setupEnvFileExists } from './utils/setup_files';
 import { logError, logInfo } from './utils/logger';
@@ -109,7 +109,7 @@ program
     // Set up issue context if provided
     const parsedIssueNumber = parseInt(issueNumber);
     if (issueNumber && parsedIssueNumber > 0) {
-      const issueRepository = new IssueRepository();
+      const issueRepository = new RepositoryFactory().createIssueRepository();
       const isIssue = await issueRepository.isIssue(
         gitInfo.owner,
         gitInfo.repo,

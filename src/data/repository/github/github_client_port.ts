@@ -119,3 +119,12 @@ export interface GithubPullRequestSummary {
     body?: string | null;
     head?: { ref?: string | null };
 }
+
+export interface GithubIssueLifecycleClient {
+    rest: {
+        issues: {
+            get(parameters: Record<string, unknown>): Promise<{ data: { state: "open" | "closed" } }>;
+            update(parameters: Record<string, unknown>): Promise<unknown>;
+        };
+    };
+}

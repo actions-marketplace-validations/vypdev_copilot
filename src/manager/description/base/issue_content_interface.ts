@@ -1,10 +1,10 @@
 import { Execution } from "../../../data/model/execution";
-import { IssueRepository } from "../../../data/repository/issue_repository";
+import { RepositoryFactory } from "../../../infrastructure/composition/repository_factory";
 import { logError } from "../../../utils/logger";
 import { ContentInterface } from "./content_interface";
 
 export abstract class IssueContentInterface extends ContentInterface {
-    private issueRepository = new IssueRepository();
+    private issueRepository = new RepositoryFactory().createIssueRepository();
 
     internalGetter = async (execution: Execution): Promise<string | undefined> => {
         try {

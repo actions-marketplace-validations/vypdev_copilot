@@ -7,7 +7,7 @@ import { logDebugInfo, setGlobalLoggerDebug } from "../../utils/logger";
 import { BranchRepository } from "../repository/branch_repository";
 import { WorkflowRepository } from "../repository/workflow_repository";
 import { OctokitWorkflowClientAdapter, OctokitOrganizationClientAdapter } from "../../infrastructure/github/octokit_client";
-import { IssueRepository } from "../repository/issue_repository";
+import { RepositoryFactory } from "../../infrastructure/composition/repository_factory";
 import { OrganizationRepository } from "../repository/organization/organization_repository";
 import { Ai } from "./ai";
 import { Branches } from "./branches";
@@ -235,7 +235,7 @@ export class Execution {
     setup = async () => {
         setGlobalLoggerDebug(this.debug, this.inputs === undefined);
 
-        const issueRepository = new IssueRepository();
+        const issueRepository = new RepositoryFactory().createIssueRepository();
         const organizationRepository = new OrganizationRepository(new OctokitOrganizationClientAdapter());
 
         this.tokenUser = await organizationRepository.getUserFromToken(this.tokens.token);

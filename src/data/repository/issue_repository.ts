@@ -26,7 +26,11 @@ export class IssueRepository {
         (owner, repository, issueNumber, token) => this.getId(owner, repository, issueNumber, token),
     );
     private readonly issueAssignmentRepository = new IssueAssignmentRepository();
-    private readonly issueLifecycleRepository = new IssueLifecycleRepository();
+    private readonly issueLifecycleRepository: IssueLifecycleRepository;
+
+    constructor(issueLifecycleRepository: IssueLifecycleRepository) {
+        this.issueLifecycleRepository = issueLifecycleRepository;
+    }
 
     updateTitleIssueFormat = async (
         owner: string,
@@ -181,9 +185,9 @@ export class IssueRepository {
 
     listIssueComments = this.issueContentRepository.listIssueComments;
 
-    closeIssue = this.issueLifecycleRepository.closeIssue;
+    closeIssue = (...args: Parameters<IssueLifecycleRepository["closeIssue"]>) => this.issueLifecycleRepository.closeIssue(...args);
 
-    openIssue = this.issueLifecycleRepository.openIssue;
+    openIssue = (...args: Parameters<IssueLifecycleRepository["openIssue"]>) => this.issueLifecycleRepository.openIssue(...args);
 
     getCurrentAssignees = this.issueAssignmentRepository.getCurrentAssignees;
 
