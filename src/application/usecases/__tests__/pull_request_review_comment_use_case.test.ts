@@ -415,7 +415,8 @@ describe("PullRequestReviewCommentUseCase", () => {
         expect(mockRunUserRequestCommitAndPush).toHaveBeenCalledTimes(1);
         expect(mockRunUserRequestCommitAndPush).toHaveBeenCalledWith(
             expect.anything(),
-            expect.objectContaining({ branchOverride: "feature/296-from-pr" })
+            expect.objectContaining({ branchOverride: "feature/296-from-pr" }),
+            expect.anything()
         );
         expect(mockThinkInvoke).not.toHaveBeenCalled();
     });

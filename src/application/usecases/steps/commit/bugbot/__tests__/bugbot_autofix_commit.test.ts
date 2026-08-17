@@ -4,8 +4,8 @@
 
 import * as exec from "@actions/exec";
 import {
-    runBugbotAutofixCommitAndPush,
-    runUserRequestCommitAndPush,
+    runBugbotAutofixCommitAndPush as runBugbotAutofixCommitAndPushImpl,
+    runUserRequestCommitAndPush as runUserRequestCommitAndPushImpl,
 } from "../bugbot_autofix_commit";
 import type { Execution } from "../../../../../../data/model/execution";
 import { logInfo } from "../../../../../../utils/logger";
@@ -27,6 +27,17 @@ jest.mock("../../../../../../data/repository/organization/organization_repositor
         getTokenUserDetails: mockGetTokenUserDetails,
     })),
 }));
+
+const mockGetUserFromToken = jest.fn();
+const authenticatedUserPort = { getTokenUserDetails: mockGetTokenUserDetails, getUserFromToken: mockGetUserFromToken };
+
+function runBugbotAutofixCommitAndPush(execution: Execution, options?: { branchOverride?: string; targetFindingIds?: string[]; workspacePaths?: string[] }) {
+    return runBugbotAutofixCommitAndPushImpl(execution, options, authenticatedUserPort);
+}
+
+function runUserRequestCommitAndPush(execution: Execution, options?: { branchOverride?: string }) {
+    return runUserRequestCommitAndPushImpl(execution, options, authenticatedUserPort);
+}
 
 const mockExec = jest.spyOn(exec, "exec") as jest.Mock;
 

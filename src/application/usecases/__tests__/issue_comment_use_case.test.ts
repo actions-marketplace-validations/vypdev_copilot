@@ -425,7 +425,8 @@ describe("IssueCommentUseCase", () => {
         expect(mockRunUserRequestCommitAndPush).toHaveBeenCalledTimes(1);
         expect(mockRunUserRequestCommitAndPush).toHaveBeenCalledWith(
             expect.anything(),
-            expect.objectContaining({ branchOverride: "feature/296-from-issue" })
+            expect.objectContaining({ branchOverride: "feature/296-from-issue" }),
+            expect.anything()
         );
         expect(mockThinkInvoke).not.toHaveBeenCalled();
     });

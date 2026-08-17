@@ -1,5 +1,5 @@
 import * as exec from '@actions/exec';
-import { OrganizationRepository } from '../../../../../data/repository/organization/organization_repository';
+import type { AuthenticatedUserPort } from '../../../../../application/ports/organization_ports';
 import type { Execution } from '../../../../../data/model/execution';
 import { logDebugInfo, logError, logInfo } from '../../../../../utils/logger';
 import { checkoutBranch } from './git_branch_checkout';
@@ -29,6 +29,7 @@ const gitCommitRepository = new GitCommitRepository({
 export async function runCommitAndPushWorkflow(
     execution: Execution,
     options: CommitAndPushWorkflowOptions,
+    authenticatedUserPort: AuthenticatedUserPort,
 ): Promise<CommitAndPushWorkflowResult> {
     if (!options.branch?.trim()) {
         return { success: false, committed: false, error: 'No branch to commit to.' };
@@ -69,8 +70,7 @@ export async function runCommitAndPushWorkflow(
     }
 
     try {
-        const organizationRepository = new OrganizationRepository();
-        const { name, email } = await organizationRepository.getTokenUserDetails(execution.tokens.token);
+        const { name, email } = await authenticatedUserPort.getTokenUserDetails(execution.tokens.token);
         await gitCommitRepository.configureAuthor(name, email);
         logDebugInfo(`Git author set to ${name} <${email}>.`);
         if (options.workspacePaths) {

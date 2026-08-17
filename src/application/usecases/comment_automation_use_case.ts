@@ -108,7 +108,7 @@ async function commitAutofixAndResolveFindings(
         branchOverride: payload.branchOverride,
         targetFindingIds: payload.targetFindingIds,
         workspacePaths: autofixPayload?.workspacePaths,
-    });
+    }, new RepositoryFactory().createOrganizationRepository());
     if (commitResult.committed && payload.context) {
         const ids = payload.targetFindingIds;
         await markFindingsResolved({
@@ -137,5 +137,5 @@ async function commitUserRequestIfSuccessful(
         return;
     }
     logInfo("Do user request succeeded; running commit and push.");
-    await runUserRequestCommitAndPush(param, { branchOverride });
+    await runUserRequestCommitAndPush(param, { branchOverride }, new RepositoryFactory().createOrganizationRepository());
 }
