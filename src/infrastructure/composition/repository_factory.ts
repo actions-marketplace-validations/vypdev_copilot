@@ -19,6 +19,8 @@ import { RepositoryReleaseRepository } from "../../data/repository/release/repos
 import { OctokitClientAdapter } from "../github/octokit_client";
 import { IssueUseCase } from "../../application/usecases/issue_use_case";
 import { PullRequestUseCase } from "../../application/usecases/pull_request_use_case";
+import { InitialSetupUseCase } from "../../application/usecases/actions/initial_setup_use_case";
+import { BranchRepository } from "../../data/repository/branch_repository";
 
 export class RepositoryFactory {
     createGithubClient(): OctokitClientAdapter {
@@ -30,6 +32,17 @@ export class RepositoryFactory {
     }
     createPullRequestUseCase(): PullRequestUseCase {
         return new PullRequestUseCase(this.createProjectBoardRepository());
+    }
+    createInitialSetupUseCase(): InitialSetupUseCase {
+        const issueRepository = this.createIssueRepository();
+        return new InitialSetupUseCase(
+            this.createOrganizationRepository(),
+            issueRepository,
+            issueRepository,
+            issueRepository,
+            new BranchRepository(),
+            this.createRepositoryReleaseRepository(),
+        );
     }
 
     createOrganizationRepository(): OrganizationRepository {

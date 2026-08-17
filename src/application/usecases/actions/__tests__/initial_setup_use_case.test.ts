@@ -86,7 +86,14 @@ describe('InitialSetupUseCase', () => {
   let useCase: InitialSetupUseCase;
 
   beforeEach(() => {
-    useCase = new InitialSetupUseCase();
+    useCase = new InitialSetupUseCase(
+      { getUserFromToken: mockGetUserFromToken, getTokenUserDetails: jest.fn() },
+      { ensureLabels: mockEnsureLabels },
+      { ensureProgressLabels: mockEnsureProgressLabels },
+      { ensureIssueTypes: mockEnsureIssueTypes },
+      { getLatestTag: mockGetLatestTag },
+      { getDefaultBranch: mockGetDefaultBranch, createTag: mockCreateTag } as any,
+    );
     mockEnsureGitHubDirs.mockClear();
     mockCopySetupFiles.mockReturnValue({ copied: 2, skipped: 0 });
     mockHasValidSetupToken.mockReturnValue(true);

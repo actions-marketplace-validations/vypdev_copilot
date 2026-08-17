@@ -16,6 +16,8 @@ import { DetectPotentialProblemsUseCase } from "./steps/commit/detect_potential_
 export class SingleActionUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'SingleActionUseCase';
 
+    constructor(private readonly initialSetupUseCase: InitialSetupUseCase) {}
+
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`)
 
@@ -39,7 +41,7 @@ export class SingleActionUseCase implements ParamUseCase<Execution, Result[]> {
             } else if (param.singleAction.isThinkAction) {
                 results.push(...await new ThinkUseCase().invoke(param));
             } else if (param.singleAction.isInitialSetupAction) {
-                results.push(...await new InitialSetupUseCase().invoke(param));
+                results.push(...await this.initialSetupUseCase.invoke(param));
             } else if (param.singleAction.isCheckProgressAction) {
                 results.push(...await new CheckProgressUseCase().invoke(param));
             } else if (param.singleAction.isDetectPotentialProblemsAction) {
