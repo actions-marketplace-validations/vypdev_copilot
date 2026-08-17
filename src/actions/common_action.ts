@@ -90,7 +90,8 @@ export async function mainRun(
     logInfo('GitHub Action: starting main run.');
     logDebugInfo(`Event: ${execution.eventName}, actor: ${execution.actor}, repo: ${execution.owner}/${execution.repo}, debug: ${execution.debug}`);
 
-    await execution.setup(branchRepository);
+    const setupFactory = new RepositoryFactory();
+    await execution.setup(branchRepository, setupFactory.createIssueRepository(), setupFactory.createOrganizationRepository());
     clearAccumulatedLogs();
 
     logDebugInfo(`Setup done. Issue number: ${execution.issueNumber}, isSingleAction: ${execution.isSingleAction}, isIssue: ${execution.isIssue}, isPullRequest: ${execution.isPullRequest}, isPush: ${execution.isPush}`);

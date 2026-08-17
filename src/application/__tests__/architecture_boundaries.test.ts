@@ -31,4 +31,9 @@ describe('application architecture boundaries', () => {
 
         expect(violations).toEqual([]);
     });
+
+    it('keeps Execution independent from repository composition', () => {
+        const executionSource = readFileSync(join(__dirname, '../../data/model/execution.ts'), 'utf8');
+        expect(executionSource).not.toMatch(/RepositoryFactory|OrganizationRepository|OctokitOrganizationClientAdapter/);
+    });
 });

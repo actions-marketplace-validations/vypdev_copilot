@@ -3,9 +3,6 @@ import { shouldSkipInitialLabelsFetch } from './initial_labels_policy';
 import { branchesForManagement, typesForIssue } from "../../utils/label_utils";
 import { logDebugInfo, setGlobalLoggerDebug } from "../../utils/logger";
 import { BranchRepository } from "../repository/branch_repository";
-import { OctokitOrganizationClientAdapter } from "../../infrastructure/github/octokit_client";
-import { RepositoryFactory } from "../../infrastructure/composition/repository_factory";
-import { OrganizationRepository } from "../repository/organization/organization_repository";
 import { Ai } from "./ai";
 import { Branches } from "./branches";
 import { Commit } from "./commit";
@@ -28,6 +25,19 @@ import { Workflows } from "./workflows";
 import { resolveExecutionIssueNumber } from "./resolve_execution_issue_number";
 import { resolveIssueBranchVersion } from './resolve_issue_branch_version';
 import { restorePreviousBranchState, type PreviousBranchState } from './previous_branch_state_policy';
+
+export interface ExecutionIssueSetupPort {
+    isPullRequest(owner: string, repository: string, issueNumber: number, token: string): Promise<boolean>;
+    isIssue(owner: string, repository: string, issueNumber: number, token: string): Promise<boolean>;
+    getHeadBranch(owner: string, repository: string, issueNumber: number, token: string): Promise<string | undefined>;
+    getLabels(owner: string, repo: string, issueNumber: number, token: string): Promise<string[]>;
+    getDescription(owner: string, repo: string, issueNumber: number, token: string): Promise<string | undefined>;
+    updateDescription(owner: string, repo: string, issueNumber: number, description: string, token: string): Promise<void>;
+}
+
+export interface ExecutionOrganizationSetupPort {
+    getUserFromToken(token: string): Promise<string | undefined>;
+}
 
 export class Execution {
     debug: boolean = false;
@@ -229,11 +239,12 @@ export class Execution {
         this.currentConfiguration.hotfixBranch = state.hotfixBranch;
     }
 
-    setup = async (branchRepository: BranchRepository) => {
+    setup = async (
+        branchRepository: BranchRepository,
+        issueRepository: ExecutionIssueSetupPort,
+        organizationRepository: ExecutionOrganizationSetupPort,
+    ) => {
         setGlobalLoggerDebug(this.debug, this.inputs === undefined);
-
-        const issueRepository = new RepositoryFactory().createIssueRepository();
-        const organizationRepository = new OrganizationRepository(new OctokitOrganizationClientAdapter());
 
         this.tokenUser = await organizationRepository.getUserFromToken(this.tokens.token);
         if (!this.tokenUser) {
