@@ -1,4 +1,5 @@
 import type { Labels } from '../../data/model/labels';
+import type { Result } from '../../data/model/result';
 import type { SizeThresholds } from '../../data/model/size_thresholds';
 
 export interface LatestTagQueryPort {
@@ -19,4 +20,15 @@ export interface BranchChangeSizePort {
 
 export interface BranchListQueryPort {
     getListOfBranches(owner: string, repository: string, token: string): Promise<string[]>;
+}
+
+export interface BranchMergePort {
+    mergeBranch(
+        owner: string,
+        repository: string,
+        head: string,
+        base: string,
+        timeout: number,
+        token: string,
+    ): Promise<Result[]>;
 }

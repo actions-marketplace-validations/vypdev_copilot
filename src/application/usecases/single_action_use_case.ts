@@ -14,6 +14,7 @@ import { CheckProgressUseCase } from "./actions/check_progress_use_case";
 import { RecommendStepsUseCase } from "./actions/recommend_steps_use_case";
 import { DetectPotentialProblemsUseCase } from './steps/commit/detect_potential_problems_use_case';
 import type { IssueDescriptionQueryPort, IssueNotificationPort } from '../ports/issue_ports';
+import type { BranchMergePort } from '../ports/branch_ports';
 
 export class SingleActionUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'SingleActionUseCase';
@@ -24,6 +25,9 @@ export class SingleActionUseCase implements ParamUseCase<Execution, Result[]> {
         private readonly checkProgressUseCase: CheckProgressUseCase,
         private readonly issueDescriptionQueryPort: IssueDescriptionQueryPort,
         private readonly issueNotificationPort: IssueNotificationPort,
+        private readonly issueLabelsPort: import('../ports/issue_ports').IssueLabelsPort,
+        private readonly issueClosurePort: import('../ports/issue_ports').IssueClosurePort,
+        private readonly branchMergePort: BranchMergePort,
     ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
@@ -39,7 +43,7 @@ export class SingleActionUseCase implements ParamUseCase<Execution, Result[]> {
             logDebugInfo(`SingleAction: dispatching to handler for action: ${param.singleAction.currentSingleAction}.`);
 
             if (param.singleAction.isDeployedAction) {
-                results.push(...await new DeployedActionUseCase().invoke(param));
+                results.push(...await new DeployedActionUseCase(this.issueLabelsPort, this.issueClosurePort, this.branchMergePort).invoke(param));
             } else if (param.singleAction.isPublishGithubAction) {
                 results.push(...await new PublishGithubActionUseCase(this.repositoryReleasePort).invoke(param));
             } else if (param.singleAction.isCreateReleaseAction) {

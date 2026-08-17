@@ -48,6 +48,9 @@ export async function mainRun(
                 singleActionFactory.createCheckProgressUseCase(),
                 singleActionFactory.createIssueRepository(),
                 singleActionFactory.createIssueRepository(),
+                singleActionFactory.createIssueRepository(),
+                singleActionFactory.createIssueRepository(),
+                singleActionFactory.createBranchRepository(),
             ).invoke(execution));
             logInfo(`Single action finished. Results: ${results.length}.`);
             return results;
@@ -66,6 +69,9 @@ export async function mainRun(
                 singleActionFactory.createCheckProgressUseCase(),
                 singleActionFactory.createIssueRepository(),
                 singleActionFactory.createIssueRepository(),
+                singleActionFactory.createIssueRepository(),
+                singleActionFactory.createIssueRepository(),
+                singleActionFactory.createBranchRepository(),
             ).invoke(execution));
         } else {
             logInfo('Issue number not found. Skipping.');
@@ -110,6 +116,9 @@ export async function mainRun(
                     singleActionFactory.createCheckProgressUseCase(),
                     singleActionFactory.createIssueRepository(),
                     singleActionFactory.createIssueRepository(),
+                    singleActionFactory.createIssueRepository(),
+                    singleActionFactory.createIssueRepository(),
+                    singleActionFactory.createBranchRepository(),
                 ).invoke(execution));
                 break;
             }

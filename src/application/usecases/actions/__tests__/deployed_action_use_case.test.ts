@@ -86,7 +86,11 @@ describe('DeployedActionUseCase', () => {
   let useCase: DeployedActionUseCase;
 
   beforeEach(() => {
-    useCase = new DeployedActionUseCase();
+    useCase = new DeployedActionUseCase(
+      { setLabels: mockSetLabels, getLabels: jest.fn() },
+      { closeIssue: mockCloseIssue, addComment: jest.fn() },
+      { mergeBranch: mockMergeBranch },
+    );
     mockSetLabels.mockResolvedValue(undefined);
     mockCloseIssue.mockResolvedValue(true);
     mockSetLabels.mockClear();
