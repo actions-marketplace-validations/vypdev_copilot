@@ -1,4 +1,4 @@
-import { PullRequestReviewThreadRepository } from "../pull_request_review_thread_repository";
+import { PullRequestReviewThreadRepository } from "../pull_request/pull_request_review_thread_repository";
 
 jest.mock("../../../utils/logger", () => ({
     logDebugInfo: jest.fn(),

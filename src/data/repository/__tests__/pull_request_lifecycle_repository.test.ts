@@ -1,4 +1,4 @@
-import { PullRequestLifecycleRepository } from "../pull_request_lifecycle_repository";
+import { PullRequestLifecycleRepository } from "../pull_request/pull_request_lifecycle_repository";
 
 const mockList = jest.fn();
 

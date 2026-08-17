@@ -1,6 +1,6 @@
 import * as github from "@actions/github";
 import { PullRequestReviewThreadRepository } from "./pull_request_review_thread_repository";
-import { logDebugInfo, logError } from "../../utils/logger";
+import { logDebugInfo, logError } from "../../../utils/logger";
 
 export class PullRequestReviewRepository {
     /**

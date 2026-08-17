@@ -1,5 +1,5 @@
 import * as github from "@actions/github";
-import { logError } from "../../utils/logger";
+import { logError } from "../../../utils/logger";
 
 export class PullRequestChangesRepository {
     getChangedFiles = async (

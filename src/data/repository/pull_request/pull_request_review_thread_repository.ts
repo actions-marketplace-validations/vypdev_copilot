@@ -1,5 +1,5 @@
 import * as github from "@actions/github";
-import { logDebugInfo, logError } from "../../utils/logger";
+import { logDebugInfo, logError } from "../../../utils/logger";
 
 type ThreadPageInfo = { hasNextPage: boolean; endCursor: string | null };
 type ThreadNode = {

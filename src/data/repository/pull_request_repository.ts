@@ -1,6 +1,6 @@
-import { PullRequestLifecycleRepository } from "./pull_request_lifecycle_repository";
-import { PullRequestChangesRepository } from "./pull_request_changes_repository";
-import { PullRequestReviewRepository } from "./pull_request_review_repository";
+import { PullRequestLifecycleRepository } from "./pull_request/pull_request_lifecycle_repository";
+import { PullRequestChangesRepository } from "./pull_request/pull_request_changes_repository";
+import { PullRequestReviewRepository } from "./pull_request/pull_request_review_repository";
 
 export class PullRequestRepository {
 
