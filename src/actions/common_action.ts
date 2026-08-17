@@ -5,9 +5,7 @@ import { CommitUseCase } from '../application/usecases/commit_use_case';
 import { ProjectBoardCommandPort } from '../application/ports/project_board_ports';
 import { RepositoryFactory } from '../infrastructure/composition/repository_factory';
 import { IssueCommentUseCase } from '../application/usecases/issue_comment_use_case';
-import { IssueUseCase } from '../application/usecases/issue_use_case';
 import { PullRequestReviewCommentUseCase } from '../application/usecases/pull_request_review_comment_use_case';
-import { PullRequestUseCase } from '../application/usecases/pull_request_use_case';
 import { SingleActionUseCase } from '../application/usecases/single_action_use_case';
 import { clearAccumulatedLogs, logDebugInfo, logError, logInfo } from '../utils/logger';
 import { TITLE } from '../utils/constants';
@@ -99,7 +97,7 @@ export async function mainRun(
                 break;
             case 'issue':
                 logInfo(`Running IssueUseCase for issue #${execution.issueNumber}.`);
-                results.push(...await new IssueUseCase().invoke(execution));
+                results.push(...await new RepositoryFactory().createIssueUseCase().invoke(execution));
                 break;
             case 'pull-request-review-comment':
                 logInfo(`Running PullRequestReviewCommentUseCase for PR #${execution.pullRequest.number}.`);
@@ -107,7 +105,7 @@ export async function mainRun(
                 break;
             case 'pull-request':
                 logInfo(`Running PullRequestUseCase for PR #${execution.pullRequest.number}.`);
-                results.push(...await new PullRequestUseCase().invoke(execution));
+                results.push(...await new RepositoryFactory().createPullRequestUseCase().invoke(execution));
                 break;
             case 'push':
                 logDebugInfo(`Push event. Branch: ${execution.commit?.branch ?? 'unknown'}, commits: ${execution.commit?.commits?.length ?? 0}, issue number: ${execution.issueNumber}.`);

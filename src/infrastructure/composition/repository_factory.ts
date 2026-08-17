@@ -17,11 +17,16 @@ import { PullRequestReviewThreadRepository } from "../../data/repository/pull_re
 import { PullRequestRepository } from "../../data/repository/pull_request_repository";
 import { RepositoryReleaseRepository } from "../../data/repository/release/repository_release_repository";
 import { OctokitClientAdapter } from "../github/octokit_client";
+import { IssueUseCase } from "../../application/usecases/issue_use_case";
+import { PullRequestUseCase } from "../../application/usecases/pull_request_use_case";
 
 export class RepositoryFactory {
     createGithubClient(): OctokitClientAdapter {
         return new OctokitClientAdapter();
     }
+
+    createIssueUseCase(): IssueUseCase { return new IssueUseCase(); }
+    createPullRequestUseCase(): PullRequestUseCase { return new PullRequestUseCase(); }
 
     createOrganizationRepository(): OrganizationRepository {
         return new OrganizationRepository();
