@@ -1,10 +1,10 @@
-import { logDebugInfo, logError } from '../../utils/logger';
-import { IssueLabelRepository } from './issue/issue_label_repository';
+import { logDebugInfo, logError } from '../../../utils/logger';
+import { IssueLabelRepository } from './issue_label_repository';
 import {
     PROGRESS_LABEL_PATTERN,
     PROGRESS_LABEL_PERCENTS,
     progressPercentToColor,
-} from './progress_labels';
+} from '../progress_labels';
 
 export interface EnsureLabelResult {
     created: boolean;

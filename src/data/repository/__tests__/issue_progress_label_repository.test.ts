@@ -1,4 +1,4 @@
-import { IssueProgressLabelRepository } from '../issue_progress_label_repository';
+import { IssueProgressLabelRepository } from '../issue/issue_progress_label_repository';
 import { PROGRESS_LABEL_PATTERN, progressPercentToColor } from '../progress_labels';
 
 describe('progress labels', () => {

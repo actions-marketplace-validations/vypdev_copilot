@@ -1,7 +1,7 @@
 import * as github from '@actions/github';
-import { logDebugInfo, logError } from '../../utils/logger';
-import { Labels } from '../model/labels';
-import { getRequiredLabels } from './required_labels';
+import { logDebugInfo, logError } from "../../../utils/logger";
+import { Labels } from "../../model/labels";
+import { getRequiredLabels } from "../required_labels";
 
 export type RepositoryLabel = { name: string; color: string; description: string | null };
 export type LabelEnsureResult = { created: boolean; existed: boolean };
