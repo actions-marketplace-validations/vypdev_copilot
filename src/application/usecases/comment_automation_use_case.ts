@@ -3,7 +3,6 @@ import { Result } from "../../data/model/result";
 import { logInfo } from "../../utils/logger";
 import { ThinkUseCase } from "./steps/common/think_use_case";
 import { ParamUseCase } from "./base/param_usecase";
-import { RepositoryFactory } from "../../infrastructure/composition/repository_factory";
 import { BugbotAutofixUseCase } from "./steps/commit/bugbot/bugbot_autofix_use_case";
 import { runBugbotAutofixCommitAndPush, runUserRequestCommitAndPush } from "./steps/commit/bugbot/bugbot_autofix_commit";
 import { markFindingsResolved } from "./steps/commit/bugbot/mark_findings_resolved_use_case";
@@ -14,7 +13,8 @@ import {
     canRunDoUserRequest,
 } from "./steps/commit/bugbot/bugbot_fix_intent_payload";
 import { DoUserRequestUseCase } from "./steps/commit/user_request_use_case";
-import type { ActorAuthorizationPort } from "../ports/organization_ports";
+import type { AuthenticatedUserPort, ActorAuthorizationPort } from "../ports/organization_ports";
+import type { BugbotWritePorts } from "../ports/bugbot_ports";
 import type { IssueDescriptionQueryPort, IssueNotificationPort } from "../ports/issue_ports";
 
 export interface CommentAutomationOptions {
@@ -30,6 +30,8 @@ export async function runCommentAutomation(
     actorAuthorizationPort: ActorAuthorizationPort,
     issueDescriptionQueryPort: IssueDescriptionQueryPort,
     issueNotificationPort: IssueNotificationPort,
+    authenticatedUserPort: AuthenticatedUserPort,
+    bugbotWritePorts: BugbotWritePorts,
 ): Promise<Result[]> {
     logInfo(`${options.taskId} started.`);
     const results: Result[] = [];
@@ -70,7 +72,7 @@ export async function runCommentAutomation(
             branchOverride: payload.branchOverride,
         });
         results.push(...autofixResults);
-        await commitAutofixAndResolveFindings(param, payload, autofixResults);
+        await commitAutofixAndResolveFindings(param, payload, autofixResults, authenticatedUserPort, bugbotWritePorts);
     } else if (!runAutofix && canRunDoUserRequest(intentPayload) && allowedToModifyFiles) {
         const payload = intentPayload!;
         logInfo("Running do user request.");
@@ -80,7 +82,7 @@ export async function runCommentAutomation(
             branchOverride: payload.branchOverride,
         });
         results.push(...doResults);
-        await commitUserRequestIfSuccessful(param, payload.branchOverride, doResults);
+        await commitUserRequestIfSuccessful(param, payload.branchOverride, doResults, authenticatedUserPort);
     } else if (!runAutofix) {
         logInfo("Skipping bugbot autofix (no fix request, no targets, or no context).");
     }
@@ -97,7 +99,9 @@ export async function runCommentAutomation(
 async function commitAutofixAndResolveFindings(
     param: Execution,
     payload: NonNullable<ReturnType<typeof getBugbotFixIntentPayload>>,
-    autofixResults: Result[]
+    autofixResults: Result[],
+    authenticatedUserPort: AuthenticatedUserPort,
+    bugbotWritePorts: BugbotWritePorts,
 ): Promise<void> {
     const lastAutofix = autofixResults.at(-1);
     if (!lastAutofix?.success) {
@@ -111,7 +115,7 @@ async function commitAutofixAndResolveFindings(
         branchOverride: payload.branchOverride,
         targetFindingIds: payload.targetFindingIds,
         workspacePaths: autofixPayload?.workspacePaths,
-    }, new RepositoryFactory().createOrganizationRepository());
+    }, authenticatedUserPort);
     if (commitResult.committed && payload.context) {
         const ids = payload.targetFindingIds;
         await markFindingsResolved({
@@ -119,10 +123,7 @@ async function commitAutofixAndResolveFindings(
             context: payload.context,
             resolvedFindingIds: new Set(ids),
             normalizedResolvedIds: new Set(ids.map(sanitizeFindingIdForMarker)),
-            ports: {
-                issueComments: new RepositoryFactory().createIssueRepository(),
-                pullRequestComments: new RepositoryFactory().createPullRequestRepository(),
-            },
+            ports: bugbotWritePorts,
         });
         logInfo(`Marked ${ids.length} finding(s) as resolved.`);
     } else if (!commitResult.committed) {
@@ -133,12 +134,13 @@ async function commitAutofixAndResolveFindings(
 async function commitUserRequestIfSuccessful(
     param: Execution,
     branchOverride: string | undefined,
-    results: Result[]
+    results: Result[],
+    authenticatedUserPort: AuthenticatedUserPort,
 ): Promise<void> {
     if (!results.at(-1)?.success) {
         logInfo("Do user request did not succeed; skipping commit.");
         return;
     }
     logInfo("Do user request succeeded; running commit and push.");
-    await runUserRequestCommitAndPush(param, { branchOverride }, new RepositoryFactory().createOrganizationRepository());
+    await runUserRequestCommitAndPush(param, { branchOverride }, authenticatedUserPort);
 }

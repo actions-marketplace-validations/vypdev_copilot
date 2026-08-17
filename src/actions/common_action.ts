@@ -164,6 +164,11 @@ export async function mainRun(
                     commentFactory.createOrganizationRepository(),
                     commentFactory.createIssueRepository(),
                     commentFactory.createIssueRepository(),
+                    commentFactory.createOrganizationRepository(),
+                    {
+                        issueComments: commentFactory.createIssueRepository(),
+                        pullRequestComments: commentFactory.createPullRequestRepository(),
+                    },
                 ).invoke(execution));
                 break;
             }
@@ -184,6 +189,11 @@ export async function mainRun(
                     reviewCommentFactory.createOrganizationRepository(),
                     reviewCommentFactory.createIssueRepository(),
                     reviewCommentFactory.createIssueRepository(),
+                    reviewCommentFactory.createOrganizationRepository(),
+                    {
+                        issueComments: reviewCommentFactory.createIssueRepository(),
+                        pullRequestComments: reviewCommentFactory.createPullRequestRepository(),
+                    },
                 ).invoke(execution));
                 break;
             }

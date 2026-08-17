@@ -137,6 +137,8 @@ describe("PullRequestReviewCommentUseCase", () => {
             { isActorAllowedToModifyFiles: mockIsActorAllowedToModifyFiles },
             { getDescription: jest.fn() },
             { addComment: jest.fn(), openIssue: jest.fn() },
+            { getUserFromToken: jest.fn(), getTokenUserDetails: jest.fn() },
+            { issueComments: { addComment: jest.fn(), updateComment: jest.fn() }, pullRequestComments: { createReviewWithComments: jest.fn(), updatePullRequestReviewComment: jest.fn(), listPullRequestReviewComments: jest.fn(), resolvePullRequestReviewThread: jest.fn() } },
         );
         mockLogInfo.mockClear();
         mockIsActorAllowedToModifyFiles.mockReset().mockResolvedValue(true);

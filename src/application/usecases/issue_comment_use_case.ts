@@ -3,7 +3,8 @@ import { Result } from "../../data/model/result";
 import { ParamUseCase } from "./base/param_usecase";
 import { runCommentAutomation } from "./comment_automation_use_case";
 import type { IssueCommentUpdatePort, IssueDescriptionQueryPort, IssueNotificationPort } from "../ports/issue_ports";
-import type { ActorAuthorizationPort } from "../ports/organization_ports";
+import type { AuthenticatedUserPort, ActorAuthorizationPort } from "../ports/organization_ports";
+import type { BugbotWritePorts } from "../ports/bugbot_ports";
 
 export class IssueCommentUseCase implements ParamUseCase<Execution, Result[]> {
     taskId = "IssueCommentUseCase";
@@ -15,7 +16,8 @@ export class IssueCommentUseCase implements ParamUseCase<Execution, Result[]> {
         private readonly actorAuthorizationPort: ActorAuthorizationPort,
         private readonly issueDescriptionQueryPort: IssueDescriptionQueryPort,
         private readonly issueNotificationPort: IssueNotificationPort,
-    ) {}
+        private readonly authenticatedUserPort: AuthenticatedUserPort,
+        private readonly bugbotWritePorts: BugbotWritePorts,    ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         return runCommentAutomation(param, {
@@ -23,6 +25,6 @@ export class IssueCommentUseCase implements ParamUseCase<Execution, Result[]> {
             languageUseCase: this.languageUseCase,
             intentUseCase: this.intentUseCase,
             userComment: param.issue.commentBody ?? "",
-        }, this.actorAuthorizationPort, this.issueDescriptionQueryPort, this.issueNotificationPort);
+        }, this.actorAuthorizationPort, this.issueDescriptionQueryPort, this.issueNotificationPort, this.authenticatedUserPort, this.bugbotWritePorts);
     }
 }
