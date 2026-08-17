@@ -51,17 +51,17 @@ jest.mock('../../repository/branch_repository', () => ({
     getLatestTag: mockGetLatestTag,
   })),
 }));
-jest.mock('../../../usecase/steps/common/get_release_version_use_case', () => ({
+jest.mock('../../../application/usecases/steps/common/get_release_version_use_case', () => ({
   GetReleaseVersionUseCase: jest.fn().mockImplementation(() => ({
     invoke: mockGetReleaseVersionInvoke,
   })),
 }));
-jest.mock('../../../usecase/steps/common/get_release_type_use_case', () => ({
+jest.mock('../../../application/usecases/steps/common/get_release_type_use_case', () => ({
   GetReleaseTypeUseCase: jest.fn().mockImplementation(() => ({
     invoke: mockGetReleaseTypeInvoke,
   })),
 }));
-jest.mock('../../../usecase/steps/common/get_hotfix_version_use_case', () => ({
+jest.mock('../../../application/usecases/steps/common/get_hotfix_version_use_case', () => ({
   GetHotfixVersionUseCase: jest.fn().mockImplementation(() => ({
     invoke: mockGetHotfixVersionInvoke,
   })),

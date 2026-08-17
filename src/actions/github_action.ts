@@ -16,8 +16,8 @@ import { SingleAction } from '../data/model/single_action';
 
 
 import { ProjectBoardRepository } from '../data/repository/project_board_repository';
-import { PublishResultUseCase } from '../usecase/steps/common/publish_resume_use_case';
-import { StoreConfigurationUseCase } from '../usecase/steps/common/store_configuration_use_case';
+import { PublishResultUseCase } from '../application/usecases/steps/common/publish_resume_use_case';
+import { StoreConfigurationUseCase } from '../application/usecases/steps/common/store_configuration_use_case';
 import { BUGBOT_MAX_COMMENTS, BUGBOT_MIN_SEVERITY, INPUT_KEYS } from '../utils/constants';
 import { logDebugInfo, logError, logInfo } from '../utils/logger';
 import type { ManagedAgentServer } from '../data/repository/agent_ports';

@@ -29,10 +29,10 @@ jest.mock('../common_action', () => ({
 
 const mockPublishInvoke = jest.fn();
 const mockStoreInvoke = jest.fn();
-jest.mock('../../usecase/steps/common/publish_resume_use_case', () => ({
+jest.mock('../../application/usecases/steps/common/publish_resume_use_case', () => ({
   PublishResultUseCase: jest.fn().mockImplementation(() => ({ invoke: mockPublishInvoke })),
 }));
-jest.mock('../../usecase/steps/common/store_configuration_use_case', () => ({
+jest.mock('../../application/usecases/steps/common/store_configuration_use_case', () => ({
   StoreConfigurationUseCase: jest.fn().mockImplementation(() => ({ invoke: mockStoreInvoke })),
 }));
 

@@ -4,8 +4,8 @@ import { releaseResolutionFromPayload } from './version_resolution_result_policy
 import { shouldAbortReleaseResolution } from './version_resolution_outcome_policy';
 import { BranchRepository } from '../repository/branch_repository';
 import type { Execution } from './execution';
-import { GetReleaseTypeUseCase } from '../../usecase/steps/common/get_release_type_use_case';
-import { GetReleaseVersionUseCase } from '../../usecase/steps/common/get_release_version_use_case';
+import { GetReleaseTypeUseCase } from '../../application/usecases/steps/common/get_release_type_use_case';
+import { GetReleaseVersionUseCase } from '../../application/usecases/steps/common/get_release_version_use_case';
 
 export async function resolveReleaseBranchVersion(
     execution: Execution,

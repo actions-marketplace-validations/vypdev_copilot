@@ -3,7 +3,7 @@ import { applyHotfixResolution } from './version_resolution_application_policy';
 import { hotfixResolutionFromPayload } from './version_resolution_result_policy';
 import { BranchRepository } from '../repository/branch_repository';
 import type { Execution } from './execution';
-import { GetHotfixVersionUseCase } from '../../usecase/steps/common/get_hotfix_version_use_case';
+import { GetHotfixVersionUseCase } from '../../application/usecases/steps/common/get_hotfix_version_use_case';
 
 export async function resolveHotfixBranchVersion(
     execution: Execution,
