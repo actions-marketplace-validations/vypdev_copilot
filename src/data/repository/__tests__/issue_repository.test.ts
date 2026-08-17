@@ -7,6 +7,8 @@
 
 import { IssueRepository, PROGRESS_LABEL_PATTERN } from '../issue_repository';
 import { OctokitGraphqlClientAdapter, OctokitIssueAssignmentClientAdapter, OctokitIssueContentClientAdapter, OctokitIssueLabelsClientAdapter, OctokitIssueLifecycleClientAdapter, OctokitIssueMetadataClientAdapter } from '../../../infrastructure/github/octokit_client';
+import { IssueTypeRepository } from '../issue/issue_type_repository';
+import { IssueTypeAssignmentRepository } from '../issue/issue_type_assignment_repository';
 import { IssueAssignmentRepository } from '../issue/issue_assignment_repository';
 import { IssueLabelRepository } from '../issue/issue_label_repository';
 import { IssueContentRepository } from '../issue/issue_content_repository';
@@ -106,7 +108,8 @@ function makeIssueTypes(): IssueTypes {
 }
 
 describe('IssueRepository', () => {
-  const repo = new IssueRepository(new IssueContentRepository(new OctokitIssueContentClientAdapter()), new IssueMetadataRepository(new OctokitIssueMetadataClientAdapter(), new OctokitGraphqlClientAdapter()), new IssueLabelRepository(new OctokitIssueLabelsClientAdapter()), new IssueAssignmentRepository(new OctokitIssueAssignmentClientAdapter()), new IssueLifecycleRepository(new OctokitIssueLifecycleClientAdapter()));
+  const metadataRepository = new IssueMetadataRepository(new OctokitIssueMetadataClientAdapter(), new OctokitGraphqlClientAdapter());
+  const repo = new IssueRepository(new IssueContentRepository(new OctokitIssueContentClientAdapter()), metadataRepository, new IssueLabelRepository(new OctokitIssueLabelsClientAdapter()), new IssueAssignmentRepository(new OctokitIssueAssignmentClientAdapter()), new IssueTypeRepository(new OctokitGraphqlClientAdapter()), new IssueTypeAssignmentRepository((owner, repository, issueNumber, token) => metadataRepository.getId(owner, repository, issueNumber, token), new OctokitGraphqlClientAdapter()), new IssueLifecycleRepository(new OctokitIssueLifecycleClientAdapter()));
 
   beforeEach(() => {
     jest.clearAllMocks();

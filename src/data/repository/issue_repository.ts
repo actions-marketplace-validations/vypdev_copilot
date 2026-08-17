@@ -21,10 +21,8 @@ export class IssueRepository {
     private readonly issueLabelRepository: IssueLabelRepository;
     private readonly issueProgressLabelRepository: IssueProgressLabelRepository;
     private readonly issueLabelProvisioningRepository = new IssueLabelProvisioningRepository();
-    private readonly issueTypeRepository = new IssueTypeRepository();
-    private readonly issueTypeAssignmentRepository = new IssueTypeAssignmentRepository(
-        (owner, repository, issueNumber, token) => this.getId(owner, repository, issueNumber, token),
-    );
+    private readonly issueTypeRepository: IssueTypeRepository;
+    private readonly issueTypeAssignmentRepository: IssueTypeAssignmentRepository;
     private readonly issueAssignmentRepository: IssueAssignmentRepository;
     private readonly issueLifecycleRepository: IssueLifecycleRepository;
 
@@ -33,6 +31,8 @@ export class IssueRepository {
         issueMetadataRepository: IssueMetadataRepository,
         issueLabelRepository: IssueLabelRepository,
         issueAssignmentRepository: IssueAssignmentRepository,
+        issueTypeRepository: IssueTypeRepository,
+        issueTypeAssignmentRepository: IssueTypeAssignmentRepository,
         issueLifecycleRepository: IssueLifecycleRepository,
     ) {
         this.issueContentRepository = issueContentRepository;
@@ -40,6 +40,8 @@ export class IssueRepository {
         this.issueLabelRepository = issueLabelRepository;
         this.issueProgressLabelRepository = new IssueProgressLabelRepository(issueLabelRepository);
         this.issueAssignmentRepository = issueAssignmentRepository;
+        this.issueTypeRepository = issueTypeRepository;
+        this.issueTypeAssignmentRepository = issueTypeAssignmentRepository;
         this.issueLifecycleRepository = issueLifecycleRepository;
     }
 
@@ -207,7 +209,7 @@ export class IssueRepository {
     getIssueDescription = (...args: Parameters<IssueContentRepository["getIssueDescription"]>) => this.issueContentRepository.getIssueDescription(...args);
 
 
-    setIssueType = this.issueTypeAssignmentRepository.setIssueType;
+    setIssueType = (...args: Parameters<IssueTypeAssignmentRepository["setIssueType"]>) => this.issueTypeAssignmentRepository.setIssueType(...args);
 
     listLabelsForRepo = this.issueLabelProvisioningRepository.listLabelsForRepo;
 
@@ -217,11 +219,11 @@ export class IssueRepository {
 
     ensureLabels = this.issueLabelProvisioningRepository.ensureLabels;
 
-    listIssueTypes = this.issueTypeRepository.listIssueTypes;
+    listIssueTypes = (...args: Parameters<IssueTypeRepository["listIssueTypes"]>) => this.issueTypeRepository.listIssueTypes(...args);
 
-    createIssueType = this.issueTypeRepository.createIssueType;
+    createIssueType = (...args: Parameters<IssueTypeRepository["createIssueType"]>) => this.issueTypeRepository.createIssueType(...args);
 
-    ensureIssueType = this.issueTypeRepository.ensureIssueType;
+    ensureIssueType = (...args: Parameters<IssueTypeRepository["ensureIssueType"]>) => this.issueTypeRepository.ensureIssueType(...args);
 
-    ensureIssueTypes = this.issueTypeRepository.ensureIssueTypes;
+    ensureIssueTypes = (...args: Parameters<IssueTypeRepository["ensureIssueTypes"]>) => this.issueTypeRepository.ensureIssueTypes(...args);
 }

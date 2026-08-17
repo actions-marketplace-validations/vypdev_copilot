@@ -108,7 +108,17 @@ export class RepositoryFactory {
     }
 
     createIssueRepository(): IssueRepository {
-        return new IssueRepository(this.createIssueContentRepository(), this.createIssueMetadataRepository(), this.createIssueLabelRepository(), this.createIssueAssignmentRepository(), this.createIssueLifecycleRepository());
+        const metadataRepository = this.createIssueMetadataRepository();
+        const graphqlClient = new OctokitGraphqlClientAdapter();
+        return new IssueRepository(
+            this.createIssueContentRepository(),
+            metadataRepository,
+            this.createIssueLabelRepository(),
+            this.createIssueAssignmentRepository(),
+            new IssueTypeRepository(graphqlClient),
+            new IssueTypeAssignmentRepository((owner, repository, issueNumber, token) => metadataRepository.getId(owner, repository, issueNumber, token), graphqlClient),
+            this.createIssueLifecycleRepository(),
+        );
     }
 
     createIssueAssignmentRepository(): IssueAssignmentRepository { return new IssueAssignmentRepository(new OctokitIssueAssignmentClientAdapter()); }
@@ -120,9 +130,11 @@ export class RepositoryFactory {
     createIssueProgressLabelRepository(): IssueProgressLabelRepository {
         return new IssueProgressLabelRepository(this.createIssueLabelRepository());
     }
-    createIssueTypeRepository(): IssueTypeRepository { return new IssueTypeRepository(); }
-    createIssueTypeAssignmentRepository(getIssueId: ConstructorParameters<typeof IssueTypeAssignmentRepository>[0]): IssueTypeAssignmentRepository {
-        return new IssueTypeAssignmentRepository(getIssueId);
+    createIssueTypeRepository(): IssueTypeRepository { return new IssueTypeRepository(new OctokitGraphqlClientAdapter()); }
+    createIssueTypeAssignmentRepository(
+        getIssueId: ConstructorParameters<typeof IssueTypeAssignmentRepository>[0],
+    ): IssueTypeAssignmentRepository {
+        return new IssueTypeAssignmentRepository(getIssueId, new OctokitGraphqlClientAdapter());
     }
 
     createProjectBoardRepository(): ProjectBoardRepository {

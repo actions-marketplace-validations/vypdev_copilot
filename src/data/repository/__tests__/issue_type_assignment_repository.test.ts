@@ -1,5 +1,6 @@
 import * as github from '@actions/github';
 import { IssueTypeAssignmentRepository } from '../issue/issue_type_assignment_repository';
+import { OctokitGraphqlClientAdapter } from '../../../infrastructure/github/octokit_client';
 import { IssueTypes } from '../../model/issue_types';
 import { Labels } from '../../model/labels';
 
@@ -34,7 +35,7 @@ describe('IssueTypeAssignmentRepository', () => {
         mockGraphql
             .mockResolvedValueOnce({ organization: { id: 'O_1', issueTypes: { nodes: [{ id: 'T', name: 'Hotfix' }] } } })
             .mockResolvedValueOnce({ updateIssueIssueType: { issue: { id: 'I_1' } } });
-        await new IssueTypeAssignmentRepository(mockGetId).setIssueType('org', 'repo', 1, labels(['hotfix', 'bug']), issueTypes, 'token');
+        await new IssueTypeAssignmentRepository(mockGetId, new OctokitGraphqlClientAdapter()).setIssueType('org', 'repo', 1, labels(['hotfix', 'bug']), issueTypes, 'token');
         expect(mockGraphql.mock.calls[1][1]).toEqual({ issueId: 'I_1', issueTypeId: 'T' });
     });
 
@@ -43,7 +44,7 @@ describe('IssueTypeAssignmentRepository', () => {
             .mockResolvedValueOnce({ organization: { id: 'O_1', issueTypes: { nodes: [] } } })
             .mockResolvedValueOnce({ createIssueType: { issueType: { id: 'T_NEW' } } })
             .mockResolvedValueOnce({ updateIssueIssueType: { issue: { id: 'I_1' } } });
-        await new IssueTypeAssignmentRepository(mockGetId).setIssueType('org', 'repo', 1, labels(['feature']), issueTypes, 'token');
+        await new IssueTypeAssignmentRepository(mockGetId, new OctokitGraphqlClientAdapter()).setIssueType('org', 'repo', 1, labels(['feature']), issueTypes, 'token');
         expect(mockGraphql).toHaveBeenCalledTimes(3);
         expect(mockGraphql.mock.calls[2][1]).toEqual({ issueId: 'I_1', issueTypeId: 'T_NEW' });
     });
@@ -52,7 +53,7 @@ describe('IssueTypeAssignmentRepository', () => {
         mockGraphql
             .mockResolvedValueOnce({ organization: { id: 'O_1', issueTypes: { nodes: [] } } })
             .mockRejectedValueOnce(new Error('Create failed'));
-        await expect(new IssueTypeAssignmentRepository(mockGetId).setIssueType('org', 'repo', 1, labels(['release']), issueTypes, 'token')).resolves.toBeUndefined();
+        await expect(new IssueTypeAssignmentRepository(mockGetId, new OctokitGraphqlClientAdapter()).setIssueType('org', 'repo', 1, labels(['release']), issueTypes, 'token')).resolves.toBeUndefined();
         expect(mockGraphql).toHaveBeenCalledTimes(2);
     });
 });
