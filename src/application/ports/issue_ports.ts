@@ -5,6 +5,10 @@ export interface IssueDescriptionQueryPort {
     getDescription(owner: string, repository: string, issueNumber: number, token: string): Promise<string | undefined>;
 }
 
+export interface IssueIdentityQueryPort {
+    getId(owner: string, repository: string, issueNumber: number, token: string): Promise<string>;
+}
+
 export interface IssueLabelsPort {
     getLabels(owner: string, repository: string, issueNumber: number, token: string): Promise<string[]>;
     setLabels(owner: string, repository: string, issueNumber: number, labels: string[], token: string): Promise<void>;

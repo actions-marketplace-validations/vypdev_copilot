@@ -40,7 +40,12 @@ export class RepositoryFactory {
     }
 
     createIssueUseCase(): IssueUseCase {
-        return new IssueUseCase(this.createProjectBoardRepository(), this.createOrganizationRepository());
+        return new IssueUseCase(
+            this.createProjectBoardRepository(),
+            this.createOrganizationRepository(),
+            this.createIssueRepository(),
+            this.createProjectBoardRepository(),
+        );
     }
     createPullRequestUseCase(): PullRequestUseCase {
         return new PullRequestUseCase(

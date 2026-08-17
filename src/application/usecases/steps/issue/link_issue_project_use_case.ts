@@ -1,7 +1,7 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import { IssueRepository } from "../../../../data/repository/issue_repository";
-import { ProjectBoardRepository } from "../../../../data/repository/project/project_board_repository";
+import type { IssueIdentityQueryPort } from "../../../../application/ports/issue_ports";
+import type { ProjectBoardCommandPort, ProjectBoardLinkPort } from "../../../../application/ports/project_board_ports";
 import { logDebugInfo, logError, logInfo, logWarn } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
 import { ParamUseCase } from "../../base/param_usecase";
@@ -9,8 +9,10 @@ import { ParamUseCase } from "../../base/param_usecase";
 export class LinkIssueProjectUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'LinkIssueProjectUseCase';
     
-    private issueRepository = new IssueRepository();
-    private projectRepository = new ProjectBoardRepository();
+    constructor(
+        private readonly issueRepository: IssueIdentityQueryPort,
+        private readonly projectRepository: ProjectBoardCommandPort & ProjectBoardLinkPort,
+    ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`)

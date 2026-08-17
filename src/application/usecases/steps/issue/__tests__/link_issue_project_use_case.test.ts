@@ -43,7 +43,10 @@ describe('LinkIssueProjectUseCase', () => {
   let useCase: LinkIssueProjectUseCase;
 
   beforeEach(() => {
-    useCase = new LinkIssueProjectUseCase();
+    useCase = new LinkIssueProjectUseCase(
+      { getId: mockGetId },
+      { linkContentId: mockLinkContentId, moveIssueToColumn: mockMoveIssueToColumn, setTaskPriority: jest.fn(), setTaskSize: jest.fn() },
+    );
     mockGetId.mockResolvedValue('issue-node-1');
     mockLinkContentId.mockResolvedValue(true);
     mockMoveIssueToColumn.mockResolvedValue(true);
