@@ -5,6 +5,14 @@ describe("RepositoryFactory", () => {
         const factory = new RepositoryFactory();
         expect(factory.createOrganizationRepository()).toBeDefined();
         expect(factory.createIssueRepository()).toBeDefined();
+        expect(factory.createIssueAssignmentRepository()).toBeDefined();
+        expect(factory.createIssueContentRepository()).toBeDefined();
+        expect(factory.createIssueLabelRepository()).toBeDefined();
+        expect(factory.createIssueLabelProvisioningRepository()).toBeDefined();
+        expect(factory.createIssueLifecycleRepository()).toBeDefined();
+        expect(factory.createIssueMetadataRepository()).toBeDefined();
+        expect(factory.createIssueProgressLabelRepository()).toBeDefined();
+        expect(factory.createIssueTypeRepository()).toBeDefined();
         expect(factory.createProjectBoardRepository()).toBeDefined();
         expect(factory.createPullRequestChangesRepository()).toBeDefined();
         expect(factory.createPullRequestLifecycleRepository()).toBeDefined();
