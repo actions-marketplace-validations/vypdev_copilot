@@ -1,4 +1,4 @@
-import * as exec from '@actions/exec';
+import type { GitCommitPort } from '../../../../../application/ports/git_ports';
 import type { AuthenticatedUserPort } from '../../../../../application/ports/organization_ports';
 import type { Execution } from '../../../../../data/model/execution';
 import { logDebugInfo, logError, logInfo } from '../../../../../utils/logger';
@@ -6,8 +6,6 @@ import { checkoutBranch } from './git_branch_checkout';
 import { MAX_VERIFY_COMMANDS, limitVerifyCommands } from './verify_command_policy';
 import { runVerifyCommands } from './verify_command_runner';
 import { hasWorkspaceChanges } from './workspace_changes';
-import { GitCommitRepository } from './git_commit_repository';
-
 export interface CommitAndPushWorkflowResult {
     success: boolean;
     committed: boolean;
@@ -22,14 +20,11 @@ export interface CommitAndPushWorkflowOptions {
     noChangesMessage: string;
 }
 
-const gitCommitRepository = new GitCommitRepository({
-    execute: (program, args) => exec.exec(program, args),
-});
-
 export async function runCommitAndPushWorkflow(
     execution: Execution,
     options: CommitAndPushWorkflowOptions,
     authenticatedUserPort: AuthenticatedUserPort,
+    gitCommitPort: GitCommitPort,
 ): Promise<CommitAndPushWorkflowResult> {
     if (!options.branch?.trim()) {
         return { success: false, committed: false, error: 'No branch to commit to.' };
@@ -50,7 +45,7 @@ export async function runCommitAndPushWorkflow(
     }
     if (verifyCommands.length > 0) {
         logInfo(`Running ${verifyCommands.length} verify command(s)...`);
-        const verify = await runVerifyCommands(verifyCommands, (program, args) => exec.exec(program, args));
+        const verify = await runVerifyCommands(verifyCommands, (program, args) => gitCommitPort.execute(program, args));
         if (!verify.success) {
             return {
                 success: false,
@@ -71,15 +66,15 @@ export async function runCommitAndPushWorkflow(
 
     try {
         const { name, email } = await authenticatedUserPort.getTokenUserDetails(execution.tokens.token);
-        await gitCommitRepository.configureAuthor(name, email);
+        await gitCommitPort.configureAuthor(name, email);
         logDebugInfo(`Git author set to ${name} <${email}>.`);
         if (options.workspacePaths) {
-            await gitCommitRepository.stagePaths(options.workspacePaths);
+            await gitCommitPort.stagePaths(options.workspacePaths);
         } else {
-            await gitCommitRepository.stageAll();
+            await gitCommitPort.stageAll();
         }
-        await gitCommitRepository.commit(options.commitMessage);
-        await gitCommitRepository.push(options.branch);
+        await gitCommitPort.commit(options.commitMessage);
+        await gitCommitPort.push(options.branch);
         logInfo(`Pushed commit to origin/${options.branch}.`);
         return { success: true, committed: true };
     } catch (error) {

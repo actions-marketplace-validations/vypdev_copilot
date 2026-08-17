@@ -1,14 +1,11 @@
-export type GitCommandExecutor = (program: string, args: string[]) => Promise<number>;
+import * as exec from '@actions/exec';
+import type { GitCommitPort } from '../application/ports/git_ports';
 
-export interface GitCommitRepositoryOptions {
-    execute: GitCommandExecutor;
-}
+export class GitCommitAdapter implements GitCommitPort {
+    constructor(private readonly executeCommand: (program: string, args: string[]) => Promise<number> = (program, args) => exec.exec(program, args)) {}
 
-export class GitCommitRepository {
-    private readonly execute: GitCommandExecutor;
-
-    constructor(options: GitCommitRepositoryOptions) {
-        this.execute = options.execute;
+    async execute(program: string, args: string[]): Promise<number> {
+        return this.executeCommand(program, args);
     }
 
     async configureAuthor(name: string, email: string): Promise<void> {

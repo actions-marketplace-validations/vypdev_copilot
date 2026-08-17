@@ -7,6 +7,7 @@ import type { DoUserRequestParam } from "./steps/commit/user_request_use_case";
 import type { IssueCommentUpdatePort } from "../ports/issue_ports";
 import type { AuthenticatedUserPort, ActorAuthorizationPort } from "../ports/organization_ports";
 import type { BugbotWritePorts } from "../ports/bugbot_ports";
+import type { GitCommitPort } from "../ports/git_ports";
 
 export class IssueCommentUseCase implements ParamUseCase<Execution, Result[]> {
     taskId = "IssueCommentUseCase";
@@ -21,6 +22,7 @@ export class IssueCommentUseCase implements ParamUseCase<Execution, Result[]> {
         private readonly actorAuthorizationPort: ActorAuthorizationPort,
         private readonly authenticatedUserPort: AuthenticatedUserPort,
         private readonly bugbotWritePorts: BugbotWritePorts,
+        private readonly gitCommitPort: GitCommitPort,
     ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
@@ -32,6 +34,7 @@ export class IssueCommentUseCase implements ParamUseCase<Execution, Result[]> {
             autofixUseCase: this.autofixUseCase,
             doUserRequestUseCase: this.doUserRequestUseCase,
             userComment: param.issue.commentBody ?? "",
+            gitCommitPort: this.gitCommitPort,
         }, this.actorAuthorizationPort, this.authenticatedUserPort, this.bugbotWritePorts);
     }
 }

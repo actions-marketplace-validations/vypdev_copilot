@@ -140,6 +140,7 @@ describe("PullRequestReviewCommentUseCase", () => {
             { isActorAllowedToModifyFiles: mockIsActorAllowedToModifyFiles },
             { getUserFromToken: jest.fn(), getTokenUserDetails: jest.fn() },
             { issueComments: { addComment: jest.fn(), updateComment: jest.fn() }, pullRequestComments: { createReviewWithComments: jest.fn(), updatePullRequestReviewComment: jest.fn(), listPullRequestReviewComments: jest.fn(), resolvePullRequestReviewThread: jest.fn() } },
+            { execute: jest.fn(), configureAuthor: jest.fn(), stageAll: jest.fn(), stagePaths: jest.fn(), commit: jest.fn(), push: jest.fn() },
         );
         mockLogInfo.mockClear();
         mockIsActorAllowedToModifyFiles.mockReset().mockResolvedValue(true);
@@ -426,6 +427,7 @@ describe("PullRequestReviewCommentUseCase", () => {
         expect(mockRunUserRequestCommitAndPush).toHaveBeenCalledWith(
             expect.anything(),
             expect.objectContaining({ branchOverride: "feature/296-from-pr" }),
+            expect.anything(),
             expect.anything()
         );
         expect(mockThinkInvoke).not.toHaveBeenCalled();

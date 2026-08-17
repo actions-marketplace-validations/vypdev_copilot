@@ -14,6 +14,7 @@ import {
 import type { DoUserRequestParam } from "./steps/commit/user_request_use_case";
 import type { AuthenticatedUserPort, ActorAuthorizationPort } from "../ports/organization_ports";
 import type { BugbotWritePorts } from "../ports/bugbot_ports";
+import type { GitCommitPort } from "../ports/git_ports";
 
 export interface CommentAutomationOptions {
     taskId: string;
@@ -23,6 +24,7 @@ export interface CommentAutomationOptions {
     autofixUseCase: ParamUseCase<BugbotAutofixParam, Result[]>;
     doUserRequestUseCase: ParamUseCase<DoUserRequestParam, Result[]>;
     userComment: string;
+    gitCommitPort: GitCommitPort;
 }
 
 export async function runCommentAutomation(
@@ -71,7 +73,7 @@ export async function runCommentAutomation(
             branchOverride: payload.branchOverride,
         });
         results.push(...autofixResults);
-        await commitAutofixAndResolveFindings(param, payload, autofixResults, authenticatedUserPort, bugbotWritePorts);
+        await commitAutofixAndResolveFindings(param, payload, autofixResults, authenticatedUserPort, bugbotWritePorts, options.gitCommitPort);
     } else if (!runAutofix && canRunDoUserRequest(intentPayload) && allowedToModifyFiles) {
         const payload = intentPayload!;
         logInfo("Running do user request.");
@@ -81,7 +83,7 @@ export async function runCommentAutomation(
             branchOverride: payload.branchOverride,
         });
         results.push(...doResults);
-        await commitUserRequestIfSuccessful(param, payload.branchOverride, doResults, authenticatedUserPort);
+        await commitUserRequestIfSuccessful(param, payload.branchOverride, doResults, authenticatedUserPort, options.gitCommitPort);
     } else if (!runAutofix) {
         logInfo("Skipping bugbot autofix (no fix request, no targets, or no context).");
     }
@@ -101,6 +103,7 @@ async function commitAutofixAndResolveFindings(
     autofixResults: Result[],
     authenticatedUserPort: AuthenticatedUserPort,
     bugbotWritePorts: BugbotWritePorts,
+    gitCommitPort: GitCommitPort,
 ): Promise<void> {
     const lastAutofix = autofixResults.at(-1);
     if (!lastAutofix?.success) {
@@ -114,7 +117,7 @@ async function commitAutofixAndResolveFindings(
         branchOverride: payload.branchOverride,
         targetFindingIds: payload.targetFindingIds,
         workspacePaths: autofixPayload?.workspacePaths,
-    }, authenticatedUserPort);
+    }, authenticatedUserPort, gitCommitPort);
     if (commitResult.committed && payload.context) {
         const ids = payload.targetFindingIds;
         await markFindingsResolved({
@@ -135,11 +138,12 @@ async function commitUserRequestIfSuccessful(
     branchOverride: string | undefined,
     results: Result[],
     authenticatedUserPort: AuthenticatedUserPort,
+    gitCommitPort: GitCommitPort,
 ): Promise<void> {
     if (!results.at(-1)?.success) {
         logInfo("Do user request did not succeed; skipping commit.");
         return;
     }
     logInfo("Do user request succeeded; running commit and push.");
-    await runUserRequestCommitAndPush(param, { branchOverride }, authenticatedUserPort);
+    await runUserRequestCommitAndPush(param, { branchOverride }, authenticatedUserPort, gitCommitPort);
 }

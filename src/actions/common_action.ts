@@ -10,6 +10,7 @@ import { DetectBugbotFixIntentUseCase } from '../application/usecases/steps/comm
 import { DoUserRequestUseCase } from '../application/usecases/steps/commit/user_request_use_case';
 import { ProjectBoardCommandPort } from '../application/ports/project_board_ports';
 import { RepositoryFactory } from '../infrastructure/composition/repository_factory';
+import { GitCommitAdapter } from '../infrastructure/git_commit_adapter';
 import type { BranchRepository } from '../data/repository/branch_repository';
 import { IssueCommentUseCase } from '../application/usecases/issue_comment_use_case';
 import { CheckIssueCommentLanguageUseCase } from '../application/usecases/steps/issue_comment/check_issue_comment_language_use_case';
@@ -180,6 +181,7 @@ export async function mainRun(
                         issueComments: commentFactory.createIssueRepository(),
                         pullRequestComments: commentFactory.createPullRequestRepository(),
                     },
+                    new GitCommitAdapter(),
                 ).invoke(execution));
                 break;
             }
@@ -206,6 +208,7 @@ export async function mainRun(
                         issueComments: reviewCommentFactory.createIssueRepository(),
                         pullRequestComments: reviewCommentFactory.createPullRequestRepository(),
                     },
+                    new GitCommitAdapter(),
                 ).invoke(execution));
                 break;
             }

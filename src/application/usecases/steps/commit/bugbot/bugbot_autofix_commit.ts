@@ -1,5 +1,6 @@
 import type { Execution } from '../../../../../data/model/execution';
 import type { AuthenticatedUserPort } from '../../../../../application/ports/organization_ports';
+import type { GitCommitPort } from '../../../../../application/ports/git_ports';
 import { buildBugbotCommitMessage, buildUserRequestCommitMessage } from './commit_message_policy';
 import {
     runCommitAndPushWorkflow,
@@ -12,6 +13,7 @@ export async function runBugbotAutofixCommitAndPush(
     execution: Execution,
     options: { branchOverride?: string; targetFindingIds?: string[]; workspacePaths?: string[] } | undefined,
     authenticatedUserPort: AuthenticatedUserPort,
+    gitCommitPort: GitCommitPort,
 ): Promise<BugbotAutofixCommitResult> {
     const branch = options?.branchOverride ?? execution.commit.branch;
     return runCommitAndPushWorkflow(execution, {
@@ -20,13 +22,14 @@ export async function runBugbotAutofixCommitAndPush(
         workspacePaths: options?.workspacePaths,
         commitMessage: buildBugbotCommitMessage(execution.issueNumber, options?.targetFindingIds ?? []),
         noChangesMessage: 'No changes to commit after autofix.',
-    }, authenticatedUserPort);
+    }, authenticatedUserPort, gitCommitPort);
 }
 
 export async function runUserRequestCommitAndPush(
     execution: Execution,
     options: { branchOverride?: string } | undefined,
     authenticatedUserPort: AuthenticatedUserPort,
+    gitCommitPort: GitCommitPort,
 ): Promise<BugbotAutofixCommitResult> {
     const branch = options?.branchOverride ?? execution.commit.branch;
     return runCommitAndPushWorkflow(execution, {
@@ -34,5 +37,5 @@ export async function runUserRequestCommitAndPush(
         branchOverride: Boolean(options?.branchOverride),
         commitMessage: buildUserRequestCommitMessage(execution.issueNumber),
         noChangesMessage: 'No changes to commit after user request.',
-    }, authenticatedUserPort);
+    }, authenticatedUserPort, gitCommitPort);
 }

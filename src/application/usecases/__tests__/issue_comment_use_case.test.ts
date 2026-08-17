@@ -132,6 +132,7 @@ describe("IssueCommentUseCase", () => {
             { isActorAllowedToModifyFiles: mockIsActorAllowedToModifyFiles },
             { getUserFromToken: jest.fn(), getTokenUserDetails: jest.fn() },
             { issueComments: { addComment: jest.fn(), updateComment: jest.fn() }, pullRequestComments: { createReviewWithComments: jest.fn(), updatePullRequestReviewComment: jest.fn(), listPullRequestReviewComments: jest.fn(), resolvePullRequestReviewThread: jest.fn() } },
+            { execute: jest.fn(), configureAuthor: jest.fn(), stageAll: jest.fn(), stagePaths: jest.fn(), commit: jest.fn(), push: jest.fn() },
         );
         mockIsActorAllowedToModifyFiles.mockReset().mockResolvedValue(true);
         mockCheckLanguageInvoke.mockReset().mockResolvedValue([
@@ -436,6 +437,7 @@ describe("IssueCommentUseCase", () => {
         expect(mockRunUserRequestCommitAndPush).toHaveBeenCalledWith(
             expect.anything(),
             expect.objectContaining({ branchOverride: "feature/296-from-issue" }),
+            expect.anything(),
             expect.anything()
         );
         expect(mockThinkInvoke).not.toHaveBeenCalled();
