@@ -3,7 +3,7 @@ import type { Execution } from "../../../../../data/model/execution";
 import { OPENCODE_AGENT_PLAN } from "../../../../../data/repository/agent_task_policy";
 import type { FindingsQueryPort } from "../../../../../data/repository/agent_ports";
 import { DefaultAgentRepositoryFactory } from "../../../../../data/repository/agent_repository_factory";
-import { PullRequestRepository } from "../../../../../data/repository/pull_request_repository";
+import type { BugbotPullRequestQueryPort } from "../../../../../application/ports/bugbot_ports";
 import { logDebugInfo, logInfo } from "../../../../../utils/logger";
 import { getTaskEmoji } from "../../../../../utils/task_emoji";
 import { ParamUseCase } from "../../../base/param_usecase";
@@ -34,6 +34,8 @@ export class DetectBugbotFixIntentUseCase implements ParamUseCase<Execution, Res
 
     private aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings();
 
+    constructor(private readonly pullRequestQueryPort: BugbotPullRequestQueryPort) {}
+
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`);
 
@@ -63,8 +65,7 @@ export class DetectBugbotFixIntentUseCase implements ParamUseCase<Execution, Res
         // On issue_comment event we may not have commit.branch; resolve from an open PR that references the issue.
         let branchOverride: string | undefined;
         if (!param.commit.branch?.trim()) {
-            const prRepo = new PullRequestRepository();
-            branchOverride = await prRepo.getHeadBranchForIssue(
+            branchOverride = await this.pullRequestQueryPort.getHeadBranchForIssue(
                 param.owner,
                 param.repo,
                 param.issueNumber,
@@ -99,9 +100,8 @@ export class DetectBugbotFixIntentUseCase implements ParamUseCase<Execution, Res
         // When user replied in a PR thread, include parent comment so OpenCode knows which finding they mean.
         let parentCommentBody: string | undefined;
         if (param.pullRequest.isPullRequestReviewComment && param.pullRequest.commentInReplyToId) {
-            const prRepo = new PullRequestRepository();
             const prNumber = param.pullRequest.number;
-            const parentBody = await prRepo.getPullRequestReviewCommentBody(
+            const parentBody = await this.pullRequestQueryPort.getPullRequestReviewCommentBody(
                 param.owner,
                 param.repo,
                 prNumber,

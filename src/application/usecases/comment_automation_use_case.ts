@@ -4,6 +4,7 @@ import { logInfo } from "../../utils/logger";
 import { ThinkUseCase } from "./steps/common/think_use_case";
 import { ParamUseCase } from "./base/param_usecase";
 import { DetectBugbotFixIntentUseCase } from "./steps/commit/bugbot/detect_bugbot_fix_intent_use_case";
+import { RepositoryFactory } from "../../infrastructure/composition/repository_factory";
 import { BugbotAutofixUseCase } from "./steps/commit/bugbot/bugbot_autofix_use_case";
 import { runBugbotAutofixCommitAndPush, runUserRequestCommitAndPush } from "./steps/commit/bugbot/bugbot_autofix_commit";
 import { markFindingsResolved } from "./steps/commit/bugbot/mark_findings_resolved_use_case";
@@ -31,7 +32,7 @@ export async function runCommentAutomation(
     results.push(...(await options.languageUseCase.invoke(param)));
 
     logInfo("Running bugbot fix intent detection (before Think).");
-    const intentResults = await new DetectBugbotFixIntentUseCase().invoke(param);
+    const intentResults = await new DetectBugbotFixIntentUseCase(new RepositoryFactory().createPullRequestRepository()).invoke(param);
     results.push(...intentResults);
     const intentPayload = getBugbotFixIntentPayload(intentResults);
     const runAutofix = canRunBugbotAutofix(intentPayload);

@@ -71,7 +71,7 @@ describe("DetectBugbotFixIntentUseCase", () => {
     let useCase: DetectBugbotFixIntentUseCase;
 
     beforeEach(() => {
-        useCase = new DetectBugbotFixIntentUseCase();
+        useCase = new DetectBugbotFixIntentUseCase({ getHeadBranchForIssue: mockGetHeadBranchForIssue, getPullRequestReviewCommentBody: mockGetPullRequestReviewCommentBody });
         mockLoadBugbotContext.mockReset();
         mockAskAgent.mockReset();
         mockGetHeadBranchForIssue.mockReset();
