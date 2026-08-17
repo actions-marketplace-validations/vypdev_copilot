@@ -64,3 +64,7 @@ export interface GithubPullRequestFile {
     deletions: number;
     patch?: string;
 }
+
+export interface GithubGraphqlClient {
+    graphql<T>(query: string, variables?: Record<string, unknown>): Promise<T>;
+}

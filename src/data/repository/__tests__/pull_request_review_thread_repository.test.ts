@@ -1,4 +1,5 @@
 import { PullRequestReviewThreadRepository } from "../pull_request/pull_request_review_thread_repository";
+import { OctokitGraphqlClientAdapter } from "../../../infrastructure/github/octokit_client";
 
 jest.mock("../../../utils/logger", () => ({
     logDebugInfo: jest.fn(),
@@ -13,7 +14,7 @@ jest.mock("@actions/github", () => ({
 }));
 
 describe("PullRequestReviewThreadRepository", () => {
-    const repository = new PullRequestReviewThreadRepository();
+    const repository = new PullRequestReviewThreadRepository(new OctokitGraphqlClientAdapter());
 
     beforeEach(() => {
         mockGraphql.mockReset();

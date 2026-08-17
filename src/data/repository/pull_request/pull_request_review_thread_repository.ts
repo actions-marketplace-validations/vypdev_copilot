@@ -1,5 +1,5 @@
-import * as github from "@actions/github";
 import { logDebugInfo, logError } from "../../../utils/logger";
+import type { GithubClientPort, GithubGraphqlClient } from "../github/github_client_port";
 
 type ThreadPageInfo = { hasNextPage: boolean; endCursor: string | null };
 type ThreadNode = {
@@ -24,6 +24,7 @@ type ThreadCommentsResult = {
 
 /** GitHub GraphQL adapter for locating and resolving a pull-request review thread. */
 export class PullRequestReviewThreadRepository {
+    constructor(private readonly githubClient: GithubClientPort<GithubGraphqlClient>) {}
     resolve = async (
         owner: string,
         repository: string,
@@ -31,7 +32,7 @@ export class PullRequestReviewThreadRepository {
         commentNodeId: string,
         token: string
     ): Promise<void> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         try {
             const threadId = await this.findThreadId(
                 octokit,
@@ -63,7 +64,7 @@ export class PullRequestReviewThreadRepository {
     };
 
     private findThreadId = async (
-        octokit: ReturnType<typeof github.getOctokit>,
+        octokit: GithubGraphqlClient,
         owner: string,
         repository: string,
         pullNumber: number,

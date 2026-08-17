@@ -1,8 +1,12 @@
 import * as github from "@actions/github";
 import { PullRequestReviewThreadRepository } from "./pull_request_review_thread_repository";
 import { logDebugInfo, logError } from "../../../utils/logger";
+import type { GithubClientPort, GithubGraphqlClient } from "../github/github_client_port";
 
 export class PullRequestReviewRepository {
+    constructor(githubClient: GithubClientPort<GithubGraphqlClient>) {
+        this.pullRequestReviewThreadRepository = new PullRequestReviewThreadRepository(githubClient);
+    }
     /**
      * Returns all users involved in review: requested (pending) + those who already submitted a review.
      * Used to avoid re-requesting someone who already reviewed when ensuring desired reviewer count.
@@ -139,7 +143,7 @@ export class PullRequestReviewRepository {
         }
     };
 
-    private readonly pullRequestReviewThreadRepository = new PullRequestReviewThreadRepository();
+    private readonly pullRequestReviewThreadRepository: PullRequestReviewThreadRepository;
 
     /** Resolve a PR review thread containing the given review comment node. */
     resolvePullRequestReviewThread = async (

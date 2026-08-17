@@ -3,7 +3,7 @@
  */
 
 import { PullRequestRepository } from "../pull_request_repository";
-import { OctokitPullRequestChangesClientAdapter } from "../../../infrastructure/github/octokit_client";
+import { OctokitPullRequestChangesClientAdapter, OctokitGraphqlClientAdapter } from '../../../infrastructure/github/octokit_client';
 
 jest.mock("../../../utils/logger", () => ({
     logDebugInfo: jest.fn(),
@@ -22,7 +22,7 @@ jest.mock("@actions/github", () => ({
 }));
 
 describe("getHeadBranchForIssue", () => {
-    const repo = new PullRequestRepository(new OctokitPullRequestChangesClientAdapter());
+    const repo = new PullRequestRepository(new OctokitPullRequestChangesClientAdapter(), new OctokitGraphqlClientAdapter());
 
     beforeEach(() => {
         mockPullsList.mockReset();

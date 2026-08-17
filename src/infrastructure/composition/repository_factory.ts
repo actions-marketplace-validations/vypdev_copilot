@@ -16,7 +16,7 @@ import { PullRequestReviewRepository } from "../../data/repository/pull_request/
 import { PullRequestReviewThreadRepository } from "../../data/repository/pull_request/pull_request_review_thread_repository";
 import { PullRequestRepository } from "../../data/repository/pull_request_repository";
 import { RepositoryReleaseRepository } from "../../data/repository/release/repository_release_repository";
-import { OctokitClientAdapter, OctokitOrganizationClientAdapter, OctokitPullRequestChangesClientAdapter, OctokitWorkflowClientAdapter } from "../github/octokit_client";
+import { OctokitClientAdapter, OctokitGraphqlClientAdapter, OctokitOrganizationClientAdapter, OctokitPullRequestChangesClientAdapter, OctokitWorkflowClientAdapter } from "../github/octokit_client";
 import { IssueUseCase } from "../../application/usecases/issue_use_case";
 import { PullRequestUseCase } from "../../application/usecases/pull_request_use_case";
 import { InitialSetupUseCase } from "../../application/usecases/actions/initial_setup_use_case";
@@ -33,6 +33,9 @@ export class RepositoryFactory {
     }
     createPullRequestChangesClient(): OctokitPullRequestChangesClientAdapter {
         return new OctokitPullRequestChangesClientAdapter();
+    }
+    createGraphqlClient(): OctokitGraphqlClientAdapter {
+        return new OctokitGraphqlClientAdapter();
     }
     createBranchRepository(): BranchRepository {
         return new BranchRepository(this.createWorkflowRepository());
@@ -121,7 +124,7 @@ export class RepositoryFactory {
     }
 
     createPullRequestRepository(): PullRequestRepository {
-        return new PullRequestRepository(this.createPullRequestChangesClient());
+        return new PullRequestRepository(this.createPullRequestChangesClient(), this.createGraphqlClient());
     }
 
     createPullRequestChangesRepository(): PullRequestChangesRepository {
@@ -133,11 +136,11 @@ export class RepositoryFactory {
     }
 
     createPullRequestReviewRepository(): PullRequestReviewRepository {
-        return new PullRequestReviewRepository();
+        return new PullRequestReviewRepository(this.createGraphqlClient());
     }
 
     createPullRequestReviewThreadRepository(): PullRequestReviewThreadRepository {
-        return new PullRequestReviewThreadRepository();
+        return new PullRequestReviewThreadRepository(this.createGraphqlClient());
     }
 
     createRepositoryReleaseRepository(): RepositoryReleaseRepository {
