@@ -43,7 +43,7 @@ describe('MarkdownContentHotfixHandler', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    handler = new MarkdownContentHotfixHandler();
+    handler = new MarkdownContentHotfixHandler({ getDescription: mockGetDescription, updateDescription: mockUpdateDescription });
   });
 
   describe('id and visibleContent', () => {

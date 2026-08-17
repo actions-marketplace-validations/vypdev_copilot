@@ -1,4 +1,5 @@
 import { StoreConfigurationUseCase } from '../store_configuration_use_case';
+import type { ConfigurationHandler } from '../../../../../manager/description/configuration_handler';
 
 jest.mock('../../../../../utils/logger', () => ({
   logInfo: jest.fn(),
@@ -16,7 +17,7 @@ describe('StoreConfigurationUseCase', () => {
   let useCase: StoreConfigurationUseCase;
 
   beforeEach(() => {
-    useCase = new StoreConfigurationUseCase();
+    useCase = new StoreConfigurationUseCase({ update: mockUpdate } as unknown as ConfigurationHandler);
     mockUpdate.mockReset();
   });
 

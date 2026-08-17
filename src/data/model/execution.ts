@@ -245,7 +245,7 @@ export class Execution {
             return;
         }
 
-        this.previousConfiguration = await new ConfigurationHandler().get(this)
+        this.previousConfiguration = await new ConfigurationHandler(issueRepository).get(this)
 
         /**
          * Get labels of issue (skip if it's the initial setup and it fails)

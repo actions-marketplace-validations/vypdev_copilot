@@ -23,6 +23,7 @@ import { logDebugInfo, logError, logInfo } from '../utils/logger';
 import type { ManagedAgentServer } from '../data/repository/agent_ports';
 import { OpenCodeServerLifecycleAdapter } from '../data/repository/opencode_server_lifecycle_adapter';
 import { RepositoryFactory } from '../infrastructure/composition/repository_factory';
+import { ConfigurationHandler } from '../manager/description/configuration_handler';
 import { loadProjectDetails } from './project_details_loader';
 import { mainRun } from './common_action';
 import { isEnabledInput } from './input_boolean_policy';
@@ -355,7 +356,7 @@ export async function runGitHubAction(): Promise<void> {
 
     const results: Result[] = await mainRun(execution, projectRepository, repositoryFactory.createBranchRepository());
 
-    await finishWithResults(execution, results);
+    await finishWithResults(execution, results, repositoryFactory.createIssueRepository());
     } finally {
         if (managedOpencodeServer) {
             logInfo('Stopping OpenCode server...');
@@ -365,14 +366,14 @@ export async function runGitHubAction(): Promise<void> {
     }
 }
 
-async function finishWithResults(execution: Execution, results: Result[]): Promise<void> {
+async function finishWithResults(execution: Execution, results: Result[], issueRepository: ReturnType<RepositoryFactory['createIssueRepository']>): Promise<void> {
     const stepCount = results.reduce((acc, r) => acc + (r.steps?.length ?? 0), 0);
     const errorCount = results.reduce((acc, r) => acc + (r.errors?.length ?? 0), 0);
     logInfo(`Publishing result: ${results.length} result(s), ${stepCount} step(s), ${errorCount} error(s).`);
 
     execution.currentConfiguration.results = results;
-    await new PublishResultUseCase(new RepositoryFactory().createIssueRepository()).invoke(execution);
-    await new StoreConfigurationUseCase().invoke(execution);
+    await new PublishResultUseCase(issueRepository).invoke(execution);
+    await new StoreConfigurationUseCase(new ConfigurationHandler(issueRepository)).invoke(execution);
     logInfo('Configuration stored. Finishing.');
 
     /**

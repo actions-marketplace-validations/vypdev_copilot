@@ -52,7 +52,7 @@ describe('ConfigurationHandler', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    handler = new ConfigurationHandler();
+    handler = new ConfigurationHandler({ getDescription: mockGetDescription, updateDescription: mockUpdateDescription });
   });
 
   describe('id and visibleContent', () => {

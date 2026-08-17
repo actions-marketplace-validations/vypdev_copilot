@@ -54,7 +54,7 @@ describe('IssueContentInterface', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    handler = new TestIssueContent();
+    handler = new TestIssueContent({ getDescription: mockGetDescription, updateDescription: mockUpdateDescription });
   });
 
   describe('internalGetter', () => {
