@@ -1,4 +1,5 @@
 import { IssueContentRepository } from "../issue_content_repository";
+import { OctokitIssueContentClientAdapter } from "../../../../infrastructure/github/octokit_client";
 
 const mockUpdate = jest.fn();
 const mockGet = jest.fn();
@@ -22,7 +23,7 @@ jest.mock('@actions/github', () => ({
 }));
 
 describe('IssueContentRepository', () => {
-    const repository = new IssueContentRepository();
+    const repository = new IssueContentRepository(new OctokitIssueContentClientAdapter());
 
     beforeEach(() => jest.clearAllMocks());
 

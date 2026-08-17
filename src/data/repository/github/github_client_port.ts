@@ -128,3 +128,27 @@ export interface GithubIssueLifecycleClient {
         };
     };
 }
+
+export interface GithubIssueContentClient {
+    paginate: {
+        iterator(
+            method: (parameters: Record<string, unknown>) => Promise<{ data: GithubIssueComment[] }>,
+            parameters: Record<string, unknown>,
+        ): AsyncIterable<{ data: GithubIssueComment[] }>;
+    };
+    rest: {
+        issues: {
+            get(parameters: Record<string, unknown>): Promise<{ data: { body?: string | null } }>;
+            update(parameters: Record<string, unknown>): Promise<unknown>;
+            createComment(parameters: Record<string, unknown>): Promise<unknown>;
+            updateComment(parameters: Record<string, unknown>): Promise<unknown>;
+            listComments(parameters: Record<string, unknown>): Promise<{ data: GithubIssueComment[] }>;
+        };
+    };
+}
+
+export interface GithubIssueComment {
+    id: number;
+    body?: string | null;
+    user?: { login?: string };
+}

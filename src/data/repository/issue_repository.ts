@@ -16,7 +16,7 @@ import { resolveIssueTitleEmoji, resolvePullRequestTitleEmoji } from './issue_em
 export { PROGRESS_LABEL_PATTERN } from './progress_labels';
 
 export class IssueRepository {
-    private readonly issueContentRepository = new IssueContentRepository();
+    private readonly issueContentRepository: IssueContentRepository;
     private readonly issueMetadataRepository = new IssueMetadataRepository();
     private readonly issueLabelRepository = new IssueLabelRepository();
     private readonly issueProgressLabelRepository = new IssueProgressLabelRepository(this.issueLabelRepository);
@@ -28,7 +28,8 @@ export class IssueRepository {
     private readonly issueAssignmentRepository = new IssueAssignmentRepository();
     private readonly issueLifecycleRepository: IssueLifecycleRepository;
 
-    constructor(issueLifecycleRepository: IssueLifecycleRepository) {
+    constructor(issueContentRepository: IssueContentRepository, issueLifecycleRepository: IssueLifecycleRepository) {
+        this.issueContentRepository = issueContentRepository;
         this.issueLifecycleRepository = issueLifecycleRepository;
     }
 
@@ -146,9 +147,9 @@ export class IssueRepository {
     };
 
 
-    updateDescription = this.issueContentRepository.updateDescription;
+    updateDescription = (...args: Parameters<IssueContentRepository["updateDescription"]>) => this.issueContentRepository.updateDescription(...args);
 
-    getDescription = this.issueContentRepository.getDescription;
+    getDescription = (...args: Parameters<IssueContentRepository["getDescription"]>) => this.issueContentRepository.getDescription(...args);
 
     getId = this.issueMetadataRepository.getId;
 
@@ -179,11 +180,11 @@ export class IssueRepository {
 
     getHeadBranch = this.issueMetadataRepository.getHeadBranch;
 
-    addComment = this.issueContentRepository.addComment;
+    addComment = (...args: Parameters<IssueContentRepository["addComment"]>) => this.issueContentRepository.addComment(...args);
 
-    updateComment = this.issueContentRepository.updateComment;
+    updateComment = (...args: Parameters<IssueContentRepository["updateComment"]>) => this.issueContentRepository.updateComment(...args);
 
-    listIssueComments = this.issueContentRepository.listIssueComments;
+    listIssueComments = (...args: Parameters<IssueContentRepository["listIssueComments"]>) => this.issueContentRepository.listIssueComments(...args);
 
     closeIssue = (...args: Parameters<IssueLifecycleRepository["closeIssue"]>) => this.issueLifecycleRepository.closeIssue(...args);
 
@@ -193,7 +194,7 @@ export class IssueRepository {
 
     assignMembersToIssue = this.issueAssignmentRepository.assignMembersToIssue;
 
-    getIssueDescription = this.issueContentRepository.getIssueDescription;
+    getIssueDescription = (...args: Parameters<IssueContentRepository["getIssueDescription"]>) => this.issueContentRepository.getIssueDescription(...args);
 
 
     setIssueType = this.issueTypeAssignmentRepository.setIssueType;

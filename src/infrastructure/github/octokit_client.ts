@@ -1,5 +1,5 @@
 import * as github from "@actions/github";
-import type { GithubClientPort, GithubGraphqlClient, GithubIssueLifecycleClient, GithubOrganizationClient, GithubPullRequestChangesClient, GithubPullRequestLifecycleClient, GithubPullRequestReviewClient, GithubWorkflowClient } from "../../data/repository/github/github_client_port";
+import type { GithubClientPort, GithubGraphqlClient, GithubIssueContentClient, GithubIssueLifecycleClient, GithubOrganizationClient, GithubPullRequestChangesClient, GithubPullRequestLifecycleClient, GithubPullRequestReviewClient, GithubWorkflowClient } from "../../data/repository/github/github_client_port";
 
 export type OctokitClient = ReturnType<typeof github.getOctokit>;
 
@@ -26,4 +26,7 @@ export class OctokitPullRequestLifecycleClientAdapter implements GithubClientPor
 }
 export class OctokitIssueLifecycleClientAdapter implements GithubClientPort<GithubIssueLifecycleClient> {
     getClient(token: string): GithubIssueLifecycleClient { return github.getOctokit(token) as unknown as GithubIssueLifecycleClient; }
+}
+export class OctokitIssueContentClientAdapter implements GithubClientPort<GithubIssueContentClient> {
+    getClient(token: string): GithubIssueContentClient { return github.getOctokit(token) as unknown as GithubIssueContentClient; }
 }

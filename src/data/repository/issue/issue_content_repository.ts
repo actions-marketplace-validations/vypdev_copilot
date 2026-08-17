@@ -1,6 +1,6 @@
-import * as github from "@actions/github";
 import { getCommentWatermark } from "../../../utils/comment_watermark";
 import { logDebugInfo, logError } from "../../../utils/logger";
+import type { GithubClientPort, GithubIssueContentClient } from "../github/github_client_port";
 
 export interface IssueComment {
     id: number;
@@ -9,6 +9,7 @@ export interface IssueComment {
 }
 
 export class IssueContentRepository {
+    constructor(private readonly githubClient: GithubClientPort<GithubIssueContentClient>) {}
     updateDescription = async (
         owner: string,
         repo: string,
@@ -16,7 +17,7 @@ export class IssueContentRepository {
         description: string,
         token: string,
     ): Promise<void> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         try {
             await octokit.rest.issues.update({
                 owner,
@@ -39,7 +40,7 @@ export class IssueContentRepository {
         if (issueNumber === -1) {
             return undefined;
         }
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         try {
             const { data: issue } = await octokit.rest.issues.get({
                 owner,
@@ -59,7 +60,7 @@ export class IssueContentRepository {
         issueNumber: number,
         token: string,
     ): Promise<string> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         const { data: issue } = await octokit.rest.issues.get({
             owner,
             repo: repository,
@@ -79,7 +80,7 @@ export class IssueContentRepository {
         const watermark = getCommentWatermark(
             options?.commitSha ? { commitSha: options.commitSha, owner, repo: repository } : undefined,
         );
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         await octokit.rest.issues.createComment({
             owner,
             repo: repository,
@@ -101,7 +102,7 @@ export class IssueContentRepository {
         const watermark = getCommentWatermark(
             options?.commitSha ? { commitSha: options.commitSha, owner, repo: repository } : undefined,
         );
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         await octokit.rest.issues.updateComment({
             owner,
             repo: repository,
@@ -117,7 +118,7 @@ export class IssueContentRepository {
         issueNumber: number,
         token: string,
     ): Promise<IssueComment[]> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         const all: IssueComment[] = [];
         for await (const response of octokit.paginate.iterator(octokit.rest.issues.listComments, {
             owner,

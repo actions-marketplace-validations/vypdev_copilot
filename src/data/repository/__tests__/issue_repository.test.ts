@@ -6,7 +6,8 @@
  */
 
 import { IssueRepository, PROGRESS_LABEL_PATTERN } from '../issue_repository';
-import { OctokitIssueLifecycleClientAdapter } from '../../../infrastructure/github/octokit_client';
+import { OctokitIssueContentClientAdapter, OctokitIssueLifecycleClientAdapter } from '../../../infrastructure/github/octokit_client';
+import { IssueContentRepository } from '../issue/issue_content_repository';
 import { IssueLifecycleRepository } from '../issue/issue_lifecycle_repository';
 import { Labels } from '../../model/labels';
 import { IssueTypes } from '../../model/issue_types';
@@ -102,7 +103,7 @@ function makeIssueTypes(): IssueTypes {
 }
 
 describe('IssueRepository', () => {
-  const repo = new IssueRepository(new IssueLifecycleRepository(new OctokitIssueLifecycleClientAdapter()));
+  const repo = new IssueRepository(new IssueContentRepository(new OctokitIssueContentClientAdapter()), new IssueLifecycleRepository(new OctokitIssueLifecycleClientAdapter()));
 
   beforeEach(() => {
     jest.clearAllMocks();
