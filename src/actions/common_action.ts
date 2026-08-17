@@ -91,18 +91,28 @@ export async function mainRun(
                 logInfo(`Running SingleActionUseCase (action: ${execution.singleAction.currentSingleAction}).`);
                 results.push(...await new SingleActionUseCase(new RepositoryFactory().createInitialSetupUseCase(), new RepositoryFactory().createRepositoryReleaseRepository(), new RepositoryFactory().createCheckProgressUseCase()).invoke(execution));
                 break;
-            case 'issue-comment':
+            case 'issue-comment': {
                 logInfo(`Running IssueCommentUseCase for issue #${execution.issue.number}.`);
-                results.push(...await new IssueCommentUseCase(new RepositoryFactory().createIssueRepository()).invoke(execution));
+                const commentFactory = new RepositoryFactory();
+                results.push(...await new IssueCommentUseCase(
+                    commentFactory.createIssueRepository(),
+                    commentFactory.createOrganizationRepository(),
+                ).invoke(execution));
                 break;
+            }
             case 'issue':
                 logInfo(`Running IssueUseCase for issue #${execution.issueNumber}.`);
                 results.push(...await new RepositoryFactory().createIssueUseCase().invoke(execution));
                 break;
-            case 'pull-request-review-comment':
+            case 'pull-request-review-comment': {
                 logInfo(`Running PullRequestReviewCommentUseCase for PR #${execution.pullRequest.number}.`);
-                results.push(...await new PullRequestReviewCommentUseCase(new RepositoryFactory().createIssueRepository()).invoke(execution));
+                const reviewCommentFactory = new RepositoryFactory();
+                results.push(...await new PullRequestReviewCommentUseCase(
+                    reviewCommentFactory.createIssueRepository(),
+                    reviewCommentFactory.createOrganizationRepository(),
+                ).invoke(execution));
                 break;
+            }
             case 'pull-request':
                 logInfo(`Running PullRequestUseCase for PR #${execution.pullRequest.number}.`);
                 results.push(...await new RepositoryFactory().createPullRequestUseCase().invoke(execution));

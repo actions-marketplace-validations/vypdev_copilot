@@ -122,7 +122,10 @@ describe("IssueCommentUseCase", () => {
     let useCase: IssueCommentUseCase;
 
     beforeEach(() => {
-        useCase = new IssueCommentUseCase({ updateComment: jest.fn() });
+        useCase = new IssueCommentUseCase(
+            { updateComment: jest.fn() },
+            { isActorAllowedToModifyFiles: mockIsActorAllowedToModifyFiles },
+        );
         mockIsActorAllowedToModifyFiles.mockReset().mockResolvedValue(true);
         mockCheckLanguageInvoke.mockReset().mockResolvedValue([
             new Result({

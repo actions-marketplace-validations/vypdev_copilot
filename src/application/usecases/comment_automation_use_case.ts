@@ -15,7 +15,7 @@ import {
     canRunDoUserRequest,
 } from "./steps/commit/bugbot/bugbot_fix_intent_payload";
 import { DoUserRequestUseCase } from "./steps/commit/user_request_use_case";
-import { OrganizationRepository } from "../../data/repository/organization/organization_repository";
+import type { ActorAuthorizationPort } from "../ports/organization_ports";
 
 export interface CommentAutomationOptions {
     taskId: string;
@@ -25,7 +25,8 @@ export interface CommentAutomationOptions {
 
 export async function runCommentAutomation(
     param: Execution,
-    options: CommentAutomationOptions
+    options: CommentAutomationOptions,
+    actorAuthorizationPort: ActorAuthorizationPort,
 ): Promise<Result[]> {
     logInfo(`${options.taskId} started.`);
     const results: Result[] = [];
@@ -45,8 +46,7 @@ export async function runCommentAutomation(
         logInfo("Bugbot fix intent: no payload from intent detection.");
     }
 
-    const organizationRepository = new OrganizationRepository();
-    const allowedToModifyFiles = await organizationRepository.isActorAllowedToModifyFiles(
+    const allowedToModifyFiles = await actorAuthorizationPort.isActorAllowedToModifyFiles(
         param.owner,
         param.actor,
         param.tokens.token
