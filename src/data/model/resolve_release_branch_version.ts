@@ -18,7 +18,7 @@ export async function resolveReleaseBranchVersion(
     if (versionInfo?.executed && versionInfo.success) {
         execution.release.version = releaseResolutionFromPayload(versionInfo.payload).version;
     } else {
-        const typeResult = await new GetReleaseTypeUseCase().invoke(execution);
+        const typeResult = await new GetReleaseTypeUseCase(issueDescriptionPort).invoke(execution);
         const typeInfo = typeResult.at(-1);
         if (typeInfo?.executed && typeInfo.success) {
             execution.release.type = releaseResolutionFromPayload(typeInfo.payload).type;
