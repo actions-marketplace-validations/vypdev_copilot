@@ -34,7 +34,7 @@ describe('CheckIssueCommentLanguageUseCase', () => {
   let useCase: CheckIssueCommentLanguageUseCase;
 
   beforeEach(() => {
-    useCase = new CheckIssueCommentLanguageUseCase();
+    useCase = new CheckIssueCommentLanguageUseCase({ updateComment: mockUpdateComment });
     mockAskAgent.mockReset();
     mockUpdateComment.mockReset();
   });

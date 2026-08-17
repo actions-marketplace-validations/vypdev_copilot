@@ -93,7 +93,7 @@ export async function mainRun(
                 break;
             case 'issue-comment':
                 logInfo(`Running IssueCommentUseCase for issue #${execution.issue.number}.`);
-                results.push(...await new IssueCommentUseCase().invoke(execution));
+                results.push(...await new IssueCommentUseCase(new RepositoryFactory().createIssueRepository()).invoke(execution));
                 break;
             case 'issue':
                 logInfo(`Running IssueUseCase for issue #${execution.issueNumber}.`);
@@ -101,7 +101,7 @@ export async function mainRun(
                 break;
             case 'pull-request-review-comment':
                 logInfo(`Running PullRequestReviewCommentUseCase for PR #${execution.pullRequest.number}.`);
-                results.push(...await new PullRequestReviewCommentUseCase().invoke(execution));
+                results.push(...await new PullRequestReviewCommentUseCase(new RepositoryFactory().createIssueRepository()).invoke(execution));
                 break;
             case 'pull-request':
                 logInfo(`Running PullRequestUseCase for PR #${execution.pullRequest.number}.`);

@@ -130,7 +130,7 @@ describe("PullRequestReviewCommentUseCase", () => {
     let useCase: PullRequestReviewCommentUseCase;
 
     beforeEach(() => {
-        useCase = new PullRequestReviewCommentUseCase();
+        useCase = new PullRequestReviewCommentUseCase({ updateComment: jest.fn() });
         mockLogInfo.mockClear();
         mockIsActorAllowedToModifyFiles.mockReset().mockResolvedValue(true);
         mockCheckLanguageInvoke.mockReset().mockResolvedValue([

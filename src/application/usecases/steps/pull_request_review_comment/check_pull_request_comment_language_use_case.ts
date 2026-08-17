@@ -7,7 +7,7 @@ import {
     LANGUAGE_CHECK_RESPONSE_SCHEMA,
     TRANSLATION_RESPONSE_SCHEMA,
 } from "../../../../data/repository/agent_response_schemas";
-import { IssueRepository } from "../../../../data/repository/issue_repository";
+import type { IssueCommentUpdatePort } from "../../../../application/ports/issue_ports";
 import { getCheckCommentLanguagePrompt, getTranslateCommentPrompt } from "../../../../prompts";
 import { logDebugInfo, logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
@@ -17,7 +17,7 @@ export class CheckPullRequestCommentLanguageUseCase implements ParamUseCase<Exec
     taskId: string = 'CheckPullRequestCommentLanguageUseCase';
 
     private aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings();
-    private issueRepository = new IssueRepository();
+    constructor(private readonly issueRepository: IssueCommentUpdatePort) {}
     private translatedKey = `<!-- content_translated
 If you'd like this comment to be translated again, please delete the entire comment, including this message. It will then be processed as a new one.
 -->`;
