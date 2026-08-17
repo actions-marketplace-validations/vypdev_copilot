@@ -1,4 +1,5 @@
 import * as core from '@actions/core';
+import * as github from '@actions/github';
 import { Ai } from '../data/model/ai';
 
 
@@ -34,6 +35,7 @@ import { buildBranches } from './branches_builder';
 import { buildEmoji, buildImages, buildIssue, buildIssueTypes, buildLabels, buildLocale, buildProjects, buildPullRequest, buildTokens, buildWorkflows } from './configuration_builders';
 
 export async function runGitHubAction(): Promise<void> {
+    const eventInputs = { ...github.context.payload, eventName: github.context.eventName };
     const projectRepository = new RepositoryFactory().createProjectBoardRepository();
 
     logInfo('GitHub Action: runGitHubAction started.');
@@ -273,8 +275,8 @@ export async function runGitHubAction(): Promise<void> {
             singleActionChangelog,
         ),
         commitPrefixBuilder,
-        buildIssue(branchManagementAlways, reopenIssueOnPush, issueDesiredAssigneesCount),
-        buildPullRequest(pullRequestDesiredAssigneesCount, pullRequestDesiredReviewersCount, pullRequestMergeTimeout),
+        buildIssue(branchManagementAlways, reopenIssueOnPush, issueDesiredAssigneesCount, eventInputs),
+        buildPullRequest(pullRequestDesiredAssigneesCount, pullRequestDesiredReviewersCount, pullRequestMergeTimeout, eventInputs),
         buildEmoji(titleEmoji, branchManagementEmoji),
         buildImages({
             onIssue: imageConfiguration.onIssue,
