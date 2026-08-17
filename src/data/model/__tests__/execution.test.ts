@@ -130,6 +130,7 @@ function makePullRequest(inputs?: Record<string, unknown>): PullRequest {
 function makeBranches(): Branches {
   return new Branches(
     'main',
+    'main',
     'develop',
     'feature',
     'bugfix',

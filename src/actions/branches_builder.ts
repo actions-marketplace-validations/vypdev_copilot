@@ -2,6 +2,7 @@ import { Branches } from '../data/model/branches';
 
 export interface BranchValues {
     main: string;
+    defaultBranch: string;
     development: string;
     featureTree: string;
     bugfixTree: string;
@@ -14,6 +15,7 @@ export interface BranchValues {
 export function buildBranches(values: BranchValues): Branches {
     return new Branches(
         values.main,
+        values.defaultBranch,
         values.development,
         values.featureTree,
         values.bugfixTree,

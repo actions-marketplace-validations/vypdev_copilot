@@ -325,6 +325,7 @@ export async function runGitHubAction(): Promise<void> {
         }),
         buildBranches({
             main: mainBranch,
+            defaultBranch: mainBranch,
             development: developmentBranch,
             featureTree,
             bugfixTree,

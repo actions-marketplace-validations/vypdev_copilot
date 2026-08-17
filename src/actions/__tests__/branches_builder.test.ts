@@ -4,6 +4,7 @@ describe('buildBranches', () => {
     it('builds the branch configuration from named values', () => {
         const branches = buildBranches({
             main: 'main',
+            defaultBranch: 'main',
             development: 'develop',
             featureTree: 'feature',
             bugfixTree: 'bugfix',
@@ -15,6 +16,7 @@ describe('buildBranches', () => {
 
         expect(branches).toMatchObject({
             main: 'main',
+            defaultBranch: 'main',
             development: 'develop',
             featureTree: 'feature',
             bugfixTree: 'bugfix',

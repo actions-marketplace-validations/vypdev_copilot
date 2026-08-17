@@ -308,6 +308,7 @@ export async function runLocalAction(
         }),
         buildBranches({
             main: mainBranch,
+            defaultBranch: mainBranch,
             development: developmentBranch,
             featureTree,
             bugfixTree,
