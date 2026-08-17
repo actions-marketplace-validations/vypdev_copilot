@@ -143,7 +143,7 @@ program
       `Question: ${question.substring(0, 100)}${question.length > 100 ? '...' : ''}`,
     ];
 
-    runLocalAction(params);
+    await runLocalAction(params);
   });
 
 /**
