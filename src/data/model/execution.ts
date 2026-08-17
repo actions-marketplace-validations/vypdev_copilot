@@ -1,5 +1,3 @@
-import * as github from "@actions/github";
-
 import { ConfigurationHandler } from "../../manager/description/configuration_handler";
 import { shouldSkipInitialLabelsFetch } from './initial_labels_policy';
 import { branchesForManagement, typesForIssue } from "../../utils/label_utils";
@@ -66,11 +64,11 @@ export class Execution {
     inputs: any | undefined;
 
     get eventName(): string {
-        return this.inputs?.eventName ?? github.context.eventName;
+        return this.inputs?.eventName ?? '';
     }
 
     get actor(): string {
-        return this.inputs?.actor ?? github.context.actor;
+        return this.inputs?.actor ?? '';
     }
 
     get isSingleAction(): boolean {
@@ -90,11 +88,11 @@ export class Execution {
     }
 
     get repo(): string {
-        return this.inputs?.repo?.repo ?? github.context.repo.repo;
+        return this.inputs?.repo?.repo ?? '';
     }
 
     get owner(): string {
-        return this.inputs?.repo?.owner ?? github.context.repo.owner;
+        return this.inputs?.repo?.owner ?? '';
     }
 
     get isFeature(): boolean {

@@ -263,9 +263,9 @@ describe('Execution', () => {
       expect(e.eventName).toBe('issues');
     });
 
-    it('eventName returns github.context.eventName when inputs undefined', () => {
+    it('returns an empty event name when inputs are undefined', () => {
       const e = buildExecution(undefined);
-      expect(e.eventName).toBe('workflow_dispatch');
+      expect(e.eventName).toBe('');
     });
 
     it('actor returns inputs.actor when set', () => {
