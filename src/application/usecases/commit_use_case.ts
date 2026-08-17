@@ -4,23 +4,14 @@ import { logDebugInfo, logError, logInfo } from "../../utils/logger";
 import { getTaskEmoji } from "../../utils/task_emoji";
 import { ParamUseCase } from "./base/param_usecase";
 import { CheckProgressUseCase } from "./actions/check_progress_use_case";
-import { NotifyNewCommitOnIssueUseCase } from "./steps/commit/notify_new_commit_on_issue_use_case";
-import { CheckChangesIssueSizeUseCase } from "./steps/commit/check_changes_issue_size_use_case";
-import { DetectPotentialProblemsUseCase } from './steps/commit/detect_potential_problems_use_case';
-import { ProjectBoardCommandPort } from '../ports/project_board_ports';
-import type { IssueLabelsPort, IssueNotificationPort } from '../ports/issue_ports';
-import type { PullRequestBranchQueryPort } from '../ports/pull_request_ports';
-import type { BranchChangeSizePort } from '../ports/branch_ports';
 
 export class CommitUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'CommitUseCase';
 
     constructor(
-        private readonly projectBoardCommandPort: ProjectBoardCommandPort,
-        private readonly issueLabelsPort: IssueLabelsPort,
-        private readonly pullRequestBranchQueryPort: PullRequestBranchQueryPort,
-        private readonly branchChangeSizePort: BranchChangeSizePort,
-        private readonly issueNotificationPort: IssueNotificationPort,
+        private readonly notifyNewCommitUseCase: ParamUseCase<Execution, Result[]>,
+        private readonly checkChangesIssueSizeUseCase: ParamUseCase<Execution, Result[]>,
+        private readonly detectPotentialProblemsUseCase: ParamUseCase<Execution, Result[]>,
         private readonly checkProgressUseCase: CheckProgressUseCase,
     ) {}
 
@@ -38,15 +29,10 @@ export class CommitUseCase implements ParamUseCase<Execution, Result[]> {
             logDebugInfo(`Commits detected: ${param.commit.commits.length}`);
             logDebugInfo(`Issue number: ${param.issueNumber}`);
 
-            results.push(...(await new NotifyNewCommitOnIssueUseCase(this.issueNotificationPort).invoke(param)));
-            results.push(...(await new CheckChangesIssueSizeUseCase(
-                this.projectBoardCommandPort,
-                this.issueLabelsPort,
-                this.pullRequestBranchQueryPort,
-                this.branchChangeSizePort,
-            ).invoke(param)));
+            results.push(...(await this.notifyNewCommitUseCase.invoke(param)));
+            results.push(...(await this.checkChangesIssueSizeUseCase.invoke(param)));
             results.push(...(await this.checkProgressUseCase.invoke(param)));
-            results.push(...(await new DetectPotentialProblemsUseCase().invoke(param)));
+            results.push(...(await this.detectPotentialProblemsUseCase.invoke(param)));
         } catch (error) {
             logError(error);
             results.push(

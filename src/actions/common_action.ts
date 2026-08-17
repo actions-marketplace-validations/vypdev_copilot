@@ -2,6 +2,9 @@ import * as core from '@actions/core';
 import { Execution } from '../data/model/execution';
 import { Result } from '../data/model/result';
 import { CommitUseCase } from '../application/usecases/commit_use_case';
+import { NotifyNewCommitOnIssueUseCase } from '../application/usecases/steps/commit/notify_new_commit_on_issue_use_case';
+import { CheckChangesIssueSizeUseCase } from '../application/usecases/steps/commit/check_changes_issue_size_use_case';
+import { DetectPotentialProblemsUseCase } from '../application/usecases/steps/commit/detect_potential_problems_use_case';
 import { ProjectBoardCommandPort } from '../application/ports/project_board_ports';
 import { RepositoryFactory } from '../infrastructure/composition/repository_factory';
 import { IssueCommentUseCase } from '../application/usecases/issue_comment_use_case';
@@ -161,11 +164,14 @@ export async function mainRun(
                 logInfo('Running CommitUseCase.');
                 const commitFactory = new RepositoryFactory();
                 results.push(...await new CommitUseCase(
-                    projectBoardCommandPort,
-                    commitFactory.createIssueRepository(),
-                    commitFactory.createPullRequestRepository(),
-                    commitFactory.createBranchRepository(),
-                    commitFactory.createIssueRepository(),
+                    new NotifyNewCommitOnIssueUseCase(commitFactory.createIssueRepository()),
+                    new CheckChangesIssueSizeUseCase(
+                        projectBoardCommandPort,
+                        commitFactory.createIssueRepository(),
+                        commitFactory.createPullRequestRepository(),
+                        commitFactory.createBranchRepository(),
+                    ),
+                    new DetectPotentialProblemsUseCase(),
                     commitFactory.createCheckProgressUseCase(),
                 ).invoke(execution));
                 break;
