@@ -1,14 +1,17 @@
 import * as core from "@actions/core";
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import { BranchRepository } from "../../../../data/repository/branch_repository";
+import type { BranchLifecyclePort, BranchNamePort } from "../../../ports/branch_ports";
 import { logError, logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
 import { ParamUseCase } from "../../base/param_usecase";
 
 export class RemoveNotNeededBranchesUseCase implements ParamUseCase<Execution, Result[]> {
     taskId = "RemoveNotNeededBranchesUseCase";
-    private branchRepository = new BranchRepository();
+    constructor(
+        private readonly branchLifecyclePort: BranchLifecyclePort,
+        private readonly branchNamePort: BranchNamePort,
+    ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`);
@@ -16,12 +19,12 @@ export class RemoveNotNeededBranchesUseCase implements ParamUseCase<Execution, R
             const issueTitle = param.issue.title ?? "";
             if (!issueTitle) return this.missingTitleResult();
 
-            const branches = await this.branchRepository.getListOfBranches(
+            const branches = await this.branchLifecyclePort.getListOfBranches(
                 param.owner,
                 param.repo,
                 param.tokens.token,
             );
-            const sanitizedTitle = this.branchRepository.formatBranchName(issueTitle, param.issueNumber);
+            const sanitizedTitle = this.branchNamePort.formatBranchName(issueTitle, param.issueNumber);
             const finalBranch = `${param.managementBranch}/${param.issueNumber}-${sanitizedTitle}`;
             const candidates = this.findCandidates(param, branches, finalBranch);
 
@@ -55,7 +58,7 @@ export class RemoveNotNeededBranchesUseCase implements ParamUseCase<Execution, R
     }
 
     private async removeBranch(param: Execution, branch: string): Promise<Result[]> {
-        const removed = await this.branchRepository.removeBranch(
+        const removed = await this.branchLifecyclePort.removeBranch(
             param.owner,
             param.repo,
             branch,
