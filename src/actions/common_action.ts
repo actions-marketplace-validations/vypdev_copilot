@@ -2,7 +2,7 @@ import * as core from '@actions/core';
 import { Execution } from '../data/model/execution';
 import { Result } from '../data/model/result';
 import { CommitUseCase } from '../application/usecases/commit_use_case';
-import { ProjectBoardRepository } from '../data/repository/project_board_repository';
+import { ProjectBoardRepository } from '../data/repository/project/project_board_repository';
 import { ProjectBoardCommandPort } from '../application/ports/project_board_ports';
 import { IssueCommentUseCase } from '../application/usecases/issue_comment_use_case';
 import { IssueUseCase } from '../application/usecases/issue_use_case';

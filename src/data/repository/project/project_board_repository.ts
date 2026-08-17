@@ -1,9 +1,9 @@
 import * as github from "@actions/github";
-import { logDebugInfo, logError } from '../../utils/logger';
-import { paginateCursor } from "./cursor_pagination";
-import { ProjectResult } from "../graph/project_result";
-import { ProjectDetail } from "../model/project_detail";
-import type { ProjectBoardCommandPort, ProjectBoardLinkPort, ProjectBoardQueryPort } from "../../application/ports/project_board_ports";
+import { logDebugInfo, logError } from "../../../utils/logger";
+import { paginateCursor } from "../cursor_pagination";
+import { ProjectResult } from "../../graph/project_result";
+import { ProjectDetail } from "../../model/project_detail";
+import type { ProjectBoardCommandPort, ProjectBoardLinkPort, ProjectBoardQueryPort } from "../../../application/ports/project_board_ports";
 
 /** GitHub Projects V2 adapter for project loading, content lookup, and linking. */
 export class ProjectBoardRepository implements ProjectBoardCommandPort, ProjectBoardQueryPort, ProjectBoardLinkPort {

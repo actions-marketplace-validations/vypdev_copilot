@@ -1,4 +1,4 @@
-import { ProjectBoardRepository } from "../project_board_repository";
+import { ProjectBoardRepository } from "./project_board_repository";
 import { ProjectDetail } from "../../model/project_detail";
 
 const mockGetByUsername = jest.fn();

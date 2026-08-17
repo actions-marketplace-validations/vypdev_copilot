@@ -1,6 +1,6 @@
 import { Execution } from '../../../../data/model/execution';
 import { Result } from '../../../../data/model/result';
-import { ProjectBoardRepository } from '../../../../data/repository/project_board_repository';
+import { ProjectBoardRepository } from '../../../../data/repository/project/project_board_repository';
 import { logDebugInfo, logError } from '../../../../utils/logger';
 
 interface PrioritySizeParam {

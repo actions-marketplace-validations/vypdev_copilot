@@ -15,7 +15,7 @@ import { SingleAction } from '../data/model/single_action';
 
 
 import { Welcome } from '../data/model/welcome';
-import { ProjectBoardRepository } from '../data/repository/project_board_repository';
+import { ProjectBoardRepository } from '../data/repository/project/project_board_repository';
 import { BUGBOT_MAX_COMMENTS, BUGBOT_MIN_SEVERITY, INPUT_KEYS, TITLE } from '../utils/constants';
 import { logInfo } from '../utils/logger';
 import { getActionInputsWithDefaults } from '../utils/yml_utils';

@@ -1,6 +1,6 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import { ProjectBoardRepository } from "../../../../data/repository/project_board_repository";
+import { ProjectBoardRepository } from "../../../../data/repository/project/project_board_repository";
 import { logError, logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
 import { ParamUseCase } from "../../base/param_usecase";

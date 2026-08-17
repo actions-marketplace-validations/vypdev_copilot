@@ -18,7 +18,7 @@ jest.mock('../../../../../data/repository/issue_repository', () => ({
 
 const mockLinkContentId = jest.fn();
 const mockMoveIssueToColumn = jest.fn();
-jest.mock('../../../../../data/repository/project_board_repository', () => ({
+jest.mock('../../../../../data/repository/project/project_board_repository', () => ({
   ProjectBoardRepository: jest.fn().mockImplementation(() => ({
     linkContentId: mockLinkContentId,
     moveIssueToColumn: mockMoveIssueToColumn,
