@@ -10,6 +10,7 @@ import { DetectPotentialProblemsUseCase } from './steps/commit/detect_potential_
 import { ProjectBoardCommandPort } from '../ports/project_board_ports';
 import type { IssueLabelsPort } from '../ports/issue_ports';
 import type { PullRequestBranchQueryPort } from '../ports/pull_request_ports';
+import type { BranchChangeSizePort } from '../ports/branch_ports';
 
 export class CommitUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'CommitUseCase';
@@ -18,6 +19,7 @@ export class CommitUseCase implements ParamUseCase<Execution, Result[]> {
         private readonly projectBoardCommandPort: ProjectBoardCommandPort,
         private readonly issueLabelsPort: IssueLabelsPort,
         private readonly pullRequestBranchQueryPort: PullRequestBranchQueryPort,
+        private readonly branchChangeSizePort: BranchChangeSizePort,
     ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
@@ -39,6 +41,7 @@ export class CommitUseCase implements ParamUseCase<Execution, Result[]> {
                 this.projectBoardCommandPort,
                 this.issueLabelsPort,
                 this.pullRequestBranchQueryPort,
+                this.branchChangeSizePort,
             ).invoke(param)));
             results.push(...(await new CheckProgressUseCase().invoke(param)));
             results.push(...(await new DetectPotentialProblemsUseCase().invoke(param)));

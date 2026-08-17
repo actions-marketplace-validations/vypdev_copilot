@@ -115,6 +115,7 @@ export async function mainRun(
                     projectBoardCommandPort,
                     commitFactory.createIssueRepository(),
                     commitFactory.createPullRequestRepository(),
+                    commitFactory.createBranchRepository(),
                 ).invoke(execution));
                 break;
             }

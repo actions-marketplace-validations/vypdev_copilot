@@ -26,6 +26,9 @@ export class RepositoryFactory {
     createGithubClient(): OctokitClientAdapter {
         return new OctokitClientAdapter();
     }
+    createBranchRepository(): BranchRepository {
+        return new BranchRepository();
+    }
 
     createIssueUseCase(): IssueUseCase {
         return new IssueUseCase(this.createProjectBoardRepository(), this.createOrganizationRepository());

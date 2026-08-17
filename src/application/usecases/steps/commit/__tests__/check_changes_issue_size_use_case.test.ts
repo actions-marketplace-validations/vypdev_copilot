@@ -56,6 +56,7 @@ describe('CheckChangesIssueSizeUseCase', () => {
       { setTaskSize: mockSetTaskSize } as any,
       { setLabels: mockSetLabels, getLabels: mockGetLabels } as any,
       { getOpenPullRequestNumbersByHeadBranch: mockGetOpenPullRequestNumbersByHeadBranch } as any,
+      { getSizeCategoryAndReason: mockGetSizeCategoryAndReason } as any,
     );
     mockGetSizeCategoryAndReason.mockReset();
     mockSetLabels.mockReset();
