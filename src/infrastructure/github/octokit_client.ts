@@ -1,5 +1,5 @@
 import * as github from "@actions/github";
-import type { GithubClientPort, GithubGraphqlClient, GithubIssueAssignmentClient, GithubIssueContentClient, GithubIssueLabelsClient, GithubIssueLifecycleClient, GithubIssueMetadataClient, GithubOrganizationClient, GithubPullRequestChangesClient, GithubPullRequestLifecycleClient, GithubPullRequestReviewClient, GithubWorkflowClient } from "../../data/repository/github/github_client_port";
+import type { GithubClientPort, GithubGraphqlClient, GithubIssueAssignmentClient, GithubIssueContentClient, GithubIssueLabelProvisioningClient, GithubIssueLabelsClient, GithubIssueLifecycleClient, GithubIssueMetadataClient, GithubOrganizationClient, GithubPullRequestChangesClient, GithubPullRequestLifecycleClient, GithubPullRequestReviewClient, GithubWorkflowClient } from "../../data/repository/github/github_client_port";
 
 export type OctokitClient = ReturnType<typeof github.getOctokit>;
 
@@ -35,6 +35,9 @@ export class OctokitIssueMetadataClientAdapter implements GithubClientPort<Githu
 }
 export class OctokitIssueLabelsClientAdapter implements GithubClientPort<GithubIssueLabelsClient> {
     getClient(token: string): GithubIssueLabelsClient { return github.getOctokit(token) as unknown as GithubIssueLabelsClient; }
+}
+export class OctokitIssueLabelProvisioningClientAdapter implements GithubClientPort<GithubIssueLabelProvisioningClient> {
+    getClient(token: string): GithubIssueLabelProvisioningClient { return github.getOctokit(token) as unknown as GithubIssueLabelProvisioningClient; }
 }
 export class OctokitIssueAssignmentClientAdapter implements GithubClientPort<GithubIssueAssignmentClient> {
     getClient(token: string): GithubIssueAssignmentClient { return github.getOctokit(token) as unknown as GithubIssueAssignmentClient; }

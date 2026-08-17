@@ -173,6 +173,15 @@ export interface GithubIssueLabelsClient {
     };
 }
 
+export interface GithubIssueLabelProvisioningClient {
+    rest: {
+        issues: {
+            listLabelsForRepo(parameters: Record<string, unknown>): Promise<{ data: Array<{ name: string; color: string; description?: string | null }> }>;
+            createLabel(parameters: Record<string, unknown>): Promise<unknown>;
+        };
+    };
+}
+
 export interface GithubIssueAssignmentClient {
     rest: {
         issues: {

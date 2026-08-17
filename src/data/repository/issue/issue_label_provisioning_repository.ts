@@ -1,5 +1,5 @@
-import * as github from '@actions/github';
 import { logDebugInfo, logError } from "../../../utils/logger";
+import type { GithubClientPort, GithubIssueLabelProvisioningClient } from "../github/github_client_port";
 import { Labels } from "../../model/labels";
 import { getRequiredLabels } from "../required_labels";
 
@@ -8,12 +8,13 @@ export type LabelEnsureResult = { created: boolean; existed: boolean };
 export type LabelEnsureSummary = { created: number; existing: number; errors: string[] };
 
 export class IssueLabelProvisioningRepository {
+    constructor(private readonly githubClient: GithubClientPort<GithubIssueLabelProvisioningClient>) {}
     listLabelsForRepo = async (
         owner: string,
         repository: string,
         token: string,
     ): Promise<RepositoryLabel[]> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         const { data: labels } = await octokit.rest.issues.listLabelsForRepo({
             owner,
             repo: repository,
@@ -22,7 +23,7 @@ export class IssueLabelProvisioningRepository {
         return labels.map(label => ({
             name: label.name,
             color: label.color,
-            description: label.description,
+            description: label.description ?? null,
         }));
     };
 
@@ -34,7 +35,7 @@ export class IssueLabelProvisioningRepository {
         description: string,
         token: string,
     ): Promise<void> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         await octokit.rest.issues.createLabel({ owner, repo: repository, name, color, description });
     };
 
