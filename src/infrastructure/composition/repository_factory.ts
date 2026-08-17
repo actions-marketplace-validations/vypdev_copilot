@@ -16,7 +16,7 @@ import { PullRequestReviewRepository } from "../../data/repository/pull_request/
 import { PullRequestReviewThreadRepository } from "../../data/repository/pull_request/pull_request_review_thread_repository";
 import { PullRequestRepository } from "../../data/repository/pull_request_repository";
 import { RepositoryReleaseRepository } from "../../data/repository/release/repository_release_repository";
-import { OctokitClientAdapter, OctokitGraphqlClientAdapter, OctokitOrganizationClientAdapter, OctokitPullRequestChangesClientAdapter, OctokitWorkflowClientAdapter } from "../github/octokit_client";
+import { OctokitClientAdapter, OctokitGraphqlClientAdapter, OctokitOrganizationClientAdapter, OctokitPullRequestChangesClientAdapter, OctokitPullRequestReviewClientAdapter, OctokitWorkflowClientAdapter } from "../github/octokit_client";
 import { IssueUseCase } from "../../application/usecases/issue_use_case";
 import { PullRequestUseCase } from "../../application/usecases/pull_request_use_case";
 import { InitialSetupUseCase } from "../../application/usecases/actions/initial_setup_use_case";
@@ -36,6 +36,9 @@ export class RepositoryFactory {
     }
     createGraphqlClient(): OctokitGraphqlClientAdapter {
         return new OctokitGraphqlClientAdapter();
+    }
+    createPullRequestReviewClient(): OctokitPullRequestReviewClientAdapter {
+        return new OctokitPullRequestReviewClientAdapter();
     }
     createBranchRepository(): BranchRepository {
         return new BranchRepository(this.createWorkflowRepository());
@@ -124,7 +127,7 @@ export class RepositoryFactory {
     }
 
     createPullRequestRepository(): PullRequestRepository {
-        return new PullRequestRepository(this.createPullRequestChangesClient(), this.createGraphqlClient());
+        return new PullRequestRepository(this.createPullRequestChangesClient(), this.createGraphqlClient(), this.createPullRequestReviewClient());
     }
 
     createPullRequestChangesRepository(): PullRequestChangesRepository {
@@ -136,7 +139,7 @@ export class RepositoryFactory {
     }
 
     createPullRequestReviewRepository(): PullRequestReviewRepository {
-        return new PullRequestReviewRepository(this.createGraphqlClient());
+        return new PullRequestReviewRepository(this.createPullRequestReviewClient(), this.createGraphqlClient());
     }
 
     createPullRequestReviewThreadRepository(): PullRequestReviewThreadRepository {

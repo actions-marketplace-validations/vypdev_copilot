@@ -1,7 +1,7 @@
 import { PullRequestLifecycleRepository } from "./pull_request/pull_request_lifecycle_repository";
 import { PullRequestChangesRepository } from "./pull_request/pull_request_changes_repository";
 import { PullRequestReviewRepository } from "./pull_request/pull_request_review_repository";
-import type { GithubClientPort, GithubGraphqlClient, GithubPullRequestChangesClient } from "./github/github_client_port";
+import type { GithubClientPort, GithubGraphqlClient, GithubPullRequestChangesClient, GithubPullRequestReviewClient } from "./github/github_client_port";
 
 export class PullRequestRepository {
 
@@ -12,9 +12,10 @@ export class PullRequestRepository {
     constructor(
         githubClient: GithubClientPort<GithubPullRequestChangesClient>,
         graphqlClient: GithubClientPort<GithubGraphqlClient>,
+        reviewClient: GithubClientPort<GithubPullRequestReviewClient>,
     ) {
         this.changesRepository = new PullRequestChangesRepository(githubClient);
-        this.reviewRepository = new PullRequestReviewRepository(graphqlClient);
+        this.reviewRepository = new PullRequestReviewRepository(reviewClient, graphqlClient);
     }
 
     getOpenPullRequestNumbersByHeadBranch = this.lifecycleRepository.getOpenPullRequestNumbersByHeadBranch;

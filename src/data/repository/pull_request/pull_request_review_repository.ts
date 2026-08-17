@@ -1,11 +1,13 @@
-import * as github from "@actions/github";
 import { PullRequestReviewThreadRepository } from "./pull_request_review_thread_repository";
 import { logDebugInfo, logError } from "../../../utils/logger";
-import type { GithubClientPort, GithubGraphqlClient } from "../github/github_client_port";
+import type { GithubClientPort, GithubGraphqlClient, GithubPullRequestReviewClient } from "../github/github_client_port";
 
 export class PullRequestReviewRepository {
-    constructor(githubClient: GithubClientPort<GithubGraphqlClient>) {
-        this.pullRequestReviewThreadRepository = new PullRequestReviewThreadRepository(githubClient);
+    constructor(
+        private readonly githubClient: GithubClientPort<GithubPullRequestReviewClient>,
+        graphqlClient: GithubClientPort<GithubGraphqlClient>,
+    ) {
+        this.pullRequestReviewThreadRepository = new PullRequestReviewThreadRepository(graphqlClient);
     }
     /**
      * Returns all users involved in review: requested (pending) + those who already submitted a review.
@@ -17,7 +19,7 @@ export class PullRequestReviewRepository {
         pullNumber: number,
         token: string
     ): Promise<string[]> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
 
         try {
             const [requestedRes, reviewsRes] = await Promise.all([
@@ -56,7 +58,7 @@ export class PullRequestReviewRepository {
         reviewers: string[],
         token: string
     ): Promise<string[]> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
 
         try {
             if (reviewers.length === 0) {
@@ -91,7 +93,7 @@ export class PullRequestReviewRepository {
         pullNumber: number,
         token: string
     ): Promise<Array<{ id: number; body: string | null; path?: string; line?: number; node_id?: string }>> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         const all: Array<{ id: number; body: string | null; path?: string; line?: number; node_id?: string }> = [];
         try {
             for await (const response of octokit.paginate.iterator(octokit.rest.pulls.listReviewComments, {
@@ -129,7 +131,7 @@ export class PullRequestReviewRepository {
         commentId: number,
         token: string
     ): Promise<string | null> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         try {
             const { data } = await octokit.rest.pulls.getReviewComment({
                 owner,
@@ -175,7 +177,7 @@ export class PullRequestReviewRepository {
         token: string
     ): Promise<void> => {
         if (comments.length === 0) return;
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         const results = await Promise.allSettled(
             comments.map((c) =>
                 octokit.rest.pulls.createReviewComment({
@@ -214,7 +216,7 @@ export class PullRequestReviewRepository {
         body: string,
         token: string
     ): Promise<void> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         await octokit.rest.pulls.updateReviewComment({
             owner,
             repo: repository,
