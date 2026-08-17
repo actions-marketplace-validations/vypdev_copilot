@@ -1,4 +1,4 @@
-import * as github from '@actions/github';
+import type { GithubBranchComparisonClient, GithubClientPort } from './github/github_client_port';
 import { logDebugInfo, logError } from '../../utils/logger';
 import { Labels } from '../model/labels';
 import { SizeThresholds } from '../model/size_thresholds';
@@ -41,6 +41,7 @@ export interface SizeCategoryResult {
  * Isolated to allow unit tests with mocked Octokit and pure size logic.
  */
 export class BranchCompareRepository {
+    constructor(private readonly githubClient: GithubClientPort<GithubBranchComparisonClient>) {}
 
     getChanges = async (
         owner: string,
@@ -50,7 +51,7 @@ export class BranchCompareRepository {
         token: string,
     ): Promise<BranchComparison> => {
         try {
-            const octokit = github.getOctokit(token);
+            const octokit = this.githubClient.getClient(token);
 
             logDebugInfo(`Comparing branches: ${head} with ${base}`);
 

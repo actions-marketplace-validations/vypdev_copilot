@@ -3,9 +3,10 @@
  */
 
 import { Execution } from '../../model/execution';
+import { BranchCompareRepository } from '../branch_compare_repository';
 import { BranchRepository } from '../branch_repository';
 import { WorkflowRepository } from '../workflow_repository';
-import { OctokitWorkflowClientAdapter } from '../../../infrastructure/github/octokit_client';
+import { OctokitBranchClientAdapter, OctokitBranchComparisonClientAdapter, OctokitGraphqlClientAdapter, OctokitWorkflowClientAdapter } from '../../../infrastructure/github/octokit_client';
 
 jest.mock('../../../utils/logger', () => ({
     logDebugInfo: jest.fn(),
@@ -47,7 +48,7 @@ function mockExecution(overrides: Partial<Execution> = {}): Execution {
 }
 
 describe('BranchRepository', () => {
-    const repo = new BranchRepository(new WorkflowRepository(new OctokitWorkflowClientAdapter()));
+    const repo = new BranchRepository(new WorkflowRepository(new OctokitWorkflowClientAdapter()), new OctokitBranchClientAdapter(), new OctokitGraphqlClientAdapter(), new BranchCompareRepository(new OctokitBranchComparisonClientAdapter()));
 
     beforeEach(() => {
         mockListBranches.mockReset();

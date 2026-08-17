@@ -1,5 +1,5 @@
-import * as github from '@actions/github';
 import { logDebugInfo, logError } from '../../utils/logger';
+import type { GithubBranchClient, GithubBranchComparisonClient, GithubClientPort, GithubGraphqlClient } from './github/github_client_port';
 import { LinkedBranchResponse } from '../graph/linked_branch_response';
 import { RepositoryResponse } from '../graph/repository_response';
 import { Execution } from '../model/execution';
@@ -19,9 +19,21 @@ import { findPreviousIssueBranch } from './find_previous_issue_branch';
 export class BranchRepository {
 
     private readonly gitCliRepository = new GitCliRepository();
-    constructor(private readonly workflowRepository: WorkflowRepository) {}
+    private readonly branchClient: GithubClientPort<GithubBranchClient>;
+    private readonly graphqlClient: GithubClientPort<GithubGraphqlClient>;
+    private readonly branchCompareRepository: BranchCompareRepository;
+
+    constructor(
+        private readonly workflowRepository: WorkflowRepository,
+        branchClient: GithubClientPort<GithubBranchClient>,
+        graphqlClient: GithubClientPort<GithubGraphqlClient>,
+        branchCompareRepository: BranchCompareRepository,
+    ) {
+        this.branchClient = branchClient;
+        this.graphqlClient = graphqlClient;
+        this.branchCompareRepository = branchCompareRepository;
+    }
     private readonly mergeRepository = new MergeRepository();
-    private readonly branchCompareRepository = new BranchCompareRepository();
 
     fetchRemoteBranches = async (): Promise<void> => {
         return this.gitCliRepository.fetchRemoteBranches();
@@ -82,7 +94,7 @@ export class BranchRepository {
                 return result
             }
 
-            const octokit = github.getOctokit(token);
+            const octokit = this.branchClient.getClient(token);
 
             const sanitizedTitle = this.formatBranchName(issueTitle, issueNumber);
 
@@ -217,8 +229,7 @@ export class BranchRepository {
             }
             const refForGraphQL = ref.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 
-            const octokit = github.getOctokit(token);
-            const {repository} = await octokit.graphql<RepositoryResponse>(`
+            const {repository} = await this.graphqlClient.getClient(token).graphql<RepositoryResponse>(`
               query($repo: String!, $owner: String!, $issueNumber: Int!) {
                 repository(name: $repo, owner: $owner) {
                   id
@@ -263,7 +274,7 @@ export class BranchRepository {
 
             logDebugInfo(`Linking branch "${newBranchName}" (oid: ${branchOid}) to issue #${issueNumber}`);
 
-            const mutationResponse = await octokit.graphql<LinkedBranchResponse>(`
+            const mutationResponse = await this.graphqlClient.getClient(token).graphql<LinkedBranchResponse>(`
                 mutation($issueId: ID!, $name: String!, $repositoryId: ID!, $oid: GitObjectID!) {
                   createLinkedBranch(input: {
                     issueId: $issueId,
@@ -326,7 +337,7 @@ export class BranchRepository {
         branch: string,
         token: string,
     ): Promise<boolean> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.branchClient.getClient(token);
 
         const ref = `heads/${branch}`;
 
@@ -359,7 +370,7 @@ export class BranchRepository {
         repository: string,
         token: string
     ): Promise<string[]> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.branchClient.getClient(token);
         const allBranches = [];
         let page = 1;
         

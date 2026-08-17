@@ -2,9 +2,10 @@
  * Unit tests for createLinkedBranch: GraphQL ref escaping so branch names with " or \ do not break the query.
  */
 
+import { BranchCompareRepository } from "../branch_compare_repository";
 import { BranchRepository } from "../branch_repository";
 import { WorkflowRepository } from "../workflow_repository";
-import { OctokitWorkflowClientAdapter } from "../../../infrastructure/github/octokit_client";
+import { OctokitBranchClientAdapter, OctokitBranchComparisonClientAdapter, OctokitGraphqlClientAdapter, OctokitWorkflowClientAdapter } from "../../../infrastructure/github/octokit_client";
 
 jest.mock("../../../utils/logger", () => ({
     logDebugInfo: jest.fn(),
@@ -19,7 +20,7 @@ jest.mock("@actions/github", () => ({
 }));
 
 describe("BranchRepository", () => {
-    const repo = new BranchRepository(new WorkflowRepository(new OctokitWorkflowClientAdapter()));
+    const repo = new BranchRepository(new WorkflowRepository(new OctokitWorkflowClientAdapter()), new OctokitBranchClientAdapter(), new OctokitGraphqlClientAdapter(), new BranchCompareRepository(new OctokitBranchComparisonClientAdapter()));
 
     describe("formatBranchName", () => {
         it("lowercases and replaces spaces with single dash", () => {
@@ -38,7 +39,7 @@ describe("BranchRepository", () => {
 });
 
 describe("createLinkedBranch", () => {
-    const repo = new BranchRepository(new WorkflowRepository(new OctokitWorkflowClientAdapter()));
+    const repo = new BranchRepository(new WorkflowRepository(new OctokitWorkflowClientAdapter()), new OctokitBranchClientAdapter(), new OctokitGraphqlClientAdapter(), new BranchCompareRepository(new OctokitBranchComparisonClientAdapter()));
 
     beforeEach(() => {
         mockGraphql.mockReset();

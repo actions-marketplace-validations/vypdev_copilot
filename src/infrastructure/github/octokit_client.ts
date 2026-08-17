@@ -1,5 +1,5 @@
 import * as github from "@actions/github";
-import type { GithubClientPort, GithubGraphqlClient, GithubIssueAssignmentClient, GithubIssueContentClient, GithubIssueLabelProvisioningClient, GithubIssueLabelsClient, GithubIssueLifecycleClient, GithubIssueMetadataClient, GithubIssueTitleClient, GithubOrganizationClient, GithubPullRequestChangesClient, GithubPullRequestLifecycleClient, GithubPullRequestReviewClient, GithubWorkflowClient } from "../../data/repository/github/github_client_port";
+import type { GithubBranchClient, GithubBranchComparisonClient, GithubClientPort, GithubGraphqlClient, GithubIssueAssignmentClient, GithubIssueContentClient, GithubIssueLabelProvisioningClient, GithubIssueLabelsClient, GithubIssueLifecycleClient, GithubIssueMetadataClient, GithubIssueTitleClient, GithubOrganizationClient, GithubPullRequestChangesClient, GithubPullRequestLifecycleClient, GithubPullRequestReviewClient, GithubWorkflowClient } from "../../data/repository/github/github_client_port";
 
 export type OctokitClient = ReturnType<typeof github.getOctokit>;
 
@@ -29,6 +29,12 @@ export class OctokitIssueLifecycleClientAdapter implements GithubClientPort<Gith
 }
 export class OctokitIssueContentClientAdapter implements GithubClientPort<GithubIssueContentClient> {
     getClient(token: string): GithubIssueContentClient { return github.getOctokit(token) as unknown as GithubIssueContentClient; }
+}
+export class OctokitBranchClientAdapter implements GithubClientPort<GithubBranchClient> {
+    getClient(token: string): GithubBranchClient { return github.getOctokit(token) as unknown as GithubBranchClient; }
+}
+export class OctokitBranchComparisonClientAdapter implements GithubClientPort<GithubBranchComparisonClient> {
+    getClient(token: string): GithubBranchComparisonClient { return github.getOctokit(token) as unknown as GithubBranchComparisonClient; }
 }
 export class OctokitIssueTitleClientAdapter implements GithubClientPort<GithubIssueTitleClient> {
     getClient(token: string): GithubIssueTitleClient { return github.getOctokit(token) as unknown as GithubIssueTitleClient; }

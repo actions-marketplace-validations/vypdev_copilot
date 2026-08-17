@@ -5,8 +5,7 @@ import { shouldSkipInitialLabelsFetch } from './initial_labels_policy';
 import { branchesForManagement, typesForIssue } from "../../utils/label_utils";
 import { logDebugInfo, setGlobalLoggerDebug } from "../../utils/logger";
 import { BranchRepository } from "../repository/branch_repository";
-import { WorkflowRepository } from "../repository/workflow_repository";
-import { OctokitWorkflowClientAdapter, OctokitOrganizationClientAdapter } from "../../infrastructure/github/octokit_client";
+import { OctokitOrganizationClientAdapter } from "../../infrastructure/github/octokit_client";
 import { RepositoryFactory } from "../../infrastructure/composition/repository_factory";
 import { OrganizationRepository } from "../repository/organization/organization_repository";
 import { Ai } from "./ai";
@@ -232,7 +231,7 @@ export class Execution {
         this.currentConfiguration.hotfixBranch = state.hotfixBranch;
     }
 
-    setup = async () => {
+    setup = async (branchRepository: BranchRepository) => {
         setGlobalLoggerDebug(this.debug, this.inputs === undefined);
 
         const issueRepository = new RepositoryFactory().createIssueRepository();
@@ -292,7 +291,6 @@ export class Execution {
              * Nothing to do here (for now)
              */
         } else if (this.isIssue) {
-            const branchRepository = new BranchRepository(new WorkflowRepository(new OctokitWorkflowClientAdapter()));
             const canContinue = await resolveIssueBranchVersion(this, branchRepository, issueRepository);
             if (!canContinue) return;
         } else if (this.isPullRequest) {
