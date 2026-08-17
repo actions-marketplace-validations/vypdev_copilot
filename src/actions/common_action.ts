@@ -107,11 +107,17 @@ export async function mainRun(
                 logInfo(`Running PullRequestUseCase for PR #${execution.pullRequest.number}.`);
                 results.push(...await new RepositoryFactory().createPullRequestUseCase().invoke(execution));
                 break;
-            case 'push':
+            case 'push': {
                 logDebugInfo(`Push event. Branch: ${execution.commit?.branch ?? 'unknown'}, commits: ${execution.commit?.commits?.length ?? 0}, issue number: ${execution.issueNumber}.`);
                 logInfo('Running CommitUseCase.');
-                results.push(...await new CommitUseCase(projectBoardCommandPort).invoke(execution));
+                const commitFactory = new RepositoryFactory();
+                results.push(...await new CommitUseCase(
+                    projectBoardCommandPort,
+                    commitFactory.createIssueRepository(),
+                    commitFactory.createPullRequestRepository(),
+                ).invoke(execution));
                 break;
+            }
             case 'unhandled':
                 logError(`Action not handled. Event: ${execution.eventName}.`);
                 core.setFailed('Action not handled.');
