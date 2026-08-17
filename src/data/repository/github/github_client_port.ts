@@ -25,3 +25,19 @@ export interface GithubWorkflowRun {
     url: string;
     html_url: string;
 }
+
+export interface GithubOrganizationClient {
+    rest: {
+        users: {
+            getAuthenticated(): Promise<{ data: { login: string; name?: string | null; email?: string | null } }>;
+            getByUsername(parameters: { username: string }): Promise<{ data: { type: string } }>;
+        };
+        orgs: {
+            checkMembershipForUser(parameters: { org: string; username: string }): Promise<unknown>;
+        };
+        teams: {
+            list(parameters: { org: string }): Promise<{ data: Array<{ slug: string }> }>;
+            listMembersInOrg(parameters: { org: string; team_slug: string }): Promise<{ data: Array<{ login: string }> }>;
+        };
+    };
+}

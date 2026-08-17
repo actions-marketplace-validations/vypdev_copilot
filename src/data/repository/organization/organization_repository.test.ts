@@ -1,4 +1,5 @@
 import { OrganizationRepository } from "./organization_repository";
+import { OctokitOrganizationClientAdapter } from "../../../infrastructure/github/octokit_client";
 
 const mockGetAuthenticated = jest.fn();
 const mockGetByUsername = jest.fn();
@@ -33,14 +34,14 @@ describe("OrganizationRepository", () => {
     it("returns the authenticated login", async () => {
         mockGetAuthenticated.mockResolvedValue({ data: { login: "alice" } });
 
-        await expect(new OrganizationRepository().getUserFromToken("token")).resolves.toBe("alice");
+        await expect(new OrganizationRepository(new OctokitOrganizationClientAdapter()).getUserFromToken("token")).resolves.toBe("alice");
     });
 
     it("allows an organization member to modify files", async () => {
         mockGetByUsername.mockResolvedValue({ data: { type: "Organization" } });
         mockCheckMembershipForUser.mockResolvedValue({ status: 204 });
 
-        await expect(new OrganizationRepository().isActorAllowedToModifyFiles("acme", "alice", "token"))
+        await expect(new OrganizationRepository(new OctokitOrganizationClientAdapter()).isActorAllowedToModifyFiles("acme", "alice", "token"))
             .resolves.toBe(true);
     });
 
@@ -48,7 +49,7 @@ describe("OrganizationRepository", () => {
         mockGetByUsername.mockResolvedValue({ data: { type: "Organization" } });
         mockCheckMembershipForUser.mockRejectedValue({ status: 404 });
 
-        await expect(new OrganizationRepository().isActorAllowedToModifyFiles("acme", "outsider", "token"))
+        await expect(new OrganizationRepository(new OctokitOrganizationClientAdapter()).isActorAllowedToModifyFiles("acme", "outsider", "token"))
             .resolves.toBe(false);
     });
 });

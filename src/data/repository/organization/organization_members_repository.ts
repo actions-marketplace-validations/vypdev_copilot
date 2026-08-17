@@ -1,9 +1,10 @@
-import * as github from "@actions/github";
 import { logDebugInfo, logError } from "../../../utils/logger";
 import { collectOrganizationMembers, selectAvailableMembers } from "../project_members_policy";
 import type { OrganizationMembersPort } from "../../../application/ports/organization_ports";
+import type { GithubClientPort, GithubOrganizationClient } from "../github/github_client_port";
 
 export class OrganizationMembersRepository implements OrganizationMembersPort {
+    constructor(private readonly githubClient: GithubClientPort<GithubOrganizationClient>) {}
     getRandomMembers = async (
         organization: string,
         membersToAdd: number,
@@ -11,7 +12,7 @@ export class OrganizationMembersRepository implements OrganizationMembersPort {
         token: string,
     ): Promise<string[]> => {
         if (membersToAdd === 0) return [];
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         try {
             const { data: teams } = await octokit.rest.teams.list({ org: organization });
             if (teams.length === 0) {
@@ -32,7 +33,7 @@ export class OrganizationMembersRepository implements OrganizationMembersPort {
     };
 
     getAllMembers = async (organization: string, token: string): Promise<string[]> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         try {
             const { data: teams } = await octokit.rest.teams.list({ org: organization });
             if (teams.length === 0) {

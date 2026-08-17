@@ -1,15 +1,16 @@
-import * as github from "@actions/github";
 import type { AuthenticatedUserPort } from "../../../application/ports/organization_ports";
+import type { GithubClientPort, GithubOrganizationClient } from "../github/github_client_port";
 
 export class AuthenticatedUserRepository implements AuthenticatedUserPort {
+    constructor(private readonly githubClient: GithubClientPort<GithubOrganizationClient>) {}
     getUserFromToken = async (token: string): Promise<string> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         const { data: user } = await octokit.rest.users.getAuthenticated();
         return user.login;
     };
 
     getTokenUserDetails = async (token: string): Promise<{ name: string; email: string }> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         const { data: user } = await octokit.rest.users.getAuthenticated();
         const name = (user.name ?? user.login ?? "GitHub Action").trim() || "GitHub Action";
         const email = typeof user.email === "string" && user.email.trim().length > 0
