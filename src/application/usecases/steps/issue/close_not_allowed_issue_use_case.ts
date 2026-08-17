@@ -1,6 +1,6 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import { IssueRepository } from "../../../../data/repository/issue_repository";
+import type { IssueClosurePort } from "../../../../application/ports/issue_ports";
 import { logDebugInfo, logError, logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
 import { ParamUseCase } from "../../base/param_usecase";
@@ -8,7 +8,7 @@ import { ParamUseCase } from "../../base/param_usecase";
 export class CloseNotAllowedIssueUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'CloseNotAllowedIssueUseCase';
     
-    private issueRepository = new IssueRepository();
+    constructor(private readonly issueRepository: IssueClosurePort) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`)

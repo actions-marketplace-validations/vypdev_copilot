@@ -50,3 +50,7 @@ export interface IssueProgressLabelProvisioningPort {
 export interface IssueTypeProvisioningPort {
     ensureIssueTypes(owner: string, issueTypes: IssueTypes, token: string): Promise<{ created: number; existing: number; errors: string[] }>;
 }
+
+export interface IssueTypeAssignmentPort {
+    setIssueType(owner: string, repository: string, issueNumber: number, labels: Labels, issueTypes: IssueTypes, token: string): Promise<void>;
+}

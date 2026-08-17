@@ -14,7 +14,7 @@ export async function resolveIssueBranchVersion(
     }
 
     if (execution.hotfix.active && execution.hotfix.version === undefined) {
-        return resolveHotfixBranchVersion(execution, branchRepository);
+        return resolveHotfixBranchVersion(execution, branchRepository, issueDescriptionPort);
     }
 
     return true;

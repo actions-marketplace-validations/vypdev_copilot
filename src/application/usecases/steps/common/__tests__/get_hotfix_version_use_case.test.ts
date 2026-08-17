@@ -17,7 +17,7 @@ describe('GetHotfixVersionUseCase', () => {
   let useCase: GetHotfixVersionUseCase;
 
   beforeEach(() => {
-    useCase = new GetHotfixVersionUseCase();
+    useCase = new GetHotfixVersionUseCase({ getDescription: mockGetDescription });
     mockGetDescription.mockReset();
   });
 

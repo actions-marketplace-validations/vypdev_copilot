@@ -19,7 +19,7 @@ import { RemoveNotNeededBranchesUseCase } from "./steps/issue/remove_not_needed_
 import { UpdateIssueTypeUseCase } from "./steps/issue/update_issue_type_use_case";
 import type { ProjectBoardPriorityPort } from "./steps/issue/priority_size_check_use_case";
 import type { OrganizationMembersPort } from "../ports/organization_ports";
-import type { IssueAssigneePort, IssueIdentityQueryPort, IssueTitlePort } from "../ports/issue_ports";
+import type { IssueAssigneePort, IssueClosurePort, IssueIdentityQueryPort, IssueTitlePort, IssueTypeAssignmentPort } from "../ports/issue_ports";
 import type { ProjectBoardCommandPort, ProjectBoardLinkPort } from "../ports/project_board_ports";
 
 export class IssueUseCase implements ParamUseCase<Execution, Result[]> {
@@ -31,6 +31,8 @@ export class IssueUseCase implements ParamUseCase<Execution, Result[]> {
         private readonly projectBoardPort: ProjectBoardCommandPort & ProjectBoardLinkPort,
         private readonly issueTitlePort: IssueTitlePort,
         private readonly issueAssigneePort: IssueAssigneePort,
+        private readonly issueClosurePort: IssueClosurePort,
+        private readonly issueTypeAssignmentPort: IssueTypeAssignmentPort,
     ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
@@ -42,7 +44,7 @@ export class IssueUseCase implements ParamUseCase<Execution, Result[]> {
         const lastAction = permissionResult[permissionResult.length - 1];
         if (!lastAction.success && lastAction.executed) {
             results.push(...permissionResult)
-            results.push(...await new CloseNotAllowedIssueUseCase().invoke(param));
+            results.push(...await new CloseNotAllowedIssueUseCase(this.issueClosurePort).invoke(param));
             return results;
         }
 
@@ -63,7 +65,7 @@ export class IssueUseCase implements ParamUseCase<Execution, Result[]> {
         /**
          * Update issue type
          */
-        results.push(...await new UpdateIssueTypeUseCase().invoke(param));
+        results.push(...await new UpdateIssueTypeUseCase(this.issueTypeAssignmentPort).invoke(param));
 
         /**
          * Link issue to project
