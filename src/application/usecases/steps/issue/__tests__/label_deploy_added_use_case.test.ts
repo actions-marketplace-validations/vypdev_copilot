@@ -42,7 +42,7 @@ describe('DeployAddedUseCase (label_deploy_added)', () => {
   let useCase: DeployAddedUseCase;
 
   beforeEach(() => {
-    useCase = new DeployAddedUseCase();
+    useCase = new DeployAddedUseCase({ moveIssueToColumn: jest.fn(), setTaskPriority: jest.fn(), setTaskSize: jest.fn() });
     mockMoveIssueToColumn.mockResolvedValue(true);
     mockExecuteWorkflow.mockResolvedValue(undefined);
   });

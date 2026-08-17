@@ -6,10 +6,13 @@ import { logDebugInfo, logError, logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
 import { ParamUseCase } from "../../base/param_usecase";
 import { MoveIssueToInProgressUseCase } from "./move_issue_to_in_progress";
+import type { ProjectBoardCommandPort } from "../../../../application/ports/project_board_ports";
 
 export class DeployAddedUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'DeployAddedUseCase';
-    
+
+    constructor(private readonly projectBoardPort: ProjectBoardCommandPort) {}
+
     private branchRepository = new BranchRepository();
 
     async invoke(param: Execution): Promise<Result[]> {
@@ -20,7 +23,7 @@ export class DeployAddedUseCase implements ParamUseCase<Execution, Result[]> {
             if (param.issue.labeled && param.issue.labelAdded === param.labels.deploy) {
                 logDebugInfo(`Deploying requested.`)
                 if (param.release.active && param.release.branch !== undefined) {
-                    result.push(...await new MoveIssueToInProgressUseCase().invoke(param));
+                    result.push(...await new MoveIssueToInProgressUseCase(this.projectBoardPort).invoke(param));
 
                     const sanitizedTitle = param.issue.title
                         .replace(/\b\d+(\.\d+){2,}\b/g, '')
@@ -63,7 +66,7 @@ ${injectJsonAsMarkdownBlock('Workflow Parameters', parameters)}`
                         })
                     )
                 } else if (param.hotfix.active && param.hotfix.branch !== undefined) {
-                    result.push(...await new MoveIssueToInProgressUseCase().invoke(param));
+                    result.push(...await new MoveIssueToInProgressUseCase(this.projectBoardPort).invoke(param));
 
                     const sanitizedTitle = param.issue.title
                         .replace(/\b\d+(\.\d+){2,}\b/g, '')

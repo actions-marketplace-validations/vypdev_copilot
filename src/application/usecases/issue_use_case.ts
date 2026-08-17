@@ -77,7 +77,7 @@ export class IssueUseCase implements ParamUseCase<Execution, Result[]> {
          * Prepare branches
          */
         if (param.isBranched) {
-            results.push(...await new PrepareBranchesUseCase().invoke(param));
+            results.push(...await new PrepareBranchesUseCase(this.projectBoardPort).invoke(param));
         } else {
             results.push(...await new RemoveIssueBranchesUseCase().invoke(param));
         }
@@ -90,7 +90,7 @@ export class IssueUseCase implements ParamUseCase<Execution, Result[]> {
         /**
          * Check if deploy label was added
          */
-        results.push(...await new DeployAddedUseCase().invoke(param));
+        results.push(...await new DeployAddedUseCase(this.projectBoardPort).invoke(param));
 
         /**
          * Check if deployed label was added

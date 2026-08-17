@@ -10,9 +10,11 @@ import { MoveIssueToInProgressUseCase } from "./move_issue_to_in_progress";
 import { prepareHotfixBranch } from "./prepare_hotfix_branch";
 import { prepareReleaseBranch } from "./prepare_release_branch";
 import { selectBranchPreparationStrategy } from "./branch_preparation_strategy";
+import type { ProjectBoardCommandPort } from "../../../../application/ports/project_board_ports";
 
 export class PrepareBranchesUseCase implements ParamUseCase<Execution, Result[]> {
     taskId = "PrepareBranchesUseCase";
+    constructor(private readonly projectBoardPort: ProjectBoardCommandPort) {}
     private branchRepository = new BranchRepository();
 
     async invoke(param: Execution): Promise<Result[]> {
@@ -140,7 +142,7 @@ export class PrepareBranchesUseCase implements ParamUseCase<Execution, Result[]>
             );
         }
         await new Promise((resolve) => setTimeout(resolve, 10000));
-        result.push(...(await new MoveIssueToInProgressUseCase().invoke(param)));
+        result.push(...(await new MoveIssueToInProgressUseCase(this.projectBoardPort).invoke(param)));
         return result;
     }
 
