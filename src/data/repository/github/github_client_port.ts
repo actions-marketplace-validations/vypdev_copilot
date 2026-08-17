@@ -41,3 +41,26 @@ export interface GithubOrganizationClient {
         };
     };
 }
+
+export interface GithubPullRequestChangesClient {
+    paginate: {
+        iterator(
+            method: (parameters: Record<string, unknown>) => Promise<{ data: GithubPullRequestFile[] }>,
+            parameters: Record<string, unknown>,
+        ): AsyncIterable<{ data: GithubPullRequestFile[] }>;
+    };
+    rest: {
+        pulls: {
+            listFiles(parameters: Record<string, unknown>): Promise<{ data: GithubPullRequestFile[] }>;
+            get(parameters: Record<string, unknown>): Promise<{ data: { head?: { sha?: string } } }>;
+        };
+    };
+}
+
+export interface GithubPullRequestFile {
+    filename: string;
+    status: string;
+    additions: number;
+    deletions: number;
+    patch?: string;
+}

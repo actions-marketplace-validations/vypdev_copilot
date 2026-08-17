@@ -16,7 +16,7 @@ import { PullRequestReviewRepository } from "../../data/repository/pull_request/
 import { PullRequestReviewThreadRepository } from "../../data/repository/pull_request/pull_request_review_thread_repository";
 import { PullRequestRepository } from "../../data/repository/pull_request_repository";
 import { RepositoryReleaseRepository } from "../../data/repository/release/repository_release_repository";
-import { OctokitClientAdapter, OctokitOrganizationClientAdapter, OctokitWorkflowClientAdapter } from "../github/octokit_client";
+import { OctokitClientAdapter, OctokitOrganizationClientAdapter, OctokitPullRequestChangesClientAdapter, OctokitWorkflowClientAdapter } from "../github/octokit_client";
 import { IssueUseCase } from "../../application/usecases/issue_use_case";
 import { PullRequestUseCase } from "../../application/usecases/pull_request_use_case";
 import { InitialSetupUseCase } from "../../application/usecases/actions/initial_setup_use_case";
@@ -30,6 +30,9 @@ export class RepositoryFactory {
     }
     createOrganizationGithubClient(): OctokitOrganizationClientAdapter {
         return new OctokitOrganizationClientAdapter();
+    }
+    createPullRequestChangesClient(): OctokitPullRequestChangesClientAdapter {
+        return new OctokitPullRequestChangesClientAdapter();
     }
     createBranchRepository(): BranchRepository {
         return new BranchRepository(this.createWorkflowRepository());
@@ -118,11 +121,11 @@ export class RepositoryFactory {
     }
 
     createPullRequestRepository(): PullRequestRepository {
-        return new PullRequestRepository();
+        return new PullRequestRepository(this.createPullRequestChangesClient());
     }
 
     createPullRequestChangesRepository(): PullRequestChangesRepository {
-        return new PullRequestChangesRepository();
+        return new PullRequestChangesRepository(this.createPullRequestChangesClient());
     }
 
     createPullRequestLifecycleRepository(): PullRequestLifecycleRepository {

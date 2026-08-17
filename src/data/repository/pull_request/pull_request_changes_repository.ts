@@ -1,14 +1,15 @@
-import * as github from "@actions/github";
 import { logError } from "../../../utils/logger";
+import type { GithubClientPort, GithubPullRequestChangesClient } from "../github/github_client_port";
 
 export class PullRequestChangesRepository {
+    constructor(private readonly githubClient: GithubClientPort<GithubPullRequestChangesClient>) {}
     getChangedFiles = async (
         owner: string,
         repository: string,
         pullNumber: number,
         token: string
     ): Promise<{filename: string, status: string}[]> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         const all: Array<{ filename: string; status: string }> = [];
         try {
             for await (const response of octokit.paginate.iterator(
@@ -51,7 +52,7 @@ export class PullRequestChangesRepository {
         pullNumber: number,
         token: string
     ): Promise<Array<{ path: string; firstLine: number }>> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         try {
             const { data } = await octokit.rest.pulls.listFiles({
                 owner,
@@ -82,7 +83,7 @@ export class PullRequestChangesRepository {
         deletions: number,
         patch: string
     }>> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         const allFiles = [];
 
         try {
@@ -116,7 +117,7 @@ export class PullRequestChangesRepository {
         pullNumber: number,
         token: string
     ): Promise<string | undefined> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         try {
             const { data } = await octokit.rest.pulls.get({
                 owner,
