@@ -1,6 +1,7 @@
 import { Execution } from '../../../../data/model/execution';
 import { Result } from '../../../../data/model/result';
-import { ProjectBoardRepository } from '../../../../data/repository/project/project_board_repository';
+import type { ProjectDetail } from '../../../../data/model/project_detail';
+import type { ProjectBoardCommandPort } from '../../../../application/ports/project_board_ports';
 import { logDebugInfo, logError } from '../../../../utils/logger';
 
 interface PrioritySizeParam {
@@ -11,29 +12,20 @@ interface PrioritySizeParam {
         priorityMedium: string;
         priorityLow: string;
     };
-    project: { getProjects(): Array<{ title: string; publicUrl: string }> };
+    project: { getProjects(): ProjectDetail[] };
     owner: string;
     repo: string;
     issueNumber: number;
     tokens: { token: string };
 }
 
-interface ProjectBoardPriorityPort {
-    setTaskPriority(
-        project: { title: string; publicUrl: string },
-        owner: string,
-        repo: string,
-        issueNumber: number,
-        priority: string,
-        token: string,
-    ): Promise<boolean>;
-}
+export type ProjectBoardPriorityPort = Pick<ProjectBoardCommandPort, 'setTaskPriority'>;
 
 export async function runPrioritySizeCheck(
     param: Execution | PrioritySizeParam,
     taskId: string,
     contentNumber: number,
-    projectRepository: ProjectBoardPriorityPort = new ProjectBoardRepository(),
+    projectRepository: ProjectBoardPriorityPort,
 ): Promise<Result[]> {
     const typedParam = param as unknown as PrioritySizeParam;
     const result: Result[] = [];

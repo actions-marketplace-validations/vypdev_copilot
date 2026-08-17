@@ -17,9 +17,11 @@ import { PrepareBranchesUseCase } from "./steps/issue/prepare_branches_use_case"
 import { RemoveIssueBranchesUseCase } from "./steps/issue/remove_issue_branches_use_case";
 import { RemoveNotNeededBranchesUseCase } from "./steps/issue/remove_not_needed_branches_use_case";
 import { UpdateIssueTypeUseCase } from "./steps/issue/update_issue_type_use_case";
+import type { ProjectBoardPriorityPort } from "./steps/issue/priority_size_check_use_case";
 
 export class IssueUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'IssueUseCase';
+    constructor(private readonly projectBoardPriorityPort: ProjectBoardPriorityPort) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`)
@@ -61,7 +63,7 @@ export class IssueUseCase implements ParamUseCase<Execution, Result[]> {
         /**
          * Check priority issue size
          */
-        results.push(...await new CheckPriorityIssueSizeUseCase().invoke(param));
+        results.push(...await new CheckPriorityIssueSizeUseCase(this.projectBoardPriorityPort).invoke(param));
 
         /**
          * Prepare branches

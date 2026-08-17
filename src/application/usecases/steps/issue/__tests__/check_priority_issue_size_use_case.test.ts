@@ -36,7 +36,7 @@ describe('CheckPriorityIssueSizeUseCase', () => {
   let useCase: CheckPriorityIssueSizeUseCase;
 
   beforeEach(() => {
-    useCase = new CheckPriorityIssueSizeUseCase();
+    useCase = new CheckPriorityIssueSizeUseCase({ setTaskPriority: mockSetTaskPriority });
     mockSetTaskPriority.mockReset();
   });
 

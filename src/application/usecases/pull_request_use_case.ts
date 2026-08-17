@@ -8,6 +8,7 @@ import { AssignMemberToIssueUseCase } from "./steps/issue/assign_members_to_issu
 import { AssignReviewersToIssueUseCase } from "./steps/issue/assign_reviewers_to_issue_use_case";
 import { CloseIssueAfterMergingUseCase } from "./steps/issue/close_issue_after_merging_use_case";
 import { CheckPriorityPullRequestSizeUseCase } from "./steps/pull_request/check_priority_pull_request_size_use_case";
+import type { ProjectBoardPriorityPort } from "./steps/issue/priority_size_check_use_case";
 import { LinkPullRequestIssueUseCase } from "./steps/pull_request/link_pull_request_issue_use_case";
 import { LinkPullRequestProjectUseCase } from "./steps/pull_request/link_pull_request_project_use_case";
 import { SyncSizeAndProgressLabelsFromIssueToPrUseCase } from "./steps/pull_request/sync_size_and_progress_labels_from_issue_to_pr_use_case";
@@ -15,6 +16,7 @@ import { UpdatePullRequestDescriptionUseCase } from "./steps/pull_request/update
 
 export class PullRequestUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'PullRequestUseCase';
+    constructor(private readonly projectBoardPriorityPort: ProjectBoardPriorityPort) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`)
@@ -59,7 +61,7 @@ export class PullRequestUseCase implements ParamUseCase<Execution, Result[]> {
                 /**
                  * Check priority pull request size
                  */
-                results.push(...await new CheckPriorityPullRequestSizeUseCase().invoke(param));
+                results.push(...await new CheckPriorityPullRequestSizeUseCase(this.projectBoardPriorityPort).invoke(param));
 
                 if (param.ai.getAiPullRequestDescription()) {
                     /**
