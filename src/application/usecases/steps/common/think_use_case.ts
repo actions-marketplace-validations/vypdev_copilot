@@ -3,7 +3,6 @@ import { Execution } from '../../../../data/model/execution';
 import { Result } from '../../../../data/model/result';
 import { OPENCODE_AGENT_PLAN } from '../../../../data/repository/agent_task_policy';
 import type { FindingsQueryPort } from '../../../../data/repository/agent_ports';
-import { DefaultAgentRepositoryFactory } from '../../../../data/repository/agent_repository_factory';
 import { THINK_RESPONSE_SCHEMA } from '../../../../data/repository/agent_response_schemas';
 import type { IssueDescriptionQueryPort, IssueNotificationPort } from '../../../ports/issue_ports';
 import { getThinkPrompt } from '../../../../prompts';
@@ -15,11 +14,14 @@ import { extractMentionQuestion, getThinkCommentBody } from './think_input_polic
 
 export class ThinkUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'ThinkUseCase';
-    private aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings();
+    private aiRepository: FindingsQueryPort;
     constructor(
         private readonly issueDescriptionQueryPort: IssueDescriptionQueryPort,
         private readonly issueNotificationPort: IssueNotificationPort,
-    ) {}
+        aiRepository: FindingsQueryPort,
+    ) {
+        this.aiRepository = aiRepository;
+    }
 
     async invoke(param: Execution): Promise<Result[]> {
         const results: Result[] = [];

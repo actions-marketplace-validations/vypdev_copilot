@@ -50,6 +50,7 @@ describe('ThinkUseCase', () => {
     useCase = new ThinkUseCase(
       { getDescription: mockGetDescription },
       { addComment: mockAddComment, openIssue: jest.fn() },
+      { askAgent: mockAskAgent },
     );
     mockAskAgent.mockReset();
     mockAddComment.mockReset();

@@ -1,7 +1,6 @@
 import { Execution } from "../../data/model/execution";
 import { Result } from "../../data/model/result";
 import { logInfo } from "../../utils/logger";
-import { ThinkUseCase } from "./steps/common/think_use_case";
 import { ParamUseCase } from "./base/param_usecase";
 import type { BugbotAutofixParam } from "./steps/commit/bugbot/bugbot_autofix_use_case";
 import { runBugbotAutofixCommitAndPush, runUserRequestCommitAndPush } from "./steps/commit/bugbot/bugbot_autofix_commit";
@@ -15,12 +14,12 @@ import {
 import type { DoUserRequestParam } from "./steps/commit/user_request_use_case";
 import type { AuthenticatedUserPort, ActorAuthorizationPort } from "../ports/organization_ports";
 import type { BugbotWritePorts } from "../ports/bugbot_ports";
-import type { IssueDescriptionQueryPort, IssueNotificationPort } from "../ports/issue_ports";
 
 export interface CommentAutomationOptions {
     taskId: string;
     languageUseCase: ParamUseCase<Execution, Result[]>;
     intentUseCase: ParamUseCase<Execution, Result[]>;
+    thinkUseCase: ParamUseCase<Execution, Result[]>;
     autofixUseCase: ParamUseCase<BugbotAutofixParam, Result[]>;
     doUserRequestUseCase: ParamUseCase<DoUserRequestParam, Result[]>;
     userComment: string;
@@ -30,8 +29,6 @@ export async function runCommentAutomation(
     param: Execution,
     options: CommentAutomationOptions,
     actorAuthorizationPort: ActorAuthorizationPort,
-    issueDescriptionQueryPort: IssueDescriptionQueryPort,
-    issueNotificationPort: IssueNotificationPort,
     authenticatedUserPort: AuthenticatedUserPort,
     bugbotWritePorts: BugbotWritePorts,
 ): Promise<Result[]> {
@@ -93,7 +90,7 @@ export async function runCommentAutomation(
     const ranDoRequest = canRunDoUserRequest(intentPayload) && allowedToModifyFiles;
     if (!ranAutofix && !ranDoRequest) {
         logInfo("Running ThinkUseCase (no file-modifying action ran).");
-        results.push(...(await new ThinkUseCase(issueDescriptionQueryPort, issueNotificationPort).invoke(param)));
+        results.push(...(await options.thinkUseCase.invoke(param)));
     }
     return results;
 }

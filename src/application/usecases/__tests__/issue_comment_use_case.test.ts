@@ -125,12 +125,11 @@ describe("IssueCommentUseCase", () => {
         useCase = new IssueCommentUseCase(
             { taskId: 'CheckIssueCommentLanguageUseCase', invoke: mockCheckLanguageInvoke },
             { taskId: 'DetectBugbotFixIntentUseCase', invoke: mockDetectIntentInvoke },
+            { taskId: 'ThinkUseCase', invoke: mockThinkInvoke },
             { taskId: 'BugbotAutofixUseCase', invoke: mockAutofixInvoke },
             { taskId: 'DoUserRequestUseCase', invoke: mockDoUserRequestInvoke },
             { updateComment: jest.fn() },
             { isActorAllowedToModifyFiles: mockIsActorAllowedToModifyFiles },
-            { getDescription: jest.fn() },
-            { addComment: jest.fn(), openIssue: jest.fn() },
             { getUserFromToken: jest.fn(), getTokenUserDetails: jest.fn() },
             { issueComments: { addComment: jest.fn(), updateComment: jest.fn() }, pullRequestComments: { createReviewWithComments: jest.fn(), updatePullRequestReviewComment: jest.fn(), listPullRequestReviewComments: jest.fn(), resolvePullRequestReviewThread: jest.fn() } },
         );
