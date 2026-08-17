@@ -71,7 +71,21 @@ describe("DetectBugbotFixIntentUseCase", () => {
     let useCase: DetectBugbotFixIntentUseCase;
 
     beforeEach(() => {
-        useCase = new DetectBugbotFixIntentUseCase({ getHeadBranchForIssue: mockGetHeadBranchForIssue, getPullRequestReviewCommentBody: mockGetPullRequestReviewCommentBody });
+        const issuePort = { listIssueComments: jest.fn() };
+        const pullRequestPort = {
+            getHeadBranchForIssue: mockGetHeadBranchForIssue,
+            getPullRequestReviewCommentBody: mockGetPullRequestReviewCommentBody,
+            getOpenPullRequestNumbersByHeadBranch: jest.fn(),
+            listPullRequestReviewComments: jest.fn(),
+            getPullRequestHeadSha: jest.fn(),
+            getChangedFiles: jest.fn(),
+            getFilesWithFirstDiffLine: jest.fn(),
+        };
+        useCase = new DetectBugbotFixIntentUseCase(
+            pullRequestPort,
+            { askAgent: mockAskAgent },
+            { issue: issuePort, pullRequest: pullRequestPort },
+        );
         mockLoadBugbotContext.mockReset();
         mockAskAgent.mockReset();
         mockGetHeadBranchForIssue.mockReset();

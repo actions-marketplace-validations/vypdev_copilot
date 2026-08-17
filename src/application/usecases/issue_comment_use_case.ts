@@ -10,6 +10,7 @@ export class IssueCommentUseCase implements ParamUseCase<Execution, Result[]> {
 
     constructor(
         private readonly languageUseCase: ParamUseCase<Execution, Result[]>,
+        private readonly intentUseCase: ParamUseCase<Execution, Result[]>,
         private readonly issueCommentUpdatePort: IssueCommentUpdatePort,
         private readonly actorAuthorizationPort: ActorAuthorizationPort,
         private readonly issueDescriptionQueryPort: IssueDescriptionQueryPort,
@@ -20,6 +21,7 @@ export class IssueCommentUseCase implements ParamUseCase<Execution, Result[]> {
         return runCommentAutomation(param, {
             taskId: this.taskId,
             languageUseCase: this.languageUseCase,
+            intentUseCase: this.intentUseCase,
             userComment: param.issue.commentBody ?? "",
         }, this.actorAuthorizationPort, this.issueDescriptionQueryPort, this.issueNotificationPort);
     }

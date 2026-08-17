@@ -5,6 +5,7 @@ import { CommitUseCase } from '../application/usecases/commit_use_case';
 import { NotifyNewCommitOnIssueUseCase } from '../application/usecases/steps/commit/notify_new_commit_on_issue_use_case';
 import { CheckChangesIssueSizeUseCase } from '../application/usecases/steps/commit/check_changes_issue_size_use_case';
 import { DetectPotentialProblemsUseCase } from '../application/usecases/steps/commit/detect_potential_problems_use_case';
+import { DetectBugbotFixIntentUseCase } from '../application/usecases/steps/commit/bugbot/detect_bugbot_fix_intent_use_case';
 import { ProjectBoardCommandPort } from '../application/ports/project_board_ports';
 import { RepositoryFactory } from '../infrastructure/composition/repository_factory';
 import { IssueCommentUseCase } from '../application/usecases/issue_comment_use_case';
@@ -36,6 +37,16 @@ function createDetectPotentialProblemsUseCase(factory: RepositoryFactory): Detec
         new DefaultAgentRepositoryFactory().createFindings(),
         contextPorts,
         writePorts,
+    );
+}
+
+function createDetectBugbotFixIntentUseCase(factory: RepositoryFactory): DetectBugbotFixIntentUseCase {
+    const issueRepository = factory.createIssueRepository();
+    const pullRequestRepository = factory.createPullRequestRepository();
+    return new DetectBugbotFixIntentUseCase(
+        pullRequestRepository,
+        new DefaultAgentRepositoryFactory().createFindings(),
+        { issue: issueRepository, pullRequest: pullRequestRepository },
     );
 }
 
@@ -148,6 +159,7 @@ export async function mainRun(
                         commentFactory.createIssueRepository(),
                         new DefaultAgentRepositoryFactory().createFindings(),
                     ),
+                    createDetectBugbotFixIntentUseCase(commentFactory),
                     commentFactory.createIssueRepository(),
                     commentFactory.createOrganizationRepository(),
                     commentFactory.createIssueRepository(),
@@ -167,6 +179,7 @@ export async function mainRun(
                         reviewCommentFactory.createIssueRepository(),
                         new DefaultAgentRepositoryFactory().createFindings(),
                     ),
+                    createDetectBugbotFixIntentUseCase(reviewCommentFactory),
                     reviewCommentFactory.createIssueRepository(),
                     reviewCommentFactory.createOrganizationRepository(),
                     reviewCommentFactory.createIssueRepository(),

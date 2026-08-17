@@ -2,8 +2,7 @@ import { isAgentConfigurationReady } from "../../../../../data/model/agent";
 import type { Execution } from "../../../../../data/model/execution";
 import { OPENCODE_AGENT_PLAN } from "../../../../../data/repository/agent_task_policy";
 import type { FindingsQueryPort } from "../../../../../data/repository/agent_ports";
-import { DefaultAgentRepositoryFactory } from "../../../../../data/repository/agent_repository_factory";
-import type { BugbotPullRequestQueryPort } from "../../../../../application/ports/bugbot_ports";
+import type { BugbotContextPorts, BugbotPullRequestQueryPort } from "../../../../../application/ports/bugbot_ports";
 import { logDebugInfo, logInfo } from "../../../../../utils/logger";
 import { getTaskEmoji } from "../../../../../utils/task_emoji";
 import { ParamUseCase } from "../../../base/param_usecase";
@@ -13,7 +12,6 @@ import { buildBugbotFixIntentPrompt } from "./build_bugbot_fix_intent_prompt";
 import { extractTitleFromBody } from "./marker";
 import { loadBugbotContext, type LoadBugbotContextOptions } from "./load_bugbot_context_use_case";
 import { BUGBOT_FIX_INTENT_RESPONSE_SCHEMA } from "./schema";
-import { RepositoryFactory } from "../../../../../infrastructure/composition/repository_factory";
 
 export interface BugbotFixIntent {
     isFixRequest: boolean;
@@ -33,9 +31,11 @@ const TASK_ID = "DetectBugbotFixIntentUseCase";
 export class DetectBugbotFixIntentUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = TASK_ID;
 
-    private aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings();
-
-    constructor(private readonly pullRequestQueryPort: BugbotPullRequestQueryPort) {}
+    constructor(
+        private readonly pullRequestQueryPort: BugbotPullRequestQueryPort,
+        private readonly aiRepository: FindingsQueryPort,
+        private readonly contextPorts: BugbotContextPorts,
+    ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`);
@@ -81,11 +81,7 @@ export class DetectBugbotFixIntentUseCase implements ParamUseCase<Execution, Res
         const options: LoadBugbotContextOptions | undefined = branchOverride
             ? { branchOverride }
             : undefined;
-        const repositoryFactory = new RepositoryFactory();
-        const context = await loadBugbotContext(param, options, {
-            issue: repositoryFactory.createIssueRepository(),
-            pullRequest: repositoryFactory.createPullRequestRepository(),
-        });
+        const context = await loadBugbotContext(param, options, this.contextPorts);
 
         const unresolvedWithBody = context.unresolvedFindingsWithBody ?? [];
         if (unresolvedWithBody.length === 0) {

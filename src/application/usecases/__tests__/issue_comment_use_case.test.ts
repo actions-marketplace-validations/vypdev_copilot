@@ -124,6 +124,7 @@ describe("IssueCommentUseCase", () => {
     beforeEach(() => {
         useCase = new IssueCommentUseCase(
             { taskId: 'CheckIssueCommentLanguageUseCase', invoke: mockCheckLanguageInvoke },
+            { taskId: 'DetectBugbotFixIntentUseCase', invoke: mockDetectIntentInvoke },
             { updateComment: jest.fn() },
             { isActorAllowedToModifyFiles: mockIsActorAllowedToModifyFiles },
             { getDescription: jest.fn() },
