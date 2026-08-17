@@ -1,5 +1,5 @@
 import * as github from '@actions/github';
-import { logDebugInfo, logError } from "../../../utils/logger";
+import { logError } from "../../../utils/logger";
 import { IssueTypes } from '../../model/issue_types';
 
 export type IssueType = { id: string; name: string };
