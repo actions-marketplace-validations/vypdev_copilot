@@ -21,6 +21,7 @@ import { RepositoryFactory } from '../infrastructure/composition/repository_fact
 
 import { getActionInputsWithDefaults } from '../utils/yml_utils';
 import { isEnabledInput } from './input_boolean_policy';
+import { resolveActionInput } from './action_input_source';
 import { loadProjectDetails } from './project_details_loader';
 import { parseBoundedPositiveIntegerInput, parseIntegerInput } from './input_number_policy';
 import { parseDelimitedValues } from './input_values_policy';
@@ -44,27 +45,27 @@ export async function runLocalAction(
     /**
      * Debug
      */
-    const debug = isEnabledInput(additionalParams[INPUT_KEYS.DEBUG] ?? actionInputs[INPUT_KEYS.DEBUG]);
+    const debug = isEnabledInput(resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.DEBUG));
 
     /**
      * Welcome
      */
-    const welcomeTitle = additionalParams[INPUT_KEYS.WELCOME_TITLE] ?? actionInputs[INPUT_KEYS.WELCOME_TITLE];
-    const welcomeMessages = additionalParams[INPUT_KEYS.WELCOME_MESSAGES] ?? actionInputs[INPUT_KEYS.WELCOME_MESSAGES];
+    const welcomeTitle = resolveActionInput<string>(additionalParams, actionInputs, INPUT_KEYS.WELCOME_TITLE);
+    const welcomeMessages = resolveActionInput<string[]>(additionalParams, actionInputs, INPUT_KEYS.WELCOME_MESSAGES);
 
     /**
      * Single action
      */
-    const singleAction = additionalParams[INPUT_KEYS.SINGLE_ACTION] ?? actionInputs[INPUT_KEYS.SINGLE_ACTION];
-    const singleActionIssue = additionalParams[INPUT_KEYS.SINGLE_ACTION_ISSUE] ?? actionInputs[INPUT_KEYS.SINGLE_ACTION_ISSUE];
-    const singleActionVersion = additionalParams[INPUT_KEYS.SINGLE_ACTION_VERSION] ?? actionInputs[INPUT_KEYS.SINGLE_ACTION_VERSION];
-    const singleActionTitle = additionalParams[INPUT_KEYS.SINGLE_ACTION_TITLE] ?? actionInputs[INPUT_KEYS.SINGLE_ACTION_TITLE];
-    const singleActionChangelog = additionalParams[INPUT_KEYS.SINGLE_ACTION_CHANGELOG] ?? actionInputs[INPUT_KEYS.SINGLE_ACTION_CHANGELOG];
+    const singleAction = resolveActionInput<string>(additionalParams, actionInputs, INPUT_KEYS.SINGLE_ACTION);
+    const singleActionIssue = resolveActionInput<string>(additionalParams, actionInputs, INPUT_KEYS.SINGLE_ACTION_ISSUE);
+    const singleActionVersion = resolveActionInput<string>(additionalParams, actionInputs, INPUT_KEYS.SINGLE_ACTION_VERSION);
+    const singleActionTitle = resolveActionInput<string>(additionalParams, actionInputs, INPUT_KEYS.SINGLE_ACTION_TITLE);
+    const singleActionChangelog = resolveActionInput<string>(additionalParams, actionInputs, INPUT_KEYS.SINGLE_ACTION_CHANGELOG);
 
     /**
      * Tokens
      */
-    const token = additionalParams[INPUT_KEYS.TOKEN] ?? actionInputs[INPUT_KEYS.TOKEN];
+    const token = resolveActionInput<string>(additionalParams, actionInputs, INPUT_KEYS.TOKEN);
 
     /**
      * AI (OpenCode)
@@ -93,7 +94,7 @@ export async function runLocalAction(
     const projectIdsInput: string = additionalParams[INPUT_KEYS.PROJECT_IDS] ?? actionInputs[INPUT_KEYS.PROJECT_IDS];
     const projectIds: string[] = parseDelimitedValues(projectIdsInput);
 
-    const projects = await loadProjectDetails(projectRepository, projectIds, token);
+    const projects = await loadProjectDetails(projectRepository, projectIds, token ?? '');
 
     const projectColumnIssueCreated = additionalParams[INPUT_KEYS.PROJECT_COLUMN_ISSUE_CREATED] ?? actionInputs[INPUT_KEYS.PROJECT_COLUMN_ISSUE_CREATED]
     const projectColumnPullRequestCreated = additionalParams[INPUT_KEYS.PROJECT_COLUMN_PULL_REQUEST_CREATED] ?? actionInputs[INPUT_KEYS.PROJECT_COLUMN_PULL_REQUEST_CREATED]
@@ -250,11 +251,11 @@ export async function runLocalAction(
     const execution = new Execution(
         debug,
         new SingleAction(
-            singleAction,
-            singleActionIssue,
-            singleActionVersion,
-            singleActionTitle,
-            singleActionChangelog,
+            singleAction ?? '',
+            singleActionIssue ?? '',
+            singleActionVersion ?? '',
+            singleActionTitle ?? '',
+            singleActionChangelog ?? '',
         ),
         commitPrefixBuilder,
         buildIssue(branchManagementAlways, reopenIssueOnPush, issueDesiredAssigneesCount, additionalParams),
@@ -268,7 +269,7 @@ export async function runLocalAction(
             pullRequest: imageConfiguration.pullRequest,
             commit: imageConfiguration.commit,
         }),
-        buildTokens(token),
+        buildTokens(token ?? ''),
         new Ai(
             opencodeServerUrl,
             opencodeModel,
@@ -328,7 +329,7 @@ export async function runLocalAction(
             issueInProgress: projectColumnIssueInProgress,
             pullRequestInProgress: projectColumnPullRequestInProgress,
         }),
-        new Welcome(welcomeTitle, welcomeMessages),
+        new Welcome(welcomeTitle ?? '', welcomeMessages ?? []),
         additionalParams,
     )
 
