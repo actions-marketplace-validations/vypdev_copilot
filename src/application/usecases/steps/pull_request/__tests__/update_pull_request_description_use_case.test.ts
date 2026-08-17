@@ -56,6 +56,7 @@ describe('UpdatePullRequestDescriptionUseCase', () => {
       { updateDescription: mockUpdateDescription },
       { getDescription: mockGetIssueDescription },
       { getAllMembers: mockGetAllMembers, getRandomMembers: jest.fn() },
+      { askAgent: mockAskAgent },
     );
     mockGetIssueDescription.mockResolvedValue('Issue description');
     mockGetAllMembers.mockResolvedValue(['alice', 'bob']);

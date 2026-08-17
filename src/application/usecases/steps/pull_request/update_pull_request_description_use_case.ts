@@ -2,7 +2,6 @@ import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
 import { OPENCODE_AGENT_PLAN } from "../../../../data/repository/agent_task_policy";
 import type { FindingsQueryPort } from "../../../../data/repository/agent_ports";
-import { DefaultAgentRepositoryFactory } from "../../../../data/repository/agent_repository_factory";
 import type { IssueDescriptionQueryPort } from "../../../ports/issue_ports";
 import type { OrganizationMembersPort } from "../../../ports/organization_ports";
 import type { PullRequestDescriptionCommandPort } from "../../../ports/pull_request_ports";
@@ -15,12 +14,15 @@ import { ParamUseCase } from "../../base/param_usecase";
 export class UpdatePullRequestDescriptionUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'UpdatePullRequestDescriptionUseCase';
 
-    private aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings();
+    private aiRepository: FindingsQueryPort;
     constructor(
         private readonly pullRequestDescriptionCommandPort: PullRequestDescriptionCommandPort,
         private readonly issueDescriptionQueryPort: IssueDescriptionQueryPort,
         private readonly organizationMembersPort: OrganizationMembersPort,
-    ) {}
+        aiRepository: FindingsQueryPort,
+    ) {
+        this.aiRepository = aiRepository;
+    }
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId} (AI PR description).`);

@@ -26,6 +26,7 @@ import { BranchRepository } from "../../data/repository/branch_repository";
 import { CheckProgressUseCase } from "../../application/usecases/actions/check_progress_use_case";
 import { RecommendStepsUseCase } from "../../application/usecases/actions/recommend_steps_use_case";
 import { AnswerIssueHelpUseCase } from "../../application/usecases/steps/issue/answer_issue_help_use_case";
+import { UpdatePullRequestDescriptionUseCase } from "../../application/usecases/steps/pull_request/update_pull_request_description_use_case";
 import { DefaultAgentRepositoryFactory } from "../../data/repository/agent_repository_factory";
 import { WorkflowRepository } from "../../data/repository/workflow_repository";
 
@@ -94,6 +95,7 @@ export class RepositoryFactory {
             this.createIssueRepository(),
             this.createPullRequestRepository(),
             this.createProjectBoardRepository(),
+            new UpdatePullRequestDescriptionUseCase(this.createPullRequestRepository(), this.createIssueRepository(), this.createOrganizationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
         );
     }
     createInitialSetupUseCase(): InitialSetupUseCase {

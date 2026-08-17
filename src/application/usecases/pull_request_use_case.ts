@@ -2,7 +2,7 @@ import { Execution } from "../../data/model/execution";
 import { Result } from "../../data/model/result";
 import { logDebugInfo, logError, logInfo } from "../../utils/logger";
 import { getTaskEmoji } from "../../utils/task_emoji";
-import { ParamUseCase } from "./base/param_usecase";
+import type { ParamUseCase } from "./base/param_usecase";
 import { UpdateTitleUseCase } from "./steps/common/update_title_use_case";
 import { AssignMemberToIssueUseCase } from "./steps/issue/assign_members_to_issue_use_case";
 import { AssignReviewersToIssueUseCase } from "./steps/issue/assign_reviewers_to_issue_use_case";
@@ -12,7 +12,6 @@ import type { ProjectBoardPriorityPort } from "./steps/issue/priority_size_check
 import { LinkPullRequestIssueUseCase } from "./steps/pull_request/link_pull_request_issue_use_case";
 import { LinkPullRequestProjectUseCase } from "./steps/pull_request/link_pull_request_project_use_case";
 import { SyncSizeAndProgressLabelsFromIssueToPrUseCase } from "./steps/pull_request/sync_size_and_progress_labels_from_issue_to_pr_use_case";
-import { UpdatePullRequestDescriptionUseCase } from "./steps/pull_request/update_pull_request_description_use_case";
 import type { IssueAssigneePort, IssueClosurePort, IssueDescriptionQueryPort } from "../ports/issue_ports";
 import type { OrganizationMembersPort } from "../ports/organization_ports";
 import type { PullRequestDescriptionCommandPort, PullRequestReviewPort } from "../ports/pull_request_ports";
@@ -34,6 +33,7 @@ export class PullRequestUseCase implements ParamUseCase<Execution, Result[]> {
         private readonly issueLabelsPort: IssueLabelsPort,
         private readonly pullRequestIssueLinkPort: PullRequestIssueLinkPort,
         private readonly projectBoardLinkPort: ProjectBoardLinkPort & ProjectBoardCommandPort,
+        private readonly updatePullRequestDescriptionUseCase: ParamUseCase<Execution, Result[]>,
     ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
@@ -85,11 +85,7 @@ export class PullRequestUseCase implements ParamUseCase<Execution, Result[]> {
                     /**
                      * Update pull request description
                      */
-                    results.push(...await new UpdatePullRequestDescriptionUseCase(
-                        this.pullRequestDescriptionCommandPort,
-                        this.issueDescriptionQueryPort,
-                        this.organizationMembersPort,
-                    ).invoke(param));
+                    results.push(...await this.updatePullRequestDescriptionUseCase.invoke(param));
                 }
             } else if (param.pullRequest.isSynchronize) {
                 /**
@@ -99,11 +95,7 @@ export class PullRequestUseCase implements ParamUseCase<Execution, Result[]> {
                     /**
                      * Update pull request description
                      */
-                    results.push(...await new UpdatePullRequestDescriptionUseCase(
-                        this.pullRequestDescriptionCommandPort,
-                        this.issueDescriptionQueryPort,
-                        this.organizationMembersPort,
-                    ).invoke(param));
+                    results.push(...await this.updatePullRequestDescriptionUseCase.invoke(param));
                 }
             } else if (param.pullRequest.isClosed && param.pullRequest.isMerged) {
                 /**
