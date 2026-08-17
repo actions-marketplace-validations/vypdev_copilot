@@ -42,7 +42,7 @@ describe('RecommendStepsUseCase', () => {
   let useCase: RecommendStepsUseCase;
 
   beforeEach(() => {
-    useCase = new RecommendStepsUseCase({ getDescription: mockGetDescription });
+    useCase = new RecommendStepsUseCase({ getDescription: mockGetDescription }, { askAgent: mockAskAgent });
     mockGetDescription.mockReset();
     mockAskAgent.mockReset();
   });

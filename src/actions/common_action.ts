@@ -74,7 +74,7 @@ function createSingleActionUseCase(factory: RepositoryFactory): SingleActionUseC
         factory.createInitialSetupUseCase(),
         factory.createCheckProgressUseCase(),
         createDetectPotentialProblemsUseCase(factory),
-        new RecommendStepsUseCase(issueDescriptionQueryPort),
+        new RecommendStepsUseCase(issueDescriptionQueryPort, new DefaultAgentRepositoryFactory().createFindings()),
     );
 }
 

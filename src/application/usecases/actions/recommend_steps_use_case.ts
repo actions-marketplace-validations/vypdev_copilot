@@ -3,7 +3,6 @@ import { Execution } from '../../../data/model/execution';
 import { Result } from '../../../data/model/result';
 import { OPENCODE_AGENT_PLAN } from '../../../data/repository/agent_task_policy';
 import type { FindingsQueryPort } from '../../../data/repository/agent_ports';
-import { DefaultAgentRepositoryFactory } from '../../../data/repository/agent_repository_factory';
 import type { IssueDescriptionQueryPort } from '../../ports/issue_ports';
 import { getRecommendStepsPrompt } from '../../../prompts';
 import { logDebugInfo, logError, logInfo } from '../../../utils/logger';
@@ -14,11 +13,11 @@ import { ParamUseCase } from '../base/param_usecase';
 export class RecommendStepsUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'RecommendStepsUseCase';
 
-    private aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings();
+    private aiRepository: FindingsQueryPort;
 
     constructor(
         private readonly issueDescriptionQueryPort: IssueDescriptionQueryPort,
-        aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings(),
+        aiRepository: FindingsQueryPort,
     ) {
         this.aiRepository = aiRepository;
     }
