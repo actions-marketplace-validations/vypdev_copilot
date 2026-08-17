@@ -1,7 +1,7 @@
 import * as github from "@actions/github";
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import { PullRequestRepository } from "../../../../data/repository/pull_request_repository";
+import type { PullRequestIssueLinkPort } from "../../../ports/pull_request_ports";
 import { logError, logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
 import { ParamUseCase } from "../../base/param_usecase";
@@ -9,7 +9,7 @@ import { ParamUseCase } from "../../base/param_usecase";
 export class LinkPullRequestIssueUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'LinkPullRequestIssueUseCase';
     
-    private pullRequestRepository = new PullRequestRepository();
+    constructor(private readonly pullRequestIssueLinkPort: PullRequestIssueLinkPort) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`)
@@ -17,13 +17,13 @@ export class LinkPullRequestIssueUseCase implements ParamUseCase<Execution, Resu
         const result: Result[] = []
 
         try {
-            const isLinked = await this.pullRequestRepository.isLinked(github.context.payload.pull_request?.html_url ?? '');
+            const isLinked = await this.pullRequestIssueLinkPort.isLinked(github.context.payload.pull_request?.html_url ?? '');
 
             if (!isLinked) {
                 /**
                  *  Set the primary/default branch
                  */
-                await this.pullRequestRepository.updateBaseBranch(
+                await this.pullRequestIssueLinkPort.updateBaseBranch(
                     param.owner,
                     param.repo,
                     param.pullRequest.number,
@@ -48,7 +48,7 @@ export class LinkPullRequestIssueUseCase implements ParamUseCase<Execution, Resu
                 let prBody = param.pullRequest.body;
 
                 let updatedBody = `${prBody}\n\nResolves #${param.issueNumber}`;
-                await this.pullRequestRepository.updateDescription(
+                await this.pullRequestIssueLinkPort.updateDescription(
                     param.owner,
                     param.repo,
                     param.pullRequest.number,
@@ -75,7 +75,7 @@ export class LinkPullRequestIssueUseCase implements ParamUseCase<Execution, Resu
                 /**
                  *  Restore the original branch
                  */
-                await this.pullRequestRepository.updateBaseBranch(
+                await this.pullRequestIssueLinkPort.updateBaseBranch(
                     param.owner,
                     param.repo,
                     param.pullRequest.number,
@@ -99,7 +99,7 @@ export class LinkPullRequestIssueUseCase implements ParamUseCase<Execution, Resu
                  */
                 prBody = param.pullRequest.body;
                 updatedBody = prBody.replace(`\n\nResolves #${param.issueNumber}`, "");
-                await this.pullRequestRepository.updateDescription(
+                await this.pullRequestIssueLinkPort.updateDescription(
                     param.owner,
                     param.repo,
                     param.pullRequest.number,

@@ -35,7 +35,7 @@ describe('LinkPullRequestProjectUseCase', () => {
 
   beforeEach(() => {
     jest.useFakeTimers();
-    useCase = new LinkPullRequestProjectUseCase();
+    useCase = new LinkPullRequestProjectUseCase({ linkContentId: mockLinkContentId, moveIssueToColumn: mockMoveIssueToColumn, setTaskPriority: jest.fn(), setTaskSize: jest.fn() });
     mockLinkContentId.mockResolvedValue(true);
     mockMoveIssueToColumn.mockResolvedValue(true);
   });

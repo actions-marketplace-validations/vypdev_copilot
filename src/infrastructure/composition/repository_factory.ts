@@ -67,6 +67,8 @@ export class RepositoryFactory {
             this.createPullRequestRepository(),
             this.createOrganizationRepository(),
             this.createIssueRepository(),
+            this.createPullRequestRepository(),
+            this.createProjectBoardRepository(),
         );
     }
     createInitialSetupUseCase(): InitialSetupUseCase {

@@ -34,7 +34,7 @@ describe('LinkPullRequestIssueUseCase', () => {
   let useCase: LinkPullRequestIssueUseCase;
 
   beforeEach(() => {
-    useCase = new LinkPullRequestIssueUseCase();
+    useCase = new LinkPullRequestIssueUseCase({ isLinked: mockIsLinked, updateBaseBranch: mockUpdateBaseBranch, updateDescription: mockUpdateDescription });
     (github.context as { payload?: { pull_request?: { html_url?: string } } }).payload = {
       pull_request: { html_url: 'https://github.com/o/r/pull/10' },
     };

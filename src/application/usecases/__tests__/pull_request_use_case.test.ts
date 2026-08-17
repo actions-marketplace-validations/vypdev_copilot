@@ -85,6 +85,8 @@ describe('PullRequestUseCase', () => {
       { getCurrentReviewers: jest.fn(), addReviewersToPullRequest: jest.fn() },
       { getAllMembers: jest.fn().mockResolvedValue([]), getRandomMembers: jest.fn() },
       { getLabels: jest.fn(), setLabels: jest.fn() },
+      { isLinked: jest.fn().mockResolvedValue(true), updateBaseBranch: jest.fn(), updateDescription: jest.fn() },
+      { linkContentId: jest.fn(), moveIssueToColumn: jest.fn(), setTaskPriority: jest.fn(), setTaskSize: jest.fn() },
     );
     const param = minimalExecution({ pullRequest: { isOpened: true, isSynchronize: false, isClosed: false, isMerged: false, action: 'opened' } });
     await useCase.invoke(param);
@@ -111,6 +113,8 @@ describe('PullRequestUseCase', () => {
       { getCurrentReviewers: jest.fn(), addReviewersToPullRequest: jest.fn() },
       { getAllMembers: jest.fn().mockResolvedValue([]), getRandomMembers: jest.fn() },
       { getLabels: jest.fn(), setLabels: jest.fn() },
+      { isLinked: jest.fn().mockResolvedValue(true), updateBaseBranch: jest.fn(), updateDescription: jest.fn() },
+      { linkContentId: jest.fn(), moveIssueToColumn: jest.fn(), setTaskPriority: jest.fn(), setTaskSize: jest.fn() },
     );
     const param = minimalExecution({
       pullRequest: { isOpened: true, isSynchronize: false, isClosed: false, isMerged: false, action: 'opened' },
@@ -133,6 +137,8 @@ describe('PullRequestUseCase', () => {
       { getCurrentReviewers: jest.fn(), addReviewersToPullRequest: jest.fn() },
       { getAllMembers: jest.fn().mockResolvedValue([]), getRandomMembers: jest.fn() },
       { getLabels: jest.fn(), setLabels: jest.fn() },
+      { isLinked: jest.fn().mockResolvedValue(true), updateBaseBranch: jest.fn(), updateDescription: jest.fn() },
+      { linkContentId: jest.fn(), moveIssueToColumn: jest.fn(), setTaskPriority: jest.fn(), setTaskSize: jest.fn() },
     );
     const param = minimalExecution({
       pullRequest: { isOpened: false, isSynchronize: true, isClosed: false, isMerged: false, action: 'synchronize' },
@@ -156,6 +162,8 @@ describe('PullRequestUseCase', () => {
       { getCurrentReviewers: jest.fn(), addReviewersToPullRequest: jest.fn() },
       { getAllMembers: jest.fn().mockResolvedValue([]), getRandomMembers: jest.fn() },
       { getLabels: jest.fn(), setLabels: jest.fn() },
+      { isLinked: jest.fn().mockResolvedValue(true), updateBaseBranch: jest.fn(), updateDescription: jest.fn() },
+      { linkContentId: jest.fn(), moveIssueToColumn: jest.fn(), setTaskPriority: jest.fn(), setTaskSize: jest.fn() },
     );
     const param = minimalExecution({
       pullRequest: { isOpened: false, isSynchronize: false, isClosed: true, isMerged: true, action: 'closed' },
@@ -179,6 +187,8 @@ describe('PullRequestUseCase', () => {
       { getCurrentReviewers: jest.fn(), addReviewersToPullRequest: jest.fn() },
       { getAllMembers: jest.fn().mockResolvedValue([]), getRandomMembers: jest.fn() },
       { getLabels: jest.fn(), setLabels: jest.fn() },
+      { isLinked: jest.fn().mockResolvedValue(true), updateBaseBranch: jest.fn(), updateDescription: jest.fn() },
+      { linkContentId: jest.fn(), moveIssueToColumn: jest.fn(), setTaskPriority: jest.fn(), setTaskSize: jest.fn() },
     );
     const param = minimalExecution();
     const results = await useCase.invoke(param);

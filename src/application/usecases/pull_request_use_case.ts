@@ -16,7 +16,9 @@ import { UpdatePullRequestDescriptionUseCase } from "./steps/pull_request/update
 import type { IssueAssigneePort, IssueClosurePort, IssueDescriptionQueryPort } from "../ports/issue_ports";
 import type { OrganizationMembersPort } from "../ports/organization_ports";
 import type { PullRequestDescriptionCommandPort, PullRequestReviewPort } from "../ports/pull_request_ports";
+import type { PullRequestIssueLinkPort } from "../ports/pull_request_ports";
 import type { IssueLabelsPort, IssueTitlePort } from "../ports/issue_ports";
+import type { ProjectBoardCommandPort, ProjectBoardLinkPort } from "../ports/project_board_ports";
 
 export class PullRequestUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'PullRequestUseCase';
@@ -30,6 +32,8 @@ export class PullRequestUseCase implements ParamUseCase<Execution, Result[]> {
         private readonly pullRequestReviewPort: PullRequestReviewPort,
         private readonly organizationMembersPort: OrganizationMembersPort,
         private readonly issueLabelsPort: IssueLabelsPort,
+        private readonly pullRequestIssueLinkPort: PullRequestIssueLinkPort,
+        private readonly projectBoardLinkPort: ProjectBoardLinkPort & ProjectBoardCommandPort,
     ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
@@ -60,12 +64,12 @@ export class PullRequestUseCase implements ParamUseCase<Execution, Result[]> {
                 /**
                  * Link Pull Request to projects
                  */
-                results.push(...await new LinkPullRequestProjectUseCase().invoke(param));
+                results.push(...await new LinkPullRequestProjectUseCase(this.projectBoardLinkPort).invoke(param));
 
                 /**
                  * Link Pull Request to issue
                  */
-                results.push(...await new LinkPullRequestIssueUseCase().invoke(param));
+                results.push(...await new LinkPullRequestIssueUseCase(this.pullRequestIssueLinkPort).invoke(param));
 
                 /**
                  * Copy size and progress labels from the linked issue to this PR (corner case: PR just opened).

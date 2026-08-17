@@ -1,6 +1,6 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import { ProjectBoardRepository } from "../../../../data/repository/project/project_board_repository";
+import type { ProjectBoardCommandPort, ProjectBoardLinkPort } from "../../../ports/project_board_ports";
 import { logDebugInfo, logError, logInfo, logWarn } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
 import { ParamUseCase } from "../../base/param_usecase";
@@ -8,7 +8,7 @@ import { ParamUseCase } from "../../base/param_usecase";
 export class LinkPullRequestProjectUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'LinkPullRequestProjectUseCase';
     
-    private projectRepository = new ProjectBoardRepository();
+    constructor(private readonly projectBoardPort: ProjectBoardLinkPort & ProjectBoardCommandPort) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`)
@@ -23,7 +23,7 @@ export class LinkPullRequestProjectUseCase implements ParamUseCase<Execution, Re
         }
         try {
             for (const project of projects) {
-                let actionDone = await this.projectRepository.linkContentId(
+                let actionDone = await this.projectBoardPort.linkContentId(
                     project,
                     param.pullRequest.id,
                     param.tokens.token
@@ -34,7 +34,7 @@ export class LinkPullRequestProjectUseCase implements ParamUseCase<Execution, Re
                      * Wait for 10 seconds to ensure the pull request is linked to the project
                      */
                     await new Promise(resolve => setTimeout(resolve, 10000));
-                    actionDone = await this.projectRepository.moveIssueToColumn(
+                    actionDone = await this.projectBoardPort.moveIssueToColumn(
                         project,
                         param.owner,
                         param.repo,
