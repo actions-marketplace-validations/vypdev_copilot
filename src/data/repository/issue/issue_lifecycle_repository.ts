@@ -1,5 +1,5 @@
 import * as github from '@actions/github';
-import { logDebugInfo } from '../../utils/logger';
+import { logDebugInfo } from "../../../utils/logger";
 
 export class IssueLifecycleRepository {
     closeIssue = (owner: string, repository: string, issueNumber: number, token: string): Promise<boolean> =>

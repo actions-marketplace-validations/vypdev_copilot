@@ -1,5 +1,5 @@
 import * as github from '@actions/github';
-import { IssueTypeAssignmentRepository } from '../issue_type_assignment_repository';
+import { IssueTypeAssignmentRepository } from '../issue/issue_type_assignment_repository';
 import { IssueTypes } from '../../model/issue_types';
 import { Labels } from '../../model/labels';
 

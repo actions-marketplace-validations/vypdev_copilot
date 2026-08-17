@@ -1,7 +1,7 @@
 import * as github from '@actions/github';
-import { logDebugInfo, logError } from '../../utils/logger';
-import { Labels } from '../model/labels';
-import { IssueTypes } from '../model/issue_types';
+import { logDebugInfo, logError } from "../../../utils/logger";
+import { Labels } from "../../model/labels";
+import { IssueTypes } from "../../model/issue_types";
 
 type SelectedIssueType = { name: string; description: string; color: string };
 type GetIssueId = (owner: string, repository: string, issueNumber: number, token: string) => Promise<string>;

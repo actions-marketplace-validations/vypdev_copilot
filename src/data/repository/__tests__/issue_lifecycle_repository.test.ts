@@ -1,5 +1,5 @@
 import * as github from '@actions/github';
-import { IssueLifecycleRepository } from '../issue_lifecycle_repository';
+import { IssueLifecycleRepository } from '../issue/issue_lifecycle_repository';
 
 jest.mock('@actions/github', () => ({ getOctokit: jest.fn() }));
 jest.mock('../../../utils/logger', () => ({ logDebugInfo: jest.fn() }));
