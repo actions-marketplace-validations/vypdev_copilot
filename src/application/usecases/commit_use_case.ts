@@ -8,7 +8,7 @@ import { NotifyNewCommitOnIssueUseCase } from "./steps/commit/notify_new_commit_
 import { CheckChangesIssueSizeUseCase } from "./steps/commit/check_changes_issue_size_use_case";
 import { DetectPotentialProblemsUseCase } from './steps/commit/detect_potential_problems_use_case';
 import { ProjectBoardCommandPort } from '../ports/project_board_ports';
-import type { IssueLabelsPort } from '../ports/issue_ports';
+import type { IssueLabelsPort, IssueNotificationPort } from '../ports/issue_ports';
 import type { PullRequestBranchQueryPort } from '../ports/pull_request_ports';
 import type { BranchChangeSizePort } from '../ports/branch_ports';
 
@@ -20,6 +20,7 @@ export class CommitUseCase implements ParamUseCase<Execution, Result[]> {
         private readonly issueLabelsPort: IssueLabelsPort,
         private readonly pullRequestBranchQueryPort: PullRequestBranchQueryPort,
         private readonly branchChangeSizePort: BranchChangeSizePort,
+        private readonly issueNotificationPort: IssueNotificationPort,
         private readonly checkProgressUseCase: CheckProgressUseCase,
     ) {}
 
@@ -37,7 +38,7 @@ export class CommitUseCase implements ParamUseCase<Execution, Result[]> {
             logDebugInfo(`Commits detected: ${param.commit.commits.length}`);
             logDebugInfo(`Issue number: ${param.issueNumber}`);
 
-            results.push(...(await new NotifyNewCommitOnIssueUseCase().invoke(param)));
+            results.push(...(await new NotifyNewCommitOnIssueUseCase(this.issueNotificationPort).invoke(param)));
             results.push(...(await new CheckChangesIssueSizeUseCase(
                 this.projectBoardCommandPort,
                 this.issueLabelsPort,

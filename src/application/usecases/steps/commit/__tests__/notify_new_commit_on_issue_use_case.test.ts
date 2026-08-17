@@ -68,7 +68,7 @@ describe('NotifyNewCommitOnIssueUseCase', () => {
   let useCase: NotifyNewCommitOnIssueUseCase;
 
   beforeEach(() => {
-    useCase = new NotifyNewCommitOnIssueUseCase();
+    useCase = new NotifyNewCommitOnIssueUseCase({ openIssue: mockOpenIssue, addComment: mockAddComment });
     mockAddComment.mockResolvedValue(undefined);
     mockOpenIssue.mockResolvedValue(true);
     mockInvoke.mockResolvedValue([

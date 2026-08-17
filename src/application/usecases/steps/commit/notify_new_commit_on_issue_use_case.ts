@@ -1,6 +1,6 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import { IssueRepository } from "../../../../data/repository/issue_repository";
+import type { IssueNotificationPort } from "../../../../application/ports/issue_ports";
 import { getRandomElement } from "../../../../utils/list_utils";
 import { logDebugInfo, logError, logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
@@ -10,7 +10,7 @@ import { CommitPrefixBuilderUseCase } from "../common/execute_script_use_case";
 export class NotifyNewCommitOnIssueUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'NotifyNewCommitOnIssueUseCase';
 
-    private issueRepository = new IssueRepository();
+    constructor(private readonly issueRepository: IssueNotificationPort) {}
     private mergeBranchPattern = 'Merge branch '
     private ghAction = 'gh-action: '
     private separator = '------------------------------------------------------'

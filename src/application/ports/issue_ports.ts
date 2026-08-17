@@ -20,6 +20,11 @@ export interface IssueClosurePort {
     addComment(owner: string, repository: string, issueNumber: number, comment: string, token: string): Promise<void>;
 }
 
+export interface IssueNotificationPort {
+    openIssue(owner: string, repository: string, issueNumber: number, token: string): Promise<boolean>;
+    addComment(owner: string, repository: string, issueNumber: number, comment: string, token: string): Promise<void>;
+}
+
 export interface IssueAssigneePort {
     getCurrentAssignees(owner: string, repository: string, issueNumber: number, token: string): Promise<string[]>;
     assignMembersToIssue(owner: string, repository: string, issueNumber: number, members: string[], token: string): Promise<string[]>;

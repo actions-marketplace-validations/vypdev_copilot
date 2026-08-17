@@ -116,6 +116,7 @@ export async function mainRun(
                     commitFactory.createIssueRepository(),
                     commitFactory.createPullRequestRepository(),
                     commitFactory.createBranchRepository(),
+                    commitFactory.createIssueRepository(),
                     commitFactory.createCheckProgressUseCase(),
                 ).invoke(execution));
                 break;
