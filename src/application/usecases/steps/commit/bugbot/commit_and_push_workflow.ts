@@ -1,5 +1,5 @@
 import * as exec from '@actions/exec';
-import { OrganizationRepository } from '../../../../../data/repository/organization_repository';
+import { OrganizationRepository } from '../../../../../data/repository/organization/organization_repository';
 import type { Execution } from '../../../../../data/model/execution';
 import { logDebugInfo, logError, logInfo } from '../../../../../utils/logger';
 import { checkoutBranch } from './git_branch_checkout';

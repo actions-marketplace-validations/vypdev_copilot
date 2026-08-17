@@ -1,6 +1,6 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import { OrganizationRepository } from "../../../../data/repository/organization_repository";
+import { OrganizationRepository } from "../../../../data/repository/organization/organization_repository";
 import { logDebugInfo, logError, logInfo, logWarn } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
 import { ParamUseCase } from "../../base/param_usecase";

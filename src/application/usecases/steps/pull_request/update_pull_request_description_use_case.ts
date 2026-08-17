@@ -4,7 +4,7 @@ import { OPENCODE_AGENT_PLAN } from "../../../../data/repository/agent_task_poli
 import type { FindingsQueryPort } from "../../../../data/repository/agent_ports";
 import { DefaultAgentRepositoryFactory } from "../../../../data/repository/agent_repository_factory";
 import { IssueRepository } from "../../../../data/repository/issue_repository";
-import { OrganizationRepository } from "../../../../data/repository/organization_repository";
+import { OrganizationRepository } from "../../../../data/repository/organization/organization_repository";
 import { PullRequestRepository } from "../../../../data/repository/pull_request_repository";
 import { getUpdatePullRequestDescriptionPrompt } from "../../../../prompts";
 import { logDebugInfo, logError, logInfo } from "../../../../utils/logger";

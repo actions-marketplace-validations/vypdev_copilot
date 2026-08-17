@@ -35,7 +35,7 @@ jest.mock("../steps/commit/bugbot/bugbot_autofix_use_case", () => ({
 
 const mockIsActorAllowedToModifyFiles = jest.fn();
 
-jest.mock("../../../data/repository/organization_repository", () => ({
+jest.mock("../../../data/repository/organization/organization_repository", () => ({
     OrganizationRepository: jest.fn().mockImplementation(() => ({
         isActorAllowedToModifyFiles: mockIsActorAllowedToModifyFiles,
     })),

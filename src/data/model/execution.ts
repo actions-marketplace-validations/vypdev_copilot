@@ -6,7 +6,7 @@ import { branchesForManagement, typesForIssue } from "../../utils/label_utils";
 import { logDebugInfo, setGlobalLoggerDebug } from "../../utils/logger";
 import { BranchRepository } from "../repository/branch_repository";
 import { IssueRepository } from "../repository/issue_repository";
-import { OrganizationRepository } from "../repository/organization_repository";
+import { OrganizationRepository } from "../repository/organization/organization_repository";
 import { Ai } from "./ai";
 import { Branches } from "./branches";
 import { Commit } from "./commit";

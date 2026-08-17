@@ -14,7 +14,7 @@ import {
     canRunDoUserRequest,
 } from "./steps/commit/bugbot/bugbot_fix_intent_payload";
 import { DoUserRequestUseCase } from "./steps/commit/user_request_use_case";
-import { OrganizationRepository } from "../../data/repository/organization_repository";
+import { OrganizationRepository } from "../../data/repository/organization/organization_repository";
 
 export interface CommentAutomationOptions {
     taskId: string;

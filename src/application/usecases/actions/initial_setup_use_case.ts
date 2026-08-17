@@ -2,7 +2,7 @@ import { Execution } from "../../../data/model/execution";
 import { BranchRepository } from "../../../data/repository/branch_repository";
 import { IssueRepository } from "../../../data/repository/issue_repository";
 import { RepositoryReleaseRepository } from "../../../data/repository/repository_release_repository";
-import { OrganizationRepository } from "../../../data/repository/organization_repository";
+import { OrganizationRepository } from "../../../data/repository/organization/organization_repository";
 import { Result } from "../../../data/model/result";
 import { ParamUseCase } from "../base/param_usecase";
 import { DEFAULT_INITIAL_TAG } from "../../../utils/version_utils";
