@@ -7,6 +7,7 @@ import { RepositoryFactory } from '../infrastructure/composition/repository_fact
 import { IssueCommentUseCase } from '../application/usecases/issue_comment_use_case';
 import { CheckIssueCommentLanguageUseCase } from '../application/usecases/steps/issue_comment/check_issue_comment_language_use_case';
 import { PullRequestReviewCommentUseCase } from '../application/usecases/pull_request_review_comment_use_case';
+import { CheckPullRequestCommentLanguageUseCase } from '../application/usecases/steps/pull_request_review_comment/check_pull_request_comment_language_use_case';
 import { SingleActionUseCase } from '../application/usecases/single_action_use_case';
 import { clearAccumulatedLogs, logDebugInfo, logError, logInfo } from '../utils/logger';
 import { TITLE } from '../utils/constants';
@@ -143,6 +144,7 @@ export async function mainRun(
                 logInfo(`Running PullRequestReviewCommentUseCase for PR #${execution.pullRequest.number}.`);
                 const reviewCommentFactory = new RepositoryFactory();
                 results.push(...await new PullRequestReviewCommentUseCase(
+                    new CheckPullRequestCommentLanguageUseCase(reviewCommentFactory.createIssueRepository()),
                     reviewCommentFactory.createIssueRepository(),
                     reviewCommentFactory.createOrganizationRepository(),
                     reviewCommentFactory.createIssueRepository(),

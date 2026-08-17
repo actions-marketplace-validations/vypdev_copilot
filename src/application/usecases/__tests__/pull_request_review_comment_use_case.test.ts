@@ -131,6 +131,7 @@ describe("PullRequestReviewCommentUseCase", () => {
 
     beforeEach(() => {
         useCase = new PullRequestReviewCommentUseCase(
+            { taskId: 'CheckPullRequestCommentLanguageUseCase', invoke: mockCheckLanguageInvoke },
             { updateComment: jest.fn() },
             { isActorAllowedToModifyFiles: mockIsActorAllowedToModifyFiles },
             { getDescription: jest.fn() },
