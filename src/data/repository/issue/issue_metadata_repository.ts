@@ -1,15 +1,20 @@
-import * as github from "@actions/github";
 import { logDebugInfo, logError } from "../../../utils/logger";
 import { Milestone } from '../../model/milestone';
+import type { GithubClientPort, GithubGraphqlClient, GithubIssueMetadataClient } from "../github/github_client_port";
 
 export class IssueMetadataRepository {
+    constructor(
+        private readonly metadataClient: GithubClientPort<GithubIssueMetadataClient>,
+        private readonly graphqlClient: GithubClientPort<GithubGraphqlClient>,
+    ) {}
+
     getId = async (
         owner: string,
         repository: string,
         issueNumber: number,
         token: string,
     ): Promise<string> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.graphqlClient.getClient(token);
         const query = `
           query($repo: String!, $owner: String!, $issueNumber: Int!) {
             repository(name: $repo, owner: $owner) {
@@ -33,7 +38,7 @@ export class IssueMetadataRepository {
         issueNumber: number,
         token: string,
     ): Promise<Milestone | undefined> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.metadataClient.getClient(token);
         const { data: issue } = await octokit.rest.issues.get({
             owner,
             repo: repository,
@@ -50,7 +55,7 @@ export class IssueMetadataRepository {
         issueNumber: number,
         token: string,
     ): Promise<string | undefined> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.metadataClient.getClient(token);
         try {
             const { data: issue } = await octokit.rest.issues.get({
                 owner,
@@ -70,7 +75,7 @@ export class IssueMetadataRepository {
         issueNumber: number,
         token: string,
     ): Promise<boolean> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.metadataClient.getClient(token);
         const { data } = await octokit.rest.issues.get({
             owner,
             repo: repository,
@@ -95,7 +100,7 @@ export class IssueMetadataRepository {
         if (!(await this.isPullRequest(owner, repository, issueNumber, token))) {
             return undefined;
         }
-        const octokit = github.getOctokit(token);
+        const octokit = this.metadataClient.getClient(token);
         const pullRequest = await octokit.rest.pulls.get({
             owner,
             repo: repository,

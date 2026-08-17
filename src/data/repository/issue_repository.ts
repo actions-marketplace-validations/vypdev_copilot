@@ -17,7 +17,7 @@ export { PROGRESS_LABEL_PATTERN } from './progress_labels';
 
 export class IssueRepository {
     private readonly issueContentRepository: IssueContentRepository;
-    private readonly issueMetadataRepository = new IssueMetadataRepository();
+    private readonly issueMetadataRepository: IssueMetadataRepository;
     private readonly issueLabelRepository = new IssueLabelRepository();
     private readonly issueProgressLabelRepository = new IssueProgressLabelRepository(this.issueLabelRepository);
     private readonly issueLabelProvisioningRepository = new IssueLabelProvisioningRepository();
@@ -28,8 +28,13 @@ export class IssueRepository {
     private readonly issueAssignmentRepository = new IssueAssignmentRepository();
     private readonly issueLifecycleRepository: IssueLifecycleRepository;
 
-    constructor(issueContentRepository: IssueContentRepository, issueLifecycleRepository: IssueLifecycleRepository) {
+    constructor(
+        issueContentRepository: IssueContentRepository,
+        issueMetadataRepository: IssueMetadataRepository,
+        issueLifecycleRepository: IssueLifecycleRepository,
+    ) {
         this.issueContentRepository = issueContentRepository;
+        this.issueMetadataRepository = issueMetadataRepository;
         this.issueLifecycleRepository = issueLifecycleRepository;
     }
 
@@ -151,11 +156,11 @@ export class IssueRepository {
 
     getDescription = (...args: Parameters<IssueContentRepository["getDescription"]>) => this.issueContentRepository.getDescription(...args);
 
-    getId = this.issueMetadataRepository.getId;
+    getId = (...args: Parameters<IssueMetadataRepository["getId"]>) => this.issueMetadataRepository.getId(...args);
 
-    getMilestone = this.issueMetadataRepository.getMilestone;
+    getMilestone = (...args: Parameters<IssueMetadataRepository["getMilestone"]>) => this.issueMetadataRepository.getMilestone(...args);
 
-    getTitle = this.issueMetadataRepository.getTitle;
+    getTitle = (...args: Parameters<IssueMetadataRepository["getTitle"]>) => this.issueMetadataRepository.getTitle(...args);
 
     getLabels = this.issueLabelRepository.getLabels;
 
@@ -174,11 +179,11 @@ export class IssueRepository {
 
     setProgressLabel = this.issueProgressLabelRepository.setProgressLabel;
 
-    isIssue = this.issueMetadataRepository.isIssue;
+    isIssue = (...args: Parameters<IssueMetadataRepository["isIssue"]>) => this.issueMetadataRepository.isIssue(...args);
 
-    isPullRequest = this.issueMetadataRepository.isPullRequest;
+    isPullRequest = (...args: Parameters<IssueMetadataRepository["isPullRequest"]>) => this.issueMetadataRepository.isPullRequest(...args);
 
-    getHeadBranch = this.issueMetadataRepository.getHeadBranch;
+    getHeadBranch = (...args: Parameters<IssueMetadataRepository["getHeadBranch"]>) => this.issueMetadataRepository.getHeadBranch(...args);
 
     addComment = (...args: Parameters<IssueContentRepository["addComment"]>) => this.issueContentRepository.addComment(...args);
 

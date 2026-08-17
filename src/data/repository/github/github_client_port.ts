@@ -152,3 +152,14 @@ export interface GithubIssueComment {
     body?: string | null;
     user?: { login?: string };
 }
+
+export interface GithubIssueMetadataClient {
+    rest: {
+        issues: {
+            get(parameters: Record<string, unknown>): Promise<{ data: { title?: string; milestone?: { id: number; title: string; description?: string | null } | null; pull_request?: unknown } }>;
+        };
+        pulls: {
+            get(parameters: Record<string, unknown>): Promise<{ data: { head: { ref: string } } }>;
+        };
+    };
+}
