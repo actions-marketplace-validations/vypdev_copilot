@@ -16,8 +16,13 @@ import { PullRequestReviewRepository } from "../../data/repository/pull_request/
 import { PullRequestReviewThreadRepository } from "../../data/repository/pull_request/pull_request_review_thread_repository";
 import { PullRequestRepository } from "../../data/repository/pull_request_repository";
 import { RepositoryReleaseRepository } from "../../data/repository/release/repository_release_repository";
+import { OctokitClientAdapter } from "../github/octokit_client";
 
 export class RepositoryFactory {
+    createGithubClient(): OctokitClientAdapter {
+        return new OctokitClientAdapter();
+    }
+
     createOrganizationRepository(): OrganizationRepository {
         return new OrganizationRepository();
     }
