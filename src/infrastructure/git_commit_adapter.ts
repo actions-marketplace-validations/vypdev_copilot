@@ -1,11 +1,18 @@
 import * as exec from '@actions/exec';
 import type { GitCommitPort } from '../application/ports/git_ports';
 
-export class GitCommitAdapter implements GitCommitPort {
-    constructor(private readonly executeCommand: (program: string, args: string[]) => Promise<number> = (program, args) => exec.exec(program, args)) {}
+type GitCommandOptions = { stdout?: (data: Buffer) => void };
+type GitCommandExecutor = (program: string, args: string[], options?: GitCommandOptions) => Promise<number>;
 
-    async execute(program: string, args: string[]): Promise<number> {
-        return this.executeCommand(program, args);
+export class GitCommitAdapter implements GitCommitPort {
+    constructor(
+        private readonly executeCommand: GitCommandExecutor = (program, args, options) => options
+            ? exec.exec(program, args, { listeners: { stdout: options.stdout } })
+            : exec.exec(program, args),
+    ) {}
+
+    async execute(program: string, args: string[], options?: GitCommandOptions): Promise<number> {
+        return options ? this.executeCommand(program, args, options) : this.executeCommand(program, args);
     }
 
     async configureAuthor(name: string, email: string): Promise<void> {
@@ -18,7 +25,7 @@ export class GitCommitAdapter implements GitCommitPort {
     }
 
     async stagePaths(paths: string[]): Promise<void> {
-        await this.execute('git', ['add', '--', ...paths]);
+        if (paths.length > 0) await this.execute('git', ['add', '--', ...paths]);
     }
 
     async commit(message: string): Promise<void> {

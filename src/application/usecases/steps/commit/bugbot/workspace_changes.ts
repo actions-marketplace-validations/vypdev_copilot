@@ -1,4 +1,4 @@
-import * as exec from "@actions/exec";
+import type { GitCommitPort } from '../../../../ports/git_ports';
 
 /**
  * Extracts repository-relative paths from `git status --porcelain` output.
@@ -48,18 +48,16 @@ export function selectWorkspacePathsToCommit(before: string[], after: string[]):
 }
 
 /** Reads the current working tree paths without executing a shell. */
-export async function listWorkspacePaths(): Promise<string[]> {
+export async function listWorkspacePaths(gitCommitPort: GitCommitPort): Promise<string[]> {
     let output = "";
-    await exec.exec("git", ["status", "--porcelain"], {
-        listeners: {
-            stdout: (data: Buffer) => {
-                output += data.toString();
-            },
+    await gitCommitPort.execute("git", ["status", "--porcelain"], {
+        stdout: (data: Buffer) => {
+            output += data.toString();
         },
     });
     return parsePorcelainWorkspacePaths(output);
 }
 
-export async function hasWorkspaceChanges(): Promise<boolean> {
-    return (await listWorkspacePaths()).length > 0;
+export async function hasWorkspaceChanges(gitCommitPort: GitCommitPort): Promise<boolean> {
+    return (await listWorkspacePaths(gitCommitPort)).length > 0;
 }

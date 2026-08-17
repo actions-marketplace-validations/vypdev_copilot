@@ -30,7 +30,7 @@ export async function runCommitAndPushWorkflow(
         return { success: false, committed: false, error: 'No branch to commit to.' };
     }
 
-    if (options.branchOverride && !(await checkoutBranch(options.branch))) {
+    if (options.branchOverride && !(await checkoutBranch(options.branch, gitCommitPort))) {
         return {
             success: false,
             committed: false,
@@ -55,7 +55,7 @@ export async function runCommitAndPushWorkflow(
         }
     }
 
-    if (!(await hasWorkspaceChanges())) {
+    if (!(await hasWorkspaceChanges(gitCommitPort))) {
         logDebugInfo(options.noChangesMessage);
         return { success: true, committed: false };
     }

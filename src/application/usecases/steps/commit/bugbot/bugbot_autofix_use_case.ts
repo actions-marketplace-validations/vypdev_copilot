@@ -2,6 +2,7 @@ import { isAgentConfigurationReady } from "../../../../../data/model/agent";
 import type { Execution } from "../../../../../data/model/execution";
 import type { FixerQueryPort } from "../../../../../data/repository/agent_ports";
 import type { BugbotContextPorts } from "../../../../../application/ports/bugbot_ports";
+import type { GitCommitPort } from "../../../../../application/ports/git_ports";
 import { logDebugInfo, logError, logInfo } from "../../../../../utils/logger";
 import { getTaskEmoji } from "../../../../../utils/task_emoji";
 import { ParamUseCase } from "../../../base/param_usecase";
@@ -34,6 +35,7 @@ export class BugbotAutofixUseCase implements ParamUseCase<BugbotAutofixParam, Re
     constructor(
         private readonly aiRepository: FixerQueryPort,
         private readonly contextPorts: BugbotContextPorts,
+        private readonly gitCommitPort: GitCommitPort,
     ) {}
 
     async invoke(param: BugbotAutofixParam): Promise<Result[]> {
@@ -60,7 +62,7 @@ export class BugbotAutofixUseCase implements ParamUseCase<BugbotAutofixParam, Re
 
         let workspacePathsBefore: string[];
         try {
-            workspacePathsBefore = await listWorkspacePaths();
+            workspacePathsBefore = await listWorkspacePaths(this.gitCommitPort);
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
             logError(`Bugbot autofix: unable to inspect workspace before OpenCode: ${message}`);
@@ -122,7 +124,7 @@ export class BugbotAutofixUseCase implements ParamUseCase<BugbotAutofixParam, Re
 
         let workspacePathsAfter: string[];
         try {
-            workspacePathsAfter = await listWorkspacePaths();
+            workspacePathsAfter = await listWorkspacePaths(this.gitCommitPort);
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
             logError(`Bugbot autofix: unable to inspect workspace after OpenCode: ${message}`);

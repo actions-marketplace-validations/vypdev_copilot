@@ -3,6 +3,7 @@
  */
 
 import { BugbotAutofixUseCase } from "../bugbot_autofix_use_case";
+import { GitCommitAdapter } from "../../../../../../infrastructure/git_commit_adapter";
 import type { BugbotContext } from "../types";
 
 const mockExec = jest.fn();
@@ -87,6 +88,7 @@ describe("BugbotAutofixUseCase", () => {
                     getFilesWithFirstDiffLine: jest.fn(),
                 },
             },
+            new GitCommitAdapter(),
         );
         mockLoadBugbotContext.mockReset();
         mockCopilotMessage.mockReset();
