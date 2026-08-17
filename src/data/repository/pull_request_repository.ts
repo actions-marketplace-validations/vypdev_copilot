@@ -1,11 +1,11 @@
 import { PullRequestLifecycleRepository } from "./pull_request/pull_request_lifecycle_repository";
 import { PullRequestChangesRepository } from "./pull_request/pull_request_changes_repository";
 import { PullRequestReviewRepository } from "./pull_request/pull_request_review_repository";
-import type { GithubClientPort, GithubGraphqlClient, GithubPullRequestChangesClient, GithubPullRequestReviewClient } from "./github/github_client_port";
+import type { GithubClientPort, GithubGraphqlClient, GithubPullRequestChangesClient, GithubPullRequestLifecycleClient, GithubPullRequestReviewClient } from "./github/github_client_port";
 
 export class PullRequestRepository {
 
-    private readonly lifecycleRepository = new PullRequestLifecycleRepository();
+    private readonly lifecycleRepository: PullRequestLifecycleRepository;
     private readonly changesRepository: PullRequestChangesRepository;
     private readonly reviewRepository: PullRequestReviewRepository;
 
@@ -13,16 +13,18 @@ export class PullRequestRepository {
         githubClient: GithubClientPort<GithubPullRequestChangesClient>,
         graphqlClient: GithubClientPort<GithubGraphqlClient>,
         reviewClient: GithubClientPort<GithubPullRequestReviewClient>,
+        lifecycleClient: GithubClientPort<GithubPullRequestLifecycleClient>,
     ) {
+        this.lifecycleRepository = new PullRequestLifecycleRepository(lifecycleClient);
         this.changesRepository = new PullRequestChangesRepository(githubClient);
         this.reviewRepository = new PullRequestReviewRepository(reviewClient, graphqlClient);
     }
 
-    getOpenPullRequestNumbersByHeadBranch = this.lifecycleRepository.getOpenPullRequestNumbersByHeadBranch;
-    getHeadBranchForIssue = this.lifecycleRepository.getHeadBranchForIssue;
-    isLinked = this.lifecycleRepository.isLinked;
-    updateBaseBranch = this.lifecycleRepository.updateBaseBranch;
-    updateDescription = this.lifecycleRepository.updateDescription;
+    getOpenPullRequestNumbersByHeadBranch = (...args: Parameters<PullRequestLifecycleRepository["getOpenPullRequestNumbersByHeadBranch"]>) => this.lifecycleRepository.getOpenPullRequestNumbersByHeadBranch(...args);
+    getHeadBranchForIssue = (...args: Parameters<PullRequestLifecycleRepository["getHeadBranchForIssue"]>) => this.lifecycleRepository.getHeadBranchForIssue(...args);
+    isLinked = (...args: Parameters<PullRequestLifecycleRepository["isLinked"]>) => this.lifecycleRepository.isLinked(...args);
+    updateBaseBranch = (...args: Parameters<PullRequestLifecycleRepository["updateBaseBranch"]>) => this.lifecycleRepository.updateBaseBranch(...args);
+    updateDescription = (...args: Parameters<PullRequestLifecycleRepository["updateDescription"]>) => this.lifecycleRepository.updateDescription(...args);
 
     getChangedFiles = (...args: Parameters<PullRequestChangesRepository["getChangedFiles"]>) => this.changesRepository.getChangedFiles(...args);
     getFilesWithFirstDiffLine = (...args: Parameters<PullRequestChangesRepository["getFilesWithFirstDiffLine"]>) => this.changesRepository.getFilesWithFirstDiffLine(...args);

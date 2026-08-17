@@ -104,3 +104,18 @@ export interface GithubReviewComment {
     line?: number;
     node_id?: string;
 }
+
+export interface GithubPullRequestLifecycleClient {
+    rest: {
+        pulls: {
+            list(parameters: Record<string, unknown>): Promise<{ data: GithubPullRequestSummary[] }>;
+            update(parameters: Record<string, unknown>): Promise<unknown>;
+        };
+    };
+}
+
+export interface GithubPullRequestSummary {
+    number: number;
+    body?: string | null;
+    head?: { ref?: string | null };
+}
