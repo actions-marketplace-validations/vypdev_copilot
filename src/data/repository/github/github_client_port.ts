@@ -163,3 +163,12 @@ export interface GithubIssueMetadataClient {
         };
     };
 }
+
+export interface GithubIssueLabelsClient {
+    rest: {
+        issues: {
+            listLabelsOnIssue(parameters: Record<string, unknown>): Promise<{ data: Array<{ name: string }> }>;
+            setLabels(parameters: Record<string, unknown>): Promise<unknown>;
+        };
+    };
+}

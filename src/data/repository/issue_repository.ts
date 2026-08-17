@@ -18,8 +18,8 @@ export { PROGRESS_LABEL_PATTERN } from './progress_labels';
 export class IssueRepository {
     private readonly issueContentRepository: IssueContentRepository;
     private readonly issueMetadataRepository: IssueMetadataRepository;
-    private readonly issueLabelRepository = new IssueLabelRepository();
-    private readonly issueProgressLabelRepository = new IssueProgressLabelRepository(this.issueLabelRepository);
+    private readonly issueLabelRepository: IssueLabelRepository;
+    private readonly issueProgressLabelRepository: IssueProgressLabelRepository;
     private readonly issueLabelProvisioningRepository = new IssueLabelProvisioningRepository();
     private readonly issueTypeRepository = new IssueTypeRepository();
     private readonly issueTypeAssignmentRepository = new IssueTypeAssignmentRepository(
@@ -31,10 +31,13 @@ export class IssueRepository {
     constructor(
         issueContentRepository: IssueContentRepository,
         issueMetadataRepository: IssueMetadataRepository,
+        issueLabelRepository: IssueLabelRepository,
         issueLifecycleRepository: IssueLifecycleRepository,
     ) {
         this.issueContentRepository = issueContentRepository;
         this.issueMetadataRepository = issueMetadataRepository;
+        this.issueLabelRepository = issueLabelRepository;
+        this.issueProgressLabelRepository = new IssueProgressLabelRepository(issueLabelRepository);
         this.issueLifecycleRepository = issueLifecycleRepository;
     }
 
@@ -162,9 +165,9 @@ export class IssueRepository {
 
     getTitle = (...args: Parameters<IssueMetadataRepository["getTitle"]>) => this.issueMetadataRepository.getTitle(...args);
 
-    getLabels = this.issueLabelRepository.getLabels;
+    getLabels = (...args: Parameters<IssueLabelRepository["getLabels"]>) => this.issueLabelRepository.getLabels(...args);
 
-    setLabels = this.issueLabelRepository.setLabels;
+    setLabels = (...args: Parameters<IssueLabelRepository["setLabels"]>) => this.issueLabelRepository.setLabels(...args);
 
     ensureProgressLabels = (
         owner: string,
@@ -174,10 +177,10 @@ export class IssueRepository {
         owner,
         repository,
         token,
-        this.ensureLabel,
+        (...args: Parameters<IssueRepository["ensureLabel"]>) => this.ensureLabel(...args),
     );
 
-    setProgressLabel = this.issueProgressLabelRepository.setProgressLabel;
+    setProgressLabel = (...args: Parameters<IssueProgressLabelRepository["setProgressLabel"]>) => this.issueProgressLabelRepository.setProgressLabel(...args);
 
     isIssue = (...args: Parameters<IssueMetadataRepository["isIssue"]>) => this.issueMetadataRepository.isIssue(...args);
 

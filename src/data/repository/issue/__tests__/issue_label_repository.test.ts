@@ -1,4 +1,5 @@
 import { IssueLabelRepository } from '../issue_label_repository';
+import { OctokitIssueLabelsClientAdapter } from '../../../../infrastructure/github/octokit_client';
 
 const mockList = jest.fn();
 const mockSet = jest.fn();
@@ -7,7 +8,7 @@ jest.mock('@actions/github', () => ({
 }));
 
 describe('IssueLabelRepository', () => {
-    const repository = new IssueLabelRepository();
+    const repository = new IssueLabelRepository(new OctokitIssueLabelsClientAdapter());
     beforeEach(() => jest.clearAllMocks());
 
     it('reads label names and handles not found', async () => {

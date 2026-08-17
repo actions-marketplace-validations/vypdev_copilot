@@ -16,7 +16,7 @@ import { PullRequestReviewRepository } from "../../data/repository/pull_request/
 import { PullRequestReviewThreadRepository } from "../../data/repository/pull_request/pull_request_review_thread_repository";
 import { PullRequestRepository } from "../../data/repository/pull_request_repository";
 import { RepositoryReleaseRepository } from "../../data/repository/release/repository_release_repository";
-import { OctokitClientAdapter, OctokitGraphqlClientAdapter, OctokitIssueContentClientAdapter, OctokitIssueLifecycleClientAdapter, OctokitIssueMetadataClientAdapter, OctokitOrganizationClientAdapter, OctokitPullRequestChangesClientAdapter, OctokitPullRequestLifecycleClientAdapter, OctokitPullRequestReviewClientAdapter, OctokitWorkflowClientAdapter } from "../github/octokit_client";
+import { OctokitClientAdapter, OctokitGraphqlClientAdapter, OctokitIssueContentClientAdapter, OctokitIssueLabelsClientAdapter, OctokitIssueLifecycleClientAdapter, OctokitIssueMetadataClientAdapter, OctokitOrganizationClientAdapter, OctokitPullRequestChangesClientAdapter, OctokitPullRequestLifecycleClientAdapter, OctokitPullRequestReviewClientAdapter, OctokitWorkflowClientAdapter } from "../github/octokit_client";
 import { IssueUseCase } from "../../application/usecases/issue_use_case";
 import { PullRequestUseCase } from "../../application/usecases/pull_request_use_case";
 import { InitialSetupUseCase } from "../../application/usecases/actions/initial_setup_use_case";
@@ -108,12 +108,12 @@ export class RepositoryFactory {
     }
 
     createIssueRepository(): IssueRepository {
-        return new IssueRepository(this.createIssueContentRepository(), this.createIssueMetadataRepository(), this.createIssueLifecycleRepository());
+        return new IssueRepository(this.createIssueContentRepository(), this.createIssueMetadataRepository(), this.createIssueLabelRepository(), this.createIssueLifecycleRepository());
     }
 
     createIssueAssignmentRepository(): IssueAssignmentRepository { return new IssueAssignmentRepository(); }
     createIssueContentRepository(): IssueContentRepository { return new IssueContentRepository(new OctokitIssueContentClientAdapter()); }
-    createIssueLabelRepository(): IssueLabelRepository { return new IssueLabelRepository(); }
+    createIssueLabelRepository(): IssueLabelRepository { return new IssueLabelRepository(new OctokitIssueLabelsClientAdapter()); }
     createIssueLabelProvisioningRepository(): IssueLabelProvisioningRepository { return new IssueLabelProvisioningRepository(); }
     createIssueMetadataRepository(): IssueMetadataRepository { return new IssueMetadataRepository(new OctokitIssueMetadataClientAdapter(), new OctokitGraphqlClientAdapter()); }
     createIssueLifecycleRepository(): IssueLifecycleRepository { return new IssueLifecycleRepository(new OctokitIssueLifecycleClientAdapter()); }
