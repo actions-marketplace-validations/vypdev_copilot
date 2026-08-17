@@ -5,7 +5,9 @@ import { CommitUseCase } from '../application/usecases/commit_use_case';
 import { NotifyNewCommitOnIssueUseCase } from '../application/usecases/steps/commit/notify_new_commit_on_issue_use_case';
 import { CheckChangesIssueSizeUseCase } from '../application/usecases/steps/commit/check_changes_issue_size_use_case';
 import { DetectPotentialProblemsUseCase } from '../application/usecases/steps/commit/detect_potential_problems_use_case';
+import { BugbotAutofixUseCase } from '../application/usecases/steps/commit/bugbot/bugbot_autofix_use_case';
 import { DetectBugbotFixIntentUseCase } from '../application/usecases/steps/commit/bugbot/detect_bugbot_fix_intent_use_case';
+import { DoUserRequestUseCase } from '../application/usecases/steps/commit/user_request_use_case';
 import { ProjectBoardCommandPort } from '../application/ports/project_board_ports';
 import { RepositoryFactory } from '../infrastructure/composition/repository_factory';
 import { IssueCommentUseCase } from '../application/usecases/issue_comment_use_case';
@@ -40,13 +42,19 @@ function createDetectPotentialProblemsUseCase(factory: RepositoryFactory): Detec
     );
 }
 
+function createBugbotContextPorts(factory: RepositoryFactory) {
+    return {
+        issue: factory.createIssueRepository(),
+        pullRequest: factory.createPullRequestRepository(),
+    };
+}
+
 function createDetectBugbotFixIntentUseCase(factory: RepositoryFactory): DetectBugbotFixIntentUseCase {
-    const issueRepository = factory.createIssueRepository();
-    const pullRequestRepository = factory.createPullRequestRepository();
+    const contextPorts = createBugbotContextPorts(factory);
     return new DetectBugbotFixIntentUseCase(
-        pullRequestRepository,
+        contextPorts.pullRequest,
         new DefaultAgentRepositoryFactory().createFindings(),
-        { issue: issueRepository, pullRequest: pullRequestRepository },
+        contextPorts,
     );
 }
 
@@ -160,6 +168,8 @@ export async function mainRun(
                         new DefaultAgentRepositoryFactory().createFindings(),
                     ),
                     createDetectBugbotFixIntentUseCase(commentFactory),
+                    new BugbotAutofixUseCase(new DefaultAgentRepositoryFactory().createFixer(), createBugbotContextPorts(commentFactory)),
+                    new DoUserRequestUseCase(new DefaultAgentRepositoryFactory().createFixer()),
                     commentFactory.createIssueRepository(),
                     commentFactory.createOrganizationRepository(),
                     commentFactory.createIssueRepository(),
@@ -185,6 +195,8 @@ export async function mainRun(
                         new DefaultAgentRepositoryFactory().createFindings(),
                     ),
                     createDetectBugbotFixIntentUseCase(reviewCommentFactory),
+                    new BugbotAutofixUseCase(new DefaultAgentRepositoryFactory().createFixer(), createBugbotContextPorts(reviewCommentFactory)),
+                    new DoUserRequestUseCase(new DefaultAgentRepositoryFactory().createFixer()),
                     reviewCommentFactory.createIssueRepository(),
                     reviewCommentFactory.createOrganizationRepository(),
                     reviewCommentFactory.createIssueRepository(),

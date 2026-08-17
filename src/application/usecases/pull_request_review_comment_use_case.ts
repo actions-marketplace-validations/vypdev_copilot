@@ -2,6 +2,8 @@ import { Execution } from "../../data/model/execution";
 import { Result } from "../../data/model/result";
 import { ParamUseCase } from "./base/param_usecase";
 import { runCommentAutomation } from "./comment_automation_use_case";
+import type { BugbotAutofixParam } from "./steps/commit/bugbot/bugbot_autofix_use_case";
+import type { DoUserRequestParam } from "./steps/commit/user_request_use_case";
 import type { IssueCommentUpdatePort, IssueDescriptionQueryPort, IssueNotificationPort } from "../ports/issue_ports";
 import type { AuthenticatedUserPort, ActorAuthorizationPort } from "../ports/organization_ports";
 import type { BugbotWritePorts } from "../ports/bugbot_ports";
@@ -12,6 +14,8 @@ export class PullRequestReviewCommentUseCase implements ParamUseCase<Execution, 
     constructor(
         private readonly languageUseCase: ParamUseCase<Execution, Result[]>,
         private readonly intentUseCase: ParamUseCase<Execution, Result[]>,
+        private readonly autofixUseCase: ParamUseCase<BugbotAutofixParam, Result[]>,
+        private readonly doUserRequestUseCase: ParamUseCase<DoUserRequestParam, Result[]>,
         private readonly issueCommentUpdatePort: IssueCommentUpdatePort,
         private readonly actorAuthorizationPort: ActorAuthorizationPort,
         private readonly issueDescriptionQueryPort: IssueDescriptionQueryPort,
@@ -24,6 +28,8 @@ export class PullRequestReviewCommentUseCase implements ParamUseCase<Execution, 
             taskId: this.taskId,
             languageUseCase: this.languageUseCase,
             intentUseCase: this.intentUseCase,
+            autofixUseCase: this.autofixUseCase,
+            doUserRequestUseCase: this.doUserRequestUseCase,
             userComment: param.pullRequest.commentBody ?? "",
         }, this.actorAuthorizationPort, this.issueDescriptionQueryPort, this.issueNotificationPort, this.authenticatedUserPort, this.bugbotWritePorts);
     }

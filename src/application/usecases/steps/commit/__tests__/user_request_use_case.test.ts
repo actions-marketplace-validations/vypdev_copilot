@@ -43,7 +43,7 @@ describe("DoUserRequestUseCase", () => {
     let useCase: DoUserRequestUseCase;
 
     beforeEach(() => {
-        useCase = new DoUserRequestUseCase();
+        useCase = new DoUserRequestUseCase({ copilotMessage: mockCopilotMessage });
         mockCopilotMessage.mockReset();
     });
 

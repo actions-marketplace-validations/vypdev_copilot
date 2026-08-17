@@ -3,7 +3,7 @@ import { Result } from "../../data/model/result";
 import { logInfo } from "../../utils/logger";
 import { ThinkUseCase } from "./steps/common/think_use_case";
 import { ParamUseCase } from "./base/param_usecase";
-import { BugbotAutofixUseCase } from "./steps/commit/bugbot/bugbot_autofix_use_case";
+import type { BugbotAutofixParam } from "./steps/commit/bugbot/bugbot_autofix_use_case";
 import { runBugbotAutofixCommitAndPush, runUserRequestCommitAndPush } from "./steps/commit/bugbot/bugbot_autofix_commit";
 import { markFindingsResolved } from "./steps/commit/bugbot/mark_findings_resolved_use_case";
 import { sanitizeFindingIdForMarker } from "./steps/commit/bugbot/marker";
@@ -12,7 +12,7 @@ import {
     canRunBugbotAutofix,
     canRunDoUserRequest,
 } from "./steps/commit/bugbot/bugbot_fix_intent_payload";
-import { DoUserRequestUseCase } from "./steps/commit/user_request_use_case";
+import type { DoUserRequestParam } from "./steps/commit/user_request_use_case";
 import type { AuthenticatedUserPort, ActorAuthorizationPort } from "../ports/organization_ports";
 import type { BugbotWritePorts } from "../ports/bugbot_ports";
 import type { IssueDescriptionQueryPort, IssueNotificationPort } from "../ports/issue_ports";
@@ -21,6 +21,8 @@ export interface CommentAutomationOptions {
     taskId: string;
     languageUseCase: ParamUseCase<Execution, Result[]>;
     intentUseCase: ParamUseCase<Execution, Result[]>;
+    autofixUseCase: ParamUseCase<BugbotAutofixParam, Result[]>;
+    doUserRequestUseCase: ParamUseCase<DoUserRequestParam, Result[]>;
     userComment: string;
 }
 
@@ -64,7 +66,7 @@ export async function runCommentAutomation(
     if (runAutofix && intentPayload && allowedToModifyFiles) {
         const payload = intentPayload;
         logInfo("Running bugbot autofix.");
-        const autofixResults = await new BugbotAutofixUseCase().invoke({
+        const autofixResults = await options.autofixUseCase.invoke({
             execution: param,
             targetFindingIds: payload.targetFindingIds,
             userComment: options.userComment,
@@ -76,7 +78,7 @@ export async function runCommentAutomation(
     } else if (!runAutofix && canRunDoUserRequest(intentPayload) && allowedToModifyFiles) {
         const payload = intentPayload!;
         logInfo("Running do user request.");
-        const doResults = await new DoUserRequestUseCase().invoke({
+        const doResults = await options.doUserRequestUseCase.invoke({
             execution: param,
             userComment: options.userComment,
             branchOverride: payload.branchOverride,

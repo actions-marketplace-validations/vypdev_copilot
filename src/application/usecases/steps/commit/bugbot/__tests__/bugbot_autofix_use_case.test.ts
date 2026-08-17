@@ -73,7 +73,21 @@ describe("BugbotAutofixUseCase", () => {
     let useCase: BugbotAutofixUseCase;
 
     beforeEach(() => {
-        useCase = new BugbotAutofixUseCase();
+        useCase = new BugbotAutofixUseCase(
+            { copilotMessage: mockCopilotMessage },
+            {
+                issue: { listIssueComments: jest.fn() },
+                pullRequest: {
+                    getHeadBranchForIssue: jest.fn(),
+                    getPullRequestReviewCommentBody: jest.fn(),
+                    getOpenPullRequestNumbersByHeadBranch: jest.fn(),
+                    listPullRequestReviewComments: jest.fn(),
+                    getPullRequestHeadSha: jest.fn(),
+                    getChangedFiles: jest.fn(),
+                    getFilesWithFirstDiffLine: jest.fn(),
+                },
+            },
+        );
         mockLoadBugbotContext.mockReset();
         mockCopilotMessage.mockReset();
         workspaceInspectionCount = 0;

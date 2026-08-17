@@ -1,7 +1,7 @@
 import { isAgentConfigurationReady } from "../../../../../data/model/agent";
 import type { Execution } from "../../../../../data/model/execution";
 import type { FixerQueryPort } from "../../../../../data/repository/agent_ports";
-import { DefaultAgentRepositoryFactory } from "../../../../../data/repository/agent_repository_factory";
+import type { BugbotContextPorts } from "../../../../../application/ports/bugbot_ports";
 import { logDebugInfo, logError, logInfo } from "../../../../../utils/logger";
 import { getTaskEmoji } from "../../../../../utils/task_emoji";
 import { ParamUseCase } from "../../../base/param_usecase";
@@ -10,7 +10,6 @@ import type { BugbotContext } from "./types";
 import { buildBugbotFixPrompt } from "./build_bugbot_fix_prompt";
 import { loadBugbotContext } from "./load_bugbot_context_use_case";
 import { listWorkspacePaths, isSensitiveWorkspacePath, selectWorkspacePathsToCommit } from "./workspace_changes";
-import { RepositoryFactory } from "../../../../../infrastructure/composition/repository_factory";
 
 const TASK_ID = "BugbotAutofixUseCase";
 
@@ -32,11 +31,10 @@ export interface BugbotAutofixParam {
 export class BugbotAutofixUseCase implements ParamUseCase<BugbotAutofixParam, Result[]> {
     taskId: string = TASK_ID;
 
-    private aiRepository: FixerQueryPort;
-
-    constructor(aiRepository: FixerQueryPort = new DefaultAgentRepositoryFactory().createFixer()) {
-        this.aiRepository = aiRepository;
-    }
+    constructor(
+        private readonly aiRepository: FixerQueryPort,
+        private readonly contextPorts: BugbotContextPorts,
+    ) {}
 
     async invoke(param: BugbotAutofixParam): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`);
@@ -54,11 +52,10 @@ export class BugbotAutofixUseCase implements ParamUseCase<BugbotAutofixParam, Re
             return results;
         }
 
-        const repositoryFactory = new RepositoryFactory();
         const context = providedContext ?? (await loadBugbotContext(
             execution,
             branchOverride ? { branchOverride } : undefined,
-            { issue: repositoryFactory.createIssueRepository(), pullRequest: repositoryFactory.createPullRequestRepository() },
+            this.contextPorts,
         ));
 
         let workspacePathsBefore: string[];

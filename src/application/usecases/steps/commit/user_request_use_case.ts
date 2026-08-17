@@ -7,7 +7,6 @@
 import { isAgentConfigurationReady } from "../../../../data/model/agent";
 import type { Execution } from "../../../../data/model/execution";
 import type { FixerQueryPort } from "../../../../data/repository/agent_ports";
-import { DefaultAgentRepositoryFactory } from "../../../../data/repository/agent_repository_factory";
 import { getUserRequestPrompt } from "../../../../prompts";
 import { logDebugInfo, logError, logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
@@ -27,11 +26,7 @@ export interface DoUserRequestParam {
 export class DoUserRequestUseCase implements ParamUseCase<DoUserRequestParam, Result[]> {
     taskId: string = TASK_ID;
 
-    private aiRepository: FixerQueryPort;
-
-    constructor(aiRepository: FixerQueryPort = new DefaultAgentRepositoryFactory().createFixer()) {
-        this.aiRepository = aiRepository;
-    }
+    constructor(private readonly aiRepository: FixerQueryPort) {}
 
     async invoke(param: DoUserRequestParam): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`);
