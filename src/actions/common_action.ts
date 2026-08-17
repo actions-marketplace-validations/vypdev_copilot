@@ -5,6 +5,7 @@ import { CommitUseCase } from '../application/usecases/commit_use_case';
 import { ProjectBoardCommandPort } from '../application/ports/project_board_ports';
 import { RepositoryFactory } from '../infrastructure/composition/repository_factory';
 import { IssueCommentUseCase } from '../application/usecases/issue_comment_use_case';
+import { CheckIssueCommentLanguageUseCase } from '../application/usecases/steps/issue_comment/check_issue_comment_language_use_case';
 import { PullRequestReviewCommentUseCase } from '../application/usecases/pull_request_review_comment_use_case';
 import { SingleActionUseCase } from '../application/usecases/single_action_use_case';
 import { clearAccumulatedLogs, logDebugInfo, logError, logInfo } from '../utils/logger';
@@ -126,6 +127,7 @@ export async function mainRun(
                 logInfo(`Running IssueCommentUseCase for issue #${execution.issue.number}.`);
                 const commentFactory = new RepositoryFactory();
                 results.push(...await new IssueCommentUseCase(
+                    new CheckIssueCommentLanguageUseCase(commentFactory.createIssueRepository()),
                     commentFactory.createIssueRepository(),
                     commentFactory.createOrganizationRepository(),
                     commentFactory.createIssueRepository(),
