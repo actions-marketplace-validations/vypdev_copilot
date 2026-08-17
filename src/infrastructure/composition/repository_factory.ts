@@ -16,10 +16,11 @@ import { PullRequestReviewRepository } from "../../data/repository/pull_request/
 import { PullRequestReviewThreadRepository } from "../../data/repository/pull_request/pull_request_review_thread_repository";
 import { PullRequestRepository } from "../../data/repository/pull_request_repository";
 import { RepositoryReleaseRepository } from "../../data/repository/release/repository_release_repository";
-import { OctokitBranchClientAdapter, OctokitBranchComparisonClientAdapter, OctokitClientAdapter, OctokitGraphqlClientAdapter, OctokitIssueAssignmentClientAdapter, OctokitIssueContentClientAdapter, OctokitIssueLabelProvisioningClientAdapter, OctokitIssueLabelsClientAdapter, OctokitIssueLifecycleClientAdapter, OctokitIssueMetadataClientAdapter, OctokitIssueTitleClientAdapter, OctokitOrganizationClientAdapter, OctokitPullRequestChangesClientAdapter, OctokitPullRequestLifecycleClientAdapter, OctokitPullRequestReviewClientAdapter, OctokitWorkflowClientAdapter } from "../github/octokit_client";
+import { OctokitBranchClientAdapter, OctokitBranchMergeClientAdapter, OctokitBranchComparisonClientAdapter, OctokitClientAdapter, OctokitGraphqlClientAdapter, OctokitIssueAssignmentClientAdapter, OctokitIssueContentClientAdapter, OctokitIssueLabelProvisioningClientAdapter, OctokitIssueLabelsClientAdapter, OctokitIssueLifecycleClientAdapter, OctokitIssueMetadataClientAdapter, OctokitIssueTitleClientAdapter, OctokitOrganizationClientAdapter, OctokitPullRequestChangesClientAdapter, OctokitPullRequestLifecycleClientAdapter, OctokitPullRequestReviewClientAdapter, OctokitWorkflowClientAdapter } from "../github/octokit_client";
 import { IssueUseCase } from "../../application/usecases/issue_use_case";
 import { PullRequestUseCase } from "../../application/usecases/pull_request_use_case";
 import { InitialSetupUseCase } from "../../application/usecases/actions/initial_setup_use_case";
+import { MergeRepository } from "../../data/repository/merge_repository";
 import { BranchCompareRepository } from "../../data/repository/branch_compare_repository";
 import { BranchRepository } from "../../data/repository/branch_repository";
 import { CheckProgressUseCase } from "../../application/usecases/actions/check_progress_use_case";
@@ -45,7 +46,7 @@ export class RepositoryFactory {
         return new OctokitPullRequestLifecycleClientAdapter();
     }
     createBranchRepository(): BranchRepository {
-        return new BranchRepository(this.createWorkflowRepository(), new OctokitBranchClientAdapter(), new OctokitGraphqlClientAdapter(), new BranchCompareRepository(new OctokitBranchComparisonClientAdapter()));
+        return new BranchRepository(this.createWorkflowRepository(), new OctokitBranchClientAdapter(), new OctokitGraphqlClientAdapter(), new BranchCompareRepository(new OctokitBranchComparisonClientAdapter()), new MergeRepository(new OctokitBranchMergeClientAdapter()));
     }
     createWorkflowRepository(): WorkflowRepository {
         return new WorkflowRepository(new OctokitWorkflowClientAdapter());

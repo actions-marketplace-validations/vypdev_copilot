@@ -24,6 +24,24 @@ export interface GithubBranchClient {
     };
 }
 
+export interface GithubBranchMergeClient {
+    rest: {
+        pulls: {
+            create(parameters: Record<string, unknown>): Promise<{ data: { number: number } }>;
+            listCommits(parameters: Record<string, unknown>): Promise<{ data: Array<{ commit: { message: string } }> }>;
+            update(parameters: Record<string, unknown>): Promise<unknown>;
+            merge(parameters: Record<string, unknown>): Promise<{ data: { merged: boolean } }>;
+        };
+        checks: {
+            listForRef(parameters: Record<string, unknown>): Promise<{ data: { check_runs: Array<{ status: string; conclusion: string | null; name: string; pull_requests?: Array<{ number: number }> }> } }>;
+        };
+        repos: {
+            getCombinedStatusForRef(parameters: Record<string, unknown>): Promise<{ data: { state: string; statuses: Array<{ context: string; state: string }> } }>;
+            merge(parameters: Record<string, unknown>): Promise<unknown>;
+        };
+    };
+}
+
 export interface GithubClientPort<Client> {
     getClient(token: string): Client;
 }

@@ -28,12 +28,12 @@ export class BranchRepository {
         branchClient: GithubClientPort<GithubBranchClient>,
         graphqlClient: GithubClientPort<GithubGraphqlClient>,
         branchCompareRepository: BranchCompareRepository,
+        private readonly mergeRepository: MergeRepository,
     ) {
         this.branchClient = branchClient;
         this.graphqlClient = graphqlClient;
         this.branchCompareRepository = branchCompareRepository;
     }
-    private readonly mergeRepository = new MergeRepository();
 
     fetchRemoteBranches = async (): Promise<void> => {
         return this.gitCliRepository.fetchRemoteBranches();

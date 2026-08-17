@@ -2,10 +2,11 @@
  * Unit tests for createLinkedBranch: GraphQL ref escaping so branch names with " or \ do not break the query.
  */
 
+import { MergeRepository } from "../merge_repository";
 import { BranchCompareRepository } from "../branch_compare_repository";
 import { BranchRepository } from "../branch_repository";
 import { WorkflowRepository } from "../workflow_repository";
-import { OctokitBranchClientAdapter, OctokitBranchComparisonClientAdapter, OctokitGraphqlClientAdapter, OctokitWorkflowClientAdapter } from "../../../infrastructure/github/octokit_client";
+import { OctokitBranchClientAdapter, OctokitBranchComparisonClientAdapter, OctokitBranchMergeClientAdapter, OctokitGraphqlClientAdapter, OctokitWorkflowClientAdapter } from "../../../infrastructure/github/octokit_client";
 
 jest.mock("../../../utils/logger", () => ({
     logDebugInfo: jest.fn(),
@@ -20,7 +21,7 @@ jest.mock("@actions/github", () => ({
 }));
 
 describe("BranchRepository", () => {
-    const repo = new BranchRepository(new WorkflowRepository(new OctokitWorkflowClientAdapter()), new OctokitBranchClientAdapter(), new OctokitGraphqlClientAdapter(), new BranchCompareRepository(new OctokitBranchComparisonClientAdapter()));
+    const repo = new BranchRepository(new WorkflowRepository(new OctokitWorkflowClientAdapter()), new OctokitBranchClientAdapter(), new OctokitGraphqlClientAdapter(), new BranchCompareRepository(new OctokitBranchComparisonClientAdapter()), new MergeRepository(new OctokitBranchMergeClientAdapter()));
 
     describe("formatBranchName", () => {
         it("lowercases and replaces spaces with single dash", () => {
@@ -39,7 +40,7 @@ describe("BranchRepository", () => {
 });
 
 describe("createLinkedBranch", () => {
-    const repo = new BranchRepository(new WorkflowRepository(new OctokitWorkflowClientAdapter()), new OctokitBranchClientAdapter(), new OctokitGraphqlClientAdapter(), new BranchCompareRepository(new OctokitBranchComparisonClientAdapter()));
+    const repo = new BranchRepository(new WorkflowRepository(new OctokitWorkflowClientAdapter()), new OctokitBranchClientAdapter(), new OctokitGraphqlClientAdapter(), new BranchCompareRepository(new OctokitBranchComparisonClientAdapter()), new MergeRepository(new OctokitBranchMergeClientAdapter()));
 
     beforeEach(() => {
         mockGraphql.mockReset();
