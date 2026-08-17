@@ -3,7 +3,7 @@ import { logDebugInfo, logError, logInfo } from "../../utils/logger";
 import { hasReleaseContent, releasePayload } from "./release_content_policy";
 import { findTargetRelease, releaseIdAsString } from "./release_transition_policy";
 import { releaseName, tagReference, tagReferencePath } from "./release_tag_policy";
-import type { RepositoryReleasePort } from "./github_repository_ports";
+import type { RepositoryReleasePort } from "../../application/ports/repository_release_ports";
 
 /** Adapter for GitHub repository tags, releases, and default-branch metadata. */
 export class RepositoryReleaseRepository implements RepositoryReleasePort {

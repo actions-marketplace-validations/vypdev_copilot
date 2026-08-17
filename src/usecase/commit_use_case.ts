@@ -7,7 +7,7 @@ import { CheckProgressUseCase } from "./actions/check_progress_use_case";
 import { NotifyNewCommitOnIssueUseCase } from "./steps/commit/notify_new_commit_on_issue_use_case";
 import { CheckChangesIssueSizeUseCase } from "./steps/commit/check_changes_issue_size_use_case";
 import { DetectPotentialProblemsUseCase } from './steps/commit/detect_potential_problems_use_case';
-import { ProjectBoardCommandPort } from '../data/repository/github_repository_ports';
+import { ProjectBoardCommandPort } from '../application/ports/project_board_ports';
 
 export class CommitUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'CommitUseCase';

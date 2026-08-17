@@ -3,7 +3,7 @@ import { Execution } from '../data/model/execution';
 import { Result } from '../data/model/result';
 import { CommitUseCase } from '../usecase/commit_use_case';
 import { ProjectBoardRepository } from '../data/repository/project_board_repository';
-import { ProjectBoardCommandPort } from '../data/repository/github_repository_ports';
+import { ProjectBoardCommandPort } from '../application/ports/project_board_ports';
 import { IssueCommentUseCase } from '../usecase/issue_comment_use_case';
 import { IssueUseCase } from '../usecase/issue_use_case';
 import { PullRequestReviewCommentUseCase } from '../usecase/pull_request_review_comment_use_case';

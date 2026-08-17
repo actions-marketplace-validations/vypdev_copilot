@@ -1,5 +1,5 @@
 import type { ProjectDetail } from '../data/model/project_detail';
-import type { ProjectDetailQueryPort } from '../data/repository/github_repository_ports';
+import type { ProjectDetailQueryPort } from '../application/ports/project_board_ports';
 
 export async function loadProjectDetails(
     projectRepository: ProjectDetailQueryPort,

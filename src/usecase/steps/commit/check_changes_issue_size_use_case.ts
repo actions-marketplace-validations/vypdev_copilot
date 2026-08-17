@@ -2,7 +2,7 @@ import { Execution } from "../../../data/model/execution";
 import { Result } from "../../../data/model/result";
 import { BranchRepository } from "../../../data/repository/branch_repository";
 import { IssueRepository } from "../../../data/repository/issue_repository";
-import { ProjectBoardCommandPort } from "../../../data/repository/github_repository_ports";
+import { ProjectBoardCommandPort } from "../../../application/ports/project_board_ports";
 import { PullRequestRepository } from "../../../data/repository/pull_request_repository";
 import { logDebugInfo, logError, logInfo } from "../../../utils/logger";
 import { getTaskEmoji } from "../../../utils/task_emoji";

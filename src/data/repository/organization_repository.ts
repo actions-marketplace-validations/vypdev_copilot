@@ -2,7 +2,7 @@ import * as github from "@actions/github";
 import { logDebugInfo, logError } from "../../utils/logger";
 import { authorizationForFileModification } from "./actor_modification_policy";
 import { collectOrganizationMembers, selectAvailableMembers } from "./project_members_policy";
-import type { ActorAuthorizationPort, AuthenticatedUserPort, OrganizationMembersPort } from "./organization_ports";
+import type { ActorAuthorizationPort, AuthenticatedUserPort, OrganizationMembersPort } from "../../application/ports/organization_ports";
 
 export class OrganizationRepository implements OrganizationMembersPort, AuthenticatedUserPort, ActorAuthorizationPort {
     getRandomMembers = async (
