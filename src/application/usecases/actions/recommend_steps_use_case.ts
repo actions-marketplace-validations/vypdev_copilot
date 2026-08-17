@@ -4,7 +4,7 @@ import { Result } from '../../../data/model/result';
 import { OPENCODE_AGENT_PLAN } from '../../../data/repository/agent_task_policy';
 import type { FindingsQueryPort } from '../../../data/repository/agent_ports';
 import { DefaultAgentRepositoryFactory } from '../../../data/repository/agent_repository_factory';
-import { IssueRepository } from '../../../data/repository/issue_repository';
+import type { IssueDescriptionQueryPort } from '../../ports/issue_ports';
 import { getRecommendStepsPrompt } from '../../../prompts';
 import { logDebugInfo, logError, logInfo } from '../../../utils/logger';
 import { OPENCODE_PROJECT_CONTEXT_INSTRUCTION } from '../../../utils/opencode_project_context_instruction';
@@ -13,10 +13,13 @@ import { ParamUseCase } from '../base/param_usecase';
 
 export class RecommendStepsUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'RecommendStepsUseCase';
-    private issueRepository: IssueRepository = new IssueRepository();
+
     private aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings();
 
-    constructor(aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings()) {
+    constructor(
+        private readonly issueDescriptionQueryPort: IssueDescriptionQueryPort,
+        aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings(),
+    ) {
         this.aiRepository = aiRepository;
     }
 
@@ -51,7 +54,7 @@ export class RecommendStepsUseCase implements ParamUseCase<Execution, Result[]> 
                 return results;
             }
 
-            const issueDescription = await this.issueRepository.getDescription(
+            const issueDescription = await this.issueDescriptionQueryPort.getDescription(
                 param.owner,
                 param.repo,
                 issueNumber,

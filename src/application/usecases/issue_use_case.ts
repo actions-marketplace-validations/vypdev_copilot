@@ -19,7 +19,7 @@ import { RemoveNotNeededBranchesUseCase } from "./steps/issue/remove_not_needed_
 import { UpdateIssueTypeUseCase } from "./steps/issue/update_issue_type_use_case";
 import type { ProjectBoardPriorityPort } from "./steps/issue/priority_size_check_use_case";
 import type { OrganizationMembersPort } from "../ports/organization_ports";
-import type { IssueAssigneePort, IssueClosurePort, IssueIdentityQueryPort, IssueTitlePort, IssueTypeAssignmentPort } from "../ports/issue_ports";
+import type { IssueAssigneePort, IssueClosurePort, IssueDescriptionQueryPort, IssueIdentityQueryPort, IssueTitlePort, IssueTypeAssignmentPort } from "../ports/issue_ports";
 import type { ProjectBoardCommandPort, ProjectBoardLinkPort } from "../ports/project_board_ports";
 
 export class IssueUseCase implements ParamUseCase<Execution, Result[]> {
@@ -33,6 +33,7 @@ export class IssueUseCase implements ParamUseCase<Execution, Result[]> {
         private readonly issueAssigneePort: IssueAssigneePort,
         private readonly issueClosurePort: IssueClosurePort,
         private readonly issueTypeAssignmentPort: IssueTypeAssignmentPort,
+        private readonly issueDescriptionQueryPort: IssueDescriptionQueryPort,
     ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
@@ -108,7 +109,7 @@ export class IssueUseCase implements ParamUseCase<Execution, Result[]> {
             const isRelease = param.labels.isRelease;
             const isQuestionOrHelp = param.labels.isQuestion || param.labels.isHelp;
             if (!isRelease && !isQuestionOrHelp) {
-                results.push(...(await new RecommendStepsUseCase().invoke(param)));
+                results.push(...(await new RecommendStepsUseCase(this.issueDescriptionQueryPort).invoke(param)));
             } else if (isQuestionOrHelp) {
                 results.push(...(await new AnswerIssueHelpUseCase().invoke(param)));
             }

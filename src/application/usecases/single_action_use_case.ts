@@ -59,7 +59,7 @@ export class SingleActionUseCase implements ParamUseCase<Execution, Result[]> {
             } else if (param.singleAction.isDetectPotentialProblemsAction) {
                 results.push(...await new DetectPotentialProblemsUseCase().invoke(param));
             } else if (param.singleAction.isRecommendStepsAction) {
-                results.push(...await new RecommendStepsUseCase().invoke(param));
+                results.push(...await new RecommendStepsUseCase(this.issueDescriptionQueryPort).invoke(param));
             }
         } catch (error) {
             logError(error);
