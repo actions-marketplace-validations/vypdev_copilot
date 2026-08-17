@@ -25,8 +25,12 @@ export class RepositoryFactory {
         return new OctokitClientAdapter();
     }
 
-    createIssueUseCase(): IssueUseCase { return new IssueUseCase(); }
-    createPullRequestUseCase(): PullRequestUseCase { return new PullRequestUseCase(); }
+    createIssueUseCase(): IssueUseCase {
+        return new IssueUseCase(this.createProjectBoardRepository());
+    }
+    createPullRequestUseCase(): PullRequestUseCase {
+        return new PullRequestUseCase(this.createProjectBoardRepository());
+    }
 
     createOrganizationRepository(): OrganizationRepository {
         return new OrganizationRepository();

@@ -99,7 +99,7 @@ describe('IssueUseCase', () => {
     mockCheckPermissionsInvoke.mockResolvedValue([failResult]);
     mockCloseNotAllowedInvoke.mockResolvedValue([new Result({ id: 'close', success: true, executed: true, steps: [] })]);
 
-    const useCase = new IssueUseCase();
+    const useCase = new IssueUseCase({ setTaskPriority: jest.fn().mockResolvedValue(true) });
     const param = minimalExecution();
     const results = await useCase.invoke(param);
 
@@ -111,7 +111,7 @@ describe('IssueUseCase', () => {
   it('when cleanIssueBranches true, calls RemoveIssueBranchesUseCase', async () => {
     mockRemoveIssueBranchesInvoke.mockResolvedValue([new Result({ id: 'remove', success: true, executed: true, steps: [] })]);
 
-    const useCase = new IssueUseCase();
+    const useCase = new IssueUseCase({ setTaskPriority: jest.fn().mockResolvedValue(true) });
     const param = minimalExecution({ cleanIssueBranches: true });
     await useCase.invoke(param);
 
@@ -119,7 +119,7 @@ describe('IssueUseCase', () => {
   });
 
   it('when isBranched true, calls PrepareBranchesUseCase', async () => {
-    const useCase = new IssueUseCase();
+    const useCase = new IssueUseCase({ setTaskPriority: jest.fn().mockResolvedValue(true) });
     const param = minimalExecution({ isBranched: true });
     await useCase.invoke(param);
 
@@ -127,7 +127,7 @@ describe('IssueUseCase', () => {
   });
 
   it('when isBranched false, calls RemoveIssueBranchesUseCase (branch block)', async () => {
-    const useCase = new IssueUseCase();
+    const useCase = new IssueUseCase({ setTaskPriority: jest.fn().mockResolvedValue(true) });
     const param = minimalExecution({ isBranched: false });
     await useCase.invoke(param);
 
@@ -137,7 +137,7 @@ describe('IssueUseCase', () => {
   it('when issue opened and not release and not question/help, calls RecommendStepsUseCase', async () => {
     mockRecommendStepsInvoke.mockResolvedValue([new Result({ id: 'rec', success: true, executed: true, steps: [] })]);
 
-    const useCase = new IssueUseCase();
+    const useCase = new IssueUseCase({ setTaskPriority: jest.fn().mockResolvedValue(true) });
     const param = minimalExecution({
       issue: { opened: true },
       labels: { isRelease: false, isQuestion: false, isHelp: false },
@@ -151,7 +151,7 @@ describe('IssueUseCase', () => {
   it('when issue opened and question or help, calls AnswerIssueHelpUseCase', async () => {
     mockAnswerIssueHelpInvoke.mockResolvedValue([new Result({ id: 'help', success: true, executed: true, steps: [] })]);
 
-    const useCase = new IssueUseCase();
+    const useCase = new IssueUseCase({ setTaskPriority: jest.fn().mockResolvedValue(true) });
     const param = minimalExecution({
       issue: { opened: true },
       labels: { isRelease: false, isQuestion: true, isHelp: false },

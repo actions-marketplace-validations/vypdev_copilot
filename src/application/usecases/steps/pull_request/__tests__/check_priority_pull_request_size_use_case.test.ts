@@ -36,7 +36,7 @@ describe('CheckPriorityPullRequestSizeUseCase', () => {
   let useCase: CheckPriorityPullRequestSizeUseCase;
 
   beforeEach(() => {
-    useCase = new CheckPriorityPullRequestSizeUseCase();
+    useCase = new CheckPriorityPullRequestSizeUseCase({ setTaskPriority: mockSetTaskPriority });
     mockSetTaskPriority.mockReset();
   });
 
