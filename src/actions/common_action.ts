@@ -2,8 +2,8 @@ import * as core from '@actions/core';
 import { Execution } from '../data/model/execution';
 import { Result } from '../data/model/result';
 import { CommitUseCase } from '../application/usecases/commit_use_case';
-import { ProjectBoardRepository } from '../data/repository/project/project_board_repository';
 import { ProjectBoardCommandPort } from '../application/ports/project_board_ports';
+import { RepositoryFactory } from '../infrastructure/composition/repository_factory';
 import { IssueCommentUseCase } from '../application/usecases/issue_comment_use_case';
 import { IssueUseCase } from '../application/usecases/issue_use_case';
 import { PullRequestReviewCommentUseCase } from '../application/usecases/pull_request_review_comment_use_case';
@@ -18,7 +18,7 @@ import { resolveMainRunRoute } from './main_run_route';
 
 export async function mainRun(
     execution: Execution,
-    projectBoardCommandPort: ProjectBoardCommandPort = new ProjectBoardRepository(),
+    projectBoardCommandPort: ProjectBoardCommandPort = new RepositoryFactory().createProjectBoardRepository(),
 ): Promise<Result[]> {
     const results: Result[] = [];
 
