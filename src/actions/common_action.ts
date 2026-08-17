@@ -18,12 +18,26 @@ import { CreateReleaseUseCase } from '../application/usecases/actions/create_rel
 import { CreateTagUseCase } from '../application/usecases/actions/create_tag_use_case';
 import { ThinkUseCase } from '../application/usecases/steps/common/think_use_case';
 import { RecommendStepsUseCase } from '../application/usecases/actions/recommend_steps_use_case';
+import { DefaultAgentRepositoryFactory } from '../data/repository/agent_repository_factory';
+import type { BugbotContextPorts, BugbotWritePorts } from '../application/ports/bugbot_ports';
 import { clearAccumulatedLogs, logDebugInfo, logError, logInfo } from '../utils/logger';
 import { TITLE } from '../utils/constants';
 import chalk from 'chalk';
 import boxen from 'boxen';
 import { waitForPreviousRuns } from '../utils/queue_utils';
 import { resolveMainRunRoute } from './main_run_route';
+
+function createDetectPotentialProblemsUseCase(factory: RepositoryFactory): DetectPotentialProblemsUseCase {
+    const issueRepository = factory.createIssueRepository();
+    const pullRequestRepository = factory.createPullRequestRepository();
+    const contextPorts: BugbotContextPorts = { issue: issueRepository, pullRequest: pullRequestRepository };
+    const writePorts: BugbotWritePorts = { issueComments: issueRepository, pullRequestComments: pullRequestRepository };
+    return new DetectPotentialProblemsUseCase(
+        new DefaultAgentRepositoryFactory().createFindings(),
+        contextPorts,
+        writePorts,
+    );
+}
 
 function createSingleActionUseCase(factory: RepositoryFactory): SingleActionUseCase {
     const repositoryReleasePort = factory.createRepositoryReleaseRepository();
@@ -40,7 +54,7 @@ function createSingleActionUseCase(factory: RepositoryFactory): SingleActionUseC
         new ThinkUseCase(issueDescriptionQueryPort, factory.createIssueRepository()),
         factory.createInitialSetupUseCase(),
         factory.createCheckProgressUseCase(),
-        new DetectPotentialProblemsUseCase(),
+        createDetectPotentialProblemsUseCase(factory),
         new RecommendStepsUseCase(issueDescriptionQueryPort),
     );
 }
@@ -170,7 +184,7 @@ export async function mainRun(
                         commitFactory.createPullRequestRepository(),
                         commitFactory.createBranchRepository(),
                     ),
-                    new DetectPotentialProblemsUseCase(),
+                    createDetectPotentialProblemsUseCase(commitFactory),
                     commitFactory.createCheckProgressUseCase(),
                 ).invoke(execution));
                 break;

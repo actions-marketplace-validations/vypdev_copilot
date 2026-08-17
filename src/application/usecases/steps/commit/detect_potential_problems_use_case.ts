@@ -2,22 +2,25 @@ import { isAgentConfigurationReady } from '../../../../data/model/agent';
 import { Execution } from '../../../../data/model/execution';
 import { Result } from '../../../../data/model/result';
 import type { FindingsQueryPort } from '../../../../data/repository/agent_ports';
-import { DefaultAgentRepositoryFactory } from '../../../../data/repository/agent_repository_factory';
 import { getTaskEmoji } from '../../../../utils/task_emoji';
 import { logDebugInfo, logError, logInfo } from '../../../../utils/logger';
 import { ParamUseCase } from '../../base/param_usecase';
+import type { BugbotContextPorts, BugbotWritePorts } from '../../../ports/bugbot_ports';
 import { buildBugbotPrompt } from './bugbot/build_bugbot_prompt';
 import { loadBugbotContext } from './bugbot/load_bugbot_context_use_case';
 import { applyDetectedFindings, prepareDetectedFindings } from './bugbot/apply_detected_findings';
 import { queryBugbotFindings } from './bugbot/query_bugbot_findings';
-import { RepositoryFactory } from '../../../../infrastructure/composition/repository_factory';
 
 export type { BugbotFinding } from './bugbot/types';
 
 export class DetectPotentialProblemsUseCase implements ParamUseCase<Execution, Result[]> {
     taskId = 'DetectPotentialProblemsUseCase';
 
-    constructor(private readonly aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings()) {}
+    constructor(
+        private readonly aiRepository: FindingsQueryPort,
+        private readonly contextPorts: BugbotContextPorts,
+        private readonly writePorts: BugbotWritePorts,
+    ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`);
@@ -32,11 +35,7 @@ export class DetectPotentialProblemsUseCase implements ParamUseCase<Execution, R
                 return results;
             }
 
-            const repositoryFactory = new RepositoryFactory();
-            const context = await loadBugbotContext(param, undefined, {
-                issue: repositoryFactory.createIssueRepository(),
-                pullRequest: repositoryFactory.createPullRequestRepository(),
-            });
+            const context = await loadBugbotContext(param, undefined, this.contextPorts);
             const prompt = buildBugbotPrompt(param, context);
             logInfo('Detecting potential problems via OpenCode (agent computes changes and checks resolved)...');
             const prepared = prepareDetectedFindings(
@@ -58,10 +57,7 @@ export class DetectPotentialProblemsUseCase implements ParamUseCase<Execution, R
                 return results;
             }
 
-            await applyDetectedFindings(param, context, prepared, {
-                issueComments: repositoryFactory.createIssueRepository(),
-                pullRequestComments: repositoryFactory.createPullRequestRepository(),
-            });
+            await applyDetectedFindings(param, context, prepared, this.writePorts);
             const stepParts = [`${prepared.toPublish.length} new/current finding(s) from OpenCode`];
             if (prepared.overflowCount > 0) {
                 stepParts.push(`${prepared.overflowCount} more not published (see summary comment)`);

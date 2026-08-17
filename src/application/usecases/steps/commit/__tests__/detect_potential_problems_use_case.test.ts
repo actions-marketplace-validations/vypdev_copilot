@@ -80,7 +80,28 @@ describe('DetectPotentialProblemsUseCase', () => {
   let useCase: DetectPotentialProblemsUseCase;
 
   beforeEach(() => {
-    useCase = new DetectPotentialProblemsUseCase();
+    const issuePort = {
+      listIssueComments: mockListIssueComments,
+      addComment: mockAddComment,
+      updateComment: mockUpdateComment,
+    };
+    const pullRequestPort = {
+      getHeadBranchForIssue: jest.fn(),
+      getPullRequestReviewCommentBody: jest.fn(),
+      getOpenPullRequestNumbersByHeadBranch: mockGetOpenPullRequestNumbersByHeadBranch,
+      listPullRequestReviewComments: mockListPullRequestReviewComments,
+      getPullRequestHeadSha: mockGetPullRequestHeadSha,
+      getChangedFiles: mockGetChangedFiles,
+      getFilesWithFirstDiffLine: mockGetFilesWithFirstDiffLine,
+      createReviewWithComments: mockCreateReviewWithComments,
+      updatePullRequestReviewComment: mockUpdatePullRequestReviewComment,
+      resolvePullRequestReviewThread: mockResolvePullRequestReviewThread,
+    };
+    useCase = new DetectPotentialProblemsUseCase(
+      { askAgent: mockAskAgent },
+      { issue: issuePort, pullRequest: pullRequestPort },
+      { issueComments: issuePort, pullRequestComments: pullRequestPort },
+    );
     mockListIssueComments.mockReset();
     mockAddComment.mockReset();
     mockUpdateComment.mockReset();
