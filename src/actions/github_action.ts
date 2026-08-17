@@ -36,7 +36,8 @@ import { buildEmoji, buildImages, buildIssue, buildIssueTypes, buildLabels, buil
 
 export async function runGitHubAction(): Promise<void> {
     const eventInputs = { ...github.context.payload, eventName: github.context.eventName };
-    const projectRepository = new RepositoryFactory().createProjectBoardRepository();
+    const repositoryFactory = new RepositoryFactory();
+    const projectRepository = repositoryFactory.createProjectBoardRepository();
 
     logInfo('GitHub Action: runGitHubAction started.');
 
@@ -352,7 +353,7 @@ export async function runGitHubAction(): Promise<void> {
 
     logDebugInfo(`Execution built. Event will be resolved in mainRun. Single action: ${execution.singleAction.currentSingleAction ?? 'none'}, AI PR description: ${execution.ai.getAiPullRequestDescription()}, bugbot min severity: ${execution.ai.getBugbotMinSeverity()}.`);
 
-    const results: Result[] = await mainRun(execution);
+    const results: Result[] = await mainRun(execution, projectRepository, repositoryFactory.createBranchRepository());
 
     await finishWithResults(execution, results);
     } finally {

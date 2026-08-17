@@ -10,6 +10,7 @@ import { DetectBugbotFixIntentUseCase } from '../application/usecases/steps/comm
 import { DoUserRequestUseCase } from '../application/usecases/steps/commit/user_request_use_case';
 import { ProjectBoardCommandPort } from '../application/ports/project_board_ports';
 import { RepositoryFactory } from '../infrastructure/composition/repository_factory';
+import type { BranchRepository } from '../data/repository/branch_repository';
 import { IssueCommentUseCase } from '../application/usecases/issue_comment_use_case';
 import { CheckIssueCommentLanguageUseCase } from '../application/usecases/steps/issue_comment/check_issue_comment_language_use_case';
 import { PullRequestReviewCommentUseCase } from '../application/usecases/pull_request_review_comment_use_case';
@@ -80,14 +81,15 @@ function createSingleActionUseCase(factory: RepositoryFactory): SingleActionUseC
 
 export async function mainRun(
     execution: Execution,
-    projectBoardCommandPort: ProjectBoardCommandPort = new RepositoryFactory().createProjectBoardRepository(),
+    projectBoardCommandPort: ProjectBoardCommandPort,
+    branchRepository: BranchRepository,
 ): Promise<Result[]> {
     const results: Result[] = [];
 
     logInfo('GitHub Action: starting main run.');
     logDebugInfo(`Event: ${execution.eventName}, actor: ${execution.actor}, repo: ${execution.owner}/${execution.repo}, debug: ${execution.debug}`);
 
-    await execution.setup(new RepositoryFactory().createBranchRepository());
+    await execution.setup(branchRepository);
     clearAccumulatedLogs();
 
     logDebugInfo(`Setup done. Issue number: ${execution.issueNumber}, isSingleAction: ${execution.isSingleAction}, isIssue: ${execution.isIssue}, isPullRequest: ${execution.isPullRequest}, isPush: ${execution.isPush}`);

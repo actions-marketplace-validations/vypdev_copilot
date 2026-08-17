@@ -36,7 +36,8 @@ export async function runLocalAction(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Params shape is dynamic (CLI/action inputs)
     additionalParams: any
 ): Promise<void> {
-    const projectRepository = new RepositoryFactory().createProjectBoardRepository();
+    const repositoryFactory = new RepositoryFactory();
+    const projectRepository = repositoryFactory.createProjectBoardRepository();
 
     const actionInputs = getActionInputsWithDefaults();
     
@@ -331,7 +332,7 @@ export async function runLocalAction(
         additionalParams,
     )
 
-    const results = await mainRun(execution);
+    const results = await mainRun(execution, projectRepository, repositoryFactory.createBranchRepository());
 
     let content = ''
     const stepsContent = results
