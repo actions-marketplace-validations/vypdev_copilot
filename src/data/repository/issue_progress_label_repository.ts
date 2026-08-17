@@ -1,5 +1,5 @@
 import { logDebugInfo, logError } from '../../utils/logger';
-import { IssueLabelRepository } from './issue_label_repository';
+import { IssueLabelRepository } from './issue/issue_label_repository';
 import {
     PROGRESS_LABEL_PATTERN,
     PROGRESS_LABEL_PERCENTS,

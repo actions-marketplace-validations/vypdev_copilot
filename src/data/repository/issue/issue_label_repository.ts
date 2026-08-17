@@ -1,5 +1,5 @@
 import * as github from "@actions/github";
-import { logDebugInfo, logError } from "../../utils/logger";
+import { logDebugInfo, logError } from "../../../utils/logger";
 
 export class IssueLabelRepository {
     getLabels = async (owner: string, repository: string, issueNumber: number, token: string): Promise<string[]> => {

@@ -1,6 +1,6 @@
 import * as github from "@actions/github";
-import { logDebugInfo, logError } from "../../utils/logger";
-import { Milestone } from "../model/milestone";
+import { logDebugInfo, logError } from "../../../utils/logger";
+import { Milestone } from '../../model/milestone';
 
 export class IssueMetadataRepository {
     getId = async (
