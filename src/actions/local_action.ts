@@ -73,16 +73,16 @@ export async function runLocalAction(
     const agentTasks = buildAgentTasksFromValues({ ...actionInputs, ...additionalParams });
     const opencodeServerUrl = agentTasks.findings.serverUrl ?? 'http://127.0.0.1:4096';
     const opencodeModel = agentTasks.findings.model ?? '';
-    const aiPullRequestDescription = isEnabledInput(additionalParams[INPUT_KEYS.AI_PULL_REQUEST_DESCRIPTION] ?? actionInputs[INPUT_KEYS.AI_PULL_REQUEST_DESCRIPTION]);
-    const aiMembersOnly = isEnabledInput(additionalParams[INPUT_KEYS.AI_MEMBERS_ONLY] ?? actionInputs[INPUT_KEYS.AI_MEMBERS_ONLY]);
-    const aiIncludeReasoning = isEnabledInput(additionalParams[INPUT_KEYS.AI_INCLUDE_REASONING] ?? actionInputs[INPUT_KEYS.AI_INCLUDE_REASONING]);
-    const aiIgnoreFilesInput: string = additionalParams[INPUT_KEYS.AI_IGNORE_FILES] ?? actionInputs[INPUT_KEYS.AI_IGNORE_FILES];
+    const aiPullRequestDescription = isEnabledInput(resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.AI_PULL_REQUEST_DESCRIPTION));
+    const aiMembersOnly = isEnabledInput(resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.AI_MEMBERS_ONLY));
+    const aiIncludeReasoning = isEnabledInput(resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.AI_INCLUDE_REASONING));
+    const aiIgnoreFilesInput: string = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.AI_IGNORE_FILES);
     const aiIgnoreFiles: string[] = parseDelimitedValues(aiIgnoreFilesInput);
-    const bugbotSeverity = (additionalParams[INPUT_KEYS.BUGBOT_SEVERITY] ?? actionInputs[INPUT_KEYS.BUGBOT_SEVERITY]) || BUGBOT_MIN_SEVERITY;
-    const bugbotCommentLimitRaw = additionalParams[INPUT_KEYS.BUGBOT_COMMENT_LIMIT] ?? actionInputs[INPUT_KEYS.BUGBOT_COMMENT_LIMIT];
+    const bugbotSeverity = (resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.BUGBOT_SEVERITY)) || BUGBOT_MIN_SEVERITY;
+    const bugbotCommentLimitRaw = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.BUGBOT_COMMENT_LIMIT);
     const bugbotCommentLimit = parseBoundedPositiveIntegerInput(bugbotCommentLimitRaw, BUGBOT_MAX_COMMENTS, 200);
     const bugbotFixVerifyCommandsInput =
-        additionalParams[INPUT_KEYS.BUGBOT_FIX_VERIFY_COMMANDS] ?? actionInputs[INPUT_KEYS.BUGBOT_FIX_VERIFY_COMMANDS] ?? '';
+        resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.BUGBOT_FIX_VERIFY_COMMANDS) ?? '';
     const bugbotFixVerifyCommands = String(bugbotFixVerifyCommandsInput)
         .split(',')
         .map((c: string) => c.trim())
@@ -91,15 +91,15 @@ export async function runLocalAction(
     /**
      * Projects Details
      */
-    const projectIdsInput: string = additionalParams[INPUT_KEYS.PROJECT_IDS] ?? actionInputs[INPUT_KEYS.PROJECT_IDS];
+    const projectIdsInput: string = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.PROJECT_IDS);
     const projectIds: string[] = parseDelimitedValues(projectIdsInput);
 
     const projects = await loadProjectDetails(projectRepository, projectIds, token ?? '');
 
-    const projectColumnIssueCreated = additionalParams[INPUT_KEYS.PROJECT_COLUMN_ISSUE_CREATED] ?? actionInputs[INPUT_KEYS.PROJECT_COLUMN_ISSUE_CREATED]
-    const projectColumnPullRequestCreated = additionalParams[INPUT_KEYS.PROJECT_COLUMN_PULL_REQUEST_CREATED] ?? actionInputs[INPUT_KEYS.PROJECT_COLUMN_PULL_REQUEST_CREATED]
-    const projectColumnIssueInProgress = additionalParams[INPUT_KEYS.PROJECT_COLUMN_ISSUE_IN_PROGRESS] ?? actionInputs[INPUT_KEYS.PROJECT_COLUMN_ISSUE_IN_PROGRESS]
-    const projectColumnPullRequestInProgress = additionalParams[INPUT_KEYS.PROJECT_COLUMN_PULL_REQUEST_IN_PROGRESS] ?? actionInputs[INPUT_KEYS.PROJECT_COLUMN_PULL_REQUEST_IN_PROGRESS]
+    const projectColumnIssueCreated = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.PROJECT_COLUMN_ISSUE_CREATED)
+    const projectColumnPullRequestCreated = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.PROJECT_COLUMN_PULL_REQUEST_CREATED)
+    const projectColumnIssueInProgress = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.PROJECT_COLUMN_ISSUE_IN_PROGRESS)
+    const projectColumnPullRequestInProgress = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.PROJECT_COLUMN_PULL_REQUEST_IN_PROGRESS)
 
     /**
      * Images
@@ -109,127 +109,127 @@ export async function runLocalAction(
     /**
      * Workflows
      */
-    const releaseWorkflow = additionalParams[INPUT_KEYS.RELEASE_WORKFLOW] ?? actionInputs[INPUT_KEYS.RELEASE_WORKFLOW];
-    const hotfixWorkflow = additionalParams[INPUT_KEYS.HOTFIX_WORKFLOW] ?? actionInputs[INPUT_KEYS.HOTFIX_WORKFLOW];
+    const releaseWorkflow = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.RELEASE_WORKFLOW);
+    const hotfixWorkflow = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.HOTFIX_WORKFLOW);
 
     /**
      * Emoji-title
      */
-    const titleEmoji = (additionalParams[INPUT_KEYS.EMOJI_LABELED_TITLE] ?? actionInputs[INPUT_KEYS.EMOJI_LABELED_TITLE]) === 'true';
-    const branchManagementEmoji = additionalParams[INPUT_KEYS.BRANCH_MANAGEMENT_EMOJI] ?? actionInputs[INPUT_KEYS.BRANCH_MANAGEMENT_EMOJI];
+    const titleEmoji = (resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.EMOJI_LABELED_TITLE)) === 'true';
+    const branchManagementEmoji = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.BRANCH_MANAGEMENT_EMOJI);
 
     /**
      * Labels
      */
-    const branchManagementLauncherLabel = additionalParams[INPUT_KEYS.BRANCH_MANAGEMENT_LAUNCHER_LABEL] ?? actionInputs[INPUT_KEYS.BRANCH_MANAGEMENT_LAUNCHER_LABEL];
-    const bugfixLabel = additionalParams[INPUT_KEYS.BUGFIX_LABEL] ?? actionInputs[INPUT_KEYS.BUGFIX_LABEL];
-    const bugLabel = additionalParams[INPUT_KEYS.BUG_LABEL] ?? actionInputs[INPUT_KEYS.BUG_LABEL];
-    const hotfixLabel = additionalParams[INPUT_KEYS.HOTFIX_LABEL] ?? actionInputs[INPUT_KEYS.HOTFIX_LABEL];
-    const enhancementLabel = additionalParams[INPUT_KEYS.ENHANCEMENT_LABEL] ?? actionInputs[INPUT_KEYS.ENHANCEMENT_LABEL];
-    const featureLabel = additionalParams[INPUT_KEYS.FEATURE_LABEL] ?? actionInputs[INPUT_KEYS.FEATURE_LABEL];
-    const releaseLabel = additionalParams[INPUT_KEYS.RELEASE_LABEL] ?? actionInputs[INPUT_KEYS.RELEASE_LABEL];
-    const questionLabel = additionalParams[INPUT_KEYS.QUESTION_LABEL] ?? actionInputs[INPUT_KEYS.QUESTION_LABEL];
-    const helpLabel = additionalParams[INPUT_KEYS.HELP_LABEL] ?? actionInputs[INPUT_KEYS.HELP_LABEL];
-    const deployLabel = additionalParams[INPUT_KEYS.DEPLOY_LABEL] ?? actionInputs[INPUT_KEYS.DEPLOY_LABEL];
-    const deployedLabel = additionalParams[INPUT_KEYS.DEPLOYED_LABEL] ?? actionInputs[INPUT_KEYS.DEPLOYED_LABEL];
-    const docsLabel = additionalParams[INPUT_KEYS.DOCS_LABEL] ?? actionInputs[INPUT_KEYS.DOCS_LABEL];
-    const documentationLabel = additionalParams[INPUT_KEYS.DOCUMENTATION_LABEL] ?? actionInputs[INPUT_KEYS.DOCUMENTATION_LABEL];
-    const choreLabel = additionalParams[INPUT_KEYS.CHORE_LABEL] ?? actionInputs[INPUT_KEYS.CHORE_LABEL];
-    const maintenanceLabel = additionalParams[INPUT_KEYS.MAINTENANCE_LABEL] ?? actionInputs[INPUT_KEYS.MAINTENANCE_LABEL];
-    const priorityHighLabel = additionalParams[INPUT_KEYS.PRIORITY_HIGH_LABEL] ?? actionInputs[INPUT_KEYS.PRIORITY_HIGH_LABEL];
-    const priorityMediumLabel = additionalParams[INPUT_KEYS.PRIORITY_MEDIUM_LABEL] ?? actionInputs[INPUT_KEYS.PRIORITY_MEDIUM_LABEL];
-    const priorityLowLabel = additionalParams[INPUT_KEYS.PRIORITY_LOW_LABEL] ?? actionInputs[INPUT_KEYS.PRIORITY_LOW_LABEL];
-    const priorityNoneLabel = additionalParams[INPUT_KEYS.PRIORITY_NONE_LABEL] ?? actionInputs[INPUT_KEYS.PRIORITY_NONE_LABEL];
-    const sizeXxlLabel = additionalParams[INPUT_KEYS.SIZE_XXL_LABEL] ?? actionInputs[INPUT_KEYS.SIZE_XXL_LABEL];
-    const sizeXlLabel = additionalParams[INPUT_KEYS.SIZE_XL_LABEL] ?? actionInputs[INPUT_KEYS.SIZE_XL_LABEL];
-    const sizeLLabel = additionalParams[INPUT_KEYS.SIZE_L_LABEL] ?? actionInputs[INPUT_KEYS.SIZE_L_LABEL];
-    const sizeMLabel = additionalParams[INPUT_KEYS.SIZE_M_LABEL] ?? actionInputs[INPUT_KEYS.SIZE_M_LABEL];
-    const sizeSLabel = additionalParams[INPUT_KEYS.SIZE_S_LABEL] ?? actionInputs[INPUT_KEYS.SIZE_S_LABEL];
-    const sizeXsLabel = additionalParams[INPUT_KEYS.SIZE_XS_LABEL] ?? actionInputs[INPUT_KEYS.SIZE_XS_LABEL];
+    const branchManagementLauncherLabel = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.BRANCH_MANAGEMENT_LAUNCHER_LABEL);
+    const bugfixLabel = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.BUGFIX_LABEL);
+    const bugLabel = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.BUG_LABEL);
+    const hotfixLabel = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.HOTFIX_LABEL);
+    const enhancementLabel = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.ENHANCEMENT_LABEL);
+    const featureLabel = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.FEATURE_LABEL);
+    const releaseLabel = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.RELEASE_LABEL);
+    const questionLabel = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.QUESTION_LABEL);
+    const helpLabel = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.HELP_LABEL);
+    const deployLabel = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.DEPLOY_LABEL);
+    const deployedLabel = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.DEPLOYED_LABEL);
+    const docsLabel = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.DOCS_LABEL);
+    const documentationLabel = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.DOCUMENTATION_LABEL);
+    const choreLabel = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.CHORE_LABEL);
+    const maintenanceLabel = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.MAINTENANCE_LABEL);
+    const priorityHighLabel = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.PRIORITY_HIGH_LABEL);
+    const priorityMediumLabel = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.PRIORITY_MEDIUM_LABEL);
+    const priorityLowLabel = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.PRIORITY_LOW_LABEL);
+    const priorityNoneLabel = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.PRIORITY_NONE_LABEL);
+    const sizeXxlLabel = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.SIZE_XXL_LABEL);
+    const sizeXlLabel = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.SIZE_XL_LABEL);
+    const sizeLLabel = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.SIZE_L_LABEL);
+    const sizeMLabel = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.SIZE_M_LABEL);
+    const sizeSLabel = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.SIZE_S_LABEL);
+    const sizeXsLabel = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.SIZE_XS_LABEL);
 
     /**
      * Issue Types
      */
-    const issueTypeBug = additionalParams[INPUT_KEYS.ISSUE_TYPE_BUG] ?? actionInputs[INPUT_KEYS.ISSUE_TYPE_BUG];
-    const issueTypeBugDescription = additionalParams[INPUT_KEYS.ISSUE_TYPE_BUG_DESCRIPTION] ?? actionInputs[INPUT_KEYS.ISSUE_TYPE_BUG_DESCRIPTION];
-    const issueTypeBugColor = additionalParams[INPUT_KEYS.ISSUE_TYPE_BUG_COLOR] ?? actionInputs[INPUT_KEYS.ISSUE_TYPE_BUG_COLOR];
+    const issueTypeBug = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.ISSUE_TYPE_BUG);
+    const issueTypeBugDescription = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.ISSUE_TYPE_BUG_DESCRIPTION);
+    const issueTypeBugColor = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.ISSUE_TYPE_BUG_COLOR);
 
-    const issueTypeHotfix = additionalParams[INPUT_KEYS.ISSUE_TYPE_HOTFIX] ?? actionInputs[INPUT_KEYS.ISSUE_TYPE_HOTFIX];
-    const issueTypeHotfixDescription = additionalParams[INPUT_KEYS.ISSUE_TYPE_HOTFIX_DESCRIPTION] ?? actionInputs[INPUT_KEYS.ISSUE_TYPE_HOTFIX_DESCRIPTION];
-    const issueTypeHotfixColor = additionalParams[INPUT_KEYS.ISSUE_TYPE_HOTFIX_COLOR] ?? actionInputs[INPUT_KEYS.ISSUE_TYPE_HOTFIX_COLOR];
+    const issueTypeHotfix = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.ISSUE_TYPE_HOTFIX);
+    const issueTypeHotfixDescription = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.ISSUE_TYPE_HOTFIX_DESCRIPTION);
+    const issueTypeHotfixColor = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.ISSUE_TYPE_HOTFIX_COLOR);
 
-    const issueTypeFeature = additionalParams[INPUT_KEYS.ISSUE_TYPE_FEATURE] ?? actionInputs[INPUT_KEYS.ISSUE_TYPE_FEATURE];
-    const issueTypeFeatureDescription = additionalParams[INPUT_KEYS.ISSUE_TYPE_FEATURE_DESCRIPTION] ?? actionInputs[INPUT_KEYS.ISSUE_TYPE_FEATURE_DESCRIPTION];
-    const issueTypeFeatureColor = additionalParams[INPUT_KEYS.ISSUE_TYPE_FEATURE_COLOR] ?? actionInputs[INPUT_KEYS.ISSUE_TYPE_FEATURE_COLOR];
+    const issueTypeFeature = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.ISSUE_TYPE_FEATURE);
+    const issueTypeFeatureDescription = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.ISSUE_TYPE_FEATURE_DESCRIPTION);
+    const issueTypeFeatureColor = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.ISSUE_TYPE_FEATURE_COLOR);
 
-    const issueTypeDocumentation = additionalParams[INPUT_KEYS.ISSUE_TYPE_DOCUMENTATION] ?? actionInputs[INPUT_KEYS.ISSUE_TYPE_DOCUMENTATION];
-    const issueTypeDocumentationDescription = additionalParams[INPUT_KEYS.ISSUE_TYPE_DOCUMENTATION_DESCRIPTION] ?? actionInputs[INPUT_KEYS.ISSUE_TYPE_DOCUMENTATION_DESCRIPTION];
-    const issueTypeDocumentationColor = additionalParams[INPUT_KEYS.ISSUE_TYPE_DOCUMENTATION_COLOR] ?? actionInputs[INPUT_KEYS.ISSUE_TYPE_DOCUMENTATION_COLOR];
+    const issueTypeDocumentation = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.ISSUE_TYPE_DOCUMENTATION);
+    const issueTypeDocumentationDescription = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.ISSUE_TYPE_DOCUMENTATION_DESCRIPTION);
+    const issueTypeDocumentationColor = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.ISSUE_TYPE_DOCUMENTATION_COLOR);
 
-    const issueTypeMaintenance = additionalParams[INPUT_KEYS.ISSUE_TYPE_MAINTENANCE] ?? actionInputs[INPUT_KEYS.ISSUE_TYPE_MAINTENANCE];
-    const issueTypeMaintenanceDescription = additionalParams[INPUT_KEYS.ISSUE_TYPE_MAINTENANCE_DESCRIPTION] ?? actionInputs[INPUT_KEYS.ISSUE_TYPE_MAINTENANCE_DESCRIPTION];
-    const issueTypeMaintenanceColor = additionalParams[INPUT_KEYS.ISSUE_TYPE_MAINTENANCE_COLOR] ?? actionInputs[INPUT_KEYS.ISSUE_TYPE_MAINTENANCE_COLOR];
+    const issueTypeMaintenance = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.ISSUE_TYPE_MAINTENANCE);
+    const issueTypeMaintenanceDescription = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.ISSUE_TYPE_MAINTENANCE_DESCRIPTION);
+    const issueTypeMaintenanceColor = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.ISSUE_TYPE_MAINTENANCE_COLOR);
 
-    const issueTypeRelease = additionalParams[INPUT_KEYS.ISSUE_TYPE_RELEASE] ?? actionInputs[INPUT_KEYS.ISSUE_TYPE_RELEASE];
-    const issueTypeReleaseDescription = additionalParams[INPUT_KEYS.ISSUE_TYPE_RELEASE_DESCRIPTION] ?? actionInputs[INPUT_KEYS.ISSUE_TYPE_RELEASE_DESCRIPTION];
-    const issueTypeReleaseColor = additionalParams[INPUT_KEYS.ISSUE_TYPE_RELEASE_COLOR] ?? actionInputs[INPUT_KEYS.ISSUE_TYPE_RELEASE_COLOR];
+    const issueTypeRelease = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.ISSUE_TYPE_RELEASE);
+    const issueTypeReleaseDescription = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.ISSUE_TYPE_RELEASE_DESCRIPTION);
+    const issueTypeReleaseColor = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.ISSUE_TYPE_RELEASE_COLOR);
 
-    const issueTypeQuestion = additionalParams[INPUT_KEYS.ISSUE_TYPE_QUESTION] ?? actionInputs[INPUT_KEYS.ISSUE_TYPE_QUESTION];
-    const issueTypeQuestionDescription = additionalParams[INPUT_KEYS.ISSUE_TYPE_QUESTION_DESCRIPTION] ?? actionInputs[INPUT_KEYS.ISSUE_TYPE_QUESTION_DESCRIPTION];
-    const issueTypeQuestionColor = additionalParams[INPUT_KEYS.ISSUE_TYPE_QUESTION_COLOR] ?? actionInputs[INPUT_KEYS.ISSUE_TYPE_QUESTION_COLOR];
+    const issueTypeQuestion = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.ISSUE_TYPE_QUESTION);
+    const issueTypeQuestionDescription = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.ISSUE_TYPE_QUESTION_DESCRIPTION);
+    const issueTypeQuestionColor = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.ISSUE_TYPE_QUESTION_COLOR);
 
-    const issueTypeHelp = additionalParams[INPUT_KEYS.ISSUE_TYPE_HELP] ?? actionInputs[INPUT_KEYS.ISSUE_TYPE_HELP];
-    const issueTypeHelpDescription = additionalParams[INPUT_KEYS.ISSUE_TYPE_HELP_DESCRIPTION] ?? actionInputs[INPUT_KEYS.ISSUE_TYPE_HELP_DESCRIPTION];
-    const issueTypeHelpColor = additionalParams[INPUT_KEYS.ISSUE_TYPE_HELP_COLOR] ?? actionInputs[INPUT_KEYS.ISSUE_TYPE_HELP_COLOR];
+    const issueTypeHelp = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.ISSUE_TYPE_HELP);
+    const issueTypeHelpDescription = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.ISSUE_TYPE_HELP_DESCRIPTION);
+    const issueTypeHelpColor = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.ISSUE_TYPE_HELP_COLOR);
 
-    const issueTypeTask = additionalParams[INPUT_KEYS.ISSUE_TYPE_TASK] ?? actionInputs[INPUT_KEYS.ISSUE_TYPE_TASK];
-    const issueTypeTaskDescription = additionalParams[INPUT_KEYS.ISSUE_TYPE_TASK_DESCRIPTION] ?? actionInputs[INPUT_KEYS.ISSUE_TYPE_TASK_DESCRIPTION];
-    const issueTypeTaskColor = additionalParams[INPUT_KEYS.ISSUE_TYPE_TASK_COLOR] ?? actionInputs[INPUT_KEYS.ISSUE_TYPE_TASK_COLOR];
+    const issueTypeTask = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.ISSUE_TYPE_TASK);
+    const issueTypeTaskDescription = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.ISSUE_TYPE_TASK_DESCRIPTION);
+    const issueTypeTaskColor = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.ISSUE_TYPE_TASK_COLOR);
 
     /**
      * Locale
      */
-    const issueLocale = additionalParams[INPUT_KEYS.ISSUES_LOCALE] ?? actionInputs[INPUT_KEYS.ISSUES_LOCALE] ?? Locale.DEFAULT;
-    const pullRequestLocale = additionalParams[INPUT_KEYS.PULL_REQUESTS_LOCALE] ?? actionInputs[INPUT_KEYS.PULL_REQUESTS_LOCALE] ?? Locale.DEFAULT;
+    const issueLocale = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.ISSUES_LOCALE) ?? Locale.DEFAULT;
+    const pullRequestLocale = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.PULL_REQUESTS_LOCALE) ?? Locale.DEFAULT;
 
     /**
      * Size Thresholds
      */
-    const sizeXxlThresholdLines = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_XXL_THRESHOLD_LINES] ?? actionInputs[INPUT_KEYS.SIZE_XXL_THRESHOLD_LINES], 1000);
-    const sizeXxlThresholdFiles = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_XXL_THRESHOLD_FILES] ?? actionInputs[INPUT_KEYS.SIZE_XXL_THRESHOLD_FILES], 20);
-    const sizeXxlThresholdCommits = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_XXL_THRESHOLD_COMMITS] ?? actionInputs[INPUT_KEYS.SIZE_XXL_THRESHOLD_COMMITS], 10);
-    const sizeXlThresholdLines = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_XL_THRESHOLD_LINES] ?? actionInputs[INPUT_KEYS.SIZE_XL_THRESHOLD_LINES], 500);
-    const sizeXlThresholdFiles = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_XL_THRESHOLD_FILES] ?? actionInputs[INPUT_KEYS.SIZE_XL_THRESHOLD_FILES], 10);
-    const sizeXlThresholdCommits = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_XL_THRESHOLD_COMMITS] ?? actionInputs[INPUT_KEYS.SIZE_XL_THRESHOLD_COMMITS], 5);
-    const sizeLThresholdLines = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_L_THRESHOLD_LINES] ?? actionInputs[INPUT_KEYS.SIZE_L_THRESHOLD_LINES], 250);
-    const sizeLThresholdFiles = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_L_THRESHOLD_FILES] ?? actionInputs[INPUT_KEYS.SIZE_L_THRESHOLD_FILES], 5);
-    const sizeLThresholdCommits = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_L_THRESHOLD_COMMITS] ?? actionInputs[INPUT_KEYS.SIZE_L_THRESHOLD_COMMITS], 3);
-    const sizeMThresholdLines = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_M_THRESHOLD_LINES] ?? actionInputs[INPUT_KEYS.SIZE_M_THRESHOLD_LINES], 100);
-    const sizeMThresholdFiles = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_M_THRESHOLD_FILES] ?? actionInputs[INPUT_KEYS.SIZE_M_THRESHOLD_FILES], 3);
-    const sizeMThresholdCommits = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_M_THRESHOLD_COMMITS] ?? actionInputs[INPUT_KEYS.SIZE_M_THRESHOLD_COMMITS], 2);
-    const sizeSThresholdLines = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_S_THRESHOLD_LINES] ?? actionInputs[INPUT_KEYS.SIZE_S_THRESHOLD_LINES], 50);
-    const sizeSThresholdFiles = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_S_THRESHOLD_FILES] ?? actionInputs[INPUT_KEYS.SIZE_S_THRESHOLD_FILES], 2);
-    const sizeSThresholdCommits = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_S_THRESHOLD_COMMITS] ?? actionInputs[INPUT_KEYS.SIZE_S_THRESHOLD_COMMITS], 1);
-    const sizeXsThresholdLines = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_XS_THRESHOLD_LINES] ?? actionInputs[INPUT_KEYS.SIZE_XS_THRESHOLD_LINES], 25);
-    const sizeXsThresholdFiles = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_XS_THRESHOLD_FILES] ?? actionInputs[INPUT_KEYS.SIZE_XS_THRESHOLD_FILES], 1);
-    const sizeXsThresholdCommits = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_XS_THRESHOLD_COMMITS] ?? actionInputs[INPUT_KEYS.SIZE_XS_THRESHOLD_COMMITS], 1);
+    const sizeXxlThresholdLines = parseIntegerInput(resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.SIZE_XXL_THRESHOLD_LINES), 1000);
+    const sizeXxlThresholdFiles = parseIntegerInput(resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.SIZE_XXL_THRESHOLD_FILES), 20);
+    const sizeXxlThresholdCommits = parseIntegerInput(resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.SIZE_XXL_THRESHOLD_COMMITS), 10);
+    const sizeXlThresholdLines = parseIntegerInput(resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.SIZE_XL_THRESHOLD_LINES), 500);
+    const sizeXlThresholdFiles = parseIntegerInput(resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.SIZE_XL_THRESHOLD_FILES), 10);
+    const sizeXlThresholdCommits = parseIntegerInput(resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.SIZE_XL_THRESHOLD_COMMITS), 5);
+    const sizeLThresholdLines = parseIntegerInput(resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.SIZE_L_THRESHOLD_LINES), 250);
+    const sizeLThresholdFiles = parseIntegerInput(resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.SIZE_L_THRESHOLD_FILES), 5);
+    const sizeLThresholdCommits = parseIntegerInput(resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.SIZE_L_THRESHOLD_COMMITS), 3);
+    const sizeMThresholdLines = parseIntegerInput(resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.SIZE_M_THRESHOLD_LINES), 100);
+    const sizeMThresholdFiles = parseIntegerInput(resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.SIZE_M_THRESHOLD_FILES), 3);
+    const sizeMThresholdCommits = parseIntegerInput(resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.SIZE_M_THRESHOLD_COMMITS), 2);
+    const sizeSThresholdLines = parseIntegerInput(resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.SIZE_S_THRESHOLD_LINES), 50);
+    const sizeSThresholdFiles = parseIntegerInput(resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.SIZE_S_THRESHOLD_FILES), 2);
+    const sizeSThresholdCommits = parseIntegerInput(resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.SIZE_S_THRESHOLD_COMMITS), 1);
+    const sizeXsThresholdLines = parseIntegerInput(resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.SIZE_XS_THRESHOLD_LINES), 25);
+    const sizeXsThresholdFiles = parseIntegerInput(resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.SIZE_XS_THRESHOLD_FILES), 1);
+    const sizeXsThresholdCommits = parseIntegerInput(resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.SIZE_XS_THRESHOLD_COMMITS), 1);
     
     /**
      * Branches
      */
-    const mainBranch = additionalParams[INPUT_KEYS.MAIN_BRANCH] ?? actionInputs[INPUT_KEYS.MAIN_BRANCH];
-    const developmentBranch = additionalParams[INPUT_KEYS.DEVELOPMENT_BRANCH] ?? actionInputs[INPUT_KEYS.DEVELOPMENT_BRANCH];
-    const featureTree = additionalParams[INPUT_KEYS.FEATURE_TREE] ?? actionInputs[INPUT_KEYS.FEATURE_TREE];
-    const bugfixTree = additionalParams[INPUT_KEYS.BUGFIX_TREE] ?? actionInputs[INPUT_KEYS.BUGFIX_TREE];
-    const hotfixTree = additionalParams[INPUT_KEYS.HOTFIX_TREE] ?? actionInputs[INPUT_KEYS.HOTFIX_TREE];
-    const releaseTree = additionalParams[INPUT_KEYS.RELEASE_TREE] ?? actionInputs[INPUT_KEYS.RELEASE_TREE];
-    const docsTree = additionalParams[INPUT_KEYS.DOCS_TREE] ?? actionInputs[INPUT_KEYS.DOCS_TREE];
-    const choreTree = additionalParams[INPUT_KEYS.CHORE_TREE] ?? actionInputs[INPUT_KEYS.CHORE_TREE];
+    const mainBranch = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.MAIN_BRANCH);
+    const developmentBranch = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.DEVELOPMENT_BRANCH);
+    const featureTree = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.FEATURE_TREE);
+    const bugfixTree = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.BUGFIX_TREE);
+    const hotfixTree = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.HOTFIX_TREE);
+    const releaseTree = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.RELEASE_TREE);
+    const docsTree = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.DOCS_TREE);
+    const choreTree = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.CHORE_TREE);
 
     /**
      * Prefix builder
      */
-    let commitPrefixBuilder = additionalParams[INPUT_KEYS.COMMIT_PREFIX_TRANSFORMS] ?? actionInputs[INPUT_KEYS.COMMIT_PREFIX_TRANSFORMS] ?? '';
+    let commitPrefixBuilder = resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.COMMIT_PREFIX_TRANSFORMS) ?? '';
     if (commitPrefixBuilder.length === 0) {
         commitPrefixBuilder = 'replace-slash';
     }
@@ -237,16 +237,16 @@ export async function runLocalAction(
     /**
      * Issue
      */
-    const branchManagementAlways = isEnabledInput(additionalParams[INPUT_KEYS.BRANCH_MANAGEMENT_ALWAYS] ?? actionInputs[INPUT_KEYS.BRANCH_MANAGEMENT_ALWAYS]);
-    const reopenIssueOnPush = isEnabledInput(additionalParams[INPUT_KEYS.REOPEN_ISSUE_ON_PUSH] ?? actionInputs[INPUT_KEYS.REOPEN_ISSUE_ON_PUSH]);
-    const issueDesiredAssigneesCount = parseIntegerInput(additionalParams[INPUT_KEYS.DESIRED_ASSIGNEES_COUNT] ?? actionInputs[INPUT_KEYS.DESIRED_ASSIGNEES_COUNT], 0);
+    const branchManagementAlways = isEnabledInput(resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.BRANCH_MANAGEMENT_ALWAYS));
+    const reopenIssueOnPush = isEnabledInput(resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.REOPEN_ISSUE_ON_PUSH));
+    const issueDesiredAssigneesCount = parseIntegerInput(resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.DESIRED_ASSIGNEES_COUNT), 0);
 
     /**
      * Pull Request
      */
-    const pullRequestDesiredAssigneesCount = parseIntegerInput(additionalParams[INPUT_KEYS.PULL_REQUEST_DESIRED_ASSIGNEES_COUNT] ?? actionInputs[INPUT_KEYS.PULL_REQUEST_DESIRED_ASSIGNEES_COUNT], 0);
-    const pullRequestDesiredReviewersCount = parseIntegerInput(additionalParams[INPUT_KEYS.PULL_REQUEST_DESIRED_REVIEWERS_COUNT] ?? actionInputs[INPUT_KEYS.PULL_REQUEST_DESIRED_REVIEWERS_COUNT], 0);
-    const pullRequestMergeTimeout = parseIntegerInput(additionalParams[INPUT_KEYS.PULL_REQUEST_MERGE_TIMEOUT] ?? actionInputs[INPUT_KEYS.PULL_REQUEST_MERGE_TIMEOUT], 0);
+    const pullRequestDesiredAssigneesCount = parseIntegerInput(resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.PULL_REQUEST_DESIRED_ASSIGNEES_COUNT), 0);
+    const pullRequestDesiredReviewersCount = parseIntegerInput(resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.PULL_REQUEST_DESIRED_REVIEWERS_COUNT), 0);
+    const pullRequestMergeTimeout = parseIntegerInput(resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.PULL_REQUEST_MERGE_TIMEOUT), 0);
 
     const execution = new Execution(
         debug,
