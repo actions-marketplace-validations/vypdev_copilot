@@ -2,7 +2,7 @@ import { ConfigurationHandler } from "../../manager/description/configuration_ha
 import { shouldSkipInitialLabelsFetch } from './initial_labels_policy';
 import { branchesForManagement, typesForIssue } from "../../utils/label_utils";
 import { logDebugInfo, setGlobalLoggerDebug } from "../../utils/logger";
-import { BranchRepository } from "../repository/branch_repository";
+import type { LatestTagQueryPort } from '../../application/ports/branch_ports';
 import { Ai } from "./ai";
 import { Branches } from "./branches";
 import { Commit } from "./commit";
@@ -240,7 +240,7 @@ export class Execution {
     }
 
     setup = async (
-        branchRepository: BranchRepository,
+        branchRepository: LatestTagQueryPort,
         issueRepository: ExecutionIssueSetupPort,
         organizationRepository: ExecutionOrganizationSetupPort,
     ) => {
