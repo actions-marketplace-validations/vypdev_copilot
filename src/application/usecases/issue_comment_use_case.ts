@@ -3,7 +3,7 @@ import { Result } from "../../data/model/result";
 import { ParamUseCase } from "./base/param_usecase";
 import { CheckIssueCommentLanguageUseCase } from "./steps/issue_comment/check_issue_comment_language_use_case";
 import { runCommentAutomation } from "./comment_automation_use_case";
-import type { IssueCommentUpdatePort } from "../ports/issue_ports";
+import type { IssueCommentUpdatePort, IssueDescriptionQueryPort, IssueNotificationPort } from "../ports/issue_ports";
 import type { ActorAuthorizationPort } from "../ports/organization_ports";
 
 export class IssueCommentUseCase implements ParamUseCase<Execution, Result[]> {
@@ -12,6 +12,8 @@ export class IssueCommentUseCase implements ParamUseCase<Execution, Result[]> {
     constructor(
         private readonly issueCommentUpdatePort: IssueCommentUpdatePort,
         private readonly actorAuthorizationPort: ActorAuthorizationPort,
+        private readonly issueDescriptionQueryPort: IssueDescriptionQueryPort,
+        private readonly issueNotificationPort: IssueNotificationPort,
     ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
@@ -19,6 +21,6 @@ export class IssueCommentUseCase implements ParamUseCase<Execution, Result[]> {
             taskId: this.taskId,
             languageUseCase: new CheckIssueCommentLanguageUseCase(this.issueCommentUpdatePort),
             userComment: param.issue.commentBody ?? "",
-        }, this.actorAuthorizationPort);
+        }, this.actorAuthorizationPort, this.issueDescriptionQueryPort, this.issueNotificationPort);
     }
 }

@@ -125,6 +125,8 @@ describe("IssueCommentUseCase", () => {
         useCase = new IssueCommentUseCase(
             { updateComment: jest.fn() },
             { isActorAllowedToModifyFiles: mockIsActorAllowedToModifyFiles },
+            { getDescription: jest.fn() },
+            { addComment: jest.fn(), openIssue: jest.fn() },
         );
         mockIsActorAllowedToModifyFiles.mockReset().mockResolvedValue(true);
         mockCheckLanguageInvoke.mockReset().mockResolvedValue([

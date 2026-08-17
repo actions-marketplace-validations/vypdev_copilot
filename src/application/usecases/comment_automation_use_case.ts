@@ -16,6 +16,7 @@ import {
 } from "./steps/commit/bugbot/bugbot_fix_intent_payload";
 import { DoUserRequestUseCase } from "./steps/commit/user_request_use_case";
 import type { ActorAuthorizationPort } from "../ports/organization_ports";
+import type { IssueDescriptionQueryPort, IssueNotificationPort } from "../ports/issue_ports";
 
 export interface CommentAutomationOptions {
     taskId: string;
@@ -27,6 +28,8 @@ export async function runCommentAutomation(
     param: Execution,
     options: CommentAutomationOptions,
     actorAuthorizationPort: ActorAuthorizationPort,
+    issueDescriptionQueryPort: IssueDescriptionQueryPort,
+    issueNotificationPort: IssueNotificationPort,
 ): Promise<Result[]> {
     logInfo(`${options.taskId} started.`);
     const results: Result[] = [];
@@ -86,7 +89,7 @@ export async function runCommentAutomation(
     const ranDoRequest = canRunDoUserRequest(intentPayload) && allowedToModifyFiles;
     if (!ranAutofix && !ranDoRequest) {
         logInfo("Running ThinkUseCase (no file-modifying action ran).");
-        results.push(...(await new ThinkUseCase().invoke(param)));
+        results.push(...(await new ThinkUseCase(issueDescriptionQueryPort, issueNotificationPort).invoke(param)));
     }
     return results;
 }

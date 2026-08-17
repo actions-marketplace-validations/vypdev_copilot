@@ -133,6 +133,8 @@ describe("PullRequestReviewCommentUseCase", () => {
         useCase = new PullRequestReviewCommentUseCase(
             { updateComment: jest.fn() },
             { isActorAllowedToModifyFiles: mockIsActorAllowedToModifyFiles },
+            { getDescription: jest.fn() },
+            { addComment: jest.fn(), openIssue: jest.fn() },
         );
         mockLogInfo.mockClear();
         mockIsActorAllowedToModifyFiles.mockReset().mockResolvedValue(true);

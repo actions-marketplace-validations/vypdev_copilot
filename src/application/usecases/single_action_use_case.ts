@@ -12,7 +12,8 @@ import { InitialSetupUseCase } from "./actions/initial_setup_use_case";
 import type { RepositoryReleasePort } from "../ports/repository_release_ports";
 import { CheckProgressUseCase } from "./actions/check_progress_use_case";
 import { RecommendStepsUseCase } from "./actions/recommend_steps_use_case";
-import { DetectPotentialProblemsUseCase } from "./steps/commit/detect_potential_problems_use_case";
+import { DetectPotentialProblemsUseCase } from './steps/commit/detect_potential_problems_use_case';
+import type { IssueDescriptionQueryPort, IssueNotificationPort } from '../ports/issue_ports';
 
 export class SingleActionUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'SingleActionUseCase';
@@ -21,6 +22,8 @@ export class SingleActionUseCase implements ParamUseCase<Execution, Result[]> {
         private readonly initialSetupUseCase: InitialSetupUseCase,
         private readonly repositoryReleasePort: RepositoryReleasePort,
         private readonly checkProgressUseCase: CheckProgressUseCase,
+        private readonly issueDescriptionQueryPort: IssueDescriptionQueryPort,
+        private readonly issueNotificationPort: IssueNotificationPort,
     ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
@@ -44,7 +47,7 @@ export class SingleActionUseCase implements ParamUseCase<Execution, Result[]> {
             } else if (param.singleAction.isCreateTagAction) {
                 results.push(...await new CreateTagUseCase(this.repositoryReleasePort).invoke(param));
             } else if (param.singleAction.isThinkAction) {
-                results.push(...await new ThinkUseCase().invoke(param));
+                results.push(...await new ThinkUseCase(this.issueDescriptionQueryPort, this.issueNotificationPort).invoke(param));
             } else if (param.singleAction.isInitialSetupAction) {
                 results.push(...await this.initialSetupUseCase.invoke(param));
             } else if (param.singleAction.isCheckProgressAction) {

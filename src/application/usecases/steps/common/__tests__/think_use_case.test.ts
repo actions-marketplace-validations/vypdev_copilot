@@ -47,7 +47,10 @@ describe('ThinkUseCase', () => {
   let useCase: ThinkUseCase;
 
   beforeEach(() => {
-    useCase = new ThinkUseCase();
+    useCase = new ThinkUseCase(
+      { getDescription: mockGetDescription },
+      { addComment: mockAddComment, openIssue: jest.fn() },
+    );
     mockAskAgent.mockReset();
     mockAddComment.mockReset();
     mockGetDescription.mockReset();

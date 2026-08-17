@@ -5,7 +5,7 @@ import { OPENCODE_AGENT_PLAN } from '../../../../data/repository/agent_task_poli
 import type { FindingsQueryPort } from '../../../../data/repository/agent_ports';
 import { DefaultAgentRepositoryFactory } from '../../../../data/repository/agent_repository_factory';
 import { THINK_RESPONSE_SCHEMA } from '../../../../data/repository/agent_response_schemas';
-import { IssueRepository } from '../../../../data/repository/issue_repository';
+import type { IssueDescriptionQueryPort, IssueNotificationPort } from '../../../ports/issue_ports';
 import { getThinkPrompt } from '../../../../prompts';
 import { logDebugInfo, logError, logInfo } from '../../../../utils/logger';
 import { OPENCODE_PROJECT_CONTEXT_INSTRUCTION } from '../../../../utils/opencode_project_context_instruction';
@@ -16,7 +16,10 @@ import { extractMentionQuestion, getThinkCommentBody } from './think_input_polic
 export class ThinkUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'ThinkUseCase';
     private aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings();
-    private issueRepository: IssueRepository = new IssueRepository();
+    constructor(
+        private readonly issueDescriptionQueryPort: IssueDescriptionQueryPort,
+        private readonly issueNotificationPort: IssueNotificationPort,
+    ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         const results: Result[] = [];
@@ -94,7 +97,7 @@ export class ThinkUseCase implements ParamUseCase<Execution, Result[]> {
                 param.issue.isIssueComment ? param.issue.number : param.issueNumber;
             let issueDescription = '';
             if (issueNumberForContext > 0) {
-                const desc = await this.issueRepository.getDescription(
+                const desc = await this.issueDescriptionQueryPort.getDescription(
                     param.owner,
                     param.repo,
                     issueNumberForContext,
@@ -153,7 +156,7 @@ export class ThinkUseCase implements ParamUseCase<Execution, Result[]> {
                 return results;
             }
 
-            await this.issueRepository.addComment(
+            await this.issueNotificationPort.addComment(
                 param.owner,
                 param.repo,
                 issueOrPrNumber,

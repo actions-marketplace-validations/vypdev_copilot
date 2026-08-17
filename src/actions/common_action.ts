@@ -41,7 +41,14 @@ export async function mainRun(
     if (execution.runnedByToken) {
         if (execution.isSingleAction && execution.singleAction.validSingleAction) {
             logInfo(`User from token (${execution.tokenUser}) matches actor. Executing single action: ${execution.singleAction.currentSingleAction}.`);
-            results.push(...await new SingleActionUseCase(new RepositoryFactory().createInitialSetupUseCase(), new RepositoryFactory().createRepositoryReleaseRepository(), new RepositoryFactory().createCheckProgressUseCase()).invoke(execution));
+            const singleActionFactory = new RepositoryFactory();
+            results.push(...await new SingleActionUseCase(
+                singleActionFactory.createInitialSetupUseCase(),
+                singleActionFactory.createRepositoryReleaseRepository(),
+                singleActionFactory.createCheckProgressUseCase(),
+                singleActionFactory.createIssueRepository(),
+                singleActionFactory.createIssueRepository(),
+            ).invoke(execution));
             logInfo(`Single action finished. Results: ${results.length}.`);
             return results;
         }
@@ -52,7 +59,14 @@ export async function mainRun(
     if (execution.issueNumber === -1) {
         if (execution.isSingleAction && execution.singleAction.isSingleActionWithoutIssue) {
             logInfo('No issue number; running single action without issue.');
-            results.push(...await new SingleActionUseCase(new RepositoryFactory().createInitialSetupUseCase(), new RepositoryFactory().createRepositoryReleaseRepository(), new RepositoryFactory().createCheckProgressUseCase()).invoke(execution));
+            const singleActionFactory = new RepositoryFactory();
+            results.push(...await new SingleActionUseCase(
+                singleActionFactory.createInitialSetupUseCase(),
+                singleActionFactory.createRepositoryReleaseRepository(),
+                singleActionFactory.createCheckProgressUseCase(),
+                singleActionFactory.createIssueRepository(),
+                singleActionFactory.createIssueRepository(),
+            ).invoke(execution));
         } else {
             logInfo('Issue number not found. Skipping.');
         }
@@ -87,16 +101,26 @@ export async function mainRun(
         });
 
         switch (route) {
-            case 'single-action':
+            case 'single-action': {
                 logInfo(`Running SingleActionUseCase (action: ${execution.singleAction.currentSingleAction}).`);
-                results.push(...await new SingleActionUseCase(new RepositoryFactory().createInitialSetupUseCase(), new RepositoryFactory().createRepositoryReleaseRepository(), new RepositoryFactory().createCheckProgressUseCase()).invoke(execution));
+                const singleActionFactory = new RepositoryFactory();
+                results.push(...await new SingleActionUseCase(
+                    singleActionFactory.createInitialSetupUseCase(),
+                    singleActionFactory.createRepositoryReleaseRepository(),
+                    singleActionFactory.createCheckProgressUseCase(),
+                    singleActionFactory.createIssueRepository(),
+                    singleActionFactory.createIssueRepository(),
+                ).invoke(execution));
                 break;
+            }
             case 'issue-comment': {
                 logInfo(`Running IssueCommentUseCase for issue #${execution.issue.number}.`);
                 const commentFactory = new RepositoryFactory();
                 results.push(...await new IssueCommentUseCase(
                     commentFactory.createIssueRepository(),
                     commentFactory.createOrganizationRepository(),
+                    commentFactory.createIssueRepository(),
+                    commentFactory.createIssueRepository(),
                 ).invoke(execution));
                 break;
             }
@@ -110,6 +134,8 @@ export async function mainRun(
                 results.push(...await new PullRequestReviewCommentUseCase(
                     reviewCommentFactory.createIssueRepository(),
                     reviewCommentFactory.createOrganizationRepository(),
+                    reviewCommentFactory.createIssueRepository(),
+                    reviewCommentFactory.createIssueRepository(),
                 ).invoke(execution));
                 break;
             }
