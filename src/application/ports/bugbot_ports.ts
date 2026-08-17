@@ -33,3 +33,20 @@ export interface BugbotContextPorts {
     issue: BugbotIssueContextPort;
     pullRequest: BugbotPullRequestContextPort;
 }
+
+export interface BugbotIssueCommentWritePort {
+    addComment(owner: string, repository: string, issueNumber: number, comment: string, token: string, options?: { commitSha?: string }): Promise<void>;
+    updateComment(owner: string, repository: string, issueNumber: number, commentId: number, comment: string, token: string, options?: { commitSha?: string }): Promise<void>;
+}
+
+export interface BugbotPullRequestCommentWritePort {
+    createReviewWithComments(owner: string, repository: string, pullNumber: number, commitSha: string, comments: Array<{ path: string; line: number; body: string }>, token: string): Promise<void>;
+    updatePullRequestReviewComment(owner: string, repository: string, commentId: number, body: string, token: string): Promise<void>;
+    listPullRequestReviewComments(owner: string, repository: string, pullNumber: number, token: string): Promise<BugbotPullRequestReviewComment[]>;
+    resolvePullRequestReviewThread(owner: string, repository: string, pullNumber: number, nodeId: string, token: string): Promise<void>;
+}
+
+export interface BugbotWritePorts {
+    issueComments: BugbotIssueCommentWritePort;
+    pullRequestComments: BugbotPullRequestCommentWritePort;
+}

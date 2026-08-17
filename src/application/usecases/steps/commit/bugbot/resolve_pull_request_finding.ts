@@ -1,4 +1,4 @@
-import { PullRequestRepository } from "../../../../../data/repository/pull_request_repository";
+import type { BugbotPullRequestCommentWritePort } from "../../../../../application/ports/bugbot_ports";
 import { logDebugInfo, logError } from "../../../../../utils/logger";
 import { replaceMarkerInBody } from "./marker";
 
@@ -12,7 +12,7 @@ export interface PullRequestFindingResolution {
 }
 
 export async function resolvePullRequestFinding(
-    repository: PullRequestRepository,
+    repository: BugbotPullRequestCommentWritePort,
     resolution: PullRequestFindingResolution
 ): Promise<void> {
     const { findingId, commentId, prNumber, owner, repo, token } = resolution;

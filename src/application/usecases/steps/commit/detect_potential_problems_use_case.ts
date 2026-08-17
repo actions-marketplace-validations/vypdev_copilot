@@ -58,7 +58,10 @@ export class DetectPotentialProblemsUseCase implements ParamUseCase<Execution, R
                 return results;
             }
 
-            await applyDetectedFindings(param, context, prepared);
+            await applyDetectedFindings(param, context, prepared, {
+                issueComments: repositoryFactory.createIssueRepository(),
+                pullRequestComments: repositoryFactory.createPullRequestRepository(),
+            });
             const stepParts = [`${prepared.toPublish.length} new/current finding(s) from OpenCode`];
             if (prepared.overflowCount > 0) {
                 stepParts.push(`${prepared.overflowCount} more not published (see summary comment)`);

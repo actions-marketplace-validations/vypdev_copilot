@@ -116,6 +116,10 @@ async function commitAutofixAndResolveFindings(
             context: payload.context,
             resolvedFindingIds: new Set(ids),
             normalizedResolvedIds: new Set(ids.map(sanitizeFindingIdForMarker)),
+            ports: {
+                issueComments: new RepositoryFactory().createIssueRepository(),
+                pullRequestComments: new RepositoryFactory().createPullRequestRepository(),
+            },
         });
         logInfo(`Marked ${ids.length} finding(s) as resolved.`);
     } else if (!commitResult.committed) {

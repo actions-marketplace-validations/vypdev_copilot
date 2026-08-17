@@ -4,8 +4,7 @@
  */
 
 import type { Execution } from "../../../../../data/model/execution";
-import { IssueRepository } from "../../../../../data/repository/issue_repository";
-import { PullRequestRepository } from "../../../../../data/repository/pull_request_repository";
+import type { BugbotWritePorts } from "../../../../../application/ports/bugbot_ports";
 import { getCommentWatermark } from "../../../../../utils/comment_watermark";
 import type { BugbotContext, BugbotFinding } from "./types";
 import { publishIssueFindingComment } from "./publish_issue_finding_comment";
@@ -21,13 +20,13 @@ export interface PublishFindingsParam {
     /** When findings were limited by max comments, add one summary comment with this overflow info. */
     overflowCount?: number;
     overflowTitles?: string[];
+    ports: BugbotWritePorts;
 }
 
 export async function publishFindings(param: PublishFindingsParam): Promise<void> {
-    const { execution, context, findings, commitSha, overflowCount = 0, overflowTitles = [] } = param;
+    const { execution, context, findings, commitSha, overflowCount = 0, overflowTitles = [], ports } = param;
     const { existingByFindingId, openPrNumbers, prContext } = context;
-    const issueRepository = new IssueRepository();
-    const pullRequestRepository = new PullRequestRepository();
+
     const watermark =
         commitSha && execution.owner && execution.repo
             ? getCommentWatermark({ commitSha, owner: execution.owner, repo: execution.repo })
@@ -36,7 +35,7 @@ export async function publishFindings(param: PublishFindingsParam): Promise<void
     const reviewPublisher =
         prContext && openPrNumbers.length > 0
             ? new PullRequestReviewCommentPublisher({
-                  repository: pullRequestRepository,
+                  repository: ports.pullRequestComments,
                   execution,
                   openPrNumber: openPrNumbers[0],
                   prContext,
@@ -46,7 +45,7 @@ export async function publishFindings(param: PublishFindingsParam): Promise<void
 
     for (const finding of findings) {
         await publishIssueFindingComment(
-            issueRepository,
+            ports.issueComments,
             execution,
             finding,
             existingByFindingId[finding.id],
@@ -59,7 +58,7 @@ export async function publishFindings(param: PublishFindingsParam): Promise<void
 
     await reviewPublisher?.flush();
     await publishOverflowComment(
-        issueRepository,
+        ports.issueComments,
         execution,
         overflowCount,
         overflowTitles,

@@ -1,13 +1,11 @@
-import { IssueRepository } from "../../../../../data/repository/issue_repository";
+import type { BugbotIssueCommentWritePort } from "../../../../../application/ports/bugbot_ports";
 import type { Execution } from "../../../../../data/model/execution";
 import type { BugbotFinding, ExistingFindingInfo } from "./types";
 import { buildCommentBody } from "./marker";
 import { logDebugInfo } from "../../../../../utils/logger";
 
-type IssueCommentRepository = Pick<IssueRepository, "addComment" | "updateComment">;
-
 export async function publishIssueFindingComment(
-    repository: IssueCommentRepository,
+    repository: BugbotIssueCommentWritePort,
     execution: Execution,
     finding: BugbotFinding,
     existing: ExistingFindingInfo | undefined,

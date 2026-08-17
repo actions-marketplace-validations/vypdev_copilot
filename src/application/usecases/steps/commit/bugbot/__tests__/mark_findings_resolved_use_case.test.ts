@@ -3,7 +3,7 @@
  * update issue comment, update PR comment and resolve thread, handle missing comment errors.
  */
 
-import { markFindingsResolved } from "../mark_findings_resolved_use_case";
+import { markFindingsResolved as markFindingsResolvedImpl, type MarkFindingsResolvedParam } from "../mark_findings_resolved_use_case";
 import { IssueRepository } from "../../../../../../data/repository/issue_repository";
 import { PullRequestRepository } from "../../../../../../data/repository/pull_request_repository";
 import type { BugbotContext, ExistingByFindingId } from "../types";
@@ -33,6 +33,21 @@ jest.mock("../../../../../../data/repository/pull_request_repository", () => ({
         resolvePullRequestReviewThread: mockResolveThread,
     })),
 }));
+
+function markFindingsResolved(param: Omit<MarkFindingsResolvedParam, "ports">) {
+    return markFindingsResolvedImpl({
+        ...param,
+        ports: {
+            issueComments: { updateComment: mockUpdateComment, addComment: jest.fn() },
+            pullRequestComments: {
+                listPullRequestReviewComments: mockListPrReviewComments,
+                updatePullRequestReviewComment: mockUpdatePrReviewComment,
+                resolvePullRequestReviewThread: mockResolveThread,
+                createReviewWithComments: jest.fn(),
+            },
+        },
+    });
+}
 
 function baseExecution(overrides: Partial<Execution> = {}): Execution {
     return {

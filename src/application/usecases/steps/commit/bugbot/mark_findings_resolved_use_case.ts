@@ -3,8 +3,7 @@
  */
 
 import type { Execution } from "../../../../../data/model/execution";
-import { IssueRepository } from "../../../../../data/repository/issue_repository";
-import { PullRequestRepository } from "../../../../../data/repository/pull_request_repository";
+import type { BugbotWritePorts } from "../../../../../application/ports/bugbot_ports";
 import { logError } from "../../../../../utils/logger";
 import type { BugbotContext } from "./types";
 import { buildMarker, sanitizeFindingIdForMarker } from "./marker";
@@ -16,16 +15,16 @@ export interface MarkFindingsResolvedParam {
     context: BugbotContext;
     resolvedFindingIds: Set<string>;
     normalizedResolvedIds: Set<string>;
+    ports: BugbotWritePorts;
 }
 
 export async function markFindingsResolved(param: MarkFindingsResolvedParam): Promise<void> {
-    const { execution, context, resolvedFindingIds, normalizedResolvedIds } = param;
+    const { execution, context, resolvedFindingIds, normalizedResolvedIds, ports } = param;
     const { existingByFindingId, issueComments } = context;
     const owner = execution.owner;
     const repo = execution.repo;
     const token = execution.tokens.token;
-    const issueRepository = new IssueRepository();
-    const pullRequestRepository = new PullRequestRepository();
+
 
     for (const [findingId, existing] of Object.entries(existingByFindingId)) {
         if (
@@ -44,7 +43,7 @@ export async function markFindingsResolved(param: MarkFindingsResolvedParam): Pr
                     `[Bugbot] No se encontró el comentario de la issue para marcar como resuelto. findingId="${findingId}", issueCommentId=${existing.issueCommentId}, issueNumber=${execution.issueNumber}, owner=${owner}, repo=${repo}.`
                 );
             } else {
-                await resolveIssueFinding(issueRepository, {
+                await resolveIssueFinding(ports.issueComments, {
                     findingId,
                     commentId: existing.issueCommentId,
                     owner,
@@ -58,7 +57,7 @@ export async function markFindingsResolved(param: MarkFindingsResolvedParam): Pr
 
         if (existing.prCommentId != null && existing.prNumber != null) {
             try {
-                await resolvePullRequestFinding(pullRequestRepository, {
+                await resolvePullRequestFinding(ports.pullRequestComments, {
                     findingId,
                     commentId: existing.prCommentId,
                     prNumber: existing.prNumber,
