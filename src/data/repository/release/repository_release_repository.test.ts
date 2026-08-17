@@ -1,4 +1,4 @@
-import { RepositoryReleaseRepository } from "../repository_release_repository";
+import { RepositoryReleaseRepository } from "./repository_release_repository";
 
 const mockGetRef = jest.fn();
 const mockCreateRef = jest.fn();

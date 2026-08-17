@@ -1,6 +1,6 @@
 import { Execution } from "../../../data/model/execution";
 import { Result } from "../../../data/model/result";
-import { RepositoryReleaseRepository } from "../../../data/repository/repository_release_repository";
+import { RepositoryReleaseRepository } from "../../../data/repository/release/repository_release_repository";
 import { INPUT_KEYS } from "../../../utils/constants";
 import { logError, logInfo } from "../../../utils/logger";
 import { getTaskEmoji } from "../../../utils/task_emoji";

@@ -23,7 +23,7 @@ jest.mock('../../../../utils/setup_files', () => ({
 
 const mockGetDefaultBranch = jest.fn();
 const mockCreateTag = jest.fn();
-jest.mock('../../../../data/repository/repository_release_repository', () => ({
+jest.mock('../../../../data/repository/release/repository_release_repository', () => ({
   RepositoryReleaseRepository: jest.fn().mockImplementation(() => ({
     getDefaultBranch: mockGetDefaultBranch,
     createTag: mockCreateTag,
