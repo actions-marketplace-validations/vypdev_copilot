@@ -1,10 +1,10 @@
-import { BranchRepository } from '../../../data/repository/branch_repository';
+import type { BranchListQueryPort } from '../../../application/ports/branch_ports';
 import { Execution } from '../../../data/model/execution';
 import { logInfo } from '../../../utils/logger';
 
 export async function findIssueBranch(
   param: Execution,
-  repository: BranchRepository,
+  repository: BranchListQueryPort,
 ): Promise<string | undefined> {
   if (param.commit.branch) return param.commit.branch;
 

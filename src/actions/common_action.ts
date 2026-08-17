@@ -41,7 +41,7 @@ export async function mainRun(
     if (execution.runnedByToken) {
         if (execution.isSingleAction && execution.singleAction.validSingleAction) {
             logInfo(`User from token (${execution.tokenUser}) matches actor. Executing single action: ${execution.singleAction.currentSingleAction}.`);
-            results.push(...await new SingleActionUseCase(new RepositoryFactory().createInitialSetupUseCase(), new RepositoryFactory().createRepositoryReleaseRepository()).invoke(execution));
+            results.push(...await new SingleActionUseCase(new RepositoryFactory().createInitialSetupUseCase(), new RepositoryFactory().createRepositoryReleaseRepository(), new RepositoryFactory().createCheckProgressUseCase()).invoke(execution));
             logInfo(`Single action finished. Results: ${results.length}.`);
             return results;
         }
@@ -52,7 +52,7 @@ export async function mainRun(
     if (execution.issueNumber === -1) {
         if (execution.isSingleAction && execution.singleAction.isSingleActionWithoutIssue) {
             logInfo('No issue number; running single action without issue.');
-            results.push(...await new SingleActionUseCase(new RepositoryFactory().createInitialSetupUseCase(), new RepositoryFactory().createRepositoryReleaseRepository()).invoke(execution));
+            results.push(...await new SingleActionUseCase(new RepositoryFactory().createInitialSetupUseCase(), new RepositoryFactory().createRepositoryReleaseRepository(), new RepositoryFactory().createCheckProgressUseCase()).invoke(execution));
         } else {
             logInfo('Issue number not found. Skipping.');
         }
@@ -89,7 +89,7 @@ export async function mainRun(
         switch (route) {
             case 'single-action':
                 logInfo(`Running SingleActionUseCase (action: ${execution.singleAction.currentSingleAction}).`);
-                results.push(...await new SingleActionUseCase(new RepositoryFactory().createInitialSetupUseCase(), new RepositoryFactory().createRepositoryReleaseRepository()).invoke(execution));
+                results.push(...await new SingleActionUseCase(new RepositoryFactory().createInitialSetupUseCase(), new RepositoryFactory().createRepositoryReleaseRepository(), new RepositoryFactory().createCheckProgressUseCase()).invoke(execution));
                 break;
             case 'issue-comment':
                 logInfo(`Running IssueCommentUseCase for issue #${execution.issue.number}.`);
@@ -116,6 +116,7 @@ export async function mainRun(
                     commitFactory.createIssueRepository(),
                     commitFactory.createPullRequestRepository(),
                     commitFactory.createBranchRepository(),
+                    commitFactory.createCheckProgressUseCase(),
                 ).invoke(execution));
                 break;
             }

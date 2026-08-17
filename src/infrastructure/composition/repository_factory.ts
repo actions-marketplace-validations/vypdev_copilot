@@ -21,6 +21,7 @@ import { IssueUseCase } from "../../application/usecases/issue_use_case";
 import { PullRequestUseCase } from "../../application/usecases/pull_request_use_case";
 import { InitialSetupUseCase } from "../../application/usecases/actions/initial_setup_use_case";
 import { BranchRepository } from "../../data/repository/branch_repository";
+import { CheckProgressUseCase } from "../../application/usecases/actions/check_progress_use_case";
 
 export class RepositoryFactory {
     createGithubClient(): OctokitClientAdapter {
@@ -28,6 +29,14 @@ export class RepositoryFactory {
     }
     createBranchRepository(): BranchRepository {
         return new BranchRepository();
+    }
+    createCheckProgressUseCase(): CheckProgressUseCase {
+        const issueRepository = this.createIssueRepository();
+        return new CheckProgressUseCase(
+            issueRepository,
+            this.createBranchRepository(),
+            this.createPullRequestRepository(),
+        );
     }
 
     createIssueUseCase(): IssueUseCase {

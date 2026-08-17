@@ -108,7 +108,7 @@ describe('SingleActionUseCase', () => {
   });
 
   it('returns empty results when not a valid single action', async () => {
-    const useCase = new SingleActionUseCase({ invoke: jest.fn().mockResolvedValue([]) } as any, {} as any);
+    const useCase = new SingleActionUseCase({ invoke: jest.fn().mockResolvedValue([]) } as any, {} as any, { invoke: mockCheckProgressInvoke } as any);
     const param = minimalExecution({
       validSingleAction: false,
       currentSingleAction: 'unknown',
@@ -124,7 +124,7 @@ describe('SingleActionUseCase', () => {
     const r = new Result({ id: 'think', success: true, executed: true, steps: [] });
     mockThinkInvoke.mockResolvedValue([r]);
 
-    const useCase = new SingleActionUseCase({ invoke: jest.fn().mockResolvedValue([]) } as any, {} as any);
+    const useCase = new SingleActionUseCase({ invoke: jest.fn().mockResolvedValue([]) } as any, {} as any, { invoke: mockCheckProgressInvoke } as any);
     const param = minimalExecution({
       validSingleAction: true,
       currentSingleAction: ACTIONS.THINK,
@@ -141,7 +141,7 @@ describe('SingleActionUseCase', () => {
       new Result({ id: 'cp', success: true, executed: true, steps: [] }),
     ]);
 
-    const useCase = new SingleActionUseCase({ invoke: jest.fn().mockResolvedValue([]) } as any, {} as any);
+    const useCase = new SingleActionUseCase({ invoke: jest.fn().mockResolvedValue([]) } as any, {} as any, { invoke: mockCheckProgressInvoke } as any);
     const param = minimalExecution({
       validSingleAction: true,
       currentSingleAction: ACTIONS.CHECK_PROGRESS,
@@ -158,7 +158,7 @@ describe('SingleActionUseCase', () => {
       new Result({ id: 'rec', success: true, executed: true, steps: [] }),
     ]);
 
-    const useCase = new SingleActionUseCase({ invoke: jest.fn().mockResolvedValue([]) } as any, {} as any);
+    const useCase = new SingleActionUseCase({ invoke: jest.fn().mockResolvedValue([]) } as any, {} as any, { invoke: mockCheckProgressInvoke } as any);
     const param = minimalExecution({
       validSingleAction: true,
       currentSingleAction: ACTIONS.RECOMMEND_STEPS,
@@ -173,7 +173,7 @@ describe('SingleActionUseCase', () => {
   it('on error pushes failure result with action name', async () => {
     mockThinkInvoke.mockRejectedValue(new Error('think failed'));
 
-    const useCase = new SingleActionUseCase({ invoke: jest.fn().mockResolvedValue([]) } as any, {} as any);
+    const useCase = new SingleActionUseCase({ invoke: jest.fn().mockResolvedValue([]) } as any, {} as any, { invoke: mockCheckProgressInvoke } as any);
     const param = minimalExecution({
       validSingleAction: true,
       currentSingleAction: ACTIONS.THINK,

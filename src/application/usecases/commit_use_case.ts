@@ -20,6 +20,7 @@ export class CommitUseCase implements ParamUseCase<Execution, Result[]> {
         private readonly issueLabelsPort: IssueLabelsPort,
         private readonly pullRequestBranchQueryPort: PullRequestBranchQueryPort,
         private readonly branchChangeSizePort: BranchChangeSizePort,
+        private readonly checkProgressUseCase: CheckProgressUseCase,
     ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
@@ -43,7 +44,7 @@ export class CommitUseCase implements ParamUseCase<Execution, Result[]> {
                 this.pullRequestBranchQueryPort,
                 this.branchChangeSizePort,
             ).invoke(param)));
-            results.push(...(await new CheckProgressUseCase().invoke(param)));
+            results.push(...(await this.checkProgressUseCase.invoke(param)));
             results.push(...(await new DetectPotentialProblemsUseCase().invoke(param)));
         } catch (error) {
             logError(error);

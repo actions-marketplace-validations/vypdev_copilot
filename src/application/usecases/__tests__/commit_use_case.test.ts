@@ -58,7 +58,7 @@ describe('CommitUseCase', () => {
   });
 
   it('returns empty results when commit has no commits', async () => {
-    const useCase = new CommitUseCase({} as any, {} as any, {} as any, {} as any);
+    const useCase = new CommitUseCase({} as any, {} as any, {} as any, {} as any, { invoke: mockCheckProgressInvoke } as any);
     const param = minimalExecution({
       commit: { commits: [], branch: 'main' },
     });
@@ -77,7 +77,7 @@ describe('CommitUseCase', () => {
     mockCheckProgressInvoke.mockResolvedValue([]);
     mockDetectProblemsInvoke.mockResolvedValue([]);
 
-    const useCase = new CommitUseCase({} as any, {} as any, {} as any, {} as any);
+    const useCase = new CommitUseCase({} as any, {} as any, {} as any, {} as any, { invoke: mockCheckProgressInvoke } as any);
     const param = minimalExecution();
     const results = await useCase.invoke(param);
 
@@ -93,7 +93,7 @@ describe('CommitUseCase', () => {
   it('on error pushes failure result and rethrows', async () => {
     mockNotifyInvoke.mockRejectedValue(new Error('step failed'));
 
-    const useCase = new CommitUseCase({} as any, {} as any, {} as any, {} as any);
+    const useCase = new CommitUseCase({} as any, {} as any, {} as any, {} as any, { invoke: mockCheckProgressInvoke } as any);
     const param = minimalExecution();
 
     const results = await useCase.invoke(param);

@@ -20,6 +20,7 @@ export class SingleActionUseCase implements ParamUseCase<Execution, Result[]> {
     constructor(
         private readonly initialSetupUseCase: InitialSetupUseCase,
         private readonly repositoryReleasePort: RepositoryReleasePort,
+        private readonly checkProgressUseCase: CheckProgressUseCase,
     ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
@@ -47,7 +48,7 @@ export class SingleActionUseCase implements ParamUseCase<Execution, Result[]> {
             } else if (param.singleAction.isInitialSetupAction) {
                 results.push(...await this.initialSetupUseCase.invoke(param));
             } else if (param.singleAction.isCheckProgressAction) {
-                results.push(...await new CheckProgressUseCase().invoke(param));
+                results.push(...await this.checkProgressUseCase.invoke(param));
             } else if (param.singleAction.isDetectPotentialProblemsAction) {
                 results.push(...await new DetectPotentialProblemsUseCase().invoke(param));
             } else if (param.singleAction.isRecommendStepsAction) {

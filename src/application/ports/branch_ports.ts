@@ -16,3 +16,7 @@ export interface BranchChangeSizePort {
         token: string,
     ): Promise<{ size: string; githubSize: string; reason: string }>;
 }
+
+export interface BranchListQueryPort {
+    getListOfBranches(owner: string, repository: string, token: string): Promise<string[]>;
+}

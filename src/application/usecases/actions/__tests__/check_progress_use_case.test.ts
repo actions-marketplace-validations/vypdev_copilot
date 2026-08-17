@@ -78,7 +78,12 @@ describe('CheckProgressUseCase', () => {
   let useCase: CheckProgressUseCase;
 
   beforeEach(() => {
-    useCase = new CheckProgressUseCase();
+    useCase = new CheckProgressUseCase(
+      { getDescription: mockGetDescription, setProgressLabel: mockSetProgressLabel, getLabels: mockGetLabels, setLabels: mockSetLabels },
+      { getListOfBranches: mockGetListOfBranches },
+      { getOpenPullRequestNumbersByHeadBranch: mockGetOpenPullRequestNumbersByHeadBranch },
+      { askAgent: mockAskAgent },
+    );
     mockGetDescription.mockReset();
     mockSetProgressLabel.mockReset();
     mockGetLabels.mockReset();
