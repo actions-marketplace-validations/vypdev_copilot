@@ -84,6 +84,7 @@ describe('PullRequestUseCase', () => {
       { getCurrentAssignees: jest.fn(), assignMembersToIssue: jest.fn() },
       { getCurrentReviewers: jest.fn(), addReviewersToPullRequest: jest.fn() },
       { getAllMembers: jest.fn().mockResolvedValue([]), getRandomMembers: jest.fn() },
+      { getLabels: jest.fn(), setLabels: jest.fn() },
     );
     const param = minimalExecution({ pullRequest: { isOpened: true, isSynchronize: false, isClosed: false, isMerged: false, action: 'opened' } });
     await useCase.invoke(param);
@@ -109,6 +110,7 @@ describe('PullRequestUseCase', () => {
       { getCurrentAssignees: jest.fn(), assignMembersToIssue: jest.fn() },
       { getCurrentReviewers: jest.fn(), addReviewersToPullRequest: jest.fn() },
       { getAllMembers: jest.fn().mockResolvedValue([]), getRandomMembers: jest.fn() },
+      { getLabels: jest.fn(), setLabels: jest.fn() },
     );
     const param = minimalExecution({
       pullRequest: { isOpened: true, isSynchronize: false, isClosed: false, isMerged: false, action: 'opened' },
@@ -130,6 +132,7 @@ describe('PullRequestUseCase', () => {
       { getCurrentAssignees: jest.fn(), assignMembersToIssue: jest.fn() },
       { getCurrentReviewers: jest.fn(), addReviewersToPullRequest: jest.fn() },
       { getAllMembers: jest.fn().mockResolvedValue([]), getRandomMembers: jest.fn() },
+      { getLabels: jest.fn(), setLabels: jest.fn() },
     );
     const param = minimalExecution({
       pullRequest: { isOpened: false, isSynchronize: true, isClosed: false, isMerged: false, action: 'synchronize' },
@@ -152,6 +155,7 @@ describe('PullRequestUseCase', () => {
       { getCurrentAssignees: jest.fn(), assignMembersToIssue: jest.fn() },
       { getCurrentReviewers: jest.fn(), addReviewersToPullRequest: jest.fn() },
       { getAllMembers: jest.fn().mockResolvedValue([]), getRandomMembers: jest.fn() },
+      { getLabels: jest.fn(), setLabels: jest.fn() },
     );
     const param = minimalExecution({
       pullRequest: { isOpened: false, isSynchronize: false, isClosed: true, isMerged: true, action: 'closed' },
@@ -174,6 +178,7 @@ describe('PullRequestUseCase', () => {
       { getCurrentAssignees: jest.fn(), assignMembersToIssue: jest.fn() },
       { getCurrentReviewers: jest.fn(), addReviewersToPullRequest: jest.fn() },
       { getAllMembers: jest.fn().mockResolvedValue([]), getRandomMembers: jest.fn() },
+      { getLabels: jest.fn(), setLabels: jest.fn() },
     );
     const param = minimalExecution();
     const results = await useCase.invoke(param);

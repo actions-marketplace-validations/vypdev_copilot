@@ -16,7 +16,7 @@ import { UpdatePullRequestDescriptionUseCase } from "./steps/pull_request/update
 import type { IssueAssigneePort, IssueClosurePort, IssueDescriptionQueryPort } from "../ports/issue_ports";
 import type { OrganizationMembersPort } from "../ports/organization_ports";
 import type { PullRequestDescriptionCommandPort, PullRequestReviewPort } from "../ports/pull_request_ports";
-import type { IssueTitlePort } from "../ports/issue_ports";
+import type { IssueLabelsPort, IssueTitlePort } from "../ports/issue_ports";
 
 export class PullRequestUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'PullRequestUseCase';
@@ -29,6 +29,7 @@ export class PullRequestUseCase implements ParamUseCase<Execution, Result[]> {
         private readonly issueAssigneePort: IssueAssigneePort,
         private readonly pullRequestReviewPort: PullRequestReviewPort,
         private readonly organizationMembersPort: OrganizationMembersPort,
+        private readonly issueLabelsPort: IssueLabelsPort,
     ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
@@ -69,7 +70,7 @@ export class PullRequestUseCase implements ParamUseCase<Execution, Result[]> {
                 /**
                  * Copy size and progress labels from the linked issue to this PR (corner case: PR just opened).
                  */
-                results.push(...await new SyncSizeAndProgressLabelsFromIssueToPrUseCase().invoke(param));
+                results.push(...await new SyncSizeAndProgressLabelsFromIssueToPrUseCase(this.issueLabelsPort).invoke(param));
 
                 /**
                  * Check priority pull request size

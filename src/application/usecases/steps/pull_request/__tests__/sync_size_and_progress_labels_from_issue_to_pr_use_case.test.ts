@@ -35,7 +35,7 @@ describe('SyncSizeAndProgressLabelsFromIssueToPrUseCase', () => {
   let useCase: SyncSizeAndProgressLabelsFromIssueToPrUseCase;
 
   beforeEach(() => {
-    useCase = new SyncSizeAndProgressLabelsFromIssueToPrUseCase();
+    useCase = new SyncSizeAndProgressLabelsFromIssueToPrUseCase({ getLabels: mockGetLabels, setLabels: mockSetLabels });
     mockGetLabels.mockReset();
     mockSetLabels.mockReset();
   });
