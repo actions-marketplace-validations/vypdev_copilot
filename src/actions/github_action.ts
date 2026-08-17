@@ -22,6 +22,7 @@ import { BUGBOT_MAX_COMMENTS, BUGBOT_MIN_SEVERITY, INPUT_KEYS } from '../utils/c
 import { logDebugInfo, logError, logInfo } from '../utils/logger';
 import type { ManagedAgentServer } from '../data/repository/agent_ports';
 import { OpenCodeServerLifecycleAdapter } from '../data/repository/opencode_server_lifecycle_adapter';
+import { RepositoryFactory } from '../infrastructure/composition/repository_factory';
 import { loadProjectDetails } from './project_details_loader';
 import { mainRun } from './common_action';
 import { isEnabledInput } from './input_boolean_policy';
@@ -367,7 +368,7 @@ async function finishWithResults(execution: Execution, results: Result[]): Promi
     logInfo(`Publishing result: ${results.length} result(s), ${stepCount} step(s), ${errorCount} error(s).`);
 
     execution.currentConfiguration.results = results;
-    await new PublishResultUseCase().invoke(execution);
+    await new PublishResultUseCase(new RepositoryFactory().createIssueRepository()).invoke(execution);
     await new StoreConfigurationUseCase().invoke(execution);
     logInfo('Configuration stored. Finishing.');
 

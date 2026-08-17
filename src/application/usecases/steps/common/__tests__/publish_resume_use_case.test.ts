@@ -64,7 +64,7 @@ describe('PublishResultUseCase', () => {
   let useCase: PublishResultUseCase;
 
   beforeEach(() => {
-    useCase = new PublishResultUseCase();
+    useCase = new PublishResultUseCase({ addComment: mockAddComment, openIssue: jest.fn() });
     mockAddComment.mockReset();
     mockGetAccumulatedLogsAsText.mockReturnValue('');
   });
