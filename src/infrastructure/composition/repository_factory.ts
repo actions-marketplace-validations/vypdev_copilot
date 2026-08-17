@@ -1,5 +1,14 @@
 import { OrganizationRepository } from "../../data/repository/organization/organization_repository";
 import { IssueRepository } from "../../data/repository/issue_repository";
+import { IssueAssignmentRepository } from "../../data/repository/issue/issue_assignment_repository";
+import { IssueContentRepository } from "../../data/repository/issue/issue_content_repository";
+import { IssueLabelRepository } from "../../data/repository/issue/issue_label_repository";
+import { IssueLabelProvisioningRepository } from "../../data/repository/issue/issue_label_provisioning_repository";
+import { IssueLifecycleRepository } from "../../data/repository/issue/issue_lifecycle_repository";
+import { IssueMetadataRepository } from "../../data/repository/issue/issue_metadata_repository";
+import { IssueProgressLabelRepository } from "../../data/repository/issue/issue_progress_label_repository";
+import { IssueTypeRepository } from "../../data/repository/issue/issue_type_repository";
+import { IssueTypeAssignmentRepository } from "../../data/repository/issue/issue_type_assignment_repository";
 import { ProjectBoardRepository } from "../../data/repository/project/project_board_repository";
 import { PullRequestChangesRepository } from "../../data/repository/pull_request/pull_request_changes_repository";
 import { PullRequestLifecycleRepository } from "../../data/repository/pull_request/pull_request_lifecycle_repository";
@@ -15,6 +24,20 @@ export class RepositoryFactory {
 
     createIssueRepository(): IssueRepository {
         return new IssueRepository();
+    }
+
+    createIssueAssignmentRepository(): IssueAssignmentRepository { return new IssueAssignmentRepository(); }
+    createIssueContentRepository(): IssueContentRepository { return new IssueContentRepository(); }
+    createIssueLabelRepository(): IssueLabelRepository { return new IssueLabelRepository(); }
+    createIssueLabelProvisioningRepository(): IssueLabelProvisioningRepository { return new IssueLabelProvisioningRepository(); }
+    createIssueLifecycleRepository(): IssueLifecycleRepository { return new IssueLifecycleRepository(); }
+    createIssueMetadataRepository(): IssueMetadataRepository { return new IssueMetadataRepository(); }
+    createIssueProgressLabelRepository(): IssueProgressLabelRepository {
+        return new IssueProgressLabelRepository(this.createIssueLabelRepository());
+    }
+    createIssueTypeRepository(): IssueTypeRepository { return new IssueTypeRepository(); }
+    createIssueTypeAssignmentRepository(getIssueId: ConstructorParameters<typeof IssueTypeAssignmentRepository>[0]): IssueTypeAssignmentRepository {
+        return new IssueTypeAssignmentRepository(getIssueId);
     }
 
     createProjectBoardRepository(): ProjectBoardRepository {
