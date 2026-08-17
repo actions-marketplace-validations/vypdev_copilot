@@ -1,11 +1,11 @@
-import { BranchRepository } from "../../../../data/repository/branch_repository";
+import type { BranchPreparationPort } from "../../../ports/branch_ports";
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
 import { logDebugInfo, logWarn } from "../../../../utils/logger";
 
 export async function prepareHotfixBranch(
     param: Execution,
-    repository: BranchRepository,
+    repository: BranchPreparationPort,
     branches: string[],
     taskId: string
 ): Promise<Result[]> {

@@ -21,7 +21,7 @@ import type { ProjectBoardPriorityPort } from "./steps/issue/priority_size_check
 import type { OrganizationMembersPort } from "../ports/organization_ports";
 import type { IssueAssigneePort, IssueClosurePort, IssueDescriptionQueryPort, IssueIdentityQueryPort, IssueNotificationPort, IssueTitlePort, IssueTypeAssignmentPort } from "../ports/issue_ports";
 import type { ProjectBoardCommandPort, ProjectBoardLinkPort } from "../ports/project_board_ports";
-import type { BranchLifecyclePort, BranchNamePort } from "../ports/branch_ports";
+import type { BranchLifecyclePort, BranchNamePort, BranchPreparationPort } from "../ports/branch_ports";
 
 export class IssueUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'IssueUseCase';
@@ -38,6 +38,7 @@ export class IssueUseCase implements ParamUseCase<Execution, Result[]> {
         private readonly issueNotificationPort: IssueNotificationPort,
         private readonly branchLifecyclePort: BranchLifecyclePort,
         private readonly branchNamePort: BranchNamePort,
+        private readonly branchPreparationPort: BranchPreparationPort,
     ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
@@ -86,7 +87,7 @@ export class IssueUseCase implements ParamUseCase<Execution, Result[]> {
          * Prepare branches
          */
         if (param.isBranched) {
-            results.push(...await new PrepareBranchesUseCase(this.projectBoardPort).invoke(param));
+            results.push(...await new PrepareBranchesUseCase(this.projectBoardPort, this.branchPreparationPort).invoke(param));
         } else {
             results.push(...await new RemoveIssueBranchesUseCase(this.branchLifecyclePort).invoke(param));
         }

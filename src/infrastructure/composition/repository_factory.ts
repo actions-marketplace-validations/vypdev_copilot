@@ -53,6 +53,7 @@ export class RepositoryFactory {
             this.createIssueRepository(),
             this.createBranchRepository(),
             this.createBranchRepository(),
+            this.createBranchRepository(),
         );
     }
     createPullRequestUseCase(): PullRequestUseCase {
