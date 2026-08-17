@@ -1,5 +1,5 @@
 import * as core from "@actions/core";
-import * as github from "@actions/github";
+import type { GithubClientPort, GithubIssueTitleClient } from './github/github_client_port';
 import { logDebugInfo } from '../../utils/logger';
 import { IssueContentRepository } from './issue/issue_content_repository';
 import { IssueMetadataRepository } from './issue/issue_metadata_repository';
@@ -25,6 +25,7 @@ export class IssueRepository {
     private readonly issueTypeAssignmentRepository: IssueTypeAssignmentRepository;
     private readonly issueAssignmentRepository: IssueAssignmentRepository;
     private readonly issueLifecycleRepository: IssueLifecycleRepository;
+    private readonly issueTitleClient: GithubClientPort<GithubIssueTitleClient>;
 
     constructor(
         issueContentRepository: IssueContentRepository,
@@ -35,6 +36,7 @@ export class IssueRepository {
         issueTypeRepository: IssueTypeRepository,
         issueTypeAssignmentRepository: IssueTypeAssignmentRepository,
         issueLifecycleRepository: IssueLifecycleRepository,
+        issueTitleClient: GithubClientPort<GithubIssueTitleClient>,
     ) {
         this.issueContentRepository = issueContentRepository;
         this.issueMetadataRepository = issueMetadataRepository;
@@ -45,6 +47,7 @@ export class IssueRepository {
         this.issueTypeRepository = issueTypeRepository;
         this.issueTypeAssignmentRepository = issueTypeAssignmentRepository;
         this.issueLifecycleRepository = issueLifecycleRepository;
+        this.issueTitleClient = issueTitleClient;
     }
 
     updateTitleIssueFormat = async (
@@ -59,7 +62,7 @@ export class IssueRepository {
         token: string,
     ): Promise<string | undefined> => {
         try {
-            const octokit = github.getOctokit(token);
+            const octokit = this.issueTitleClient.getClient(token);
 
             const emoji = resolveIssueTitleEmoji(labels, branchManagementAlways, branchManagementEmoji);
 
@@ -102,7 +105,7 @@ export class IssueRepository {
         token: string,
     ): Promise<string | undefined> => {
         try {
-            const octokit = github.getOctokit(token);
+            const octokit = this.issueTitleClient.getClient(token);
 
             const emoji = resolvePullRequestTitleEmoji(labels, branchManagementAlways, branchManagementEmoji);
 
@@ -137,7 +140,7 @@ export class IssueRepository {
         token: string,
     ): Promise<string | undefined> => {
         try {
-            const octokit = github.getOctokit(token);
+            const octokit = this.issueTitleClient.getClient(token);
 
             const sanitizedTitle = sanitizePullRequestTitle(issueTitle);
 

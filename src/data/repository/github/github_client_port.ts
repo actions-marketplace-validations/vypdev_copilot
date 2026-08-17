@@ -153,6 +153,14 @@ export interface GithubIssueComment {
     user?: { login?: string };
 }
 
+export interface GithubIssueTitleClient {
+    rest: {
+        issues: {
+            update(parameters: Record<string, unknown>): Promise<unknown>;
+        };
+    };
+}
+
 export interface GithubIssueMetadataClient {
     rest: {
         issues: {
