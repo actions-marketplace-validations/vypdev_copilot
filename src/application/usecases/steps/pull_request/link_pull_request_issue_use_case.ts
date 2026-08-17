@@ -1,4 +1,3 @@
-import * as github from "@actions/github";
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
 import type { PullRequestIssueLinkPort } from "../../../ports/pull_request_ports";
@@ -17,7 +16,7 @@ export class LinkPullRequestIssueUseCase implements ParamUseCase<Execution, Resu
         const result: Result[] = []
 
         try {
-            const isLinked = await this.pullRequestIssueLinkPort.isLinked(github.context.payload.pull_request?.html_url ?? '');
+            const isLinked = await this.pullRequestIssueLinkPort.isLinked(param.pullRequest.url);
 
             if (!isLinked) {
                 /**

@@ -430,7 +430,7 @@ describe('DetectPotentialProblemsUseCase', () => {
 
     await useCase.invoke(baseParam());
 
-    expect(mockAddComment).toHaveBeenCalledWith('owner', 'repo', 42, expect.any(String), 'token', undefined);
+    expect(mockAddComment).toHaveBeenCalledWith('owner', 'repo', 42, expect.any(String), 'token', { commitSha: 'sha1' });
     expect(mockCreateReviewWithComments).not.toHaveBeenCalled();
   });
 

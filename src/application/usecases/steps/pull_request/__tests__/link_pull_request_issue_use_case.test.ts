@@ -1,4 +1,3 @@
-import * as github from '@actions/github';
 import { LinkPullRequestIssueUseCase } from '../link_pull_request_issue_use_case';
 
 jest.mock('../../../../../utils/logger', () => ({
@@ -24,7 +23,7 @@ function baseParam() {
     owner: 'o',
     repo: 'r',
     issueNumber: 42,
-    pullRequest: { number: 10, base: 'develop', body: 'PR body' },
+    pullRequest: { number: 10, base: 'develop', body: 'PR body', url: 'https://github.com/o/r/pull/10' },
     branches: { defaultBranch: 'main' },
     tokens: { token: 't' },
   } as unknown as Parameters<LinkPullRequestIssueUseCase['invoke']>[0];
@@ -35,9 +34,6 @@ describe('LinkPullRequestIssueUseCase', () => {
 
   beforeEach(() => {
     useCase = new LinkPullRequestIssueUseCase({ isLinked: mockIsLinked, updateBaseBranch: mockUpdateBaseBranch, updateDescription: mockUpdateDescription });
-    (github.context as { payload?: { pull_request?: { html_url?: string } } }).payload = {
-      pull_request: { html_url: 'https://github.com/o/r/pull/10' },
-    };
     mockIsLinked.mockResolvedValue(false);
     mockUpdateBaseBranch.mockResolvedValue(undefined);
     mockUpdateDescription.mockResolvedValue(undefined);
