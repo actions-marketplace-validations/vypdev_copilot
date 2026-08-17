@@ -11,7 +11,7 @@ import { OPENCODE_AGENT_PLAN } from '../../../../data/repository/agent_task_poli
 import type { FindingsQueryPort } from '../../../../data/repository/agent_ports';
 import { DefaultAgentRepositoryFactory } from '../../../../data/repository/agent_repository_factory';
 import { THINK_RESPONSE_SCHEMA } from '../../../../data/repository/agent_response_schemas';
-import { IssueRepository } from '../../../../data/repository/issue_repository';
+import type { IssueNotificationPort } from '../../../ports/issue_ports';
 import { getAnswerIssueHelpPrompt } from '../../../../prompts';
 import { logDebugInfo, logError, logInfo } from '../../../../utils/logger';
 import { OPENCODE_PROJECT_CONTEXT_INSTRUCTION } from '../../../../utils/opencode_project_context_instruction';
@@ -22,7 +22,7 @@ import { extractStructuredAnswer } from '../common/agent_answer_policy';
 export class AnswerIssueHelpUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'AnswerIssueHelpUseCase';
     private aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings();
-    private issueRepository: IssueRepository = new IssueRepository();
+    constructor(private readonly issueNotificationPort: IssueNotificationPort) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         const results: Result[] = [];
@@ -120,7 +120,7 @@ export class AnswerIssueHelpUseCase implements ParamUseCase<Execution, Result[]>
                 return results;
             }
 
-            await this.issueRepository.addComment(
+            await this.issueNotificationPort.addComment(
                 param.owner,
                 param.repo,
                 issueNumber,
