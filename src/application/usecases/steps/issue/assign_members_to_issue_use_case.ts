@@ -1,7 +1,7 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import { IssueRepository } from "../../../../data/repository/issue_repository";
-import { OrganizationRepository } from "../../../../data/repository/organization/organization_repository";
+import type { IssueAssigneePort } from "../../../../application/ports/issue_ports";
+import type { OrganizationMembersPort } from "../../../../application/ports/organization_ports";
 import { logDebugInfo, logError, logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
 import { ParamUseCase } from "../../base/param_usecase";
@@ -9,8 +9,7 @@ import { ParamUseCase } from "../../base/param_usecase";
 export class AssignMemberToIssueUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'AssignMemberToIssueUseCase';
     
-    private issueRepository = new IssueRepository();
-    private projectRepository = new OrganizationRepository();
+    constructor(private readonly issueRepository: IssueAssigneePort, private readonly projectRepository: OrganizationMembersPort) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`);

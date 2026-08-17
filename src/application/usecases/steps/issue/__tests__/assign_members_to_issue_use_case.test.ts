@@ -41,7 +41,7 @@ describe('AssignMemberToIssueUseCase', () => {
   let useCase: AssignMemberToIssueUseCase;
 
   beforeEach(() => {
-    useCase = new AssignMemberToIssueUseCase();
+    useCase = new AssignMemberToIssueUseCase({ getCurrentAssignees: mockGetCurrentAssignees, assignMembersToIssue: mockAssignMembersToIssue }, { getAllMembers: mockGetAllMembers, getRandomMembers: mockGetRandomMembers });
     mockGetAllMembers.mockResolvedValue(['alice', 'bob']);
     mockGetCurrentAssignees.mockResolvedValue([]);
     mockGetRandomMembers.mockResolvedValue(['bob']);

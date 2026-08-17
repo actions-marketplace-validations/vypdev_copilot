@@ -46,6 +46,7 @@ export class RepositoryFactory {
             this.createIssueRepository(),
             this.createProjectBoardRepository(),
             this.createIssueRepository(),
+            this.createIssueRepository(),
         );
     }
     createPullRequestUseCase(): PullRequestUseCase {
@@ -55,6 +56,8 @@ export class RepositoryFactory {
             this.createIssueRepository(),
             this.createIssueRepository(),
             this.createIssueRepository(),
+            this.createIssueRepository(),
+            this.createPullRequestRepository(),
             this.createOrganizationRepository(),
         );
     }

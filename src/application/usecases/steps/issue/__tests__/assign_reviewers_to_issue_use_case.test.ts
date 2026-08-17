@@ -46,7 +46,7 @@ describe('AssignReviewersToIssueUseCase', () => {
   let useCase: AssignReviewersToIssueUseCase;
 
   beforeEach(() => {
-    useCase = new AssignReviewersToIssueUseCase();
+    useCase = new AssignReviewersToIssueUseCase({ getCurrentAssignees: mockGetCurrentAssignees, assignMembersToIssue: jest.fn() }, { getCurrentReviewers: mockGetCurrentReviewers, addReviewersToPullRequest: mockAddReviewersToPullRequest }, { getAllMembers: jest.fn(), getRandomMembers: mockGetRandomMembers });
     mockGetCurrentReviewers.mockReset();
     mockGetCurrentAssignees.mockReset();
     mockGetRandomMembers.mockReset();

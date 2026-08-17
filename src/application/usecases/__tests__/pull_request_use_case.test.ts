@@ -81,6 +81,8 @@ describe('PullRequestUseCase', () => {
       { getDescription: jest.fn().mockResolvedValue('') },
       { getTitle: jest.fn(), updateTitleIssueFormat: jest.fn(), updateTitlePullRequestFormat: jest.fn() },
       { closeIssue: jest.fn(), addComment: jest.fn() },
+      { getCurrentAssignees: jest.fn(), assignMembersToIssue: jest.fn() },
+      { getCurrentReviewers: jest.fn(), addReviewersToPullRequest: jest.fn() },
       { getAllMembers: jest.fn().mockResolvedValue([]), getRandomMembers: jest.fn() },
     );
     const param = minimalExecution({ pullRequest: { isOpened: true, isSynchronize: false, isClosed: false, isMerged: false, action: 'opened' } });
@@ -104,6 +106,8 @@ describe('PullRequestUseCase', () => {
       { getDescription: jest.fn().mockResolvedValue('') },
       { getTitle: jest.fn(), updateTitleIssueFormat: jest.fn(), updateTitlePullRequestFormat: jest.fn() },
       { closeIssue: jest.fn(), addComment: jest.fn() },
+      { getCurrentAssignees: jest.fn(), assignMembersToIssue: jest.fn() },
+      { getCurrentReviewers: jest.fn(), addReviewersToPullRequest: jest.fn() },
       { getAllMembers: jest.fn().mockResolvedValue([]), getRandomMembers: jest.fn() },
     );
     const param = minimalExecution({
@@ -123,6 +127,8 @@ describe('PullRequestUseCase', () => {
       { getDescription: jest.fn().mockResolvedValue('') },
       { getTitle: jest.fn(), updateTitleIssueFormat: jest.fn(), updateTitlePullRequestFormat: jest.fn() },
       { closeIssue: jest.fn(), addComment: jest.fn() },
+      { getCurrentAssignees: jest.fn(), assignMembersToIssue: jest.fn() },
+      { getCurrentReviewers: jest.fn(), addReviewersToPullRequest: jest.fn() },
       { getAllMembers: jest.fn().mockResolvedValue([]), getRandomMembers: jest.fn() },
     );
     const param = minimalExecution({
@@ -143,6 +149,8 @@ describe('PullRequestUseCase', () => {
       { getDescription: jest.fn().mockResolvedValue('') },
       { getTitle: jest.fn(), updateTitleIssueFormat: jest.fn(), updateTitlePullRequestFormat: jest.fn() },
       { closeIssue: jest.fn(), addComment: jest.fn() },
+      { getCurrentAssignees: jest.fn(), assignMembersToIssue: jest.fn() },
+      { getCurrentReviewers: jest.fn(), addReviewersToPullRequest: jest.fn() },
       { getAllMembers: jest.fn().mockResolvedValue([]), getRandomMembers: jest.fn() },
     );
     const param = minimalExecution({
@@ -163,6 +171,8 @@ describe('PullRequestUseCase', () => {
       { getDescription: jest.fn().mockResolvedValue('') },
       { getTitle: jest.fn(), updateTitleIssueFormat: jest.fn(), updateTitlePullRequestFormat: jest.fn() },
       { closeIssue: jest.fn(), addComment: jest.fn() },
+      { getCurrentAssignees: jest.fn(), assignMembersToIssue: jest.fn() },
+      { getCurrentReviewers: jest.fn(), addReviewersToPullRequest: jest.fn() },
       { getAllMembers: jest.fn().mockResolvedValue([]), getRandomMembers: jest.fn() },
     );
     const param = minimalExecution();
