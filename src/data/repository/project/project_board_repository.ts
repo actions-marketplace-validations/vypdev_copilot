@@ -1,6 +1,6 @@
 import * as github from "@actions/github";
 import { logDebugInfo, logError } from "../../../utils/logger";
-import { paginateCursor } from "../cursor_pagination";
+import { paginateCursor } from "../github/github_pagination_adapter";
 import { ProjectResult } from "../../graph/project_result";
 import { ProjectDetail } from "../../model/project_detail";
 import type { ProjectBoardCommandPort, ProjectBoardLinkPort, ProjectBoardQueryPort } from "../../../application/ports/project_board_ports";

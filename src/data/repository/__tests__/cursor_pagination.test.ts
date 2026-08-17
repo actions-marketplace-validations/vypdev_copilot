@@ -1,4 +1,4 @@
-import { CursorPage, paginateCursor } from "../cursor_pagination";
+import { CursorPage, paginateCursor } from "../github/github_pagination_adapter";
 
 describe("paginateCursor", () => {
     it("fetches pages until hasNextPage is false", async () => {
