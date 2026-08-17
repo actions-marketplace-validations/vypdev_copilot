@@ -1,6 +1,6 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import { BranchRepository } from "../../../../data/repository/branch_repository";
+import type { BranchWorkflowPort } from "../../../ports/branch_ports";
 import { extractChangelogUpToAdditionalContext, injectJsonAsMarkdownBlock } from "../../../../utils/content_utils";
 import { logDebugInfo, logError, logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
@@ -11,9 +11,10 @@ import type { ProjectBoardCommandPort } from "../../../../application/ports/proj
 export class DeployAddedUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'DeployAddedUseCase';
 
-    constructor(private readonly projectBoardPort: ProjectBoardCommandPort) {}
-
-    private branchRepository = new BranchRepository();
+    constructor(
+        private readonly projectBoardPort: ProjectBoardCommandPort,
+        private readonly branchWorkflowPort: BranchWorkflowPort,
+    ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`)
@@ -45,7 +46,7 @@ export class DeployAddedUseCase implements ParamUseCase<Execution, Result[]> {
                         changelog: changelogBody,
                         issue: `${param.issue.number}`,
                     }
-                    await this.branchRepository.executeWorkflow(
+                    await this.branchWorkflowPort.executeWorkflow(
                         param.owner,
                         param.repo,
                         param.release.branch,
@@ -88,7 +89,7 @@ ${injectJsonAsMarkdownBlock('Workflow Parameters', parameters)}`
                         changelog: changelogBody,
                         issue: param.issue.number,
                     }
-                    await this.branchRepository.executeWorkflow(
+                    await this.branchWorkflowPort.executeWorkflow(
                         param.owner,
                         param.repo,
                         param.hotfix.branch,

@@ -21,7 +21,7 @@ import type { ProjectBoardPriorityPort } from "./steps/issue/priority_size_check
 import type { OrganizationMembersPort } from "../ports/organization_ports";
 import type { IssueAssigneePort, IssueClosurePort, IssueDescriptionQueryPort, IssueIdentityQueryPort, IssueNotificationPort, IssueTitlePort, IssueTypeAssignmentPort } from "../ports/issue_ports";
 import type { ProjectBoardCommandPort, ProjectBoardLinkPort } from "../ports/project_board_ports";
-import type { BranchLifecyclePort, BranchNamePort, BranchPreparationPort } from "../ports/branch_ports";
+import type { BranchLifecyclePort, BranchNamePort, BranchPreparationPort, BranchWorkflowPort } from "../ports/branch_ports";
 
 export class IssueUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'IssueUseCase';
@@ -39,6 +39,7 @@ export class IssueUseCase implements ParamUseCase<Execution, Result[]> {
         private readonly branchLifecyclePort: BranchLifecyclePort,
         private readonly branchNamePort: BranchNamePort,
         private readonly branchPreparationPort: BranchPreparationPort,
+        private readonly branchWorkflowPort: BranchWorkflowPort,
     ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
@@ -100,7 +101,7 @@ export class IssueUseCase implements ParamUseCase<Execution, Result[]> {
         /**
          * Check if deploy label was added
          */
-        results.push(...await new DeployAddedUseCase(this.projectBoardPort).invoke(param));
+        results.push(...await new DeployAddedUseCase(this.projectBoardPort, this.branchWorkflowPort).invoke(param));
 
         /**
          * Check if deployed label was added

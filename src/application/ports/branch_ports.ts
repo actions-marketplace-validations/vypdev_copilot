@@ -38,6 +38,10 @@ export interface BranchPreparationPort extends BranchLifecyclePort, BranchNamePo
     manageBranches(param: Execution, owner: string, repository: string, issueNumber: number, issueTitle: string, branchType: string, developmentBranch: string, hotfixBranch: string | undefined, isHotfix: boolean, token: string): Promise<Result[]>;
 }
 
+export interface BranchWorkflowPort {
+    executeWorkflow(owner: string, repository: string, branch: string, workflow: string, inputs: Record<string, unknown>, token: string): Promise<void>;
+}
+
 export interface BranchMergePort {
     mergeBranch(
         owner: string,
