@@ -47,7 +47,7 @@ describe('AnswerIssueHelpUseCase', () => {
   let useCase: AnswerIssueHelpUseCase;
 
   beforeEach(() => {
-    useCase = new AnswerIssueHelpUseCase({ addComment: mockAddComment, openIssue: jest.fn() });
+    useCase = new AnswerIssueHelpUseCase({ addComment: mockAddComment, openIssue: jest.fn() }, { askAgent: mockAskAgent });
     mockAddComment.mockReset();
     mockAskAgent.mockReset();
   });

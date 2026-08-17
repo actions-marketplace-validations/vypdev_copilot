@@ -9,7 +9,6 @@ import { Execution } from '../../../../data/model/execution';
 import { Result } from '../../../../data/model/result';
 import { OPENCODE_AGENT_PLAN } from '../../../../data/repository/agent_task_policy';
 import type { FindingsQueryPort } from '../../../../data/repository/agent_ports';
-import { DefaultAgentRepositoryFactory } from '../../../../data/repository/agent_repository_factory';
 import { THINK_RESPONSE_SCHEMA } from '../../../../data/repository/agent_response_schemas';
 import type { IssueNotificationPort } from '../../../ports/issue_ports';
 import { getAnswerIssueHelpPrompt } from '../../../../prompts';
@@ -21,8 +20,13 @@ import { extractStructuredAnswer } from '../common/agent_answer_policy';
 
 export class AnswerIssueHelpUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'AnswerIssueHelpUseCase';
-    private aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings();
-    constructor(private readonly issueNotificationPort: IssueNotificationPort) {}
+    private aiRepository: FindingsQueryPort;
+    constructor(
+        private readonly issueNotificationPort: IssueNotificationPort,
+        aiRepository: FindingsQueryPort,
+    ) {
+        this.aiRepository = aiRepository;
+    }
 
     async invoke(param: Execution): Promise<Result[]> {
         const results: Result[] = [];

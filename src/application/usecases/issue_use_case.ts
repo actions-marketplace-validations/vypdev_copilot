@@ -5,7 +5,6 @@ import { getTaskEmoji } from "../../utils/task_emoji";
 import { ParamUseCase } from "./base/param_usecase";
 import { CheckPermissionsUseCase } from "./steps/common/check_permissions_use_case";
 import { UpdateTitleUseCase } from "./steps/common/update_title_use_case";
-import { AnswerIssueHelpUseCase } from "./steps/issue/answer_issue_help_use_case";
 import { AssignMemberToIssueUseCase } from "./steps/issue/assign_members_to_issue_use_case";
 import { CheckPriorityIssueSizeUseCase } from "./steps/issue/check_priority_issue_size_use_case";
 import { CloseNotAllowedIssueUseCase } from "./steps/issue/close_not_allowed_issue_use_case";
@@ -40,6 +39,7 @@ export class IssueUseCase implements ParamUseCase<Execution, Result[]> {
         private readonly branchPreparationPort: BranchPreparationPort,
         private readonly branchWorkflowPort: BranchWorkflowPort,
         private readonly recommendStepsUseCase: ParamUseCase<Execution, Result[]>,
+        private readonly answerIssueHelpUseCase: ParamUseCase<Execution, Result[]>,
     ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
@@ -117,7 +117,7 @@ export class IssueUseCase implements ParamUseCase<Execution, Result[]> {
             if (!isRelease && !isQuestionOrHelp) {
                 results.push(...(await this.recommendStepsUseCase.invoke(param)));
             } else if (isQuestionOrHelp) {
-                results.push(...(await new AnswerIssueHelpUseCase(this.issueNotificationPort).invoke(param)));
+                results.push(...(await this.answerIssueHelpUseCase.invoke(param)));
             }
         }
 

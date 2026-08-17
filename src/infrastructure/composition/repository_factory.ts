@@ -25,6 +25,7 @@ import { BranchCompareRepository } from "../../data/repository/branch_compare_re
 import { BranchRepository } from "../../data/repository/branch_repository";
 import { CheckProgressUseCase } from "../../application/usecases/actions/check_progress_use_case";
 import { RecommendStepsUseCase } from "../../application/usecases/actions/recommend_steps_use_case";
+import { AnswerIssueHelpUseCase } from "../../application/usecases/steps/issue/answer_issue_help_use_case";
 import { DefaultAgentRepositoryFactory } from "../../data/repository/agent_repository_factory";
 import { WorkflowRepository } from "../../data/repository/workflow_repository";
 
@@ -77,6 +78,7 @@ export class RepositoryFactory {
             this.createBranchRepository(),
             this.createBranchRepository(),
             new RecommendStepsUseCase(this.createIssueRepository(), new DefaultAgentRepositoryFactory().createFindings()),
+            new AnswerIssueHelpUseCase(this.createIssueRepository(), new DefaultAgentRepositoryFactory().createFindings()),
         );
     }
     createPullRequestUseCase(): PullRequestUseCase {
