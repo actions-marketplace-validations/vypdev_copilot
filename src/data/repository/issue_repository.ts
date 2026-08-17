@@ -25,19 +25,21 @@ export class IssueRepository {
     private readonly issueTypeAssignmentRepository = new IssueTypeAssignmentRepository(
         (owner, repository, issueNumber, token) => this.getId(owner, repository, issueNumber, token),
     );
-    private readonly issueAssignmentRepository = new IssueAssignmentRepository();
+    private readonly issueAssignmentRepository: IssueAssignmentRepository;
     private readonly issueLifecycleRepository: IssueLifecycleRepository;
 
     constructor(
         issueContentRepository: IssueContentRepository,
         issueMetadataRepository: IssueMetadataRepository,
         issueLabelRepository: IssueLabelRepository,
+        issueAssignmentRepository: IssueAssignmentRepository,
         issueLifecycleRepository: IssueLifecycleRepository,
     ) {
         this.issueContentRepository = issueContentRepository;
         this.issueMetadataRepository = issueMetadataRepository;
         this.issueLabelRepository = issueLabelRepository;
         this.issueProgressLabelRepository = new IssueProgressLabelRepository(issueLabelRepository);
+        this.issueAssignmentRepository = issueAssignmentRepository;
         this.issueLifecycleRepository = issueLifecycleRepository;
     }
 
@@ -198,9 +200,9 @@ export class IssueRepository {
 
     openIssue = (...args: Parameters<IssueLifecycleRepository["openIssue"]>) => this.issueLifecycleRepository.openIssue(...args);
 
-    getCurrentAssignees = this.issueAssignmentRepository.getCurrentAssignees;
+    getCurrentAssignees = (...args: Parameters<IssueAssignmentRepository["getCurrentAssignees"]>) => this.issueAssignmentRepository.getCurrentAssignees(...args);
 
-    assignMembersToIssue = this.issueAssignmentRepository.assignMembersToIssue;
+    assignMembersToIssue = (...args: Parameters<IssueAssignmentRepository["assignMembersToIssue"]>) => this.issueAssignmentRepository.assignMembersToIssue(...args);
 
     getIssueDescription = (...args: Parameters<IssueContentRepository["getIssueDescription"]>) => this.issueContentRepository.getIssueDescription(...args);
 

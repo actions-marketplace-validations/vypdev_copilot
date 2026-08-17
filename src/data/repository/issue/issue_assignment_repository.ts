@@ -1,9 +1,10 @@
-import * as github from '@actions/github';
 import { logDebugInfo, logError } from "../../../utils/logger";
+import type { GithubClientPort, GithubIssueAssignmentClient } from "../github/github_client_port";
 
 export class IssueAssignmentRepository {
+    constructor(private readonly githubClient: GithubClientPort<GithubIssueAssignmentClient>) {}
     getCurrentAssignees = async (owner: string, repository: string, issueNumber: number, token: string): Promise<string[]> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         try {
             const { data: issue } = await octokit.rest.issues.get({ owner, repo: repository, issue_number: issueNumber });
             return (issue.assignees ?? []).map(assignee => assignee.login);
@@ -20,7 +21,7 @@ export class IssueAssignmentRepository {
         members: string[],
         token: string,
     ): Promise<string[]> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         try {
             if (members.length === 0) {
                 logDebugInfo('No members provided for assignment. Skipping operation.');

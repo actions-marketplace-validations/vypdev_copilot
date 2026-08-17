@@ -172,3 +172,12 @@ export interface GithubIssueLabelsClient {
         };
     };
 }
+
+export interface GithubIssueAssignmentClient {
+    rest: {
+        issues: {
+            get(parameters: Record<string, unknown>): Promise<{ data: { assignees?: Array<{ login: string }> | null } }>;
+            addAssignees(parameters: Record<string, unknown>): Promise<{ data: { assignees?: Array<{ login: string }> | null } }>;
+        };
+    };
+}
