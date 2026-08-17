@@ -144,7 +144,10 @@ export async function mainRun(
                 logInfo(`Running IssueCommentUseCase for issue #${execution.issue.number}.`);
                 const commentFactory = new RepositoryFactory();
                 results.push(...await new IssueCommentUseCase(
-                    new CheckIssueCommentLanguageUseCase(commentFactory.createIssueRepository()),
+                    new CheckIssueCommentLanguageUseCase(
+                        commentFactory.createIssueRepository(),
+                        new DefaultAgentRepositoryFactory().createFindings(),
+                    ),
                     commentFactory.createIssueRepository(),
                     commentFactory.createOrganizationRepository(),
                     commentFactory.createIssueRepository(),
@@ -160,7 +163,10 @@ export async function mainRun(
                 logInfo(`Running PullRequestReviewCommentUseCase for PR #${execution.pullRequest.number}.`);
                 const reviewCommentFactory = new RepositoryFactory();
                 results.push(...await new PullRequestReviewCommentUseCase(
-                    new CheckPullRequestCommentLanguageUseCase(reviewCommentFactory.createIssueRepository()),
+                    new CheckPullRequestCommentLanguageUseCase(
+                        reviewCommentFactory.createIssueRepository(),
+                        new DefaultAgentRepositoryFactory().createFindings(),
+                    ),
                     reviewCommentFactory.createIssueRepository(),
                     reviewCommentFactory.createOrganizationRepository(),
                     reviewCommentFactory.createIssueRepository(),

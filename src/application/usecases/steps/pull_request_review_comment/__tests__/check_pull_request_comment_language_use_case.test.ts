@@ -34,7 +34,7 @@ describe('CheckPullRequestCommentLanguageUseCase', () => {
   let useCase: CheckPullRequestCommentLanguageUseCase;
 
   beforeEach(() => {
-    useCase = new CheckPullRequestCommentLanguageUseCase({ updateComment: mockUpdateComment });
+    useCase = new CheckPullRequestCommentLanguageUseCase({ updateComment: mockUpdateComment }, { askAgent: mockAskAgent });
     mockAskAgent.mockReset();
     mockUpdateComment.mockReset();
   });
