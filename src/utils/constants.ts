@@ -217,7 +217,21 @@ export const INPUT_KEYS = {
     // Tokens
     TOKEN: 'token',
 
-    // AI (OpenCode)
+    // Agent selection
+    AGENT_PROVIDER: 'agent-provider',
+    AGENT_TRANSPORT: 'agent-transport',
+    AGENT_MODEL: 'agent-model',
+    AGENT_COMMAND: 'agent-command',
+    FINDINGS_PROVIDER: 'findings-provider',
+    FINDINGS_TRANSPORT: 'findings-transport',
+    FINDINGS_MODEL: 'findings-model',
+    FINDINGS_COMMAND: 'findings-command',
+    FIXER_PROVIDER: 'fixer-provider',
+    FIXER_TRANSPORT: 'fixer-transport',
+    FIXER_MODEL: 'fixer-model',
+    FIXER_COMMAND: 'fixer-command',
+
+    // AI (OpenCode compatibility)
     OPENCODE_SERVER_URL: 'opencode-server-url',
     OPENCODE_MODEL: 'opencode-model',
     OPENCODE_START_SERVER: 'opencode-start-server',

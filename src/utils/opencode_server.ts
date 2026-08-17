@@ -1,6 +1,6 @@
 /**
  * Managed OpenCode server lifecycle for GitHub Actions.
- * Starts "npx opencode-ai serve" and stops it when the action finishes.
+ * Starts "pnpm dlx --yes opencode-ai serve" and stops it when the action finishes.
  * If no opencode.json exists in cwd, creates one with provider timeout 10 min and removes it on stop.
  */
 
@@ -12,8 +12,9 @@ import { logInfo, logError, logDebugInfo } from './logger';
 const DEFAULT_PORT = 4096;
 const HEALTH_PATH = '/global/health';
 const POLL_INTERVAL_MS = 500;
-const STARTUP_TIMEOUT_MS = 120000; // 2 min (first npx download can be slow)
+const STARTUP_TIMEOUT_MS = 120000; // 2 min (first pnpm dlx download can be slow)
 const OPENCODE_CONFIG_FILENAME = 'opencode.json';
+const OPENCODE_PACKAGE_VERSION = '1.18.18';
 /** Provider request timeout in ms (10 min). OpenCode default is 5 min; we need longer for plan agent. */
 const OPENCODE_PROVIDER_TIMEOUT_MS = 600_000;
 
@@ -96,7 +97,7 @@ async function waitForHealthy(baseUrl: string): Promise<boolean> {
 
 /**
  * Start OpenCode server in the background and wait until it is healthy.
- * Uses npx so the binary is fetched on first use (no pre-install needed).
+ * Uses pnpm dlx so the binary is fetched on first use (no pre-install needed).
  * Call the returned stop() when the action finishes (e.g. in finally).
  */
 export async function startOpencodeServer(options?: {
@@ -114,8 +115,8 @@ export async function startOpencodeServer(options?: {
   logInfo(`Starting OpenCode server at ${baseUrl} (this may take a moment on first run)...`);
 
   const child = spawn(
-    'npx',
-    ['-y', 'opencode-ai', 'serve', '--port', String(port), '--hostname', hostname],
+    'pnpm',
+    ['dlx', '--yes', `opencode-ai@${OPENCODE_PACKAGE_VERSION}`, 'serve', '--port', String(port), '--hostname', hostname],
     {
       cwd,
       env: { ...process.env, OPENCODE_CLIENT: 'copilot' },
@@ -125,8 +126,14 @@ export async function startOpencodeServer(options?: {
   );
 
   const stop = async (): Promise<void> => {
-    await stopOpencodeServer(child);
-    await removeOpencodeConfigIfCreated(configResult);
+    try {
+      await stopOpencodeServer(child);
+    } finally {
+      process.removeListener('exit', onExit);
+      process.removeListener('SIGINT', onExit);
+      process.removeListener('SIGTERM', onExit);
+      await removeOpencodeConfigIfCreated(configResult);
+    }
   };
 
   // Ensure we don't leave the process running if our process exits
@@ -154,7 +161,7 @@ export async function startOpencodeServer(options?: {
   if (!healthy) {
     await stop();
     throw new Error(
-      `OpenCode server did not become healthy within ${STARTUP_TIMEOUT_MS / 1000}s. Check that npx can run and that opencode-ai can be installed.`
+      `OpenCode server did not become healthy within ${STARTUP_TIMEOUT_MS / 1000}s. Check that pnpm dlx can run and that opencode-ai can be installed.`
     );
   }
 

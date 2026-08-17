@@ -103,8 +103,8 @@ describe('opencode_server', () => {
 
       expect(server.url).toBe('http://0.0.0.0:5000');
       expect(spawn).toHaveBeenCalledWith(
-        'npx',
-        ['-y', 'opencode-ai', 'serve', '--port', '5000', '--hostname', '0.0.0.0'],
+        'pnpm',
+        ['dlx', '--yes', 'opencode-ai@1.18.18', 'serve', '--port', '5000', '--hostname', '0.0.0.0'],
         expect.objectContaining({ cwd: '/app' })
       );
       await server.stop();

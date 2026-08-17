@@ -8,7 +8,7 @@ const { spawnSync } = require('child_process');
 const path = require('path');
 
 const root = path.resolve(__dirname, '..', '..');
-const opts = { cwd: root, stdio: 'inherit', shell: true }; // shell: true so "npm" works on Windows (npm.cmd)
+const opts = { cwd: root, stdio: 'inherit', shell: true }; // shell: true keeps pnpm available on Windows too
 
 function run(name, args) {
   const r = spawnSync(name, args, opts);
@@ -17,6 +17,6 @@ function run(name, args) {
   }
 }
 
-run('npm', ['run', 'build']);
-run('npm', ['test']);
-run('npm', ['run', 'lint']);
+run('pnpm', ['run', 'build']);
+run('pnpm', ['test']);
+run('pnpm', ['run', 'lint']);

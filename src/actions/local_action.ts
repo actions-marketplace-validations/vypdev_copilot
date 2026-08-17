@@ -1,28 +1,33 @@
 import chalk from 'chalk';
 import { Ai } from '../data/model/ai';
-import { Branches } from '../data/model/branches';
-import { Emoji } from '../data/model/emoji';
+
+
 import { Execution } from '../data/model/execution';
 import { Hotfix } from '../data/model/hotfix';
-import { Images } from '../data/model/images';
-import { Issue } from '../data/model/issue';
-import { IssueTypes } from '../data/model/issue_types';
-import { Labels } from '../data/model/labels';
+
+
+
+
 import { Locale } from '../data/model/locale';
-import { ProjectDetail } from '../data/model/project_detail';
-import { Projects } from '../data/model/projects';
-import { PullRequest } from '../data/model/pull_request';
+
 import { Release } from '../data/model/release';
 import { SingleAction } from '../data/model/single_action';
-import { SizeThreshold } from '../data/model/size_threshold';
-import { SizeThresholds } from '../data/model/size_thresholds';
-import { Tokens } from '../data/model/tokens';
+
+
 import { Welcome } from '../data/model/welcome';
-import { Workflows } from '../data/model/workflows';
-import { ProjectRepository } from '../data/repository/project_repository';
-import { BUGBOT_MAX_COMMENTS, BUGBOT_MIN_SEVERITY, DEFAULT_IMAGE_CONFIG, INPUT_KEYS, OPENCODE_DEFAULT_MODEL, TITLE } from '../utils/constants';
+import { ProjectBoardRepository } from '../data/repository/project/project_board_repository';
+import { BUGBOT_MAX_COMMENTS, BUGBOT_MIN_SEVERITY, INPUT_KEYS, TITLE } from '../utils/constants';
 import { logInfo } from '../utils/logger';
 import { getActionInputsWithDefaults } from '../utils/yml_utils';
+import { isEnabledInput } from './input_boolean_policy';
+import { loadProjectDetails } from './project_details_loader';
+import { parseBoundedPositiveIntegerInput, parseIntegerInput } from './input_number_policy';
+import { parseDelimitedValues } from './input_values_policy';
+import { buildAgentTasksFromValues } from './agent_input_builder';
+import { buildImageConfiguration } from './image_configuration_builder';
+import { buildSizeThresholds } from './size_threshold_builder';
+import { buildBranches } from './branches_builder';
+import { buildEmoji, buildImages, buildIssue, buildIssueTypes, buildLabels, buildLocale, buildProjects, buildPullRequest, buildTokens, buildWorkflows } from './configuration_builders';
 import { mainRun } from './common_action';
 import boxen from 'boxen';
 
@@ -30,14 +35,14 @@ export async function runLocalAction(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Params shape is dynamic (CLI/action inputs)
     additionalParams: any
 ): Promise<void> {
-    const projectRepository = new ProjectRepository();
+    const projectRepository = new ProjectBoardRepository();
 
     const actionInputs = getActionInputsWithDefaults();
     
     /**
      * Debug
      */
-    const debug = (additionalParams[INPUT_KEYS.DEBUG] ?? actionInputs[INPUT_KEYS.DEBUG]) == 'true'
+    const debug = isEnabledInput(additionalParams[INPUT_KEYS.DEBUG] ?? actionInputs[INPUT_KEYS.DEBUG]);
 
     /**
      * Welcome
@@ -62,23 +67,17 @@ export async function runLocalAction(
     /**
      * AI (OpenCode)
      */
-    const opencodeServerUrl = additionalParams[INPUT_KEYS.OPENCODE_SERVER_URL] ?? actionInputs[INPUT_KEYS.OPENCODE_SERVER_URL] ?? 'http://127.0.0.1:4096';
-    const opencodeModel = additionalParams[INPUT_KEYS.OPENCODE_MODEL] ?? actionInputs[INPUT_KEYS.OPENCODE_MODEL] ?? OPENCODE_DEFAULT_MODEL;
-    const aiPullRequestDescription = (additionalParams[INPUT_KEYS.AI_PULL_REQUEST_DESCRIPTION] ?? actionInputs[INPUT_KEYS.AI_PULL_REQUEST_DESCRIPTION]) === 'true';
-    const aiMembersOnly = (additionalParams[INPUT_KEYS.AI_MEMBERS_ONLY] ?? actionInputs[INPUT_KEYS.AI_MEMBERS_ONLY]) === 'true';
-    const aiIncludeReasoning = (additionalParams[INPUT_KEYS.AI_INCLUDE_REASONING] ?? actionInputs[INPUT_KEYS.AI_INCLUDE_REASONING]) === 'true';
+    const agentTasks = buildAgentTasksFromValues({ ...actionInputs, ...additionalParams });
+    const opencodeServerUrl = agentTasks.findings.serverUrl ?? 'http://127.0.0.1:4096';
+    const opencodeModel = agentTasks.findings.model ?? '';
+    const aiPullRequestDescription = isEnabledInput(additionalParams[INPUT_KEYS.AI_PULL_REQUEST_DESCRIPTION] ?? actionInputs[INPUT_KEYS.AI_PULL_REQUEST_DESCRIPTION]);
+    const aiMembersOnly = isEnabledInput(additionalParams[INPUT_KEYS.AI_MEMBERS_ONLY] ?? actionInputs[INPUT_KEYS.AI_MEMBERS_ONLY]);
+    const aiIncludeReasoning = isEnabledInput(additionalParams[INPUT_KEYS.AI_INCLUDE_REASONING] ?? actionInputs[INPUT_KEYS.AI_INCLUDE_REASONING]);
     const aiIgnoreFilesInput: string = additionalParams[INPUT_KEYS.AI_IGNORE_FILES] ?? actionInputs[INPUT_KEYS.AI_IGNORE_FILES];
-    const aiIgnoreFiles: string[] = aiIgnoreFilesInput
-        .split(',')
-        .map(path => path.trim())
-        .filter(path => path.length > 0);
+    const aiIgnoreFiles: string[] = parseDelimitedValues(aiIgnoreFilesInput);
     const bugbotSeverity = (additionalParams[INPUT_KEYS.BUGBOT_SEVERITY] ?? actionInputs[INPUT_KEYS.BUGBOT_SEVERITY]) || BUGBOT_MIN_SEVERITY;
     const bugbotCommentLimitRaw = additionalParams[INPUT_KEYS.BUGBOT_COMMENT_LIMIT] ?? actionInputs[INPUT_KEYS.BUGBOT_COMMENT_LIMIT];
-    const bugbotCommentLimitNum = typeof bugbotCommentLimitRaw === 'number' ? bugbotCommentLimitRaw : parseInt(String(bugbotCommentLimitRaw ?? ''), 10);
-    const bugbotCommentLimit =
-        Number.isNaN(bugbotCommentLimitNum) || bugbotCommentLimitNum < 1
-            ? BUGBOT_MAX_COMMENTS
-            : Math.min(bugbotCommentLimitNum, 200);
+    const bugbotCommentLimit = parseBoundedPositiveIntegerInput(bugbotCommentLimitRaw, BUGBOT_MAX_COMMENTS, 200);
     const bugbotFixVerifyCommandsInput =
         additionalParams[INPUT_KEYS.BUGBOT_FIX_VERIFY_COMMANDS] ?? actionInputs[INPUT_KEYS.BUGBOT_FIX_VERIFY_COMMANDS] ?? '';
     const bugbotFixVerifyCommands = String(bugbotFixVerifyCommandsInput)
@@ -90,16 +89,9 @@ export async function runLocalAction(
      * Projects Details
      */
     const projectIdsInput: string = additionalParams[INPUT_KEYS.PROJECT_IDS] ?? actionInputs[INPUT_KEYS.PROJECT_IDS];
-    const projectIds: string[] = projectIdsInput
-        .split(',')
-        .map(id => id.trim())
-        .filter(id => id.length > 0);
+    const projectIds: string[] = parseDelimitedValues(projectIdsInput);
 
-    const projects: ProjectDetail[] = []
-    for (const projectId of projectIds) {        
-        const detail = await projectRepository.getProjectDetail(projectId, token)
-        projects.push(detail)
-    }
+    const projects = await loadProjectDetails(projectRepository, projectIds, token);
 
     const projectColumnIssueCreated = additionalParams[INPUT_KEYS.PROJECT_COLUMN_ISSUE_CREATED] ?? actionInputs[INPUT_KEYS.PROJECT_COLUMN_ISSUE_CREATED]
     const projectColumnPullRequestCreated = additionalParams[INPUT_KEYS.PROJECT_COLUMN_PULL_REQUEST_CREATED] ?? actionInputs[INPUT_KEYS.PROJECT_COLUMN_PULL_REQUEST_CREATED]
@@ -109,219 +101,7 @@ export async function runLocalAction(
     /**
      * Images
      */
-    const imagesOnIssue = (additionalParams[INPUT_KEYS.IMAGES_ON_ISSUE] ?? actionInputs[INPUT_KEYS.IMAGES_ON_ISSUE]) === 'true';
-    const imagesOnPullRequest = (additionalParams[INPUT_KEYS.IMAGES_ON_PULL_REQUEST] ?? actionInputs[INPUT_KEYS.IMAGES_ON_PULL_REQUEST]) === 'true';
-    const imagesOnCommit = (additionalParams[INPUT_KEYS.IMAGES_ON_COMMIT] ?? actionInputs[INPUT_KEYS.IMAGES_ON_COMMIT]) === 'true';
-
-    const imagesIssueAutomaticInput: string = additionalParams[INPUT_KEYS.IMAGES_ISSUE_AUTOMATIC] ?? actionInputs[INPUT_KEYS.IMAGES_ISSUE_AUTOMATIC];
-    const imagesIssueAutomatic: string[] = imagesIssueAutomaticInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesIssueAutomatic.length === 0) {
-        imagesIssueAutomatic.push(...DEFAULT_IMAGE_CONFIG.issue.automatic);
-    }
-
-    const imagesIssueFeatureInput: string = additionalParams[INPUT_KEYS.IMAGES_ISSUE_FEATURE] ?? actionInputs[INPUT_KEYS.IMAGES_ISSUE_FEATURE];
-    const imagesIssueFeature: string[] = imagesIssueFeatureInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesIssueFeature.length === 0) {
-        imagesIssueFeature.push(...DEFAULT_IMAGE_CONFIG.issue.feature);
-    }
-
-    const imagesIssueBugfixInput: string = additionalParams[INPUT_KEYS.IMAGES_ISSUE_BUGFIX] ?? actionInputs[INPUT_KEYS.IMAGES_ISSUE_BUGFIX];
-    const imagesIssueBugfix: string[] = imagesIssueBugfixInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesIssueBugfix.length === 0) {
-        imagesIssueBugfix.push(...DEFAULT_IMAGE_CONFIG.issue.bugfix);
-    }
-
-    const imagesIssueDocsInput: string = additionalParams[INPUT_KEYS.IMAGES_ISSUE_DOCS] ?? actionInputs[INPUT_KEYS.IMAGES_ISSUE_DOCS];
-    const imagesIssueDocs: string[] = imagesIssueDocsInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesIssueDocs.length === 0) {
-        imagesIssueDocs.push(...DEFAULT_IMAGE_CONFIG.issue.docs);
-    }
-
-    const imagesIssueChoreInput: string = additionalParams[INPUT_KEYS.IMAGES_ISSUE_CHORE] ?? actionInputs[INPUT_KEYS.IMAGES_ISSUE_CHORE];
-    const imagesIssueChore: string[] = imagesIssueChoreInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesIssueChore.length === 0) {
-        imagesIssueChore.push(...DEFAULT_IMAGE_CONFIG.issue.chore);
-    }
-
-    const imagesIssueReleaseInput: string = additionalParams[INPUT_KEYS.IMAGES_ISSUE_RELEASE] ?? actionInputs[INPUT_KEYS.IMAGES_ISSUE_RELEASE];
-    const imagesIssueRelease: string[] = imagesIssueReleaseInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesIssueRelease.length === 0) {
-        imagesIssueRelease.push(...DEFAULT_IMAGE_CONFIG.issue.release);
-    }
-
-    const imagesIssueHotfixInput: string = additionalParams[INPUT_KEYS.IMAGES_ISSUE_HOTFIX] ?? actionInputs[INPUT_KEYS.IMAGES_ISSUE_HOTFIX];
-    const imagesIssueHotfix: string[] = imagesIssueHotfixInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesIssueHotfix.length === 0) {
-        imagesIssueHotfix.push(...DEFAULT_IMAGE_CONFIG.issue.hotfix);
-    }
-
-    const imagesPullRequestAutomaticInput: string = additionalParams[INPUT_KEYS.IMAGES_PULL_REQUEST_AUTOMATIC] ?? actionInputs[INPUT_KEYS.IMAGES_PULL_REQUEST_AUTOMATIC];
-    const imagesPullRequestAutomatic: string[] = imagesPullRequestAutomaticInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesPullRequestAutomatic.length === 0) {
-        imagesPullRequestAutomatic.push(...DEFAULT_IMAGE_CONFIG.pullRequest.automatic);
-    }
-
-    const imagesPullRequestFeatureInput: string = additionalParams[INPUT_KEYS.IMAGES_PULL_REQUEST_FEATURE] ?? actionInputs[INPUT_KEYS.IMAGES_PULL_REQUEST_FEATURE];
-    const imagesPullRequestFeature: string[] = imagesPullRequestFeatureInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesPullRequestFeature.length === 0) {
-        imagesPullRequestFeature.push(...DEFAULT_IMAGE_CONFIG.pullRequest.feature);
-    }
-
-    const imagesPullRequestBugfixInput: string = additionalParams[INPUT_KEYS.IMAGES_PULL_REQUEST_BUGFIX] ?? actionInputs[INPUT_KEYS.IMAGES_PULL_REQUEST_BUGFIX];
-    const imagesPullRequestBugfix: string[] = imagesPullRequestBugfixInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesPullRequestBugfix.length === 0) {
-        imagesPullRequestBugfix.push(...DEFAULT_IMAGE_CONFIG.pullRequest.bugfix);
-    }
-
-    const imagesPullRequestReleaseInput: string = additionalParams[INPUT_KEYS.IMAGES_PULL_REQUEST_RELEASE] ?? actionInputs[INPUT_KEYS.IMAGES_PULL_REQUEST_RELEASE];
-    const imagesPullRequestRelease: string[] = imagesPullRequestReleaseInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesPullRequestRelease.length === 0) {
-        imagesPullRequestRelease.push(...DEFAULT_IMAGE_CONFIG.pullRequest.release);
-    }
-
-    const imagesPullRequestHotfixInput: string = additionalParams[INPUT_KEYS.IMAGES_PULL_REQUEST_HOTFIX] ?? actionInputs[INPUT_KEYS.IMAGES_PULL_REQUEST_HOTFIX];
-    const imagesPullRequestHotfix: string[] = imagesPullRequestHotfixInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesPullRequestHotfix.length === 0) {
-        imagesPullRequestHotfix.push(...DEFAULT_IMAGE_CONFIG.pullRequest.hotfix);
-    }
-
-    const imagesPullRequestDocsInput: string = additionalParams[INPUT_KEYS.IMAGES_PULL_REQUEST_DOCS] ?? actionInputs[INPUT_KEYS.IMAGES_PULL_REQUEST_DOCS];
-    const imagesPullRequestDocs: string[] = imagesPullRequestDocsInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesPullRequestDocs.length === 0) {
-        imagesPullRequestDocs.push(...DEFAULT_IMAGE_CONFIG.pullRequest.docs);
-    }
-
-    const imagesPullRequestChoreInput: string = additionalParams[INPUT_KEYS.IMAGES_PULL_REQUEST_CHORE] ?? actionInputs[INPUT_KEYS.IMAGES_PULL_REQUEST_CHORE];
-    const imagesPullRequestChore: string[] = imagesPullRequestChoreInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesPullRequestChore.length === 0) {
-        imagesPullRequestChore.push(...DEFAULT_IMAGE_CONFIG.pullRequest.chore);
-    }
-
-    const imagesCommitAutomaticInput: string = additionalParams[INPUT_KEYS.IMAGES_COMMIT_AUTOMATIC] ?? actionInputs[INPUT_KEYS.IMAGES_COMMIT_AUTOMATIC];
-    const imagesCommitAutomatic: string[] = imagesCommitAutomaticInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesCommitAutomatic.length === 0) {
-        imagesCommitAutomatic.push(...DEFAULT_IMAGE_CONFIG.commit.automatic);
-    }
-
-    const imagesCommitFeatureInput: string = additionalParams[INPUT_KEYS.IMAGES_COMMIT_FEATURE] ?? actionInputs[INPUT_KEYS.IMAGES_COMMIT_FEATURE];
-    const imagesCommitFeature: string[] = imagesCommitFeatureInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesCommitFeature.length === 0) {
-        imagesCommitFeature.push(...DEFAULT_IMAGE_CONFIG.commit.feature);
-    }
-
-    const imagesCommitBugfixInput: string = additionalParams[INPUT_KEYS.IMAGES_COMMIT_BUGFIX] ?? actionInputs[INPUT_KEYS.IMAGES_COMMIT_BUGFIX];
-    const imagesCommitBugfix: string[] = imagesCommitBugfixInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesCommitBugfix.length === 0) {
-        imagesCommitBugfix.push(...DEFAULT_IMAGE_CONFIG.commit.bugfix);
-    }
-
-    const imagesCommitReleaseInput: string = additionalParams[INPUT_KEYS.IMAGES_COMMIT_RELEASE] ?? actionInputs[INPUT_KEYS.IMAGES_COMMIT_RELEASE];
-    const imagesCommitRelease: string[] = imagesCommitReleaseInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesCommitRelease.length === 0) {
-        imagesCommitRelease.push(...DEFAULT_IMAGE_CONFIG.commit.release);
-    }
-
-    const imagesCommitHotfixInput: string = additionalParams[INPUT_KEYS.IMAGES_COMMIT_HOTFIX] ?? actionInputs[INPUT_KEYS.IMAGES_COMMIT_HOTFIX];
-    const imagesCommitHotfix: string[] = imagesCommitHotfixInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesCommitHotfix.length === 0) {
-        imagesCommitHotfix.push(...DEFAULT_IMAGE_CONFIG.commit.hotfix);
-    }
-
-    const imagesCommitDocsInput: string = additionalParams[INPUT_KEYS.IMAGES_COMMIT_DOCS] ?? actionInputs[INPUT_KEYS.IMAGES_COMMIT_DOCS];
-    const imagesCommitDocs: string[] = imagesCommitDocsInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesCommitDocs.length === 0) {
-        imagesCommitDocs.push(...DEFAULT_IMAGE_CONFIG.commit.docs);
-    }
-
-    const imagesCommitChoreInput: string = additionalParams[INPUT_KEYS.IMAGES_COMMIT_CHORE] ?? actionInputs[INPUT_KEYS.IMAGES_COMMIT_CHORE];
-    const imagesCommitChore: string[] = imagesCommitChoreInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesCommitChore.length === 0) {
-        imagesCommitChore.push(...DEFAULT_IMAGE_CONFIG.commit.chore);
-    }
+    const imageConfiguration = buildImageConfiguration(key => additionalParams[key] ?? actionInputs[key]);
 
     /**
      * Workflows
@@ -412,24 +192,24 @@ export async function runLocalAction(
     /**
      * Size Thresholds
      */
-    const sizeXxlThresholdLines = parseInt(additionalParams[INPUT_KEYS.SIZE_XXL_THRESHOLD_LINES] ?? actionInputs[INPUT_KEYS.SIZE_XXL_THRESHOLD_LINES]) ?? 1000;
-    const sizeXxlThresholdFiles = parseInt(additionalParams[INPUT_KEYS.SIZE_XXL_THRESHOLD_FILES] ?? actionInputs[INPUT_KEYS.SIZE_XXL_THRESHOLD_FILES]) ?? 20;
-    const sizeXxlThresholdCommits = parseInt(additionalParams[INPUT_KEYS.SIZE_XXL_THRESHOLD_COMMITS] ?? actionInputs[INPUT_KEYS.SIZE_XXL_THRESHOLD_COMMITS]) ?? 10;
-    const sizeXlThresholdLines = parseInt(additionalParams[INPUT_KEYS.SIZE_XL_THRESHOLD_LINES] ?? actionInputs[INPUT_KEYS.SIZE_XL_THRESHOLD_LINES]) ?? 500;
-    const sizeXlThresholdFiles = parseInt(additionalParams[INPUT_KEYS.SIZE_XL_THRESHOLD_FILES] ?? actionInputs[INPUT_KEYS.SIZE_XL_THRESHOLD_FILES]) ?? 10;
-    const sizeXlThresholdCommits = parseInt(additionalParams[INPUT_KEYS.SIZE_XL_THRESHOLD_COMMITS] ?? actionInputs[INPUT_KEYS.SIZE_XL_THRESHOLD_COMMITS]) ?? 5;
-    const sizeLThresholdLines = parseInt(additionalParams[INPUT_KEYS.SIZE_L_THRESHOLD_LINES] ?? actionInputs[INPUT_KEYS.SIZE_L_THRESHOLD_LINES]) ?? 250;
-    const sizeLThresholdFiles = parseInt(additionalParams[INPUT_KEYS.SIZE_L_THRESHOLD_FILES] ?? actionInputs[INPUT_KEYS.SIZE_L_THRESHOLD_FILES]) ?? 5;
-    const sizeLThresholdCommits = parseInt(additionalParams[INPUT_KEYS.SIZE_L_THRESHOLD_COMMITS] ?? actionInputs[INPUT_KEYS.SIZE_L_THRESHOLD_COMMITS]) ?? 3;
-    const sizeMThresholdLines = parseInt(additionalParams[INPUT_KEYS.SIZE_M_THRESHOLD_LINES] ?? actionInputs[INPUT_KEYS.SIZE_M_THRESHOLD_LINES]) ?? 100;
-    const sizeMThresholdFiles = parseInt(additionalParams[INPUT_KEYS.SIZE_M_THRESHOLD_FILES] ?? actionInputs[INPUT_KEYS.SIZE_M_THRESHOLD_FILES]) ?? 3;
-    const sizeMThresholdCommits = parseInt(additionalParams[INPUT_KEYS.SIZE_M_THRESHOLD_COMMITS] ?? actionInputs[INPUT_KEYS.SIZE_M_THRESHOLD_COMMITS]) ?? 2;
-    const sizeSThresholdLines = parseInt(additionalParams[INPUT_KEYS.SIZE_S_THRESHOLD_LINES] ?? actionInputs[INPUT_KEYS.SIZE_S_THRESHOLD_LINES]) ?? 50;
-    const sizeSThresholdFiles = parseInt(additionalParams[INPUT_KEYS.SIZE_S_THRESHOLD_FILES] ?? actionInputs[INPUT_KEYS.SIZE_S_THRESHOLD_FILES]) ?? 2;
-    const sizeSThresholdCommits = parseInt(additionalParams[INPUT_KEYS.SIZE_S_THRESHOLD_COMMITS] ?? actionInputs[INPUT_KEYS.SIZE_S_THRESHOLD_COMMITS]) ?? 1;
-    const sizeXsThresholdLines = parseInt(additionalParams[INPUT_KEYS.SIZE_XS_THRESHOLD_LINES] ?? actionInputs[INPUT_KEYS.SIZE_XS_THRESHOLD_LINES]) ?? 25;
-    const sizeXsThresholdFiles = parseInt(additionalParams[INPUT_KEYS.SIZE_XS_THRESHOLD_FILES] ?? actionInputs[INPUT_KEYS.SIZE_XS_THRESHOLD_FILES]) ?? 1;
-    const sizeXsThresholdCommits = parseInt(additionalParams[INPUT_KEYS.SIZE_XS_THRESHOLD_COMMITS] ?? actionInputs[INPUT_KEYS.SIZE_XS_THRESHOLD_COMMITS]) ?? 1;
+    const sizeXxlThresholdLines = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_XXL_THRESHOLD_LINES] ?? actionInputs[INPUT_KEYS.SIZE_XXL_THRESHOLD_LINES], 1000);
+    const sizeXxlThresholdFiles = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_XXL_THRESHOLD_FILES] ?? actionInputs[INPUT_KEYS.SIZE_XXL_THRESHOLD_FILES], 20);
+    const sizeXxlThresholdCommits = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_XXL_THRESHOLD_COMMITS] ?? actionInputs[INPUT_KEYS.SIZE_XXL_THRESHOLD_COMMITS], 10);
+    const sizeXlThresholdLines = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_XL_THRESHOLD_LINES] ?? actionInputs[INPUT_KEYS.SIZE_XL_THRESHOLD_LINES], 500);
+    const sizeXlThresholdFiles = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_XL_THRESHOLD_FILES] ?? actionInputs[INPUT_KEYS.SIZE_XL_THRESHOLD_FILES], 10);
+    const sizeXlThresholdCommits = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_XL_THRESHOLD_COMMITS] ?? actionInputs[INPUT_KEYS.SIZE_XL_THRESHOLD_COMMITS], 5);
+    const sizeLThresholdLines = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_L_THRESHOLD_LINES] ?? actionInputs[INPUT_KEYS.SIZE_L_THRESHOLD_LINES], 250);
+    const sizeLThresholdFiles = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_L_THRESHOLD_FILES] ?? actionInputs[INPUT_KEYS.SIZE_L_THRESHOLD_FILES], 5);
+    const sizeLThresholdCommits = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_L_THRESHOLD_COMMITS] ?? actionInputs[INPUT_KEYS.SIZE_L_THRESHOLD_COMMITS], 3);
+    const sizeMThresholdLines = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_M_THRESHOLD_LINES] ?? actionInputs[INPUT_KEYS.SIZE_M_THRESHOLD_LINES], 100);
+    const sizeMThresholdFiles = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_M_THRESHOLD_FILES] ?? actionInputs[INPUT_KEYS.SIZE_M_THRESHOLD_FILES], 3);
+    const sizeMThresholdCommits = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_M_THRESHOLD_COMMITS] ?? actionInputs[INPUT_KEYS.SIZE_M_THRESHOLD_COMMITS], 2);
+    const sizeSThresholdLines = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_S_THRESHOLD_LINES] ?? actionInputs[INPUT_KEYS.SIZE_S_THRESHOLD_LINES], 50);
+    const sizeSThresholdFiles = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_S_THRESHOLD_FILES] ?? actionInputs[INPUT_KEYS.SIZE_S_THRESHOLD_FILES], 2);
+    const sizeSThresholdCommits = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_S_THRESHOLD_COMMITS] ?? actionInputs[INPUT_KEYS.SIZE_S_THRESHOLD_COMMITS], 1);
+    const sizeXsThresholdLines = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_XS_THRESHOLD_LINES] ?? actionInputs[INPUT_KEYS.SIZE_XS_THRESHOLD_LINES], 25);
+    const sizeXsThresholdFiles = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_XS_THRESHOLD_FILES] ?? actionInputs[INPUT_KEYS.SIZE_XS_THRESHOLD_FILES], 1);
+    const sizeXsThresholdCommits = parseIntegerInput(additionalParams[INPUT_KEYS.SIZE_XS_THRESHOLD_COMMITS] ?? actionInputs[INPUT_KEYS.SIZE_XS_THRESHOLD_COMMITS], 1);
     
     /**
      * Branches
@@ -454,16 +234,16 @@ export async function runLocalAction(
     /**
      * Issue
      */
-    const branchManagementAlways = (additionalParams[INPUT_KEYS.BRANCH_MANAGEMENT_ALWAYS] ?? actionInputs[INPUT_KEYS.BRANCH_MANAGEMENT_ALWAYS]) === 'true';
-    const reopenIssueOnPush = (additionalParams[INPUT_KEYS.REOPEN_ISSUE_ON_PUSH] ?? actionInputs[INPUT_KEYS.REOPEN_ISSUE_ON_PUSH]) === 'true';
-    const issueDesiredAssigneesCount = parseInt(additionalParams[INPUT_KEYS.DESIRED_ASSIGNEES_COUNT] ?? actionInputs[INPUT_KEYS.DESIRED_ASSIGNEES_COUNT]) ?? 0;
+    const branchManagementAlways = isEnabledInput(additionalParams[INPUT_KEYS.BRANCH_MANAGEMENT_ALWAYS] ?? actionInputs[INPUT_KEYS.BRANCH_MANAGEMENT_ALWAYS]);
+    const reopenIssueOnPush = isEnabledInput(additionalParams[INPUT_KEYS.REOPEN_ISSUE_ON_PUSH] ?? actionInputs[INPUT_KEYS.REOPEN_ISSUE_ON_PUSH]);
+    const issueDesiredAssigneesCount = parseIntegerInput(additionalParams[INPUT_KEYS.DESIRED_ASSIGNEES_COUNT] ?? actionInputs[INPUT_KEYS.DESIRED_ASSIGNEES_COUNT], 0);
 
     /**
      * Pull Request
      */
-    const pullRequestDesiredAssigneesCount = parseInt(additionalParams[INPUT_KEYS.PULL_REQUEST_DESIRED_ASSIGNEES_COUNT] ?? actionInputs[INPUT_KEYS.PULL_REQUEST_DESIRED_ASSIGNEES_COUNT]) ?? 0;
-    const pullRequestDesiredReviewersCount = parseInt(additionalParams[INPUT_KEYS.PULL_REQUEST_DESIRED_REVIEWERS_COUNT] ?? actionInputs[INPUT_KEYS.PULL_REQUEST_DESIRED_REVIEWERS_COUNT]) ?? 0;
-    const pullRequestMergeTimeout = parseInt(additionalParams[INPUT_KEYS.PULL_REQUEST_MERGE_TIMEOUT] ?? actionInputs[INPUT_KEYS.PULL_REQUEST_MERGE_TIMEOUT]) ?? 0;
+    const pullRequestDesiredAssigneesCount = parseIntegerInput(additionalParams[INPUT_KEYS.PULL_REQUEST_DESIRED_ASSIGNEES_COUNT] ?? actionInputs[INPUT_KEYS.PULL_REQUEST_DESIRED_ASSIGNEES_COUNT], 0);
+    const pullRequestDesiredReviewersCount = parseIntegerInput(additionalParams[INPUT_KEYS.PULL_REQUEST_DESIRED_REVIEWERS_COUNT] ?? actionInputs[INPUT_KEYS.PULL_REQUEST_DESIRED_REVIEWERS_COUNT], 0);
+    const pullRequestMergeTimeout = parseIntegerInput(additionalParams[INPUT_KEYS.PULL_REQUEST_MERGE_TIMEOUT] ?? actionInputs[INPUT_KEYS.PULL_REQUEST_MERGE_TIMEOUT], 0);
 
     const execution = new Execution(
         debug,
@@ -475,51 +255,18 @@ export async function runLocalAction(
             singleActionChangelog,
         ),
         commitPrefixBuilder,
-        new Issue(
-            branchManagementAlways,
-            reopenIssueOnPush,
-            issueDesiredAssigneesCount,
-            additionalParams,
-        ),
-        new PullRequest(
-            pullRequestDesiredAssigneesCount,
-            pullRequestDesiredReviewersCount,
-            pullRequestMergeTimeout,
-            additionalParams,
-        ),
-        new Emoji(
-            titleEmoji,
-            branchManagementEmoji,
-        ),
-        new Images(
-            imagesOnIssue,
-            imagesOnPullRequest,
-            imagesOnCommit,
-            imagesIssueAutomatic,
-            imagesIssueFeature,
-            imagesIssueBugfix,
-            imagesIssueDocs,
-            imagesIssueChore,
-            imagesIssueRelease,
-            imagesIssueHotfix,
-            imagesPullRequestAutomatic,
-            imagesPullRequestFeature,
-            imagesPullRequestBugfix,
-            imagesPullRequestRelease,
-            imagesPullRequestHotfix,
-            imagesPullRequestDocs,
-            imagesPullRequestChore,
-            imagesCommitAutomatic,
-            imagesCommitFeature,
-            imagesCommitBugfix,
-            imagesCommitRelease,
-            imagesCommitHotfix,
-            imagesCommitDocs,
-            imagesCommitChore,
-        ),
-        new Tokens(
-            token,
-        ),
+        buildIssue(branchManagementAlways, reopenIssueOnPush, issueDesiredAssigneesCount, additionalParams),
+        buildPullRequest(pullRequestDesiredAssigneesCount, pullRequestDesiredReviewersCount, pullRequestMergeTimeout, additionalParams),
+        buildEmoji(titleEmoji, branchManagementEmoji),
+        buildImages({
+            onIssue: imageConfiguration.onIssue,
+            onPullRequest: imageConfiguration.onPullRequest,
+            onCommit: imageConfiguration.onCommit,
+            issue: imageConfiguration.issue,
+            pullRequest: imageConfiguration.pullRequest,
+            commit: imageConfiguration.commit,
+        }),
+        buildTokens(token),
         new Ai(
             opencodeServerUrl,
             opencodeModel,
@@ -530,119 +277,54 @@ export async function runLocalAction(
             bugbotSeverity,
             bugbotCommentLimit,
             bugbotFixVerifyCommands,
+            agentTasks,
         ),
-        new Labels(
-            branchManagementLauncherLabel,
-            bugLabel,
-            bugfixLabel,
-            hotfixLabel,
-            enhancementLabel,
-            featureLabel,
-            releaseLabel,
-            questionLabel,
-            helpLabel,
-            deployLabel,
-            deployedLabel,
-            docsLabel,
-            documentationLabel,
-            choreLabel,
-            maintenanceLabel,
-            priorityHighLabel,
-            priorityMediumLabel,
-            priorityLowLabel,
-            priorityNoneLabel,
-            sizeXxlLabel,
-            sizeXlLabel,
-            sizeLLabel,
-            sizeMLabel,
-            sizeSLabel,
-            sizeXsLabel,
-        ),
-        new IssueTypes(
-            issueTypeTask,
-            issueTypeTaskDescription,
-            issueTypeTaskColor,
-            issueTypeBug,
-            issueTypeBugDescription,
-            issueTypeBugColor,
-            issueTypeFeature,
-            issueTypeFeatureDescription,
-            issueTypeFeatureColor,
-            issueTypeDocumentation,
-            issueTypeDocumentationDescription,
-            issueTypeDocumentationColor,
-            issueTypeMaintenance,
-            issueTypeMaintenanceDescription,
-            issueTypeMaintenanceColor,
-            issueTypeHotfix,
-            issueTypeHotfixDescription,
-            issueTypeHotfixColor,
-            issueTypeRelease,
-            issueTypeReleaseDescription,
-            issueTypeReleaseColor,
-            issueTypeQuestion,
-            issueTypeQuestionDescription,
-            issueTypeQuestionColor,
-            issueTypeHelp,
-            issueTypeHelpDescription,
-            issueTypeHelpColor,
-        ),
-        new Locale(issueLocale, pullRequestLocale),
-        new SizeThresholds(
-            new SizeThreshold(
-                sizeXxlThresholdLines,
-                sizeXxlThresholdFiles,
-                sizeXxlThresholdCommits,
-            ),
-            new SizeThreshold(
-                sizeXlThresholdLines,
-                sizeXlThresholdFiles,
-                sizeXlThresholdCommits,
-            ),
-            new SizeThreshold(
-                sizeLThresholdLines,
-                sizeLThresholdFiles,
-                sizeLThresholdCommits,
-            ),
-            new SizeThreshold(
-                sizeMThresholdLines,
-                sizeMThresholdFiles,
-                sizeMThresholdCommits,
-            ),
-            new SizeThreshold(
-                sizeSThresholdLines,
-                sizeSThresholdFiles,
-                sizeSThresholdCommits,
-            ),
-            new SizeThreshold(
-                sizeXsThresholdLines,
-                sizeXsThresholdFiles,
-                sizeXsThresholdCommits,
-            ),
-        ),
-        new Branches(
-            mainBranch,
-            developmentBranch,
+        buildLabels({
+            branching: { launcher: branchManagementLauncherLabel },
+            workflow: { bug: bugLabel, bugfix: bugfixLabel, hotfix: hotfixLabel, enhancement: enhancementLabel, feature: featureLabel, release: releaseLabel, question: questionLabel, help: helpLabel, deploy: deployLabel, deployed: deployedLabel, docs: docsLabel, documentation: documentationLabel, chore: choreLabel, maintenance: maintenanceLabel },
+            priorities: { high: priorityHighLabel, medium: priorityMediumLabel, low: priorityLowLabel, none: priorityNoneLabel },
+            sizes: { xxl: sizeXxlLabel, xl: sizeXlLabel, l: sizeLLabel, m: sizeMLabel, s: sizeSLabel, xs: sizeXsLabel },
+        }),
+        buildIssueTypes({
+            task: { name: issueTypeTask, description: issueTypeTaskDescription, color: issueTypeTaskColor },
+            bug: { name: issueTypeBug, description: issueTypeBugDescription, color: issueTypeBugColor },
+            feature: { name: issueTypeFeature, description: issueTypeFeatureDescription, color: issueTypeFeatureColor },
+            documentation: { name: issueTypeDocumentation, description: issueTypeDocumentationDescription, color: issueTypeDocumentationColor },
+            maintenance: { name: issueTypeMaintenance, description: issueTypeMaintenanceDescription, color: issueTypeMaintenanceColor },
+            hotfix: { name: issueTypeHotfix, description: issueTypeHotfixDescription, color: issueTypeHotfixColor },
+            release: { name: issueTypeRelease, description: issueTypeReleaseDescription, color: issueTypeReleaseColor },
+            question: { name: issueTypeQuestion, description: issueTypeQuestionDescription, color: issueTypeQuestionColor },
+            help: { name: issueTypeHelp, description: issueTypeHelpDescription, color: issueTypeHelpColor },
+        }),
+        buildLocale(issueLocale, pullRequestLocale),
+        buildSizeThresholds({
+            xxl: { lines: sizeXxlThresholdLines, files: sizeXxlThresholdFiles, commits: sizeXxlThresholdCommits },
+            xl: { lines: sizeXlThresholdLines, files: sizeXlThresholdFiles, commits: sizeXlThresholdCommits },
+            l: { lines: sizeLThresholdLines, files: sizeLThresholdFiles, commits: sizeLThresholdCommits },
+            m: { lines: sizeMThresholdLines, files: sizeMThresholdFiles, commits: sizeMThresholdCommits },
+            s: { lines: sizeSThresholdLines, files: sizeSThresholdFiles, commits: sizeSThresholdCommits },
+            xs: { lines: sizeXsThresholdLines, files: sizeXsThresholdFiles, commits: sizeXsThresholdCommits },
+        }),
+        buildBranches({
+            main: mainBranch,
+            development: developmentBranch,
             featureTree,
             bugfixTree,
             hotfixTree,
             releaseTree,
             docsTree,
             choreTree,
-        ),
+        }),
         new Release(),
         new Hotfix(),
-        new Workflows(
-            releaseWorkflow,
-            hotfixWorkflow,
-        ),
-        new Projects(
+        buildWorkflows(releaseWorkflow, hotfixWorkflow),
+        buildProjects({
             projects,
-            projectColumnIssueCreated,
-            projectColumnPullRequestCreated,
-            projectColumnIssueInProgress,
-            projectColumnPullRequestInProgress,
-        ),
+            issueCreated: projectColumnIssueCreated,
+            pullRequestCreated: projectColumnPullRequestCreated,
+            issueInProgress: projectColumnIssueInProgress,
+            pullRequestInProgress: projectColumnPullRequestInProgress,
+        }),
         new Welcome(welcomeTitle, welcomeMessages),
         additionalParams,
     )

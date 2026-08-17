@@ -6,7 +6,8 @@
  */
 
 import { OPENCODE_MAX_RETRIES, OPENCODE_RETRY_DELAY_MS } from '../../../utils/constants';
-import { AiRepository, getSessionDiff } from '../ai_repository';
+import { AiRepository } from '../ai_repository';
+import { getSessionDiff } from '../opencode_session_diff_client';
 import { Ai } from '../../model/ai';
 
 jest.mock('../../../utils/logger', () => ({
@@ -24,11 +25,29 @@ function createAi(serverUrl = 'http://localhost:4096', model = 'opencode/kimi-k2
 describe('AiRepository', () => {
   let repo: AiRepository;
 
+
+
   beforeEach(() => {
     jest.useFakeTimers();
     repo = new AiRepository();
     mockFetch.mockReset();
     (global as unknown as { fetch: typeof fetch }).fetch = mockFetch;
+  });
+
+  it('uses injected CLI port for findings without creating an HTTP adapter', async () => {
+    const cli = { execute: jest.fn().mockResolvedValue('{"findings":[]}') };
+    const http = { sendMessage: jest.fn() };
+    const ai = new Ai('', '', false, false, [], false, 'low', 20, [], {
+      findings: { provider: 'cursor', transport: 'cli', model: 'cursor', command: 'cursor-agent' },
+      fixer: { provider: 'cursor', transport: 'cli', model: 'cursor', command: 'cursor-agent' },
+    });
+    const injectedRepo = new AiRepository(cli, http);
+
+    const result = await injectedRepo.askAgent(ai, 'findings', 'inspect', { expectJson: true, schema: { type: 'object' } });
+
+    expect(result).toEqual({ findings: [] });
+    expect(cli.execute).toHaveBeenCalledTimes(1);
+    expect(http.sendMessage).not.toHaveBeenCalled();
   });
 
   afterEach(() => {

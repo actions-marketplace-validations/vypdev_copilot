@@ -1,0 +1,35 @@
+import type { Execution } from '../../../../../data/model/execution';
+import { buildBugbotCommitMessage, buildUserRequestCommitMessage } from './commit_message_policy';
+import {
+    runCommitAndPushWorkflow,
+    type CommitAndPushWorkflowResult,
+} from './commit_and_push_workflow';
+
+export type BugbotAutofixCommitResult = CommitAndPushWorkflowResult;
+
+export async function runBugbotAutofixCommitAndPush(
+    execution: Execution,
+    options?: { branchOverride?: string; targetFindingIds?: string[]; workspacePaths?: string[] },
+): Promise<BugbotAutofixCommitResult> {
+    const branch = options?.branchOverride ?? execution.commit.branch;
+    return runCommitAndPushWorkflow(execution, {
+        branch,
+        branchOverride: Boolean(options?.branchOverride),
+        workspacePaths: options?.workspacePaths,
+        commitMessage: buildBugbotCommitMessage(execution.issueNumber, options?.targetFindingIds ?? []),
+        noChangesMessage: 'No changes to commit after autofix.',
+    });
+}
+
+export async function runUserRequestCommitAndPush(
+    execution: Execution,
+    options?: { branchOverride?: string },
+): Promise<BugbotAutofixCommitResult> {
+    const branch = options?.branchOverride ?? execution.commit.branch;
+    return runCommitAndPushWorkflow(execution, {
+        branch,
+        branchOverride: Boolean(options?.branchOverride),
+        commitMessage: buildUserRequestCommitMessage(execution.issueNumber),
+        noChangesMessage: 'No changes to commit after user request.',
+    });
+}

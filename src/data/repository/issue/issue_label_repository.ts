@@ -1,0 +1,41 @@
+import * as github from "@actions/github";
+import { logDebugInfo, logError } from "../../../utils/logger";
+
+export class IssueLabelRepository {
+    getLabels = async (owner: string, repository: string, issueNumber: number, token: string): Promise<string[]> => {
+        if (issueNumber === -1) return [];
+        const octokit = github.getOctokit(token);
+        try {
+            const { data: labels } = await octokit.rest.issues.listLabelsOnIssue({
+                owner,
+                repo: repository,
+                issue_number: issueNumber,
+            });
+            return labels.map(label => label.name);
+        } catch (error: unknown) {
+            const err = error as { status?: number };
+            if (err.status === 404) {
+                logDebugInfo(`Issue #${issueNumber} not found or no access; returning empty labels.`);
+                return [];
+            }
+            logError(`Error fetching labels for issue #${issueNumber}: ${error}`);
+            return [];
+        }
+    };
+
+    setLabels = async (
+        owner: string,
+        repository: string,
+        issueNumber: number,
+        labels: string[],
+        token: string,
+    ): Promise<void> => {
+        const octokit = github.getOctokit(token);
+        await octokit.rest.issues.setLabels({
+            owner,
+            repo: repository,
+            issue_number: issueNumber,
+            labels,
+        });
+    };
+}

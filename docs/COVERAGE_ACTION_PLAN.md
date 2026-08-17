@@ -218,7 +218,7 @@ Estos archivos orquestan todo; suelen testearse con integración/E2E. Para cober
 | 12 | Entry points (actions + CLI) | 4 |
 | 13 | Data graph | 3 |
 
-**Total: ~88 ítems.** Tras cada fase, ejecutar `npm run test:coverage` y comprobar que el porcentaje sube y que no se introducen regresiones.
+**Total: ~88 ítems.** Tras cada fase, ejecutar `pnpm run test:coverage` y comprobar que el porcentaje sube y que no se introducen regresiones.
 
 ---
 

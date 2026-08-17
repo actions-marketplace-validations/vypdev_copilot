@@ -9,7 +9,7 @@ This guide walks you through testing the OpenCode Plan flows (`check-progress`, 
 
 ## Prerequisites
 
-1. **Node.js 20** – Use `nvm use 20` if you have nvm.
+1. **Node.js 24** – Use `nvm use 24` if you have nvm.
 2. **Git repository** – A repo with `origin` pointing to GitHub (e.g. `github.com/owner/repo`).
 3. **Personal Access Token (PAT)** – Fine-grained PAT with repo and project access. Set `PERSONAL_ACCESS_TOKEN` in your environment or use `-t` / `--token`.
 4. **OpenCode server** – Must be running and reachable (default: `http://localhost:4096`).
@@ -19,7 +19,7 @@ This guide walks you through testing the OpenCode Plan flows (`check-progress`, 
 In a separate terminal, start the OpenCode server:
 
 ```bash
-npx opencode-ai serve
+pnpm dlx --yes opencode-ai serve
 # or
 opencode serve --port 4096
 ```
@@ -31,9 +31,9 @@ Ensure the server is healthy before running the CLI. The default URL is `http://
 From the copilot repository root:
 
 ```bash
-nvm use 20
-npm install
-npm run build
+nvm use 24
+pnpm install
+pnpm run build
 ```
 
 ## 3. Run the Commands
@@ -101,7 +101,7 @@ node build/cli/index.js check-progress -i 123
 |-------|----------|
 | "Missing required AI configuration" | Set `OPENCODE_SERVER_URL` and `OPENCODE_MODEL` (or use `--opencode-server-url` and `--opencode-model`). |
 | "Git repository not found" | Ensure you're in a repo with `origin` set to a GitHub URL. |
-| Connection refused to OpenCode | Start the OpenCode server (`npx opencode-ai serve`) before running the CLI. |
+| Connection refused to OpenCode | Start the OpenCode server (`pnpm dlx --yes opencode-ai serve`) before running the CLI. |
 | No branch found for issue | Ensure the issue has a linked branch (e.g. `feature/123-title`); run the issue workflow first or create the branch manually. |
 
 For more details, see [OpenCode (AI)](/opencode-integration) and [Troubleshooting](/troubleshooting).

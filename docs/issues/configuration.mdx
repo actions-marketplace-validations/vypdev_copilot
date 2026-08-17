@@ -124,6 +124,26 @@ The following parameters can be configured in the workflow:
 - `images-commit-hotfix`: Image URLs to display in hotfix action commit comments
 - `images-commit-release`: Image URLs to display in release action commit comments
 
+#### AI agent selection
+The workflow can select one provider for both findings and fixer operations. The selected transport is resolved before execution; unsupported combinations fail instead of silently falling back to OpenCode.
+
+- `agent-provider`: `opencode`, `cursor`, or `codex` (default: `opencode`)
+- `agent-transport`: `server`, `sdk`, or `cli` (default: `server`)
+- `agent-model`: provider-specific model or executable identifier (defaults to `opencode-model`)
+- `agent-command`: literal executable plus arguments for CLI transport (required for `cli`)
+
+Current execution matrix:
+
+| Provider | `server` | `sdk` | `cli` |
+| --- | --- | --- | --- |
+| OpenCode | supported; managed startup preserves the legacy lifecycle | rejected until an SDK adapter is verified | supported when explicitly configured |
+| Cursor | rejected until a server adapter is verified | rejected until an SDK adapter is verified | supported through the configured CLI |
+| Codex | rejected until a server adapter is verified | rejected until an SDK adapter is verified | supported through the configured CLI |
+
+CLI commands are executed without a shell. Shell operators, substitutions, pipes, redirects, and non-literal command tokens are rejected. The prompt is sent through standard input, and stdout is treated as the agent response. Configure credentials through the runner/provider environment; never include tokens in `agent-command`.
+
+Legacy OpenCode inputs remain supported:
+
 #### AI (OpenCode)
 - `opencode-server-url`: OpenCode server URL (default: "http://localhost:4096"). See [OpenCode (AI)](/opencode-integration).
 - `opencode-model`: Model in provider/model format (default: "opencode/kimi-k2.5-free")

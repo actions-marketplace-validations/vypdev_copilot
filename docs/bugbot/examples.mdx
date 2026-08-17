@@ -26,7 +26,7 @@ on:
 jobs:
   copilot-commits:
     name: Copilot - Commit
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, X64, Linux, coolify]
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -61,7 +61,7 @@ on:
 jobs:
   copilot-issues:
     name: Copilot - Issue Comment
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, X64, Linux, coolify]
     permissions:
       contents: write
     steps:
@@ -94,7 +94,7 @@ on:
 jobs:
   copilot-pull-requests:
     name: Copilot - Pull Request Comment
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, X64, Linux, coolify]
     permissions:
       contents: write
     steps:
@@ -134,7 +134,7 @@ on:
 
 jobs:
   detect:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, X64, Linux, coolify]
     steps:
       - uses: actions/checkout@v4
         with:

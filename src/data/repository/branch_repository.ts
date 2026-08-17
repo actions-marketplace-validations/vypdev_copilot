@@ -10,6 +10,7 @@ import { BranchCompareRepository } from './branch_compare_repository';
 import { GitCliRepository } from './git_cli_repository';
 import { MergeRepository } from './merge_repository';
 import { WorkflowRepository } from './workflow_repository';
+import { findPreviousIssueBranch } from './find_previous_issue_branch';
 
 /**
  * Facade for branch-related operations. Delegates to focused repositories
@@ -121,33 +122,15 @@ export class BranchRepository {
                     repo: repository,
                 });
 
-                for (const type of branchTypes) {
-                    const prefix = `${type}/${issueNumber}-`;
-
-                    try {
-                        const matchingBranch = data.find(branch => branch.name.indexOf(prefix) > -1);
-
-                        if (matchingBranch) {
-                            baseBranchName = matchingBranch.name;
-                            isRenamingBranch = true;
-                            logDebugInfo(`Found previous issue branch: ${baseBranchName}`);
-                            // TODO replacedBranchName = baseBranchName
-                            break;
-                        }
-                    } catch (error) {
-                        logError(`Error while listing branches: ${error}`);
-                        result.push(
-                            new Result({
-                                id: 'branch_repository',
-                                success: false,
-                                executed: true,
-                                steps: [
-                                    `Error while listing branches.`,
-                                ],
-                                error: error,
-                            })
-                        )
-                    }
+                const previousBranch = findPreviousIssueBranch(
+                    data.map((branch) => branch.name),
+                    issueNumber,
+                    branchTypes,
+                );
+                if (previousBranch) {
+                    baseBranchName = previousBranch;
+                    isRenamingBranch = true;
+                    logDebugInfo(`Found previous issue branch: ${baseBranchName}`);
                 }
             } else {
                 baseBranchName = hotfixBranch ?? developmentBranch;
@@ -263,8 +246,8 @@ export class BranchRepository {
             const issueId: string | undefined = repository?.issue?.id ?? undefined;
             const branchOid: string | undefined = oid ?? repository?.ref?.target?.oid ?? undefined;
 
-            if (repositoryId === undefined || issueNumber === undefined || branchOid === undefined) {
-                logError(`Error searching repository "${baseBranchName}": id: ${repositoryId}, oid: ${branchOid}), issue #${issueNumber}`);
+            if (repositoryId === undefined || issueId === undefined || branchOid === undefined) {
+                logError(`Error searching repository "${baseBranchName}": id: ${repositoryId}, issue: ${issueId}, oid: ${branchOid}), issue #${issueNumber}`);
                 result.push(
                     new Result({
                         id: 'branch_repository',
@@ -406,8 +389,8 @@ export class BranchRepository {
         workflow: string,
         inputs: Record<string, unknown>,
         token: string,
-    ) => {
-        return this.workflowRepository.executeWorkflow(owner, repository, branch, workflow, inputs, token);
+    ): Promise<void> => {
+        await this.workflowRepository.executeWorkflow(owner, repository, branch, workflow, inputs, token);
     };
 
     mergeBranch = async (

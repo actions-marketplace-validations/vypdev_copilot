@@ -14,7 +14,7 @@ Run progress check for issue `123` (checkout the branch first if you need a spec
 ```yaml
 jobs:
   run-check-progress:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, X64, Linux, coolify]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,7 +34,7 @@ Run Bugbot detection for issue `456` on the current checkout:
 ```yaml
 jobs:
   run-bugbot:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, X64, Linux, coolify]
     steps:
       - uses: actions/checkout@v4
       - uses: vypdev/copilot@v2
@@ -76,7 +76,7 @@ on:
 
 jobs:
   think:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, X64, Linux, coolify]
     steps:
       - uses: actions/checkout@v4
       - uses: vypdev/copilot@v2

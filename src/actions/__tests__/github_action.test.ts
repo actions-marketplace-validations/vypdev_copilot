@@ -1,6 +1,6 @@
 /**
  * Unit tests for runGitHubAction.
- * Mocks @actions/core, ProjectRepository, mainRun, and finish flow.
+ * Mocks @actions/core, the project-board adapter, mainRun, and finish flow.
  */
 
 import * as core from '@actions/core';
@@ -29,16 +29,16 @@ jest.mock('../common_action', () => ({
 
 const mockPublishInvoke = jest.fn();
 const mockStoreInvoke = jest.fn();
-jest.mock('../../usecase/steps/common/publish_resume_use_case', () => ({
+jest.mock('../../application/usecases/steps/common/publish_resume_use_case', () => ({
   PublishResultUseCase: jest.fn().mockImplementation(() => ({ invoke: mockPublishInvoke })),
 }));
-jest.mock('../../usecase/steps/common/store_configuration_use_case', () => ({
+jest.mock('../../application/usecases/steps/common/store_configuration_use_case', () => ({
   StoreConfigurationUseCase: jest.fn().mockImplementation(() => ({ invoke: mockStoreInvoke })),
 }));
 
 const mockGetProjectDetail = jest.fn();
-jest.mock('../../data/repository/project_repository', () => ({
-  ProjectRepository: jest.fn().mockImplementation(() => ({
+jest.mock('../../data/repository/project/project_board_repository', () => ({
+  ProjectBoardRepository: jest.fn().mockImplementation(() => ({
     getProjectDetail: mockGetProjectDetail,
   })),
 }));
@@ -112,7 +112,7 @@ describe('runGitHubAction', () => {
     expect(startOpencodeServer).toHaveBeenCalledWith({ cwd: process.cwd() });
     expect(mockStop).toHaveBeenCalledTimes(1);
     const execution = mockMainRun.mock.calls[0][0];
-    expect(execution.ai.getOpencodeServerUrl()).toBe('http://started:4096');
+    expect(execution.ai.getAgentConfiguration('findings').serverUrl).toBe('http://started:4096');
   });
 
   it('calls setFailed and stops server when mainRun throws', async () => {

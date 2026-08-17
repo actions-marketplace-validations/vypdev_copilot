@@ -1,19 +1,25 @@
 import * as core from '@actions/core';
 import { Execution } from '../data/model/execution';
 import { Result } from '../data/model/result';
-import { CommitUseCase } from '../usecase/commit_use_case';
-import { IssueCommentUseCase } from '../usecase/issue_comment_use_case';
-import { IssueUseCase } from '../usecase/issue_use_case';
-import { PullRequestReviewCommentUseCase } from '../usecase/pull_request_review_comment_use_case';
-import { PullRequestUseCase } from '../usecase/pull_request_use_case';
-import { SingleActionUseCase } from '../usecase/single_action_use_case';
+import { CommitUseCase } from '../application/usecases/commit_use_case';
+import { ProjectBoardRepository } from '../data/repository/project/project_board_repository';
+import { ProjectBoardCommandPort } from '../application/ports/project_board_ports';
+import { IssueCommentUseCase } from '../application/usecases/issue_comment_use_case';
+import { IssueUseCase } from '../application/usecases/issue_use_case';
+import { PullRequestReviewCommentUseCase } from '../application/usecases/pull_request_review_comment_use_case';
+import { PullRequestUseCase } from '../application/usecases/pull_request_use_case';
+import { SingleActionUseCase } from '../application/usecases/single_action_use_case';
 import { clearAccumulatedLogs, logDebugInfo, logError, logInfo } from '../utils/logger';
 import { TITLE } from '../utils/constants';
 import chalk from 'chalk';
 import boxen from 'boxen';
 import { waitForPreviousRuns } from '../utils/queue_utils';
+import { resolveMainRunRoute } from './main_run_route';
 
-export async function mainRun(execution: Execution): Promise<Result[]> {
+export async function mainRun(
+    execution: Execution,
+    projectBoardCommandPort: ProjectBoardCommandPort = new ProjectBoardRepository(),
+): Promise<Result[]> {
     const results: Result[] = [];
 
     logInfo('GitHub Action: starting main run.');
@@ -73,32 +79,45 @@ export async function mainRun(execution: Execution): Promise<Result[]> {
     }
 
     try {
-        if (execution.isSingleAction) {
-            logInfo(`Running SingleActionUseCase (action: ${execution.singleAction.currentSingleAction}).`);
-            results.push(...await new SingleActionUseCase().invoke(execution));
-        } else if (execution.isIssue) {
-            if (execution.issue.isIssueComment) {
+        const route = resolveMainRunRoute({
+            isSingleAction: execution.isSingleAction,
+            isIssue: execution.isIssue,
+            isIssueComment: execution.issue.isIssueComment,
+            isPullRequest: execution.isPullRequest,
+            isPullRequestReviewComment: execution.pullRequest.isPullRequestReviewComment,
+            isPush: execution.isPush,
+        });
+
+        switch (route) {
+            case 'single-action':
+                logInfo(`Running SingleActionUseCase (action: ${execution.singleAction.currentSingleAction}).`);
+                results.push(...await new SingleActionUseCase().invoke(execution));
+                break;
+            case 'issue-comment':
                 logInfo(`Running IssueCommentUseCase for issue #${execution.issue.number}.`);
                 results.push(...await new IssueCommentUseCase().invoke(execution));
-            } else {
+                break;
+            case 'issue':
                 logInfo(`Running IssueUseCase for issue #${execution.issueNumber}.`);
                 results.push(...await new IssueUseCase().invoke(execution));
-            }
-        } else if (execution.isPullRequest) {
-            if (execution.pullRequest.isPullRequestReviewComment) {
+                break;
+            case 'pull-request-review-comment':
                 logInfo(`Running PullRequestReviewCommentUseCase for PR #${execution.pullRequest.number}.`);
                 results.push(...await new PullRequestReviewCommentUseCase().invoke(execution));
-            } else {
+                break;
+            case 'pull-request':
                 logInfo(`Running PullRequestUseCase for PR #${execution.pullRequest.number}.`);
                 results.push(...await new PullRequestUseCase().invoke(execution));
-            }
-        } else if (execution.isPush) {
-            logDebugInfo(`Push event. Branch: ${execution.commit?.branch ?? 'unknown'}, commits: ${execution.commit?.commits?.length ?? 0}, issue number: ${execution.issueNumber}.`);
-            logInfo('Running CommitUseCase.');
-            results.push(...await new CommitUseCase().invoke(execution));
-        } else {
-            logError(`Action not handled. Event: ${execution.eventName}.`);
-            core.setFailed(`Action not handled.`);
+                break;
+            case 'push':
+                logDebugInfo(`Push event. Branch: ${execution.commit?.branch ?? 'unknown'}, commits: ${execution.commit?.commits?.length ?? 0}, issue number: ${execution.issueNumber}.`);
+                logInfo('Running CommitUseCase.');
+                results.push(...await new CommitUseCase(projectBoardCommandPort).invoke(execution));
+                break;
+            case 'unhandled':
+                logError(`Action not handled. Event: ${execution.eventName}.`);
+                core.setFailed('Action not handled.');
+                break;
         }
 
         const totalSteps = results.reduce((acc, r) => acc + (r.steps?.length ?? 0), 0);

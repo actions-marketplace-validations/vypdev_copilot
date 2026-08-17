@@ -1,41 +1,47 @@
 import * as core from '@actions/core';
 import { Ai } from '../data/model/ai';
-import { Branches } from '../data/model/branches';
-import { Emoji } from '../data/model/emoji';
+
+
 import { Execution } from '../data/model/execution';
 import { Hotfix } from '../data/model/hotfix';
-import { Images } from '../data/model/images';
-import { Issue } from '../data/model/issue';
-import { IssueTypes } from '../data/model/issue_types';
-import { Labels } from '../data/model/labels';
+
+
+
+
 import { Locale } from '../data/model/locale';
-import { ProjectDetail } from '../data/model/project_detail';
-import { Projects } from '../data/model/projects';
-import { PullRequest } from '../data/model/pull_request';
+
 import { Release } from '../data/model/release';
 import { Result } from '../data/model/result';
 import { SingleAction } from '../data/model/single_action';
-import { SizeThreshold } from '../data/model/size_threshold';
-import { SizeThresholds } from '../data/model/size_thresholds';
-import { Tokens } from '../data/model/tokens';
-import { Workflows } from '../data/model/workflows';
-import { ProjectRepository } from '../data/repository/project_repository';
-import { PublishResultUseCase } from '../usecase/steps/common/publish_resume_use_case';
-import { StoreConfigurationUseCase } from '../usecase/steps/common/store_configuration_use_case';
-import { BUGBOT_MAX_COMMENTS, BUGBOT_MIN_SEVERITY, DEFAULT_IMAGE_CONFIG, INPUT_KEYS, OPENCODE_DEFAULT_MODEL } from '../utils/constants';
+
+
+import { ProjectBoardRepository } from '../data/repository/project/project_board_repository';
+import { PublishResultUseCase } from '../application/usecases/steps/common/publish_resume_use_case';
+import { StoreConfigurationUseCase } from '../application/usecases/steps/common/store_configuration_use_case';
+import { BUGBOT_MAX_COMMENTS, BUGBOT_MIN_SEVERITY, INPUT_KEYS } from '../utils/constants';
 import { logDebugInfo, logError, logInfo } from '../utils/logger';
-import { startOpencodeServer, type ManagedOpencodeServer } from '../utils/opencode_server';
+import type { ManagedAgentServer } from '../data/repository/agent_ports';
+import { OpenCodeServerLifecycleAdapter } from '../data/repository/opencode_server_lifecycle_adapter';
+import { loadProjectDetails } from './project_details_loader';
 import { mainRun } from './common_action';
+import { isEnabledInput } from './input_boolean_policy';
+import { parseBoundedPositiveIntegerInput, parseIntegerInput } from './input_number_policy';
+import { parseDelimitedValues } from './input_values_policy';
+import { buildAgentTasksFromInputs } from './agent_input_builder';
+import { buildImageConfiguration } from './image_configuration_builder';
+import { buildSizeThresholds } from './size_threshold_builder';
+import { buildBranches } from './branches_builder';
+import { buildEmoji, buildImages, buildIssue, buildIssueTypes, buildLabels, buildLocale, buildProjects, buildPullRequest, buildTokens, buildWorkflows } from './configuration_builders';
 
 export async function runGitHubAction(): Promise<void> {
-    const projectRepository = new ProjectRepository();
+    const projectRepository = new ProjectBoardRepository();
 
     logInfo('GitHub Action: runGitHubAction started.');
 
     /**
      * Debug
      */
-    const debug = getInput(INPUT_KEYS.DEBUG) == 'true';
+    const debug = isEnabledInput(getInput(INPUT_KEYS.DEBUG));
     if (debug) {
         logInfo('Debug mode is enabled. Full logs will be included in the report.');
     }
@@ -58,34 +64,40 @@ export async function runGitHubAction(): Promise<void> {
      * AI (OpenCode)
      */
     let opencodeServerUrl = getInput(INPUT_KEYS.OPENCODE_SERVER_URL) || 'http://127.0.0.1:4096';
-    const opencodeModel = getInput(INPUT_KEYS.OPENCODE_MODEL) || OPENCODE_DEFAULT_MODEL;
-    const opencodeStartServer = getInput(INPUT_KEYS.OPENCODE_START_SERVER) === 'true';
+    const readAgentInput = (key: string): string => getInput(key);
+    const requestedAgentTasks = buildAgentTasksFromInputs(readAgentInput);
+    const opencodeModel = requestedAgentTasks.findings.model;
+    const opencodeStartServer = isEnabledInput(getInput(INPUT_KEYS.OPENCODE_START_SERVER))
+        && requestedAgentTasks.findings.provider === 'opencode'
+        && requestedAgentTasks.findings.transport === 'server';
 
-    let managedOpencodeServer: ManagedOpencodeServer | undefined;
+    const lifecycle: OpenCodeServerLifecycleAdapter = new OpenCodeServerLifecycleAdapter();
+    let managedOpencodeServer: ManagedAgentServer | undefined;
     if (opencodeStartServer) {
         logInfo('Starting managed OpenCode server...');
-        managedOpencodeServer = await startOpencodeServer({ cwd: process.cwd() });
+        managedOpencodeServer = await lifecycle.start({ cwd: process.cwd() });
         opencodeServerUrl = managedOpencodeServer.url;
         logInfo(`OpenCode server started at ${opencodeServerUrl}.`);
     } else {
         logDebugInfo(`Using OpenCode server URL: ${opencodeServerUrl}, model: ${opencodeModel}.`);
     }
+    const agentTasks = buildAgentTasksFromInputs((key) =>
+        key === INPUT_KEYS.OPENCODE_SERVER_URL ? opencodeServerUrl : readAgentInput(key)
+    );
+
 
     try {
-    const aiPullRequestDescription = getInput(INPUT_KEYS.AI_PULL_REQUEST_DESCRIPTION) === 'true';
-    const aiMembersOnly = getInput(INPUT_KEYS.AI_MEMBERS_ONLY) === 'true';
-    const aiIncludeReasoning = getInput(INPUT_KEYS.AI_INCLUDE_REASONING) === 'true';
+    const aiPullRequestDescription = isEnabledInput(getInput(INPUT_KEYS.AI_PULL_REQUEST_DESCRIPTION));
+    const aiMembersOnly = isEnabledInput(getInput(INPUT_KEYS.AI_MEMBERS_ONLY));
+    const aiIncludeReasoning = isEnabledInput(getInput(INPUT_KEYS.AI_INCLUDE_REASONING));
     const aiIgnoreFilesInput: string = getInput(INPUT_KEYS.AI_IGNORE_FILES);
-    const aiIgnoreFiles: string[] = aiIgnoreFilesInput
-        .split(',')
-        .map(path => path.trim())
-        .filter(path => path.length > 0);
+    const aiIgnoreFiles: string[] = parseDelimitedValues(aiIgnoreFilesInput);
     const bugbotSeverity = getInput(INPUT_KEYS.BUGBOT_SEVERITY) || BUGBOT_MIN_SEVERITY;
-    const bugbotCommentLimitRaw = parseInt(getInput(INPUT_KEYS.BUGBOT_COMMENT_LIMIT), 10);
-    const bugbotCommentLimit =
-        Number.isNaN(bugbotCommentLimitRaw) || bugbotCommentLimitRaw < 1
-            ? BUGBOT_MAX_COMMENTS
-            : Math.min(bugbotCommentLimitRaw, 200);
+    const bugbotCommentLimit = parseBoundedPositiveIntegerInput(
+        getInput(INPUT_KEYS.BUGBOT_COMMENT_LIMIT),
+        BUGBOT_MAX_COMMENTS,
+        200,
+    );
     const bugbotFixVerifyCommandsInput = getInput(INPUT_KEYS.BUGBOT_FIX_VERIFY_COMMANDS);
     const bugbotFixVerifyCommands = bugbotFixVerifyCommandsInput
         .split(',')
@@ -96,16 +108,9 @@ export async function runGitHubAction(): Promise<void> {
      * Projects Details
      */
     const projectIdsInput: string = getInput(INPUT_KEYS.PROJECT_IDS);
-    const projectIds: string[] = projectIdsInput
-        .split(',')
-        .map(id => id.trim())
-        .filter(id => id.length > 0);
+    const projectIds: string[] = parseDelimitedValues(projectIdsInput);
 
-    const projects: ProjectDetail[] = []
-    for (const projectId of projectIds) {        
-        const detail = await projectRepository.getProjectDetail(projectId, token)
-        projects.push(detail)
-    }
+    const projects = await loadProjectDetails(projectRepository, projectIds, token);
 
     const projectColumnIssueCreated = getInput(INPUT_KEYS.PROJECT_COLUMN_ISSUE_CREATED)
     const projectColumnPullRequestCreated = getInput(INPUT_KEYS.PROJECT_COLUMN_PULL_REQUEST_CREATED)
@@ -115,220 +120,7 @@ export async function runGitHubAction(): Promise<void> {
     /**
      * Images
      */
-    const imagesOnIssue = getInput(INPUT_KEYS.IMAGES_ON_ISSUE) === 'true';
-    const imagesOnPullRequest = getInput(INPUT_KEYS.IMAGES_ON_PULL_REQUEST) === 'true';
-    const imagesOnCommit = getInput(INPUT_KEYS.IMAGES_ON_COMMIT) === 'true';
-
-    const imagesIssueAutomaticInput: string = getInput(INPUT_KEYS.IMAGES_ISSUE_AUTOMATIC);
-    const imagesIssueAutomatic: string[] = imagesIssueAutomaticInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesIssueAutomatic.length === 0) {
-        imagesIssueAutomatic.push(...DEFAULT_IMAGE_CONFIG.issue.automatic);
-    }
-
-    const imagesIssueFeatureInput: string = getInput(INPUT_KEYS.IMAGES_ISSUE_FEATURE);
-    const imagesIssueFeature: string[] = imagesIssueFeatureInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesIssueFeature.length === 0) {
-        imagesIssueFeature.push(...DEFAULT_IMAGE_CONFIG.issue.feature);
-    }
-
-    const imagesIssueBugfixInput: string = getInput(INPUT_KEYS.IMAGES_ISSUE_BUGFIX);
-    const imagesIssueBugfix: string[] = imagesIssueBugfixInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesIssueBugfix.length === 0) {
-        imagesIssueBugfix.push(...DEFAULT_IMAGE_CONFIG.issue.bugfix);
-    }
-
-    const imagesIssueDocsInput: string = getInput(INPUT_KEYS.IMAGES_ISSUE_DOCS);
-    const imagesIssueDocs: string[] = imagesIssueDocsInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesIssueDocs.length === 0) {
-        imagesIssueDocs.push(...DEFAULT_IMAGE_CONFIG.issue.docs);
-    }
-
-    const imagesIssueChoreInput: string = getInput(INPUT_KEYS.IMAGES_ISSUE_CHORE);
-    const imagesIssueChore: string[] = imagesIssueChoreInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesIssueChore.length === 0) {
-        imagesIssueChore.push(...DEFAULT_IMAGE_CONFIG.issue.chore);
-    }
-
-    const imagesIssueReleaseInput: string = getInput(INPUT_KEYS.IMAGES_ISSUE_RELEASE);
-    const imagesIssueRelease: string[] = imagesIssueReleaseInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesIssueRelease.length === 0) {
-        imagesIssueRelease.push(...DEFAULT_IMAGE_CONFIG.issue.release);
-    }
-
-    const imagesIssueHotfixInput: string = getInput(INPUT_KEYS.IMAGES_ISSUE_HOTFIX);
-    const imagesIssueHotfix: string[] = imagesIssueHotfixInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesIssueHotfix.length === 0) {
-        imagesIssueHotfix.push(...DEFAULT_IMAGE_CONFIG.issue.hotfix);
-    }
-
-    const imagesPullRequestAutomaticInput: string = getInput(INPUT_KEYS.IMAGES_PULL_REQUEST_AUTOMATIC);
-    const imagesPullRequestAutomatic: string[] = imagesPullRequestAutomaticInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesPullRequestAutomatic.length === 0) {
-        imagesPullRequestAutomatic.push(...DEFAULT_IMAGE_CONFIG.pullRequest.automatic);
-    }
-
-    const imagesPullRequestFeatureInput: string = getInput(INPUT_KEYS.IMAGES_PULL_REQUEST_FEATURE);
-    const imagesPullRequestFeature: string[] = imagesPullRequestFeatureInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesPullRequestFeature.length === 0) {
-        imagesPullRequestFeature.push(...DEFAULT_IMAGE_CONFIG.pullRequest.feature);
-    }
-
-    const imagesPullRequestBugfixInput: string = getInput(INPUT_KEYS.IMAGES_PULL_REQUEST_BUGFIX);
-    const imagesPullRequestBugfix: string[] = imagesPullRequestBugfixInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesPullRequestBugfix.length === 0) {
-        imagesPullRequestBugfix.push(...DEFAULT_IMAGE_CONFIG.pullRequest.bugfix);
-    }
-
-    const imagesPullRequestReleaseInput: string = getInput(INPUT_KEYS.IMAGES_PULL_REQUEST_RELEASE);
-    const imagesPullRequestRelease: string[] = imagesPullRequestReleaseInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesPullRequestRelease.length === 0) {
-        imagesPullRequestRelease.push(...DEFAULT_IMAGE_CONFIG.pullRequest.release);
-    }
-
-    const imagesPullRequestHotfixInput: string = getInput(INPUT_KEYS.IMAGES_PULL_REQUEST_HOTFIX);
-    const imagesPullRequestHotfix: string[] = imagesPullRequestHotfixInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesPullRequestHotfix.length === 0) {
-        imagesPullRequestHotfix.push(...DEFAULT_IMAGE_CONFIG.pullRequest.hotfix);
-    }
-
-    const imagesPullRequestDocsInput: string = getInput(INPUT_KEYS.IMAGES_PULL_REQUEST_DOCS);
-    const imagesPullRequestDocs: string[] = imagesPullRequestDocsInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesPullRequestDocs.length === 0) {
-        imagesPullRequestDocs.push(...DEFAULT_IMAGE_CONFIG.pullRequest.docs);
-    }
-
-    const imagesPullRequestChoreInput: string = getInput(INPUT_KEYS.IMAGES_PULL_REQUEST_CHORE);
-    const imagesPullRequestChore: string[] = imagesPullRequestChoreInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesPullRequestChore.length === 0) {
-        imagesPullRequestChore.push(...DEFAULT_IMAGE_CONFIG.pullRequest.chore);
-    }
-
-    const imagesCommitAutomaticInput: string = getInput(INPUT_KEYS.IMAGES_COMMIT_AUTOMATIC);
-    const imagesCommitAutomatic: string[] = imagesCommitAutomaticInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesCommitAutomatic.length === 0) {
-        imagesCommitAutomatic.push(...DEFAULT_IMAGE_CONFIG.commit.automatic);
-    }
-
-    const imagesCommitFeatureInput: string = getInput(INPUT_KEYS.IMAGES_COMMIT_FEATURE);
-    const imagesCommitFeature: string[] = imagesCommitFeatureInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesCommitFeature.length === 0) {
-        imagesCommitFeature.push(...DEFAULT_IMAGE_CONFIG.commit.feature);
-    }
-
-    const imagesCommitBugfixInput: string = getInput(INPUT_KEYS.IMAGES_COMMIT_BUGFIX);
-    const imagesCommitBugfix: string[] = imagesCommitBugfixInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesCommitBugfix.length === 0) {
-        imagesCommitBugfix.push(...DEFAULT_IMAGE_CONFIG.commit.bugfix);
-    }
-
-    const imagesCommitReleaseInput: string = getInput(INPUT_KEYS.IMAGES_COMMIT_RELEASE);
-    const imagesCommitRelease: string[] = imagesCommitReleaseInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesCommitRelease.length === 0) {
-        imagesCommitRelease.push(...DEFAULT_IMAGE_CONFIG.commit.release);
-    }
-
-    const imagesCommitHotfixInput: string = getInput(INPUT_KEYS.IMAGES_COMMIT_HOTFIX);
-    const imagesCommitHotfix: string[] = imagesCommitHotfixInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesCommitHotfix.length === 0) {
-        imagesCommitHotfix.push(...DEFAULT_IMAGE_CONFIG.commit.hotfix);
-    }
-
-    const imagesCommitDocsInput: string = getInput(INPUT_KEYS.IMAGES_COMMIT_DOCS);
-    const imagesCommitDocs: string[] = imagesCommitDocsInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesCommitDocs.length === 0) {
-        imagesCommitDocs.push(...DEFAULT_IMAGE_CONFIG.commit.docs);
-    }
-
-    const imagesCommitChoreInput: string = getInput(INPUT_KEYS.IMAGES_COMMIT_CHORE);
-    const imagesCommitChore: string[] = imagesCommitChoreInput
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url.length > 0);
-    
-    if (imagesCommitChore.length === 0) {
-        imagesCommitChore.push(...DEFAULT_IMAGE_CONFIG.commit.chore);
-    }
-
+    const imageConfiguration = buildImageConfiguration(getInput);
     /**
      * Workflows
      */
@@ -418,24 +210,24 @@ export async function runGitHubAction(): Promise<void> {
     /**
      * Size Thresholds
      */
-    const sizeXxlThresholdLines = parseInt(getInput(INPUT_KEYS.SIZE_XXL_THRESHOLD_LINES)) ?? 1000;
-    const sizeXxlThresholdFiles = parseInt(getInput(INPUT_KEYS.SIZE_XXL_THRESHOLD_FILES)) ?? 20;
-    const sizeXxlThresholdCommits = parseInt(getInput(INPUT_KEYS.SIZE_XXL_THRESHOLD_COMMITS)) ?? 10;
-    const sizeXlThresholdLines = parseInt(getInput(INPUT_KEYS.SIZE_XL_THRESHOLD_LINES)) ?? 500;
-    const sizeXlThresholdFiles = parseInt(getInput(INPUT_KEYS.SIZE_XL_THRESHOLD_FILES)) ?? 10;
-    const sizeXlThresholdCommits = parseInt(getInput(INPUT_KEYS.SIZE_XL_THRESHOLD_COMMITS)) ?? 5;
-    const sizeLThresholdLines = parseInt(getInput(INPUT_KEYS.SIZE_L_THRESHOLD_LINES)) ?? 250;
-    const sizeLThresholdFiles = parseInt(getInput(INPUT_KEYS.SIZE_L_THRESHOLD_FILES)) ?? 5;
-    const sizeLThresholdCommits = parseInt(getInput(INPUT_KEYS.SIZE_L_THRESHOLD_COMMITS)) ?? 3;
-    const sizeMThresholdLines = parseInt(getInput(INPUT_KEYS.SIZE_M_THRESHOLD_LINES)) ?? 100;
-    const sizeMThresholdFiles = parseInt(getInput(INPUT_KEYS.SIZE_M_THRESHOLD_FILES)) ?? 3;
-    const sizeMThresholdCommits = parseInt(getInput(INPUT_KEYS.SIZE_M_THRESHOLD_COMMITS)) ?? 2;
-    const sizeSThresholdLines = parseInt(getInput(INPUT_KEYS.SIZE_S_THRESHOLD_LINES)) ?? 50;
-    const sizeSThresholdFiles = parseInt(getInput(INPUT_KEYS.SIZE_S_THRESHOLD_FILES)) ?? 2;
-    const sizeSThresholdCommits = parseInt(getInput(INPUT_KEYS.SIZE_S_THRESHOLD_COMMITS)) ?? 1;
-    const sizeXsThresholdLines = parseInt(getInput(INPUT_KEYS.SIZE_XS_THRESHOLD_LINES)) ?? 25;
-    const sizeXsThresholdFiles = parseInt(getInput(INPUT_KEYS.SIZE_XS_THRESHOLD_FILES)) ?? 1;
-    const sizeXsThresholdCommits = parseInt(getInput(INPUT_KEYS.SIZE_XS_THRESHOLD_COMMITS)) ?? 1;
+    const sizeXxlThresholdLines = parseIntegerInput(getInput(INPUT_KEYS.SIZE_XXL_THRESHOLD_LINES), 1000);
+    const sizeXxlThresholdFiles = parseIntegerInput(getInput(INPUT_KEYS.SIZE_XXL_THRESHOLD_FILES), 20);
+    const sizeXxlThresholdCommits = parseIntegerInput(getInput(INPUT_KEYS.SIZE_XXL_THRESHOLD_COMMITS), 10);
+    const sizeXlThresholdLines = parseIntegerInput(getInput(INPUT_KEYS.SIZE_XL_THRESHOLD_LINES), 500);
+    const sizeXlThresholdFiles = parseIntegerInput(getInput(INPUT_KEYS.SIZE_XL_THRESHOLD_FILES), 10);
+    const sizeXlThresholdCommits = parseIntegerInput(getInput(INPUT_KEYS.SIZE_XL_THRESHOLD_COMMITS), 5);
+    const sizeLThresholdLines = parseIntegerInput(getInput(INPUT_KEYS.SIZE_L_THRESHOLD_LINES), 250);
+    const sizeLThresholdFiles = parseIntegerInput(getInput(INPUT_KEYS.SIZE_L_THRESHOLD_FILES), 5);
+    const sizeLThresholdCommits = parseIntegerInput(getInput(INPUT_KEYS.SIZE_L_THRESHOLD_COMMITS), 3);
+    const sizeMThresholdLines = parseIntegerInput(getInput(INPUT_KEYS.SIZE_M_THRESHOLD_LINES), 100);
+    const sizeMThresholdFiles = parseIntegerInput(getInput(INPUT_KEYS.SIZE_M_THRESHOLD_FILES), 3);
+    const sizeMThresholdCommits = parseIntegerInput(getInput(INPUT_KEYS.SIZE_M_THRESHOLD_COMMITS), 2);
+    const sizeSThresholdLines = parseIntegerInput(getInput(INPUT_KEYS.SIZE_S_THRESHOLD_LINES), 50);
+    const sizeSThresholdFiles = parseIntegerInput(getInput(INPUT_KEYS.SIZE_S_THRESHOLD_FILES), 2);
+    const sizeSThresholdCommits = parseIntegerInput(getInput(INPUT_KEYS.SIZE_S_THRESHOLD_COMMITS), 1);
+    const sizeXsThresholdLines = parseIntegerInput(getInput(INPUT_KEYS.SIZE_XS_THRESHOLD_LINES), 25);
+    const sizeXsThresholdFiles = parseIntegerInput(getInput(INPUT_KEYS.SIZE_XS_THRESHOLD_FILES), 1);
+    const sizeXsThresholdCommits = parseIntegerInput(getInput(INPUT_KEYS.SIZE_XS_THRESHOLD_COMMITS), 1);
     
     /**
      * Branches
@@ -460,16 +252,16 @@ export async function runGitHubAction(): Promise<void> {
     /**
      * Issue
      */
-    const branchManagementAlways = getInput(INPUT_KEYS.BRANCH_MANAGEMENT_ALWAYS) === 'true';
-    const reopenIssueOnPush = getInput(INPUT_KEYS.REOPEN_ISSUE_ON_PUSH) === 'true';
-    const issueDesiredAssigneesCount = parseInt(getInput(INPUT_KEYS.DESIRED_ASSIGNEES_COUNT)) ?? 0;
+    const branchManagementAlways = isEnabledInput(getInput(INPUT_KEYS.BRANCH_MANAGEMENT_ALWAYS));
+    const reopenIssueOnPush = isEnabledInput(getInput(INPUT_KEYS.REOPEN_ISSUE_ON_PUSH));
+    const issueDesiredAssigneesCount = parseIntegerInput(getInput(INPUT_KEYS.DESIRED_ASSIGNEES_COUNT), 0);
 
     /**
      * Pull Request
      */
-    const pullRequestDesiredAssigneesCount = parseInt(getInput(INPUT_KEYS.PULL_REQUEST_DESIRED_ASSIGNEES_COUNT)) ?? 0;
-    const pullRequestDesiredReviewersCount = parseInt(getInput(INPUT_KEYS.PULL_REQUEST_DESIRED_REVIEWERS_COUNT)) ?? 0;
-    const pullRequestMergeTimeout = parseInt(getInput(INPUT_KEYS.PULL_REQUEST_MERGE_TIMEOUT)) ?? 0;
+    const pullRequestDesiredAssigneesCount = parseIntegerInput(getInput(INPUT_KEYS.PULL_REQUEST_DESIRED_ASSIGNEES_COUNT), 0);
+    const pullRequestDesiredReviewersCount = parseIntegerInput(getInput(INPUT_KEYS.PULL_REQUEST_DESIRED_REVIEWERS_COUNT), 0);
+    const pullRequestMergeTimeout = parseIntegerInput(getInput(INPUT_KEYS.PULL_REQUEST_MERGE_TIMEOUT), 0);
 
     const execution = new Execution(
         debug,
@@ -481,49 +273,18 @@ export async function runGitHubAction(): Promise<void> {
             singleActionChangelog,
         ),
         commitPrefixBuilder,
-        new Issue(
-            branchManagementAlways,
-            reopenIssueOnPush,
-            issueDesiredAssigneesCount
-        ),
-        new PullRequest(
-            pullRequestDesiredAssigneesCount,
-            pullRequestDesiredReviewersCount,
-            pullRequestMergeTimeout,
-        ),
-        new Emoji(
-            titleEmoji,
-            branchManagementEmoji,
-        ),
-        new Images(
-            imagesOnIssue,
-            imagesOnPullRequest,
-            imagesOnCommit,
-            imagesIssueAutomatic,
-            imagesIssueFeature,
-            imagesIssueBugfix,
-            imagesIssueDocs,
-            imagesIssueChore,
-            imagesIssueRelease,
-            imagesIssueHotfix,
-            imagesPullRequestAutomatic,
-            imagesPullRequestFeature,
-            imagesPullRequestBugfix,
-            imagesPullRequestRelease,
-            imagesPullRequestHotfix,
-            imagesPullRequestDocs,
-            imagesPullRequestChore,
-            imagesCommitAutomatic,
-            imagesCommitFeature,
-            imagesCommitBugfix,
-            imagesCommitRelease,
-            imagesCommitHotfix,
-            imagesCommitDocs,
-            imagesCommitChore,
-        ),
-        new Tokens(
-            token,
-        ),
+        buildIssue(branchManagementAlways, reopenIssueOnPush, issueDesiredAssigneesCount),
+        buildPullRequest(pullRequestDesiredAssigneesCount, pullRequestDesiredReviewersCount, pullRequestMergeTimeout),
+        buildEmoji(titleEmoji, branchManagementEmoji),
+        buildImages({
+            onIssue: imageConfiguration.onIssue,
+            onPullRequest: imageConfiguration.onPullRequest,
+            onCommit: imageConfiguration.onCommit,
+            issue: imageConfiguration.issue,
+            pullRequest: imageConfiguration.pullRequest,
+            commit: imageConfiguration.commit,
+        }),
+        buildTokens(token),
         new Ai(
             opencodeServerUrl,
             opencodeModel,
@@ -534,119 +295,54 @@ export async function runGitHubAction(): Promise<void> {
             bugbotSeverity,
             bugbotCommentLimit,
             bugbotFixVerifyCommands,
+            agentTasks,
         ),
-        new Labels(
-            branchManagementLauncherLabel,
-            bugLabel,
-            bugfixLabel,
-            hotfixLabel,
-            enhancementLabel,
-            featureLabel,
-            releaseLabel,
-            questionLabel,
-            helpLabel,
-            deployLabel,
-            deployedLabel,
-            docsLabel,
-            documentationLabel,
-            choreLabel,
-            maintenanceLabel,
-            priorityHighLabel,
-            priorityMediumLabel,
-            priorityLowLabel,
-            priorityNoneLabel,
-            sizeXxlLabel,
-            sizeXlLabel,
-            sizeLLabel,
-            sizeMLabel,
-            sizeSLabel,
-            sizeXsLabel,
-        ),
-        new IssueTypes(
-            issueTypeTask,
-            issueTypeTaskDescription,
-            issueTypeTaskColor,
-            issueTypeBug,
-            issueTypeBugDescription,
-            issueTypeBugColor,
-            issueTypeFeature,
-            issueTypeFeatureDescription,
-            issueTypeFeatureColor,
-            issueTypeDocumentation,
-            issueTypeDocumentationDescription,
-            issueTypeDocumentationColor,
-            issueTypeMaintenance,
-            issueTypeMaintenanceDescription,
-            issueTypeMaintenanceColor,
-            issueTypeHotfix,
-            issueTypeHotfixDescription,
-            issueTypeHotfixColor,
-            issueTypeRelease,
-            issueTypeReleaseDescription,
-            issueTypeReleaseColor,
-            issueTypeQuestion,
-            issueTypeQuestionDescription,
-            issueTypeQuestionColor,
-            issueTypeHelp,
-            issueTypeHelpDescription,
-            issueTypeHelpColor,
-        ),
-        new Locale(issueLocale, pullRequestLocale),
-        new SizeThresholds(
-            new SizeThreshold(
-                sizeXxlThresholdLines,
-                sizeXxlThresholdFiles,
-                sizeXxlThresholdCommits,
-            ),
-            new SizeThreshold(
-                sizeXlThresholdLines,
-                sizeXlThresholdFiles,
-                sizeXlThresholdCommits,
-            ),
-            new SizeThreshold(
-                sizeLThresholdLines,
-                sizeLThresholdFiles,
-                sizeLThresholdCommits,
-            ),
-            new SizeThreshold(
-                sizeMThresholdLines,
-                sizeMThresholdFiles,
-                sizeMThresholdCommits,
-            ),
-            new SizeThreshold(
-                sizeSThresholdLines,
-                sizeSThresholdFiles,
-                sizeSThresholdCommits,
-            ),
-            new SizeThreshold(
-                sizeXsThresholdLines,
-                sizeXsThresholdFiles,
-                sizeXsThresholdCommits,
-            ),
-        ),
-        new Branches(
-            mainBranch,
-            developmentBranch,
+        buildLabels({
+            branching: { launcher: branchManagementLauncherLabel },
+            workflow: { bug: bugLabel, bugfix: bugfixLabel, hotfix: hotfixLabel, enhancement: enhancementLabel, feature: featureLabel, release: releaseLabel, question: questionLabel, help: helpLabel, deploy: deployLabel, deployed: deployedLabel, docs: docsLabel, documentation: documentationLabel, chore: choreLabel, maintenance: maintenanceLabel },
+            priorities: { high: priorityHighLabel, medium: priorityMediumLabel, low: priorityLowLabel, none: priorityNoneLabel },
+            sizes: { xxl: sizeXxlLabel, xl: sizeXlLabel, l: sizeLLabel, m: sizeMLabel, s: sizeSLabel, xs: sizeXsLabel },
+        }),
+        buildIssueTypes({
+            task: { name: issueTypeTask, description: issueTypeTaskDescription, color: issueTypeTaskColor },
+            bug: { name: issueTypeBug, description: issueTypeBugDescription, color: issueTypeBugColor },
+            feature: { name: issueTypeFeature, description: issueTypeFeatureDescription, color: issueTypeFeatureColor },
+            documentation: { name: issueTypeDocumentation, description: issueTypeDocumentationDescription, color: issueTypeDocumentationColor },
+            maintenance: { name: issueTypeMaintenance, description: issueTypeMaintenanceDescription, color: issueTypeMaintenanceColor },
+            hotfix: { name: issueTypeHotfix, description: issueTypeHotfixDescription, color: issueTypeHotfixColor },
+            release: { name: issueTypeRelease, description: issueTypeReleaseDescription, color: issueTypeReleaseColor },
+            question: { name: issueTypeQuestion, description: issueTypeQuestionDescription, color: issueTypeQuestionColor },
+            help: { name: issueTypeHelp, description: issueTypeHelpDescription, color: issueTypeHelpColor },
+        }),
+        buildLocale(issueLocale, pullRequestLocale),
+        buildSizeThresholds({
+            xxl: { lines: sizeXxlThresholdLines, files: sizeXxlThresholdFiles, commits: sizeXxlThresholdCommits },
+            xl: { lines: sizeXlThresholdLines, files: sizeXlThresholdFiles, commits: sizeXlThresholdCommits },
+            l: { lines: sizeLThresholdLines, files: sizeLThresholdFiles, commits: sizeLThresholdCommits },
+            m: { lines: sizeMThresholdLines, files: sizeMThresholdFiles, commits: sizeMThresholdCommits },
+            s: { lines: sizeSThresholdLines, files: sizeSThresholdFiles, commits: sizeSThresholdCommits },
+            xs: { lines: sizeXsThresholdLines, files: sizeXsThresholdFiles, commits: sizeXsThresholdCommits },
+        }),
+        buildBranches({
+            main: mainBranch,
+            development: developmentBranch,
             featureTree,
             bugfixTree,
             hotfixTree,
             releaseTree,
             docsTree,
             choreTree,
-        ),
+        }),
         new Release(),
         new Hotfix(),
-        new Workflows(
-            releaseWorkflow,
-            hotfixWorkflow,
-        ),
-        new Projects(
+        buildWorkflows(releaseWorkflow, hotfixWorkflow),
+        buildProjects({
             projects,
-            projectColumnIssueCreated,
-            projectColumnPullRequestCreated,
-            projectColumnIssueInProgress,
-            projectColumnPullRequestInProgress,
-        ),
+            issueCreated: projectColumnIssueCreated,
+            pullRequestCreated: projectColumnPullRequestCreated,
+            issueInProgress: projectColumnIssueInProgress,
+            pullRequestInProgress: projectColumnPullRequestInProgress,
+        }),
         undefined,
         undefined,
     )

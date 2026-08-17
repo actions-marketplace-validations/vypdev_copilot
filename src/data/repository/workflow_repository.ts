@@ -51,9 +51,9 @@ export class WorkflowRepository {
         workflow: string,
         inputs: Record<string, unknown>,
         token: string,
-    ) => {
+    ): Promise<void> => {
         const octokit = github.getOctokit(token);
-        return octokit.rest.actions.createWorkflowDispatch({
+        await octokit.rest.actions.createWorkflowDispatch({
             owner: owner,
             repo: repository,
             workflow_id: workflow,

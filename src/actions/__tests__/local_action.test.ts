@@ -1,6 +1,6 @@
 /**
  * Unit tests for runLocalAction.
- * Mocks getActionInputsWithDefaults, ProjectRepository, mainRun, chalk, boxen.
+ * Mocks getActionInputsWithDefaults, the project-board adapter, mainRun, chalk, boxen.
  */
 
 jest.mock('chalk', () => ({
@@ -26,8 +26,8 @@ jest.mock('../common_action', () => ({
 }));
 
 const mockGetProjectDetail = jest.fn();
-jest.mock('../../data/repository/project_repository', () => ({
-  ProjectRepository: jest.fn().mockImplementation(() => ({
+jest.mock('../../data/repository/project/project_board_repository', () => ({
+  ProjectBoardRepository: jest.fn().mockImplementation(() => ({
     getProjectDetail: mockGetProjectDetail,
   })),
 }));
@@ -185,6 +185,6 @@ describe('runLocalAction', () => {
 
     const execution = mockMainRun.mock.calls[0][0];
     expect(execution.tokens.token).toBe('from-action-inputs');
-    expect(execution.ai.getOpencodeServerUrl()).toBe('http://custom-opencode:4096');
+    expect(execution.ai.getAgentConfiguration('findings').serverUrl).toBe('http://custom-opencode:4096');
   });
 });

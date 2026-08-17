@@ -36,32 +36,32 @@ const mockPullRequestReviewCommentInvoke = jest.fn();
 const mockPullRequestInvoke = jest.fn();
 const mockCommitInvoke = jest.fn();
 
-jest.mock('../../usecase/single_action_use_case', () => ({
+jest.mock('../../application/usecases/single_action_use_case', () => ({
   SingleActionUseCase: jest.fn().mockImplementation(() => ({
     invoke: mockSingleActionInvoke,
   })),
 }));
-jest.mock('../../usecase/issue_comment_use_case', () => ({
+jest.mock('../../application/usecases/issue_comment_use_case', () => ({
   IssueCommentUseCase: jest.fn().mockImplementation(() => ({
     invoke: mockIssueCommentInvoke,
   })),
 }));
-jest.mock('../../usecase/issue_use_case', () => ({
+jest.mock('../../application/usecases/issue_use_case', () => ({
   IssueUseCase: jest.fn().mockImplementation(() => ({
     invoke: mockIssueInvoke,
   })),
 }));
-jest.mock('../../usecase/pull_request_review_comment_use_case', () => ({
+jest.mock('../../application/usecases/pull_request_review_comment_use_case', () => ({
   PullRequestReviewCommentUseCase: jest.fn().mockImplementation(() => ({
     invoke: mockPullRequestReviewCommentInvoke,
   })),
 }));
-jest.mock('../../usecase/pull_request_use_case', () => ({
+jest.mock('../../application/usecases/pull_request_use_case', () => ({
   PullRequestUseCase: jest.fn().mockImplementation(() => ({
     invoke: mockPullRequestInvoke,
   })),
 }));
-jest.mock('../../usecase/commit_use_case', () => ({
+jest.mock('../../application/usecases/commit_use_case', () => ({
   CommitUseCase: jest.fn().mockImplementation(() => ({
     invoke: mockCommitInvoke,
   })),
