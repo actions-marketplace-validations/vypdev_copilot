@@ -34,7 +34,12 @@ export class RepositoryFactory {
         return new IssueUseCase(this.createProjectBoardRepository(), this.createOrganizationRepository());
     }
     createPullRequestUseCase(): PullRequestUseCase {
-        return new PullRequestUseCase(this.createProjectBoardRepository());
+        return new PullRequestUseCase(
+            this.createProjectBoardRepository(),
+            this.createPullRequestRepository(),
+            this.createIssueRepository(),
+            this.createOrganizationRepository(),
+        );
     }
     createInitialSetupUseCase(): InitialSetupUseCase {
         const issueRepository = this.createIssueRepository();

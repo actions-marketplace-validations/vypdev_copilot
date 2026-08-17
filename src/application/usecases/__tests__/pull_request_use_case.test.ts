@@ -75,7 +75,12 @@ describe('PullRequestUseCase', () => {
   });
 
   it('when PR is opened, runs update title, assign, link, sync, check priority', async () => {
-    const useCase = new PullRequestUseCase({ setTaskPriority: jest.fn().mockResolvedValue(true) });
+    const useCase = new PullRequestUseCase(
+      { setTaskPriority: jest.fn().mockResolvedValue(true) },
+      { updateDescription: jest.fn() },
+      { getDescription: jest.fn().mockResolvedValue('') },
+      { getAllMembers: jest.fn().mockResolvedValue([]), getRandomMembers: jest.fn() },
+    );
     const param = minimalExecution({ pullRequest: { isOpened: true, isSynchronize: false, isClosed: false, isMerged: false, action: 'opened' } });
     await useCase.invoke(param);
 
@@ -91,7 +96,12 @@ describe('PullRequestUseCase', () => {
   it('when PR is opened and ai getAiPullRequestDescription, calls UpdatePullRequestDescriptionUseCase', async () => {
     mockUpdateDescriptionInvoke.mockResolvedValue([new Result({ id: 'desc', success: true, executed: true, steps: [] })]);
 
-    const useCase = new PullRequestUseCase({ setTaskPriority: jest.fn().mockResolvedValue(true) });
+    const useCase = new PullRequestUseCase(
+      { setTaskPriority: jest.fn().mockResolvedValue(true) },
+      { updateDescription: jest.fn() },
+      { getDescription: jest.fn().mockResolvedValue('') },
+      { getAllMembers: jest.fn().mockResolvedValue([]), getRandomMembers: jest.fn() },
+    );
     const param = minimalExecution({
       pullRequest: { isOpened: true, isSynchronize: false, isClosed: false, isMerged: false, action: 'opened' },
       ai: { getAiPullRequestDescription: () => true },
@@ -103,7 +113,12 @@ describe('PullRequestUseCase', () => {
   });
 
   it('when PR is synchronize and ai description enabled, updates description', async () => {
-    const useCase = new PullRequestUseCase({ setTaskPriority: jest.fn().mockResolvedValue(true) });
+    const useCase = new PullRequestUseCase(
+      { setTaskPriority: jest.fn().mockResolvedValue(true) },
+      { updateDescription: jest.fn() },
+      { getDescription: jest.fn().mockResolvedValue('') },
+      { getAllMembers: jest.fn().mockResolvedValue([]), getRandomMembers: jest.fn() },
+    );
     const param = minimalExecution({
       pullRequest: { isOpened: false, isSynchronize: true, isClosed: false, isMerged: false, action: 'synchronize' },
       ai: { getAiPullRequestDescription: () => true },
@@ -116,7 +131,12 @@ describe('PullRequestUseCase', () => {
   it('when PR is closed and merged, calls CloseIssueAfterMergingUseCase', async () => {
     mockCloseIssueInvoke.mockResolvedValue([new Result({ id: 'close', success: true, executed: true, steps: [] })]);
 
-    const useCase = new PullRequestUseCase({ setTaskPriority: jest.fn().mockResolvedValue(true) });
+    const useCase = new PullRequestUseCase(
+      { setTaskPriority: jest.fn().mockResolvedValue(true) },
+      { updateDescription: jest.fn() },
+      { getDescription: jest.fn().mockResolvedValue('') },
+      { getAllMembers: jest.fn().mockResolvedValue([]), getRandomMembers: jest.fn() },
+    );
     const param = minimalExecution({
       pullRequest: { isOpened: false, isSynchronize: false, isClosed: true, isMerged: true, action: 'closed' },
     });
@@ -129,7 +149,12 @@ describe('PullRequestUseCase', () => {
   it('on error pushes failure result', async () => {
     mockUpdateTitleInvoke.mockRejectedValue(new Error('link failed'));
 
-    const useCase = new PullRequestUseCase({ setTaskPriority: jest.fn().mockResolvedValue(true) });
+    const useCase = new PullRequestUseCase(
+      { setTaskPriority: jest.fn().mockResolvedValue(true) },
+      { updateDescription: jest.fn() },
+      { getDescription: jest.fn().mockResolvedValue('') },
+      { getAllMembers: jest.fn().mockResolvedValue([]), getRandomMembers: jest.fn() },
+    );
     const param = minimalExecution();
     const results = await useCase.invoke(param);
 

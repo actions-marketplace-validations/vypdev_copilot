@@ -13,10 +13,18 @@ import { LinkPullRequestIssueUseCase } from "./steps/pull_request/link_pull_requ
 import { LinkPullRequestProjectUseCase } from "./steps/pull_request/link_pull_request_project_use_case";
 import { SyncSizeAndProgressLabelsFromIssueToPrUseCase } from "./steps/pull_request/sync_size_and_progress_labels_from_issue_to_pr_use_case";
 import { UpdatePullRequestDescriptionUseCase } from "./steps/pull_request/update_pull_request_description_use_case";
+import type { IssueDescriptionQueryPort } from "../ports/issue_ports";
+import type { OrganizationMembersPort } from "../ports/organization_ports";
+import type { PullRequestDescriptionCommandPort } from "../ports/pull_request_ports";
 
 export class PullRequestUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'PullRequestUseCase';
-    constructor(private readonly projectBoardPriorityPort: ProjectBoardPriorityPort) {}
+    constructor(
+        private readonly projectBoardPriorityPort: ProjectBoardPriorityPort,
+        private readonly pullRequestDescriptionCommandPort: PullRequestDescriptionCommandPort,
+        private readonly issueDescriptionQueryPort: IssueDescriptionQueryPort,
+        private readonly organizationMembersPort: OrganizationMembersPort,
+    ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`)
@@ -67,7 +75,11 @@ export class PullRequestUseCase implements ParamUseCase<Execution, Result[]> {
                     /**
                      * Update pull request description
                      */
-                    results.push(...await new UpdatePullRequestDescriptionUseCase().invoke(param));
+                    results.push(...await new UpdatePullRequestDescriptionUseCase(
+                        this.pullRequestDescriptionCommandPort,
+                        this.issueDescriptionQueryPort,
+                        this.organizationMembersPort,
+                    ).invoke(param));
                 }
             } else if (param.pullRequest.isSynchronize) {
                 /**
@@ -77,7 +89,11 @@ export class PullRequestUseCase implements ParamUseCase<Execution, Result[]> {
                     /**
                      * Update pull request description
                      */
-                    results.push(...await new UpdatePullRequestDescriptionUseCase().invoke(param));
+                    results.push(...await new UpdatePullRequestDescriptionUseCase(
+                        this.pullRequestDescriptionCommandPort,
+                        this.issueDescriptionQueryPort,
+                        this.organizationMembersPort,
+                    ).invoke(param));
                 }
             } else if (param.pullRequest.isClosed && param.pullRequest.isMerged) {
                 /**

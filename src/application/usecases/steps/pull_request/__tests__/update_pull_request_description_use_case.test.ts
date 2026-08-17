@@ -52,7 +52,11 @@ describe('UpdatePullRequestDescriptionUseCase', () => {
   let useCase: UpdatePullRequestDescriptionUseCase;
 
   beforeEach(() => {
-    useCase = new UpdatePullRequestDescriptionUseCase();
+    useCase = new UpdatePullRequestDescriptionUseCase(
+      { updateDescription: mockUpdateDescription },
+      { getDescription: mockGetIssueDescription },
+      { getAllMembers: mockGetAllMembers, getRandomMembers: jest.fn() },
+    );
     mockGetIssueDescription.mockResolvedValue('Issue description');
     mockGetAllMembers.mockResolvedValue(['alice', 'bob']);
     mockAskAgent.mockResolvedValue('## Summary\nPR does X.');
