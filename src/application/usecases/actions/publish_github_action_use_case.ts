@@ -1,6 +1,6 @@
 import { Execution } from "../../../data/model/execution";
 import { Result } from "../../../data/model/result";
-import { RepositoryReleaseRepository } from "../../../data/repository/release/repository_release_repository";
+import type { RepositoryReleasePort } from "../../ports/repository_release_ports";
 import { INPUT_KEYS } from "../../../utils/constants";
 import { logError, logInfo } from "../../../utils/logger";
 import { getTaskEmoji } from "../../../utils/task_emoji";
@@ -10,7 +10,7 @@ import { ParamUseCase } from "../base/param_usecase";
 export class PublishGithubActionUseCase  implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'PublishGithubActionUseCase';
     
-    private projectRepository = new RepositoryReleaseRepository();
+    constructor(private readonly repositoryReleasePort: RepositoryReleasePort) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`);
@@ -36,14 +36,14 @@ export class PublishGithubActionUseCase  implements ParamUseCase<Execution, Resu
         const targetTag = sourceTag.split('.')[0];
 
         try {
-            await this.projectRepository.updateTag(
+            await this.repositoryReleasePort.updateTag(
                 param.owner,
                 param.repo,
                 sourceTag,
                 targetTag,
                 param.tokens.token,
             );
-            const releaseId = await this.projectRepository.updateRelease(
+            const releaseId = await this.repositoryReleasePort.updateRelease(
                 param.owner,
                 param.repo,
                 sourceTag,

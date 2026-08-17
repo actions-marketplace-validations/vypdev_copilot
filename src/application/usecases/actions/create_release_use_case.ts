@@ -1,6 +1,6 @@
 import { Execution } from "../../../data/model/execution";
 import { Result } from "../../../data/model/result";
-import { RepositoryReleaseRepository } from "../../../data/repository/release/repository_release_repository";
+import type { RepositoryReleasePort } from "../../ports/repository_release_ports";
 import { INPUT_KEYS } from "../../../utils/constants";
 import { logError, logInfo, logWarn } from "../../../utils/logger";
 import { getTaskEmoji } from "../../../utils/task_emoji";
@@ -32,7 +32,7 @@ function normalizeAndValidateVersion(
 export class CreateReleaseUseCase  implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'CreateReleaseUseCase';
     
-    private projectRepository = new RepositoryReleaseRepository();
+    constructor(private readonly repositoryReleasePort: RepositoryReleasePort) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`);
@@ -96,7 +96,7 @@ export class CreateReleaseUseCase  implements ParamUseCase<Execution, Result[]> 
 
         const releaseVersion = `v${versionCheck.normalized}`;
         try {
-            const releaseUrl = await this.projectRepository.createRelease(
+            const releaseUrl = await this.repositoryReleasePort.createRelease(
                 param.owner,
                 param.repo,
                 releaseVersion,

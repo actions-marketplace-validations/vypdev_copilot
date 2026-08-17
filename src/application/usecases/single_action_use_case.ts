@@ -9,6 +9,7 @@ import { CreateReleaseUseCase } from "./actions/create_release_use_case";
 import { CreateTagUseCase } from "./actions/create_tag_use_case";
 import { ThinkUseCase } from "./steps/common/think_use_case";
 import { InitialSetupUseCase } from "./actions/initial_setup_use_case";
+import type { RepositoryReleasePort } from "../ports/repository_release_ports";
 import { CheckProgressUseCase } from "./actions/check_progress_use_case";
 import { RecommendStepsUseCase } from "./actions/recommend_steps_use_case";
 import { DetectPotentialProblemsUseCase } from "./steps/commit/detect_potential_problems_use_case";
@@ -16,7 +17,10 @@ import { DetectPotentialProblemsUseCase } from "./steps/commit/detect_potential_
 export class SingleActionUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'SingleActionUseCase';
 
-    constructor(private readonly initialSetupUseCase: InitialSetupUseCase) {}
+    constructor(
+        private readonly initialSetupUseCase: InitialSetupUseCase,
+        private readonly repositoryReleasePort: RepositoryReleasePort,
+    ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`)
@@ -33,11 +37,11 @@ export class SingleActionUseCase implements ParamUseCase<Execution, Result[]> {
             if (param.singleAction.isDeployedAction) {
                 results.push(...await new DeployedActionUseCase().invoke(param));
             } else if (param.singleAction.isPublishGithubAction) {
-                results.push(...await new PublishGithubActionUseCase().invoke(param));
+                results.push(...await new PublishGithubActionUseCase(this.repositoryReleasePort).invoke(param));
             } else if (param.singleAction.isCreateReleaseAction) {
-                results.push(...await new CreateReleaseUseCase().invoke(param));
+                results.push(...await new CreateReleaseUseCase(this.repositoryReleasePort).invoke(param));
             } else if (param.singleAction.isCreateTagAction) {
-                results.push(...await new CreateTagUseCase().invoke(param));
+                results.push(...await new CreateTagUseCase(this.repositoryReleasePort).invoke(param));
             } else if (param.singleAction.isThinkAction) {
                 results.push(...await new ThinkUseCase().invoke(param));
             } else if (param.singleAction.isInitialSetupAction) {

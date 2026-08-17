@@ -35,7 +35,7 @@ describe('CreateTagUseCase', () => {
   let useCase: CreateTagUseCase;
 
   beforeEach(() => {
-    useCase = new CreateTagUseCase();
+    useCase = new CreateTagUseCase({ createTag: mockCreateTag } as any);
     mockCreateTag.mockReset();
   });
 

@@ -35,7 +35,7 @@ describe('PublishGithubActionUseCase', () => {
   let useCase: PublishGithubActionUseCase;
 
   beforeEach(() => {
-    useCase = new PublishGithubActionUseCase();
+    useCase = new PublishGithubActionUseCase({ updateTag: mockUpdateTag, updateRelease: mockUpdateRelease } as any);
     mockUpdateTag.mockResolvedValue(undefined);
     mockUpdateRelease.mockReset();
   });

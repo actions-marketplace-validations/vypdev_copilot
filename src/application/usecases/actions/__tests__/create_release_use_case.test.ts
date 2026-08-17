@@ -39,7 +39,7 @@ describe('CreateReleaseUseCase', () => {
   let useCase: CreateReleaseUseCase;
 
   beforeEach(() => {
-    useCase = new CreateReleaseUseCase();
+    useCase = new CreateReleaseUseCase({ createRelease: mockCreateRelease } as any);
     mockCreateRelease.mockReset();
   });
 
