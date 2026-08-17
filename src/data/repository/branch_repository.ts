@@ -1,5 +1,5 @@
 import { logDebugInfo, logError } from '../../utils/logger';
-import type { GithubBranchClient, GithubBranchComparisonClient, GithubClientPort, GithubGraphqlClient } from './github/github_client_port';
+import type { GithubBranchClient, GithubClientPort, GithubGraphqlClient } from './github/github_client_port';
 import { LinkedBranchResponse } from '../graph/linked_branch_response';
 import { RepositoryResponse } from '../graph/repository_response';
 import { Execution } from '../model/execution';
