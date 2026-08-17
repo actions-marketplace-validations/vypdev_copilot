@@ -12,12 +12,38 @@ import { CheckIssueCommentLanguageUseCase } from '../application/usecases/steps/
 import { PullRequestReviewCommentUseCase } from '../application/usecases/pull_request_review_comment_use_case';
 import { CheckPullRequestCommentLanguageUseCase } from '../application/usecases/steps/pull_request_review_comment/check_pull_request_comment_language_use_case';
 import { SingleActionUseCase } from '../application/usecases/single_action_use_case';
+import { DeployedActionUseCase } from '../application/usecases/actions/deployed_action_use_case';
+import { PublishGithubActionUseCase } from '../application/usecases/actions/publish_github_action_use_case';
+import { CreateReleaseUseCase } from '../application/usecases/actions/create_release_use_case';
+import { CreateTagUseCase } from '../application/usecases/actions/create_tag_use_case';
+import { ThinkUseCase } from '../application/usecases/steps/common/think_use_case';
+import { RecommendStepsUseCase } from '../application/usecases/actions/recommend_steps_use_case';
 import { clearAccumulatedLogs, logDebugInfo, logError, logInfo } from '../utils/logger';
 import { TITLE } from '../utils/constants';
 import chalk from 'chalk';
 import boxen from 'boxen';
 import { waitForPreviousRuns } from '../utils/queue_utils';
 import { resolveMainRunRoute } from './main_run_route';
+
+function createSingleActionUseCase(factory: RepositoryFactory): SingleActionUseCase {
+    const repositoryReleasePort = factory.createRepositoryReleaseRepository();
+    const issueDescriptionQueryPort = factory.createIssueRepository();
+    return new SingleActionUseCase(
+        new DeployedActionUseCase(
+            factory.createIssueRepository(),
+            factory.createIssueRepository(),
+            factory.createBranchRepository(),
+        ),
+        new PublishGithubActionUseCase(repositoryReleasePort),
+        new CreateReleaseUseCase(repositoryReleasePort),
+        new CreateTagUseCase(repositoryReleasePort),
+        new ThinkUseCase(issueDescriptionQueryPort, factory.createIssueRepository()),
+        factory.createInitialSetupUseCase(),
+        factory.createCheckProgressUseCase(),
+        new DetectPotentialProblemsUseCase(),
+        new RecommendStepsUseCase(issueDescriptionQueryPort),
+    );
+}
 
 export async function mainRun(
     execution: Execution,
@@ -47,16 +73,7 @@ export async function mainRun(
         if (execution.isSingleAction && execution.singleAction.validSingleAction) {
             logInfo(`User from token (${execution.tokenUser}) matches actor. Executing single action: ${execution.singleAction.currentSingleAction}.`);
             const singleActionFactory = new RepositoryFactory();
-            results.push(...await new SingleActionUseCase(
-                singleActionFactory.createInitialSetupUseCase(),
-                singleActionFactory.createRepositoryReleaseRepository(),
-                singleActionFactory.createCheckProgressUseCase(),
-                singleActionFactory.createIssueRepository(),
-                singleActionFactory.createIssueRepository(),
-                singleActionFactory.createIssueRepository(),
-                singleActionFactory.createIssueRepository(),
-                singleActionFactory.createBranchRepository(),
-            ).invoke(execution));
+            results.push(...await createSingleActionUseCase(singleActionFactory).invoke(execution));
             logInfo(`Single action finished. Results: ${results.length}.`);
             return results;
         }
@@ -68,16 +85,7 @@ export async function mainRun(
         if (execution.isSingleAction && execution.singleAction.isSingleActionWithoutIssue) {
             logInfo('No issue number; running single action without issue.');
             const singleActionFactory = new RepositoryFactory();
-            results.push(...await new SingleActionUseCase(
-                singleActionFactory.createInitialSetupUseCase(),
-                singleActionFactory.createRepositoryReleaseRepository(),
-                singleActionFactory.createCheckProgressUseCase(),
-                singleActionFactory.createIssueRepository(),
-                singleActionFactory.createIssueRepository(),
-                singleActionFactory.createIssueRepository(),
-                singleActionFactory.createIssueRepository(),
-                singleActionFactory.createBranchRepository(),
-            ).invoke(execution));
+            results.push(...await createSingleActionUseCase(singleActionFactory).invoke(execution));
         } else {
             logInfo('Issue number not found. Skipping.');
         }
@@ -115,16 +123,7 @@ export async function mainRun(
             case 'single-action': {
                 logInfo(`Running SingleActionUseCase (action: ${execution.singleAction.currentSingleAction}).`);
                 const singleActionFactory = new RepositoryFactory();
-                results.push(...await new SingleActionUseCase(
-                    singleActionFactory.createInitialSetupUseCase(),
-                    singleActionFactory.createRepositoryReleaseRepository(),
-                    singleActionFactory.createCheckProgressUseCase(),
-                    singleActionFactory.createIssueRepository(),
-                    singleActionFactory.createIssueRepository(),
-                    singleActionFactory.createIssueRepository(),
-                    singleActionFactory.createIssueRepository(),
-                    singleActionFactory.createBranchRepository(),
-                ).invoke(execution));
+                results.push(...await createSingleActionUseCase(singleActionFactory).invoke(execution));
                 break;
             }
             case 'issue-comment': {
