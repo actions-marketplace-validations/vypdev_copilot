@@ -11,7 +11,6 @@ import type { FindingsQueryPort } from '../../../data/repository/agent_ports';
 import type { IssueDescriptionQueryPort, IssueLabelsPort, IssueProgressPort } from '../../../application/ports/issue_ports';
 import type { PullRequestBranchQueryPort } from '../../../application/ports/pull_request_ports';
 import type { BranchListQueryPort } from '../../../application/ports/branch_ports';
-import { DefaultAgentRepositoryFactory } from '../../../data/repository/agent_repository_factory';
 import { getCheckProgressPrompt } from '../../../prompts';
 import { OPENCODE_PROJECT_CONTEXT_INSTRUCTION } from '../../../utils/opencode_project_context_instruction';
 import { findIssueBranch } from './find_issue_branch';
@@ -23,13 +22,13 @@ import { parseProgressResponse, PROGRESS_RESPONSE_SCHEMA, type ProgressAttemptRe
 
 export class CheckProgressUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'CheckProgressUseCase';
-    private aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings();
+    private aiRepository: FindingsQueryPort;
 
     constructor(
         private readonly issueRepository: IssueDescriptionQueryPort & IssueLabelsPort & IssueProgressPort,
         private readonly branchRepository: BranchListQueryPort,
         private readonly pullRequestRepository: PullRequestBranchQueryPort,
-        aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings(),
+        aiRepository: FindingsQueryPort,
     ) {
         this.aiRepository = aiRepository;
     }

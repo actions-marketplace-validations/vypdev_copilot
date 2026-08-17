@@ -24,6 +24,7 @@ import { MergeRepository } from "../../data/repository/merge_repository";
 import { BranchCompareRepository } from "../../data/repository/branch_compare_repository";
 import { BranchRepository } from "../../data/repository/branch_repository";
 import { CheckProgressUseCase } from "../../application/usecases/actions/check_progress_use_case";
+import { DefaultAgentRepositoryFactory } from "../../data/repository/agent_repository_factory";
 import { WorkflowRepository } from "../../data/repository/workflow_repository";
 
 export class RepositoryFactory {
@@ -54,6 +55,7 @@ export class RepositoryFactory {
             issueRepository,
             this.createBranchRepository(),
             this.createPullRequestRepository(),
+            new DefaultAgentRepositoryFactory().createFindings(),
         );
     }
 
