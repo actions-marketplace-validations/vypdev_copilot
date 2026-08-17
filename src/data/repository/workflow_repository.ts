@@ -1,13 +1,14 @@
-import * as github from "@actions/github";
 import { Execution } from "../model/execution";
 import { WorkflowRun } from "../model/workflow_run";
 import { WORKFLOW_ACTIVE_STATUSES } from "../../utils/constants";
+import type { GithubClientPort, GithubWorkflowClient } from "./github/github_client_port";
 
 
 export class WorkflowRepository {
+    constructor(private readonly githubClient: GithubClientPort<GithubWorkflowClient>) {}
 
     getWorkflows = async (params: Execution): Promise<WorkflowRun[]> => {
-        const octokit = github.getOctokit(params.tokens.token);
+        const octokit = this.githubClient.getClient(params.tokens.token);
         const workflows = await octokit.rest.actions.listWorkflowRunsForRepo({
             owner: params.owner,
             repo: params.repo,
@@ -52,7 +53,7 @@ export class WorkflowRepository {
         inputs: Record<string, unknown>,
         token: string,
     ): Promise<void> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         await octokit.rest.actions.createWorkflowDispatch({
             owner: owner,
             repo: repository,

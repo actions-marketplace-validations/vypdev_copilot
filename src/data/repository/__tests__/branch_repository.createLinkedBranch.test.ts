@@ -3,6 +3,8 @@
  */
 
 import { BranchRepository } from "../branch_repository";
+import { WorkflowRepository } from "../workflow_repository";
+import { OctokitWorkflowClientAdapter } from "../../../infrastructure/github/octokit_client";
 
 jest.mock("../../../utils/logger", () => ({
     logDebugInfo: jest.fn(),
@@ -17,7 +19,7 @@ jest.mock("@actions/github", () => ({
 }));
 
 describe("BranchRepository", () => {
-    const repo = new BranchRepository();
+    const repo = new BranchRepository(new WorkflowRepository(new OctokitWorkflowClientAdapter()));
 
     describe("formatBranchName", () => {
         it("lowercases and replaces spaces with single dash", () => {
@@ -36,7 +38,7 @@ describe("BranchRepository", () => {
 });
 
 describe("createLinkedBranch", () => {
-    const repo = new BranchRepository();
+    const repo = new BranchRepository(new WorkflowRepository(new OctokitWorkflowClientAdapter()));
 
     beforeEach(() => {
         mockGraphql.mockReset();

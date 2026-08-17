@@ -4,6 +4,8 @@
 
 import { Execution } from '../../model/execution';
 import { BranchRepository } from '../branch_repository';
+import { WorkflowRepository } from '../workflow_repository';
+import { OctokitWorkflowClientAdapter } from '../../../infrastructure/github/octokit_client';
 
 jest.mock('../../../utils/logger', () => ({
     logDebugInfo: jest.fn(),
@@ -45,7 +47,7 @@ function mockExecution(overrides: Partial<Execution> = {}): Execution {
 }
 
 describe('BranchRepository', () => {
-    const repo = new BranchRepository();
+    const repo = new BranchRepository(new WorkflowRepository(new OctokitWorkflowClientAdapter()));
 
     beforeEach(() => {
         mockListBranches.mockReset();

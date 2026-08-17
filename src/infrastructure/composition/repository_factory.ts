@@ -17,18 +17,23 @@ import { PullRequestReviewThreadRepository } from "../../data/repository/pull_re
 import { PullRequestRepository } from "../../data/repository/pull_request_repository";
 import { RepositoryReleaseRepository } from "../../data/repository/release/repository_release_repository";
 import { OctokitClientAdapter } from "../github/octokit_client";
+import { OctokitWorkflowClientAdapter } from "../github/octokit_client";
 import { IssueUseCase } from "../../application/usecases/issue_use_case";
 import { PullRequestUseCase } from "../../application/usecases/pull_request_use_case";
 import { InitialSetupUseCase } from "../../application/usecases/actions/initial_setup_use_case";
 import { BranchRepository } from "../../data/repository/branch_repository";
 import { CheckProgressUseCase } from "../../application/usecases/actions/check_progress_use_case";
+import { WorkflowRepository } from "../../data/repository/workflow_repository";
 
 export class RepositoryFactory {
     createGithubClient(): OctokitClientAdapter {
         return new OctokitClientAdapter();
     }
     createBranchRepository(): BranchRepository {
-        return new BranchRepository();
+        return new BranchRepository(this.createWorkflowRepository());
+    }
+    createWorkflowRepository(): WorkflowRepository {
+        return new WorkflowRepository(new OctokitWorkflowClientAdapter());
     }
     createCheckProgressUseCase(): CheckProgressUseCase {
         const issueRepository = this.createIssueRepository();
@@ -79,7 +84,7 @@ export class RepositoryFactory {
             issueRepository,
             issueRepository,
             issueRepository,
-            new BranchRepository(),
+            this.createBranchRepository(),
             this.createRepositoryReleaseRepository(),
         );
     }

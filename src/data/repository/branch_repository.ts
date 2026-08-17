@@ -19,7 +19,7 @@ import { findPreviousIssueBranch } from './find_previous_issue_branch';
 export class BranchRepository {
 
     private readonly gitCliRepository = new GitCliRepository();
-    private readonly workflowRepository = new WorkflowRepository();
+    constructor(private readonly workflowRepository: WorkflowRepository) {}
     private readonly mergeRepository = new MergeRepository();
     private readonly branchCompareRepository = new BranchCompareRepository();
 

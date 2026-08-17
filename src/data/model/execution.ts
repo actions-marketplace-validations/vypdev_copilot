@@ -5,6 +5,8 @@ import { shouldSkipInitialLabelsFetch } from './initial_labels_policy';
 import { branchesForManagement, typesForIssue } from "../../utils/label_utils";
 import { logDebugInfo, setGlobalLoggerDebug } from "../../utils/logger";
 import { BranchRepository } from "../repository/branch_repository";
+import { WorkflowRepository } from "../repository/workflow_repository";
+import { OctokitWorkflowClientAdapter } from "../../infrastructure/github/octokit_client";
 import { IssueRepository } from "../repository/issue_repository";
 import { OrganizationRepository } from "../repository/organization/organization_repository";
 import { Ai } from "./ai";
@@ -290,7 +292,7 @@ export class Execution {
              * Nothing to do here (for now)
              */
         } else if (this.isIssue) {
-            const branchRepository = new BranchRepository();
+            const branchRepository = new BranchRepository(new WorkflowRepository(new OctokitWorkflowClientAdapter()));
             const canContinue = await resolveIssueBranchVersion(this, branchRepository, issueRepository);
             if (!canContinue) return;
         } else if (this.isPullRequest) {
