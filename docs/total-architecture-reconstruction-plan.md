@@ -2,11 +2,13 @@
 
 ## Intent
 
-This plan reconstructs Copilot's architecture around semantic capabilities and explicit runtime composition. It is not a RepoWise score-improvement exercise. Structural metrics are evidence, while the acceptance criteria are dependency direction, cohesive responsibilities, explicit contracts, behavior preservation, and verified removal of obsolete facades.
+This plan reconstructs Copilot's architecture around semantic capabilities and explicit runtime composition. It is not a superficial RepoWise-score exercise: RepoWise metrics are an explicit optimization signal, but they must improve as a consequence of better cohesion, dependency direction, testability, and deletion of accidental complexity. No metric will justify a fake abstraction or a semantic regression.
 
 The plan permits large changes, file moves, and deletion of legacy abstractions. It forbids compatibility shims, universal repositories, universal provider clients, and mechanical helper extraction without shared semantics.
 
 ## Current evidence
+
+The baseline below was refreshed against the published HEAD `4178531005881680741a694f1788253734abb831` before production changes begin. The working tree was clean and `HEAD == origin/master`.
 
 The current repository has useful capability ports, specialized GitHub adapters, input-source policies, and architecture tests, but it is still an intermediate migration state.
 
@@ -16,7 +18,21 @@ Graphify AST-only baseline:
 - 2,327 nodes;
 - 6,764 edges.
 
-Important hubs:
+RepoWise refreshed baseline:
+
+- 564 analyzed files;
+- average health: 8.46;
+- hotspot health: 5.95;
+- maintainability average: 9.19;
+- maintainability hotspot: 8.53;
+- performance average: 9.99;
+- worst performer: `src/data/repository/ai_repository.ts`;
+- worst performer score: 3.43;
+- current RepoWise graph: 2,672 nodes and 5,436 edges;
+- safe dead-code result: 0 unreachable files and 0 unused exports;
+- index-only refresh: successful.
+
+Important Graphify hubs:
 
 - `Execution`: degree 221;
 - `GithubClientPort`: degree 71;

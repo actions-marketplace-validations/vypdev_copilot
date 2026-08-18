@@ -32,6 +32,9 @@ Full documentation: **[docs.page/vypdev/copilot](https://docs.page/vypdev/copilo
 | [Support](https://docs.page/vypdev/copilot/support) | How to get help |
 | [Architecture and repository capabilities](docs/repository-architecture.md) | Clean Architecture target, capability ports, composition roots |
 | [Total architecture reconstruction plan](docs/total-architecture-reconstruction-plan.md) | Full capability partitioning, facade retirement, composition and boundary plan |
+| [Capability map](docs/capability-map.md) | Current responsibilities, target ports, adapters, consumers and retirement criteria |
+| [Dependency rules](docs/dependency-rules.md) | Enforceable Clean Architecture layer and import invariants |
+| [Migration baseline](docs/migration-baseline.md) | Reproducible Graphify, RepoWise, Git and verification baseline |
 | [Graphify development workflow](docs/graphify-development.md) | Local topology graph and impact analysis complementary to RepoWise |
 
 ---
