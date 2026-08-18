@@ -1,5 +1,5 @@
 import type { GithubClientPort } from "../../../application/ports/github_client_ports";
-import type { GithubGraphqlTransportClient } from "../../../application/ports/github_graphql_ports";
+import type { GithubGraphqlTransportClient } from "../../../infrastructure/github/ports/github_graphql_transport_port";
 import { logDebugInfo, logError } from "../../../utils/logger";
 import { ProjectDetail } from "../../model/project_detail";
 import type { ProjectBoardCommandPort } from "../../../application/ports/project_board_command_ports";

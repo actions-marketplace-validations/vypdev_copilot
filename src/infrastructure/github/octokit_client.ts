@@ -2,7 +2,7 @@ import { getOctokitClient } from "./octokit_client_factory";
 import type { GithubAuthenticatedUserClient, GithubActorAuthorizationClient, GithubOrganizationMembersClient, GithubOwnerTypeClient, GithubRepositoryContextClient } from "../../application/ports/github_identity_ports";
 import type { GithubBranchClient, GithubBranchComparisonClient, GithubBranchMergeClient } from "../../application/ports/github_branch_ports";
 import type { GithubClientPort } from "../../application/ports/github_client_ports";
-import type { GithubGraphqlTransportClient } from "../../application/ports/github_graphql_ports";
+import type { GithubGraphqlTransportClient } from "./ports/github_graphql_transport_port";
 import type { GithubReleaseClient } from "../../application/ports/github_release_ports";
 import type { GithubIssueAssignmentClient, GithubIssueContentClient, GithubIssueLabelProvisioningClient, GithubIssueLabelsClient, GithubIssueLifecycleClient, GithubIssueMetadataClient, GithubIssueTitleClient } from "../../application/ports/github_issue_ports";
 import type { GithubPullRequestChangesClient, GithubPullRequestLifecycleClient, GithubPullRequestReviewClient } from "../../application/ports/github_pull_request_ports";
