@@ -21,14 +21,8 @@ import { BranchLifecycleRepository } from "../../data/repository/branch_lifecycl
 import { BranchNameRepository } from "../../data/repository/branch_name_repository";
 import { BranchPreparationRepository } from "../../data/repository/branch/branch_preparation_repository";
 import { LinkedBranchRepository } from "../../data/repository/branch/linked_branch_repository";
-import { RecommendStepsUseCase } from "../../application/usecases/actions/recommend_steps_use_case";
-import { AnswerIssueHelpUseCase } from "../../application/usecases/steps/issue/answer_issue_help_use_case";
-import { DefaultAgentRepositoryFactory } from "../../data/repository/agent_repository_factory";
 import { WorkflowRepository } from "../../data/repository/workflow_repository";
 import { GithubClientFactory } from "./github_client_factory";
-import { composeIssueUseCase } from "./issue_use_case_composition";
-import { createProjectBoardCompositionRoot } from "./project_board_composition_root";
-import { createOrganizationMembersCompositionRoot } from "./organization_members_composition_root";
 
 export class RepositoryFactory {
     private readonly githubClients = new GithubClientFactory();
@@ -64,29 +58,6 @@ export class RepositoryFactory {
     }
     createWorkflowRepository(): WorkflowRepository {
         return new WorkflowRepository(this.githubClients.createWorkflowClient());
-    }
-    createIssueUseCase(): ReturnType<typeof composeIssueUseCase> {
-        const issueMetadataRepository = this.createIssueMetadataRepository();
-        return composeIssueUseCase(
-            createProjectBoardCompositionRoot(),
-            createOrganizationMembersCompositionRoot(),
-            issueMetadataRepository,
-            createProjectBoardCompositionRoot(),
-            this.createIssueTitleRepository(issueMetadataRepository),
-            this.createIssueAssignmentRepository(),
-            this.createIssueClosureRepository(),
-            this.createIssueTypeAssignmentRepository(
-                (owner, repository, issueNumber, token) => issueMetadataRepository.getId(owner, repository, issueNumber, token),
-            ),
-            this.createIssueContentRepository(),
-            this.createIssueNotificationRepository(),
-            this.createBranchLifecycleRepository(),
-            this.createBranchNameRepository(),
-            this.createBranchPreparationRepository(),
-            this.createWorkflowRepository(),
-            new RecommendStepsUseCase(this.createIssueContentRepository(), new DefaultAgentRepositoryFactory().createFindings()),
-            new AnswerIssueHelpUseCase(this.createIssueNotificationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
-        );
     }
     createActorAuthorizationRepository(): ActorAuthorizationRepository {
         return new ActorAuthorizationRepository(this.createOrganizationGithubClient());

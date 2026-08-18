@@ -1,6 +1,7 @@
 import { createCheckProgressCompositionRoot } from '../infrastructure/composition/check_progress_composition_root';
 import { createBugbotCompositionRoot } from '../infrastructure/composition/bugbot_composition_root';
 import { createPullRequestUseCaseCompositionRoot } from '../infrastructure/composition/pull_request_use_case_composition_root';
+import { createIssueUseCaseCompositionRoot } from '../infrastructure/composition/issue_use_case_composition_root';
 import * as core from '@actions/core';
 import { Execution } from '../data/model/execution';
 import { Result } from '../data/model/result';
@@ -64,7 +65,7 @@ export async function dispatchMainRunRoute(
                 }
                 case 'issue':
                     logInfo(`Running IssueUseCase for issue #${execution.issueNumber}.`);
-                    results.push(...await factory.createIssueUseCase().invoke(execution));
+                    results.push(...await createIssueUseCaseCompositionRoot().invoke(execution));
                     break;
                 case 'pull-request-review-comment': {
                     logInfo(`Running PullRequestReviewCommentUseCase for PR #${execution.pullRequest.number}.`);
