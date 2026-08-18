@@ -4,6 +4,7 @@ import { createPullRequestUseCaseCompositionRoot } from '../infrastructure/compo
 import { createIssueUseCaseCompositionRoot } from '../infrastructure/composition/issue_use_case_composition_root';
 import { createIssueContentCompositionRoot } from '../infrastructure/composition/issue_content_composition_root';
 import { createIssueNotificationRepository } from '../infrastructure/composition/issue_interaction_composition_root';
+import { createIssueLabelRepository } from '../infrastructure/composition/issue_labels_composition_root';
 import { GithubClientFactory } from '../infrastructure/composition/github_client_factory';
 import { PullRequestLifecycleRepository } from '../data/repository/pull_request/pull_request_lifecycle_repository';
 import { BranchCompareRepository } from '../data/repository/branch_compare_repository';
@@ -108,7 +109,7 @@ export async function dispatchMainRunRoute(
                         new NotifyNewCommitOnIssueUseCase(createIssueNotificationRepository()),
                         new CheckChangesIssueSizeUseCase(
                             projectBoardCommandPort,
-                            commitFactory.createIssueLabelRepository(),
+                            createIssueLabelRepository(),
                             new PullRequestLifecycleRepository(new GithubClientFactory().createPullRequestLifecycleClient()),
                             new BranchCompareRepository(new GithubClientFactory().createBranchComparisonClient()),
                         ),

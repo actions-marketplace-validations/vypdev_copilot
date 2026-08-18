@@ -14,6 +14,7 @@ import { createBugbotCompositionRoot } from '../infrastructure/composition/bugbo
 import { createInitialSetupCompositionRoot } from '../infrastructure/composition/initial_setup_composition_root';
 import { createIssueContentCompositionRoot } from '../infrastructure/composition/issue_content_composition_root';
 import { createIssueClosureRepository, createIssueNotificationRepository } from '../infrastructure/composition/issue_interaction_composition_root';
+import { createIssueLabelRepository } from '../infrastructure/composition/issue_labels_composition_root';
 import { createRepositoryReleasePort } from '../infrastructure/composition/release_composition_root';
 import { GithubClientFactory } from '../infrastructure/composition/github_client_factory';
 import { MergeRepository } from '../data/repository/merge_repository';
@@ -41,7 +42,7 @@ export function createSingleActionUseCase(factory: RepositoryFactory): SingleAct
     const issueDescriptionQueryPort = createIssueContentCompositionRoot();
     return new SingleActionUseCase(
         new DeployedActionUseCase(
-            factory.createIssueLabelRepository(),
+            createIssueLabelRepository(),
             createIssueClosureRepository(),
             new MergeRepository(new GithubClientFactory().createBranchMergeClient()),
         ),
