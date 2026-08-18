@@ -14,6 +14,7 @@ import { IssueTypeAssignmentRepository } from "../../data/repository/issue/issue
 import { IssueTitleRepository } from "../../data/repository/issue/issue_title_repository";
 import { IssueClosureRepository } from "../../data/repository/issue/issue_closure_repository";
 import { IssueNotificationRepository } from "../../data/repository/issue/issue_notification_repository";
+import { IssueProgressTrackingRepository } from "../../data/repository/issue/issue_progress_tracking_repository";
 import { ProjectBoardRepository } from "../../data/repository/project/project_board_repository";
 import { PullRequestChangesRepository } from "../../data/repository/pull_request/pull_request_changes_repository";
 import { PullRequestLifecycleRepository } from "../../data/repository/pull_request/pull_request_lifecycle_repository";
@@ -67,11 +68,10 @@ export class RepositoryFactory {
         return new WorkflowRepository(new OctokitWorkflowClientAdapter());
     }
     createCheckProgressUseCase(): CheckProgressUseCase {
-        const issueRepository = this.createIssueRepository();
         return new CheckProgressUseCase(
-            issueRepository,
-            this.createBranchRepository(),
-            this.createPullRequestRepository(),
+            this.createIssueProgressTrackingRepository(),
+            this.createBranchLifecycleRepository(),
+            this.createPullRequestLifecycleRepository(),
             new DefaultAgentRepositoryFactory().createFindings(),
         );
     }
@@ -112,7 +112,7 @@ export class RepositoryFactory {
             this.createIssueLabelRepository(),
             this.createPullRequestLifecycleRepository(),
             this.createProjectBoardRepository(),
-            new UpdatePullRequestDescriptionUseCase(this.createPullRequestRepository(), this.createIssueRepository(), this.createOrganizationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
+            new UpdatePullRequestDescriptionUseCase(this.createPullRequestLifecycleRepository(), this.createIssueContentRepository(), this.createOrganizationMembersRepository(), new DefaultAgentRepositoryFactory().createFindings()),
         );
     }
     createInitialSetupUseCase(): InitialSetupUseCase {
@@ -170,6 +170,13 @@ export class RepositoryFactory {
     createIssueLifecycleRepository(): IssueLifecycleRepository { return new IssueLifecycleRepository(new OctokitIssueLifecycleClientAdapter()); }
     createIssueProgressLabelRepository(): IssueProgressLabelRepository {
         return new IssueProgressLabelRepository(this.createIssueLabelRepository());
+    }
+    createIssueProgressTrackingRepository(): IssueProgressTrackingRepository {
+        return new IssueProgressTrackingRepository(
+            this.createIssueContentRepository(),
+            this.createIssueLabelRepository(),
+            this.createIssueProgressLabelRepository(),
+        );
     }
     createIssueProgressLabelProvisioningPort(): IssueProgressLabelProvisioningPort {
         const progressRepository = this.createIssueProgressLabelRepository();
