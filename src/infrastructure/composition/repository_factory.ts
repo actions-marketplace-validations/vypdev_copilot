@@ -35,6 +35,9 @@ import { BranchCompareRepository } from "../../data/repository/branch_compare_re
 import { BranchRepository } from "../../data/repository/branch_repository";
 import { BranchLifecycleRepository } from "../../data/repository/branch_lifecycle_repository";
 import { BranchNameRepository } from "../../data/repository/branch_name_repository";
+import { BranchPreparationRepository } from "../../data/repository/branch/branch_preparation_repository";
+import { LinkedBranchRepository } from "../../data/repository/branch/linked_branch_repository";
+import { GitCliRepository } from "../../data/repository/git_cli_repository";
 import { CheckProgressUseCase } from "../../application/usecases/actions/check_progress_use_case";
 import { RecommendStepsUseCase } from "../../application/usecases/actions/recommend_steps_use_case";
 import { AnswerIssueHelpUseCase } from "../../application/usecases/steps/issue/answer_issue_help_use_case";
@@ -68,6 +71,14 @@ export class RepositoryFactory {
     createBranchNameRepository(): BranchNameRepository {
         return new BranchNameRepository();
     }
+    createBranchPreparationRepository(): BranchPreparationRepository {
+        return new BranchPreparationRepository(
+            new OctokitBranchClientAdapter(),
+            this.createBranchNameRepository(),
+            new LinkedBranchRepository(this.createGraphqlClient()),
+            new GitCliRepository(),
+        );
+    }
     createWorkflowRepository(): WorkflowRepository {
         return new WorkflowRepository(new OctokitWorkflowClientAdapter());
     }
@@ -97,7 +108,7 @@ export class RepositoryFactory {
             this.createIssueNotificationRepository(),
             this.createBranchLifecycleRepository(),
             this.createBranchNameRepository(),
-            this.createBranchRepository(),
+            this.createBranchPreparationRepository(),
             this.createWorkflowRepository(),
             new RecommendStepsUseCase(this.createIssueContentRepository(), new DefaultAgentRepositoryFactory().createFindings()),
             new AnswerIssueHelpUseCase(this.createIssueNotificationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
