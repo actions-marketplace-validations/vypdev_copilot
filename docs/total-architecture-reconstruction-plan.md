@@ -116,6 +116,8 @@ Moves into this topology are semantic migrations, not file renames. The current 
 
 ## Phase 0 — baseline and architecture contract
 
+Before structural migration, fix and lock any confirmed behavior defects found by the audit. In particular, `src/data/model/single_action.ts` currently evaluates `isSingleActionWithoutIssue` before assigning `currentSingleAction`; add regression tests for `think_action` and `initial_setup`, correct the initialization order, and verify the complete suite before moving the model.
+
 - Reindex Graphify against the current HEAD with `--code-only`.
 - Capture RepoWise health, hotspots, security, coverage, tests, typecheck, lint, build, and workflow validation.
 - Update architecture documentation so it describes the actual graph, not an earlier migration state.
