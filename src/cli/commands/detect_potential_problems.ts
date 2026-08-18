@@ -3,6 +3,7 @@ import { runLocalAction } from '../../actions/local_action';
 import { ACTIONS, INPUT_KEYS, OPENCODE_DEFAULT_MODEL, TITLE } from '../../utils/constants';
 import { logError } from '../../utils/logger';
 import { getGitInfo, getCurrentBranch } from '../../cli_context';
+import { cleanCliArgument, parsePositiveCliInteger } from '../command_input_policy';
 
 export function registerDetectPotentialProblemsCommand(program: Command): void {
 program
@@ -20,13 +21,13 @@ program
       logError(gitInfo.error);
       process.exit(1);
     }
-    const cleanArg = (v: unknown): string => (v != null ? (String(v).startsWith('=') ? String(v).substring(1) : String(v)) : '');
-    const issueNumber = cleanArg(options.issue);
-    if (!issueNumber || isNaN(parseInt(issueNumber)) || parseInt(issueNumber) <= 0) {
+    const issueNumber = cleanCliArgument(options.issue);
+    const parsedIssueNumber = parsePositiveCliInteger(issueNumber);
+    if (parsedIssueNumber === undefined) {
       console.log('❌ Provide a valid issue number with -i or --issue');
       return;
     }
-    const branch = (cleanArg(options.branch) || getCurrentBranch()).trim() || 'main';
+    const branch = (cleanCliArgument(options.branch) || getCurrentBranch()).trim() || 'main';
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- CLI options map to action inputs
     const params: any = {
       [INPUT_KEYS.DEBUG]: options.debug?.toString() ?? 'false',

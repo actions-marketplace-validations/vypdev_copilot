@@ -3,6 +3,7 @@ import { runLocalAction } from '../../actions/local_action';
 import { ACTIONS, INPUT_KEYS, OPENCODE_DEFAULT_MODEL, TITLE } from '../../utils/constants';
 import { logError } from '../../utils/logger';
 import { getGitInfo } from '../../cli_context';
+import { cleanCliArgument, parsePositiveCliInteger } from '../command_input_policy';
 
 export function registerCheckProgressCommand(program: Command): void {
 program
@@ -22,27 +23,20 @@ program
       process.exit(1);
     }
 
-    // Helper function to clean CLI arguments that may have '=' prefix
-    const cleanArg = (value: unknown): string => {
-      if (value == null) return '';
-      const str = String(value);
-      return str.startsWith('=') ? str.substring(1) : str;
-    };
-
-    const issueNumber = cleanArg(options.issue);
+    const issueNumber = cleanCliArgument(options.issue);
 
     if (!issueNumber || issueNumber.length === 0) {
       console.log('❌ Please provide an issue number using -i or --issue');
       return;
     }
 
-    const parsedIssueNumber = parseInt(issueNumber);
-    if (isNaN(parsedIssueNumber) || parsedIssueNumber <= 0) {
+    const parsedIssueNumber = parsePositiveCliInteger(issueNumber);
+    if (parsedIssueNumber === undefined) {
       console.log(`❌ Invalid issue number: ${issueNumber}. Must be a positive number.`);
       return;
     }
 
-    const branch = cleanArg(options.branch);
+    const branch = cleanCliArgument(options.branch);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- CLI options map to action inputs
     const params: any = {

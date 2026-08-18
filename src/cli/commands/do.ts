@@ -7,6 +7,7 @@ import { OPENCODE_DEFAULT_MODEL, TITLE } from '../../utils/constants';
 import { logError } from '../../utils/logger';
 import { OPENCODE_PROJECT_CONTEXT_INSTRUCTION } from '../../utils/opencode_project_context_instruction';
 import { getGitInfo, getCurrentBranch } from '../../cli_context';
+import { cleanCliArgument, joinCliArguments } from '../command_input_policy';
 
 export function registerDoCommand(program: Command): void {
 program
@@ -36,27 +37,19 @@ program
       process.exit(1);
     }
 
-    // Helper function to clean CLI arguments that may have '=' prefix
-    const cleanArg = (value: unknown): string => {
-      if (value == null) return '';
-      const str = String(value);
-      return str.startsWith('=') ? str.substring(1) : str;
-    };
-
-    const promptParts = (options.prompt || []).map(cleanArg);
-    const prompt = promptParts.join(' ');
+    const prompt = joinCliArguments(options.prompt);
 
     if (!prompt || prompt.length === 0) {
       console.log('❌ Please provide a prompt using -p or --prompt');
       return;
     }
 
-    const serverUrl = cleanArg(options.opencodeServerUrl) || process.env.OPENCODE_SERVER_URL || 'http://127.0.0.1:4096';
-    const model = cleanArg(options.opencodeModel) || process.env.OPENCODE_MODEL || OPENCODE_DEFAULT_MODEL;
-    const agentProvider = cleanArg(options.agentProvider) || process.env.AGENT_PROVIDER || 'opencode';
-    const agentTransport = cleanArg(options.agentTransport) || process.env.AGENT_TRANSPORT || 'server';
-    const agentModel = cleanArg(options.agentModel) || process.env.AGENT_MODEL || model;
-    const agentCommand = cleanArg(options.agentCommand) || process.env.AGENT_COMMAND;
+    const serverUrl = cleanCliArgument(options.opencodeServerUrl) || process.env.OPENCODE_SERVER_URL || 'http://127.0.0.1:4096';
+    const model = cleanCliArgument(options.opencodeModel) || process.env.OPENCODE_MODEL || OPENCODE_DEFAULT_MODEL;
+    const agentProvider = cleanCliArgument(options.agentProvider) || process.env.AGENT_PROVIDER || 'opencode';
+    const agentTransport = cleanCliArgument(options.agentTransport) || process.env.AGENT_TRANSPORT || 'server';
+    const agentModel = cleanCliArgument(options.agentModel) || process.env.AGENT_MODEL || model;
+    const agentCommand = cleanCliArgument(options.agentCommand) || process.env.AGENT_COMMAND;
     const agentTasks = buildAgentTasks({
       provider: agentProvider,
       transport: agentTransport,
@@ -64,12 +57,12 @@ program
       serverUrl,
       command: agentCommand,
       findings: {
-        provider: cleanArg(options.findingsProvider), transport: cleanArg(options.findingsTransport),
-        model: cleanArg(options.findingsModel), command: cleanArg(options.findingsCommand),
+        provider: cleanCliArgument(options.findingsProvider), transport: cleanCliArgument(options.findingsTransport),
+        model: cleanCliArgument(options.findingsModel), command: cleanCliArgument(options.findingsCommand),
       },
       fixer: {
-        provider: cleanArg(options.fixerProvider), transport: cleanArg(options.fixerTransport),
-        model: cleanArg(options.fixerModel), command: cleanArg(options.fixerCommand),
+        provider: cleanCliArgument(options.fixerProvider), transport: cleanCliArgument(options.fixerTransport),
+        model: cleanCliArgument(options.fixerModel), command: cleanCliArgument(options.fixerCommand),
       },
     });
     const authPreflight = runAgentAuthenticationPreflight(agentTasks.findings);
@@ -81,7 +74,7 @@ program
       }
       if (authPreflight.mode === 'warn') console.warn(`⚠️ ${authPreflight.check.message}`);
     }
-    const outputFormat = cleanArg(options.output) || 'text';
+    const outputFormat = cleanCliArgument(options.output) || 'text';
 
     if (agentTasks.findings.transport === 'server' && !serverUrl) {
       console.log('❌ OpenCode server URL required for server transport. Set OPENCODE_SERVER_URL or use --opencode-server-url');

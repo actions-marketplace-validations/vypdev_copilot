@@ -4,6 +4,7 @@ import { createIssueMetadataCompositionRoot } from '../../infrastructure/composi
 import { ACTIONS, INPUT_KEYS, OPENCODE_DEFAULT_MODEL, TITLE } from '../../utils/constants';
 import { logError } from '../../utils/logger';
 import { getGitInfo } from '../../cli_context';
+import { cleanCliArgument, joinCliArguments } from '../command_input_policy';
 
 export function registerThinkCommand(program: Command): void {
 program
@@ -26,23 +27,15 @@ program
       process.exit(1);
     }
 
-    // Helper function to clean CLI arguments that may have '=' prefix
-    const cleanArg = (value: unknown): string => {
-      if (value == null) return '';
-      const str = String(value);
-      return str.startsWith('=') ? str.substring(1) : str;
-    };
-
-    const questionParts = (options.question || []).map(cleanArg);
-    const question = questionParts.join(' ');
+    const question = joinCliArguments(options.question);
 
     if (!question || question.length === 0) {
       console.log('❌ Please provide a question or prompt using -q or --question');
       return;
     }
 
-    const branch = cleanArg(options.branch);
-    const issueNumber = cleanArg(options.issue);
+    const branch = cleanCliArgument(options.branch);
+    const issueNumber = cleanCliArgument(options.issue);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- CLI options map to action inputs
     const params: any = {

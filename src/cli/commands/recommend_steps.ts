@@ -3,6 +3,7 @@ import { runLocalAction } from '../../actions/local_action';
 import { ACTIONS, INPUT_KEYS, OPENCODE_DEFAULT_MODEL, TITLE } from '../../utils/constants';
 import { logError } from '../../utils/logger';
 import { getGitInfo } from '../../cli_context';
+import { cleanCliArgument, parsePositiveCliInteger } from '../command_input_policy';
 
 export function registerRecommendStepsCommand(program: Command): void {
 program
@@ -19,9 +20,9 @@ program
       logError(gitInfo.error);
       process.exit(1);
     }
-    const cleanArg = (v: unknown): string => (v != null ? (String(v).startsWith('=') ? String(v).substring(1) : String(v)) : '');
-    const issueNumber = cleanArg(options.issue);
-    if (!issueNumber || isNaN(parseInt(issueNumber)) || parseInt(issueNumber) <= 0) {
+    const issueNumber = cleanCliArgument(options.issue);
+    const parsedIssueNumber = parsePositiveCliInteger(issueNumber);
+    if (parsedIssueNumber === undefined) {
       console.log('❌ Provide a valid issue number with -i or --issue');
       return;
     }
@@ -29,7 +30,7 @@ program
     const params: any = {
       [INPUT_KEYS.DEBUG]: options.debug?.toString() ?? 'false',
       [INPUT_KEYS.SINGLE_ACTION]: ACTIONS.RECOMMEND_STEPS,
-      [INPUT_KEYS.SINGLE_ACTION_ISSUE]: parseInt(issueNumber),
+      [INPUT_KEYS.SINGLE_ACTION_ISSUE]: parsedIssueNumber,
       [INPUT_KEYS.TOKEN]: options.token || process.env.PERSONAL_ACCESS_TOKEN,
       [INPUT_KEYS.OPENCODE_SERVER_URL]: options.opencodeServerUrl || process.env.OPENCODE_SERVER_URL || 'http://127.0.0.1:4096',
       [INPUT_KEYS.OPENCODE_MODEL]: options.opencodeModel || process.env.OPENCODE_MODEL || OPENCODE_DEFAULT_MODEL,
