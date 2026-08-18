@@ -27,6 +27,7 @@ import { ConfigurationHandler } from '../manager/description/configuration_handl
 import { loadProjectDetails } from './project_details_loader';
 import { mainRun } from './common_action';
 import { isEnabledInput } from './input_boolean_policy';
+import { resolveJsonInput } from './action_input_source';
 import { parseBoundedPositiveIntegerInput, parseIntegerInput } from './input_number_policy';
 import { parseDelimitedValues } from './input_values_policy';
 import { buildAgentTasksFromInputs } from './agent_input_builder';
@@ -387,12 +388,9 @@ async function finishWithResults(execution: Execution, results: Result[], issueR
 function getInput(key: string, options?: { required?: boolean }): string {
     try {
         const inputVarsJson = process.env.INPUT_VARS_JSON;
-        if (inputVarsJson) {
-            const inputVars = JSON.parse(inputVarsJson);
-            const value = inputVars[`INPUT_${key.toUpperCase()}`];
-            if (value !== undefined) {
-                return value;
-            }
+        const value = resolveJsonInput(inputVarsJson, key);
+        if (value !== undefined) {
+            return value;
         }
     } catch (error) {
         logError(`Error parsing INPUT_VARS_JSON: ${JSON.stringify(error, null, 2)}`);

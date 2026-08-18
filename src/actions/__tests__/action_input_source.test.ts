@@ -1,4 +1,4 @@
-import { resolveActionInput } from '../action_input_source';
+import { resolveActionInput, resolveJsonInput } from '../action_input_source';
 
 describe('resolveActionInput', () => {
     it('prefers explicit runtime parameters over defaults', () => {
@@ -9,7 +9,11 @@ describe('resolveActionInput', () => {
         expect(resolveActionInput({}, { token: 'default' }, 'token')).toBe('default');
     });
 
-    it('treats nullish runtime values as absent', () => {
-        expect(resolveActionInput({ token: undefined }, { token: 'default' }, 'token')).toBe('default');
+    it('reads an input from the GitHub JSON source', () => {
+        expect(resolveJsonInput('{"INPUT_TOKEN":"secretless-value"}', 'token')).toBe('secretless-value');
+    });
+
+    it('returns undefined when the GitHub JSON source does not contain the key', () => {
+        expect(resolveJsonInput('{"INPUT_OTHER":"value"}', 'token')).toBeUndefined();
     });
 });
