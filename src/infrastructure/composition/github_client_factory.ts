@@ -1,4 +1,4 @@
-import { OctokitBranchClientAdapter, OctokitBranchMergeClientAdapter, OctokitBranchComparisonClientAdapter, OctokitGraphqlClientAdapter, OctokitIssueAssignmentClientAdapter, OctokitIssueContentClientAdapter, OctokitIssueLabelProvisioningClientAdapter, OctokitIssueLabelsClientAdapter, OctokitIssueLifecycleClientAdapter, OctokitIssueMetadataClientAdapter, OctokitIssueTitleClientAdapter, OctokitAuthenticatedUserClientAdapter, OctokitActorAuthorizationClientAdapter, OctokitOrganizationMembersClientAdapter, OctokitProjectClientAdapter, OctokitPullRequestChangesClientAdapter, OctokitReleaseClientAdapter, OctokitPullRequestLifecycleClientAdapter, OctokitPullRequestReviewClientAdapter, OctokitWorkflowClientAdapter } from "../github/octokit_client";
+import { OctokitBranchClientAdapter, OctokitBranchMergeClientAdapter, OctokitBranchComparisonClientAdapter, OctokitGraphqlClientAdapter, OctokitIssueAssignmentClientAdapter, OctokitIssueContentClientAdapter, OctokitIssueLabelProvisioningClientAdapter, OctokitIssueLabelsClientAdapter, OctokitIssueLifecycleClientAdapter, OctokitIssueMetadataClientAdapter, OctokitIssueTitleClientAdapter, OctokitAuthenticatedUserClientAdapter, OctokitActorAuthorizationClientAdapter, OctokitOrganizationMembersClientAdapter, OctokitRepositoryContextClientAdapter, OctokitOwnerTypeClientAdapter, OctokitPullRequestChangesClientAdapter, OctokitReleaseClientAdapter, OctokitPullRequestLifecycleClientAdapter, OctokitPullRequestReviewClientAdapter, OctokitWorkflowClientAdapter } from "../github/octokit_client";
 
 export class GithubClientFactory {
     createBranchClient(): OctokitBranchClientAdapter { return new OctokitBranchClientAdapter(); }
@@ -15,7 +15,8 @@ export class GithubClientFactory {
     createAuthenticatedUserClient(): OctokitAuthenticatedUserClientAdapter { return new OctokitAuthenticatedUserClientAdapter(); }
     createActorAuthorizationClient(): OctokitActorAuthorizationClientAdapter { return new OctokitActorAuthorizationClientAdapter(); }
     createOrganizationMembersClient(): OctokitOrganizationMembersClientAdapter { return new OctokitOrganizationMembersClientAdapter(); }
-    createProjectClient(): OctokitProjectClientAdapter { return new OctokitProjectClientAdapter(); }
+    createRepositoryContextClient(): OctokitRepositoryContextClientAdapter { return new OctokitRepositoryContextClientAdapter(); }
+    createOwnerTypeClient(): OctokitOwnerTypeClientAdapter { return new OctokitOwnerTypeClientAdapter(); }
     createPullRequestChangesClient(): OctokitPullRequestChangesClientAdapter { return new OctokitPullRequestChangesClientAdapter(); }
     createReleaseClient(): OctokitReleaseClientAdapter { return new OctokitReleaseClientAdapter(); }
     createPullRequestLifecycleClient(): OctokitPullRequestLifecycleClientAdapter { return new OctokitPullRequestLifecycleClientAdapter(); }

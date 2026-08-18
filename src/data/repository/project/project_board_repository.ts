@@ -1,4 +1,4 @@
-import type { GithubClientPort, GithubGraphqlClient, GithubProjectClient } from "../../../application/ports/github_provider_ports";
+import type { GithubClientPort, GithubGraphqlClient, GithubOwnerTypeClient, GithubRepositoryContextClient } from "../../../application/ports/github_provider_ports";
 import { logDebugInfo, logError } from "../../../utils/logger";
 import { paginateCursor } from "../github/github_pagination_adapter";
 import { ProjectResult } from "../../graph/project_result";
@@ -8,7 +8,8 @@ import type { ProjectBoardCommandPort, ProjectBoardLinkPort, ProjectBoardQueryPo
 /** GitHub Projects V2 adapter for project loading, content lookup, and linking. */
 export class ProjectBoardRepository implements ProjectBoardCommandPort, ProjectBoardQueryPort, ProjectBoardLinkPort {
     constructor(
-        private readonly projectClient: GithubClientPort<GithubProjectClient>,
+        private readonly repositoryContextClient: GithubClientPort<GithubRepositoryContextClient>,
+        private readonly ownerTypeClient: GithubClientPort<GithubOwnerTypeClient>,
         private readonly graphqlClient: GithubClientPort<GithubGraphqlClient>,
     ) {}
 
@@ -29,12 +30,12 @@ export class ProjectBoardRepository implements ProjectBoardCommandPort, ProjectB
             if (isNaN(projectNumber)) {
                 throw new Error(`Invalid project ID: ${projectId}. Must be a valid number.`);
             }
-            const projectOctokit = this.projectClient.getClient(token);
-            const { data: owner } = await projectOctokit.rest.users.getByUsername({ username: this.projectClient.getClient(token).context.repo.owner }).catch((error: unknown) => {
+            const repositoryContext = this.repositoryContextClient.getClient(token);
+            const { data: owner } = await this.ownerTypeClient.getClient(token).rest.users.getByUsername({ username: repositoryContext.context.repo.owner }).catch((error: unknown) => {
                 throw new Error(`Failed to get owner information: ${error instanceof Error ? error.message : String(error)}`);
             });
             const ownerType = owner.type === 'Organization' ? 'orgs' : 'users';
-            const projectUrl = `https://github.com/${ownerType}/${this.projectClient.getClient(token).context.repo.owner}/projects/${projectId}`;
+            const projectUrl = `https://github.com/${ownerType}/${this.repositoryContextClient.getClient(token).context.repo.owner}/projects/${projectId}`;
             const ownerQueryField = ownerType === 'orgs' ? 'organization' : 'user';
             const queryProject = `
                 query($ownerName: String!, $projectNumber: Int!) {
@@ -44,7 +45,7 @@ export class ProjectBoardRepository implements ProjectBoardCommandPort, ProjectB
                 }
             `;
             const projectResult = await this.graphqlClient.getClient(token).graphql<ProjectResult>(queryProject, {
-                ownerName: this.projectClient.getClient(token).context.repo.owner,
+                ownerName: this.repositoryContextClient.getClient(token).context.repo.owner,
                 projectNumber,
             }).catch(error => {
                 throw new Error(`Failed to fetch project data: ${error.message}`);
@@ -54,7 +55,7 @@ export class ProjectBoardRepository implements ProjectBoardCommandPort, ProjectB
             logDebugInfo(`Project ID: ${projectData.id}`);
             logDebugInfo(`Project Title: ${projectData.title}`);
             logDebugInfo(`Project URL: ${projectData.url}`);
-            return new ProjectDetail({ id: projectData.id, title: projectData.title, url: projectData.url, type: ownerQueryField, owner: this.projectClient.getClient(token).context.repo.owner, number: projectNumber });
+            return new ProjectDetail({ id: projectData.id, title: projectData.title, url: projectData.url, type: ownerQueryField, owner: this.repositoryContextClient.getClient(token).context.repo.owner, number: projectNumber });
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
             logError(`Error in getProjectDetail: ${errorMessage}`);
