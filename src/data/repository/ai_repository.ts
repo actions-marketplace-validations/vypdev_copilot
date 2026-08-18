@@ -1,10 +1,9 @@
 import { OPENCODE_REQUEST_TIMEOUT_MS } from '../../utils/constants';
 import { logDebugInfo, logError, logInfo } from '../../utils/logger';
-import { Ai } from '../model/ai';
 import { AgentCliClient } from './agent_cli_client';
 import { ProviderCliAdapter } from './provider_cli_adapter';
 import { OpenCodeHttpClient } from './opencode_http_client';
-import type { AgentQueryOptions, FindingsQueryPort, FixerQueryPort } from '../../application/ports/agent_ports';
+import type { FindingsQueryPort, FixerQueryPort, FindingsQueryRequest, FixerQueryRequest } from '../../application/ports/agent_ports';
 import type { AgentCliPort, OpenCodeClientPort } from '../../infrastructure/agents/ports/agent_provider_ports';
 import { OpenCodeAgentInvoker } from './opencode_agent_invoker';
 import { buildAgentPrompt } from './agent_prompt_policy';
@@ -17,7 +16,6 @@ export { LANGUAGE_CHECK_RESPONSE_SCHEMA, THINK_RESPONSE_SCHEMA, TRANSLATION_RESP
 
 export const OPENCODE_AGENT_PLAN = 'build';
 export const OPENCODE_AGENT_BUILD = 'build';
-export type AskAgentOptions = AgentQueryOptions;
 
 export class AiRepository implements FindingsQueryPort, FixerQueryPort {
     private readonly cliAdapter: ProviderCliAdapter;
@@ -34,12 +32,10 @@ export class AiRepository implements FindingsQueryPort, FixerQueryPort {
      * Ask an OpenCode agent (e.g. Plan) to perform a task. All calls use strict response (expectJson + schema).
      * Single retry system: HTTP failures and parse failures both retry up to OPENCODE_MAX_RETRIES.
      */
-    askAgent = async (
-        ai: Ai,
-        agentId: string,
-        prompt: string,
-        options: AskAgentOptions = {}
+    query = async (
+        request: FindingsQueryRequest
     ): Promise<string | Record<string, unknown> | undefined> => {
+        const { configuration, agentId, prompt, options = {} } = request;
         const schemaName = options.schemaName ?? 'response';
         const promptText = buildAgentPrompt(
             prompt,
@@ -47,7 +43,11 @@ export class AiRepository implements FindingsQueryPort, FixerQueryPort {
             options.schema,
             schemaName,
         );
-        const taskConfiguration = getValidatedAgentConfiguration(ai.getAgentConfiguration('findings'), 'findings');
+        if (!configuration) {
+            logError('Missing required AI configuration for findings.');
+            return undefined;
+        }
+        const taskConfiguration = getValidatedAgentConfiguration(configuration, 'findings');
         if (taskConfiguration.transport === 'cli') {
             try {
                 const output = await this.cliAdapter.execute({
@@ -98,11 +98,15 @@ export class AiRepository implements FindingsQueryPort, FixerQueryPort {
      * Run the OpenCode "build" agent for the copilot command. Returns the final message and sessionId.
      * Uses the same retry system (OPENCODE_MAX_RETRIES).
      */
-    copilotMessage = async (
-        ai: Ai,
-        prompt: string
+    fix = async (
+        request: FixerQueryRequest
     ): Promise<{ text: string; sessionId: string } | undefined> => {
-        const taskConfiguration = getValidatedAgentConfiguration(ai.getAgentConfiguration('fixer'), 'fixer');
+        const { configuration, prompt } = request;
+        if (!configuration) {
+            logError('Missing required AI configuration for fixer.');
+            return undefined;
+        }
+        const taskConfiguration = getValidatedAgentConfiguration(configuration, 'fixer');
         if (taskConfiguration.transport === 'cli') {
             try {
                 const text = await this.cliAdapter.execute({

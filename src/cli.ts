@@ -9,7 +9,7 @@ import { ACTIONS, ERRORS, INPUT_KEYS, OPENCODE_DEFAULT_MODEL, TITLE } from './ut
 import { getSetupToken, setupEnvFileExists } from './utils/setup_files';
 import { logError, logInfo } from './utils/logger';
 import { getCliDoPrompt } from './prompts';
-import { Ai } from './data/model/ai';
+
 import { OPENCODE_PROJECT_CONTEXT_INSTRUCTION } from './utils/opencode_project_context_instruction';
 import { DefaultAgentRepositoryFactory } from './data/repository/agent_repository_factory';
 import { buildAgentTasks } from './actions/agent_configuration_builder';
@@ -231,13 +231,15 @@ program
     }
 
     try {
-      const ai = new Ai(serverUrl, model, false, false, [], false, 'low', 20, [], agentTasks);
       const aiRepository = new DefaultAgentRepositoryFactory().createFixer();
       const fullPrompt = getCliDoPrompt({
         projectContextInstruction: `${OPENCODE_PROJECT_CONTEXT_INSTRUCTION}\n\nRepository identity: ${gitInfo.owner}/${gitInfo.repo}\nCurrent branch: ${getCurrentBranch()}\nTreat this repository identity as authoritative context for the request.`,
         userPrompt: prompt,
       });
-      const result = await aiRepository.copilotMessage(ai, fullPrompt);
+      const result = await aiRepository.fix({
+        configuration: agentTasks.fixer,
+        prompt: fullPrompt,
+      });
 
       if (!result) {
         console.error('❌ Request failed (check OpenCode server and model).');

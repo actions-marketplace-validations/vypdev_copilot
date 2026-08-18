@@ -8,9 +8,14 @@ export async function queryBugbotFindings(
     execution: Execution,
     prompt: string,
 ): Promise<unknown> {
-    return repository.askAgent(execution.ai, OPENCODE_AGENT_PLAN, prompt, {
-        expectJson: true,
-        schema: BUGBOT_RESPONSE_SCHEMA as unknown as Record<string, unknown>,
-        schemaName: 'bugbot_findings',
+    return repository.query({
+        configuration: execution.ai?.getAgentConfiguration('findings'),
+        agentId: OPENCODE_AGENT_PLAN,
+        prompt,
+        options: {
+            expectJson: true,
+            schema: BUGBOT_RESPONSE_SCHEMA as unknown as Record<string, unknown>,
+            schemaName: 'bugbot_findings',
+        },
     });
 }

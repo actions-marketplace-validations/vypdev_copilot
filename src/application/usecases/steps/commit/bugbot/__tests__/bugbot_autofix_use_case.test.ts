@@ -27,7 +27,7 @@ jest.mock("../load_bugbot_context_use_case", () => ({
 
 jest.mock("../../../../../../data/repository/ai_repository", () => ({
     AiRepository: jest.fn().mockImplementation(() => ({
-        copilotMessage: mockCopilotMessage,
+        fix: (request: { configuration: unknown; prompt: string }) => mockCopilotMessage(request.configuration, request.prompt),
     })),
 }));
 
@@ -75,7 +75,7 @@ describe("BugbotAutofixUseCase", () => {
 
     beforeEach(() => {
         useCase = new BugbotAutofixUseCase(
-            { copilotMessage: mockCopilotMessage },
+            { fix: (request: { configuration: unknown; prompt: string }) => mockCopilotMessage(request.configuration, request.prompt) },
             {
                 issue: { listIssueComments: jest.fn() },
                 pullRequest: {

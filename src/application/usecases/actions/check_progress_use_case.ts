@@ -244,17 +244,17 @@ export class CheckProgressUseCase implements ParamUseCase<Execution, Result[]> {
      * HTTP-level retries are handled by AiRepository (OPENCODE_MAX_RETRIES).
      */
     private async fetchProgressAttempt(ai: Ai, prompt: string): Promise<ProgressAttemptResult> {
-        return parseProgressResponse(await this.aiRepository.askAgent(
-            ai,
-            OPENCODE_AGENT_PLAN,
+        return parseProgressResponse(await this.aiRepository.query({
+            configuration: ai.getAgentConfiguration('findings'),
+            agentId: OPENCODE_AGENT_PLAN,
             prompt,
-            {
+            options: {
                 expectJson: true,
                 schema: PROGRESS_RESPONSE_SCHEMA as unknown as Record<string, unknown>,
                 schemaName: 'progress_response',
                 includeReasoning: true,
             }
-        ));
+        }));
     }
 }
 

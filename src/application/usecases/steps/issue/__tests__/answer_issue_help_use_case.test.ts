@@ -21,7 +21,7 @@ jest.mock('../../../../../data/repository/issue_repository', () => ({
 
 const mockAskAgent = jest.fn();
 jest.mock('../../../../../data/repository/ai_repository', () => ({
-  AiRepository: jest.fn().mockImplementation(() => ({ askAgent: mockAskAgent })),
+  AiRepository: jest.fn().mockImplementation(() => ({ query: (request: { configuration: unknown; agentId: string; prompt: string; options?: unknown }) => mockAskAgent(request.configuration, request.agentId, request.prompt, request.options) })),
   OPENCODE_AGENT_PLAN: 'plan',
   THINK_RESPONSE_SCHEMA: {},
 }));
@@ -47,7 +47,7 @@ describe('AnswerIssueHelpUseCase', () => {
   let useCase: AnswerIssueHelpUseCase;
 
   beforeEach(() => {
-    useCase = new AnswerIssueHelpUseCase({ addComment: mockAddComment, openIssue: jest.fn() }, { askAgent: mockAskAgent });
+    useCase = new AnswerIssueHelpUseCase({ addComment: mockAddComment, openIssue: jest.fn() }, { query: (request: { configuration: unknown; agentId: string; prompt: string; options?: unknown }) => mockAskAgent(request.configuration, request.agentId, request.prompt, request.options) });
     mockAddComment.mockReset();
     mockAskAgent.mockReset();
   });

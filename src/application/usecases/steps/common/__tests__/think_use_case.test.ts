@@ -11,7 +11,7 @@ const mockAskAgent = jest.fn();
 const mockAddComment = jest.fn();
 const mockGetDescription = jest.fn();
 jest.mock('../../../../../data/repository/ai_repository', () => ({
-  AiRepository: jest.fn().mockImplementation(() => ({ askAgent: mockAskAgent })),
+  AiRepository: jest.fn().mockImplementation(() => ({ query: (request: { configuration: unknown; agentId: string; prompt: string; options?: unknown }) => mockAskAgent(request.configuration, request.agentId, request.prompt, request.options) })),
 }));
 jest.mock('../../../../../data/repository/issue_repository', () => ({
   IssueRepository: jest.fn().mockImplementation(() => ({
@@ -50,7 +50,7 @@ describe('ThinkUseCase', () => {
     useCase = new ThinkUseCase(
       { getDescription: mockGetDescription },
       { addComment: mockAddComment, openIssue: jest.fn() },
-      { askAgent: mockAskAgent },
+      { query: (request: { configuration: unknown; agentId: string; prompt: string; options?: unknown }) => mockAskAgent(request.configuration, request.agentId, request.prompt, request.options) },
     );
     mockAskAgent.mockReset();
     mockAddComment.mockReset();

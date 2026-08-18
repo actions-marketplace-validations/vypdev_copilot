@@ -44,16 +44,16 @@ If you'd like this comment to be translated again, please delete the entire comm
         const locale = param.locale.issue;
         let prompt = getCheckCommentLanguagePrompt({ locale, commentBody });
         logDebugInfo(`CheckIssueCommentLanguage: locale=${locale}, comment length=${commentBody.length}. Calling OpenCode for language check.`);
-        const checkResponse = await this.aiRepository.askAgent(
-            param.ai,
-            OPENCODE_AGENT_PLAN,
+        const checkResponse = await this.aiRepository.query({
+            configuration: param.ai?.getAgentConfiguration('findings'),
+            agentId: OPENCODE_AGENT_PLAN,
             prompt,
-            {
+            options: {
                 expectJson: true,
                 schema: LANGUAGE_CHECK_RESPONSE_SCHEMA as unknown as Record<string, unknown>,
                 schemaName: 'language_check_response',
             },
-        );
+        });
         const status =
             checkResponse != null &&
             typeof checkResponse === 'object' &&
@@ -74,16 +74,16 @@ If you'd like this comment to be translated again, please delete the entire comm
 
         prompt = getTranslateCommentPrompt({ locale, commentBody });
         logDebugInfo(`CheckIssueCommentLanguage: translating comment (prompt length=${prompt.length}).`);
-        const translationResponse = await this.aiRepository.askAgent(
-            param.ai,
-            OPENCODE_AGENT_PLAN,
+        const translationResponse = await this.aiRepository.query({
+            configuration: param.ai?.getAgentConfiguration('findings'),
+            agentId: OPENCODE_AGENT_PLAN,
             prompt,
-            {
+            options: {
                 expectJson: true,
                 schema: TRANSLATION_RESPONSE_SCHEMA as unknown as Record<string, unknown>,
                 schemaName: 'translation_response',
             },
-        );
+        });
 
         const translatedText =
             translationResponse != null &&

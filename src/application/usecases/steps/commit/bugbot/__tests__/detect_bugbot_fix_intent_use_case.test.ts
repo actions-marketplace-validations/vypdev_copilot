@@ -21,7 +21,7 @@ jest.mock("../load_bugbot_context_use_case", () => ({
 }));
 
 jest.mock("../../../../../../data/repository/ai_repository", () => ({
-    AiRepository: jest.fn().mockImplementation(() => ({ askAgent: mockAskAgent })),
+    AiRepository: jest.fn().mockImplementation(() => ({ query: (request: { configuration: unknown; agentId: string; prompt: string; options?: unknown }) => mockAskAgent(request.configuration, request.agentId, request.prompt, request.options) })),
     OPENCODE_AGENT_PLAN: "plan",
 }));
 
@@ -83,7 +83,7 @@ describe("DetectBugbotFixIntentUseCase", () => {
         };
         useCase = new DetectBugbotFixIntentUseCase(
             pullRequestPort,
-            { askAgent: mockAskAgent },
+            { query: (request: { configuration: unknown; agentId: string; prompt: string; options?: unknown }) => mockAskAgent(request.configuration, request.agentId, request.prompt, request.options) },
             { issue: issuePort, pullRequest: pullRequestPort },
         );
         mockLoadBugbotContext.mockReset();

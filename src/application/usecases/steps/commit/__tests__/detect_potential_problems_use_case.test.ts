@@ -57,7 +57,7 @@ jest.mock('../../../../../data/repository/pull_request_repository', () => ({
 const mockAskAgent = jest.fn();
 jest.mock('../../../../../data/repository/ai_repository', () => ({
   AiRepository: jest.fn().mockImplementation(() => ({
-    askAgent: mockAskAgent,
+    query: (request: { configuration: unknown; agentId: string; prompt: string; options?: unknown }) => mockAskAgent(request.configuration, request.agentId, request.prompt, request.options),
   })),
   OPENCODE_AGENT_PLAN: 'plan',
 }));
@@ -98,7 +98,7 @@ describe('DetectPotentialProblemsUseCase', () => {
       resolvePullRequestReviewThread: mockResolvePullRequestReviewThread,
     };
     useCase = new DetectPotentialProblemsUseCase(
-      { askAgent: mockAskAgent },
+      { query: (request: { configuration: unknown; agentId: string; prompt: string; options?: unknown }) => mockAskAgent(request.configuration, request.agentId, request.prompt, request.options) },
       { issue: issuePort, pullRequest: pullRequestPort },
       { issueComments: issuePort, pullRequestComments: pullRequestPort },
     );

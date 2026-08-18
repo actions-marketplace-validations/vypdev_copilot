@@ -24,7 +24,7 @@ jest.mock('../../../../../data/repository/organization/organization_repository',
 const mockAskAgent = jest.fn();
 jest.mock('../../../../../data/repository/ai_repository', () => ({
   AiRepository: jest.fn().mockImplementation(() => ({
-    askAgent: mockAskAgent,
+    query: (request: { configuration: unknown; agentId: string; prompt: string; options?: unknown }) => mockAskAgent(request.configuration, request.agentId, request.prompt, request.options),
   })),
   OPENCODE_AGENT_PLAN: 'plan',
 }));
@@ -56,7 +56,7 @@ describe('UpdatePullRequestDescriptionUseCase', () => {
       { updateDescription: mockUpdateDescription },
       { getDescription: mockGetIssueDescription },
       { getAllMembers: mockGetAllMembers, getRandomMembers: jest.fn() },
-      { askAgent: mockAskAgent },
+      { query: (request: { configuration: unknown; agentId: string; prompt: string; options?: unknown }) => mockAskAgent(request.configuration, request.agentId, request.prompt, request.options) },
     );
     mockGetIssueDescription.mockResolvedValue('Issue description');
     mockGetAllMembers.mockResolvedValue(['alice', 'bob']);

@@ -80,11 +80,11 @@ export class RecommendStepsUseCase implements ParamUseCase<Execution, Result[]> 
 
             logDebugInfo(`RecommendSteps: prompt length=${prompt.length}, issue description length=${issueDescription.length}.`);
             logInfo(`🤖 Recommending steps using OpenCode Plan agent...`);
-            const response = await this.aiRepository.askAgent(
-                param.ai,
-                OPENCODE_AGENT_PLAN,
-                prompt
-            );
+            const response = await this.aiRepository.query({
+                configuration: param.ai?.getAgentConfiguration('findings'),
+                agentId: OPENCODE_AGENT_PLAN,
+                prompt,
+            });
 
             const steps =
                 typeof response === 'string'

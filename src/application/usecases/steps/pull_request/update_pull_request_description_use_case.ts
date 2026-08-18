@@ -104,11 +104,11 @@ export class UpdatePullRequestDescriptionUseCase implements ParamUseCase<Executi
             });
 
             logDebugInfo(`UpdatePullRequestDescription: prompt length=${prompt.length}, issue description length=${issueDescription.length}. Calling OpenCode Plan agent.`);
-            const agentResponse = await this.aiRepository.askAgent(
-                param.ai,
-                OPENCODE_AGENT_PLAN,
-                prompt
-            );
+            const agentResponse = await this.aiRepository.query({
+                configuration: param.ai?.getAgentConfiguration('findings'),
+                agentId: OPENCODE_AGENT_PLAN,
+                prompt,
+            });
 
             const prBody =
                 typeof agentResponse === 'string'

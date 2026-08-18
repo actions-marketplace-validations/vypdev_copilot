@@ -59,7 +59,10 @@ export class DoUserRequestUseCase implements ParamUseCase<DoUserRequestParam, Re
 
         logDebugInfo(`DoUserRequest: prompt length=${prompt.length}, user comment length=${commentTrimmed.length}.`);
         logInfo("Running OpenCode build agent to perform user request (changes applied in workspace).");
-        const response = await this.aiRepository.copilotMessage(execution.ai, prompt);
+        const response = await this.aiRepository.fix({
+            configuration: execution.ai?.getAgentConfiguration('fixer'),
+            prompt,
+        });
 
         logDebugInfo(`DoUserRequest: OpenCode build agent response length=${response?.text?.length ?? 0}. Full response:\n${response?.text ?? '(none)'}`);
 

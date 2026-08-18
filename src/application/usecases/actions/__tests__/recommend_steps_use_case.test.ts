@@ -22,7 +22,7 @@ jest.mock('../../../../data/repository/issue_repository', () => ({
 const mockAskAgent = jest.fn();
 jest.mock('../../../../data/repository/ai_repository', () => ({
   AiRepository: jest.fn().mockImplementation(() => ({
-    askAgent: mockAskAgent,
+    query: (request: { configuration: unknown; agentId: string; prompt: string; options?: unknown }) => mockAskAgent(request.configuration, request.agentId, request.prompt, request.options),
   })),
   OPENCODE_AGENT_PLAN: 'plan',
 }));
@@ -42,7 +42,7 @@ describe('RecommendStepsUseCase', () => {
   let useCase: RecommendStepsUseCase;
 
   beforeEach(() => {
-    useCase = new RecommendStepsUseCase({ getDescription: mockGetDescription }, { askAgent: mockAskAgent });
+    useCase = new RecommendStepsUseCase({ getDescription: mockGetDescription }, { query: (request: { configuration: unknown; agentId: string; prompt: string; options?: unknown }) => mockAskAgent(request.configuration, request.agentId, request.prompt, request.options) });
     mockGetDescription.mockReset();
     mockAskAgent.mockReset();
   });

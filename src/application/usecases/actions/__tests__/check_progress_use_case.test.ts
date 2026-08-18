@@ -46,7 +46,7 @@ jest.mock('../../../../data/repository/pull_request_repository', () => ({
 const mockAskAgent = jest.fn();
 jest.mock('../../../../data/repository/ai_repository', () => ({
   AiRepository: jest.fn().mockImplementation(() => ({
-    askAgent: mockAskAgent,
+    query: (request: { configuration: unknown; agentId: string; prompt: string; options?: unknown }) => mockAskAgent(request.configuration, request.agentId, request.prompt, request.options),
   })),
   OPENCODE_AGENT_PLAN: 'plan',
 }));
@@ -82,7 +82,7 @@ describe('CheckProgressUseCase', () => {
       { getDescription: mockGetDescription, setProgressLabel: mockSetProgressLabel, getLabels: mockGetLabels, setLabels: mockSetLabels },
       { getListOfBranches: mockGetListOfBranches },
       { getOpenPullRequestNumbersByHeadBranch: mockGetOpenPullRequestNumbersByHeadBranch },
-      { askAgent: mockAskAgent },
+      { query: (request: { configuration: unknown; agentId: string; prompt: string; options?: unknown }) => mockAskAgent(request.configuration, request.agentId, request.prompt, request.options) },
     );
     mockGetDescription.mockReset();
     mockSetProgressLabel.mockReset();

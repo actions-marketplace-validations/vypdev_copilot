@@ -120,10 +120,15 @@ export class ThinkUseCase implements ParamUseCase<Execution, Result[]> {
                 question,
             });
             logDebugInfo(`Think: calling OpenCode Plan agent (prompt length=${prompt.length}).`);
-            const response = await this.aiRepository.askAgent(param.ai, OPENCODE_AGENT_PLAN, prompt, {
-                expectJson: true,
-                schema: THINK_RESPONSE_SCHEMA as unknown as Record<string, unknown>,
-                schemaName: 'think_response',
+            const response = await this.aiRepository.query({
+                configuration: param.ai?.getAgentConfiguration('findings'),
+                agentId: OPENCODE_AGENT_PLAN,
+                prompt,
+                options: {
+                    expectJson: true,
+                    schema: THINK_RESPONSE_SCHEMA as unknown as Record<string, unknown>,
+                    schemaName: 'think_response',
+                },
             });
             const answer = extractStructuredAnswer(response);
 

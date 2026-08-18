@@ -115,10 +115,15 @@ export class DetectBugbotFixIntentUseCase implements ParamUseCase<Execution, Res
         const prompt = buildBugbotFixIntentPrompt(commentBody, unresolvedFindings, parentCommentBody);
 
         logDebugInfo(`DetectBugbotFixIntent: prompt length=${prompt.length}, unresolved findings=${unresolvedFindings.length}. Calling OpenCode Plan agent.`);
-        const response = await this.aiRepository.askAgent(param.ai, OPENCODE_AGENT_PLAN, prompt, {
-            expectJson: true,
-            schema: BUGBOT_FIX_INTENT_RESPONSE_SCHEMA as unknown as Record<string, unknown>,
-            schemaName: "bugbot_fix_intent",
+        const response = await this.aiRepository.query({
+            configuration: param.ai?.getAgentConfiguration('findings'),
+            agentId: OPENCODE_AGENT_PLAN,
+            prompt,
+            options: {
+                expectJson: true,
+                schema: BUGBOT_FIX_INTENT_RESPONSE_SCHEMA as unknown as Record<string, unknown>,
+                schemaName: 'bugbot_fix_intent',
+            },
         });
 
         if (response == null || typeof response !== "object") {
