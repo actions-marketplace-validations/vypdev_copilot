@@ -3,15 +3,14 @@ import { Result } from "../../data/model/result";
 import { logInfo } from "../../utils/logger";
 import { ParamUseCase } from "./base/param_usecase";
 import type { BugbotAutofixParam } from "./steps/commit/bugbot/bugbot_autofix_use_case";
-import { runBugbotAutofixCommitAndPush, runUserRequestCommitAndPush } from "./steps/commit/bugbot/bugbot_autofix_commit";
-import { markFindingsResolved } from "./steps/commit/bugbot/mark_findings_resolved_use_case";
-import { sanitizeFindingIdForMarker } from "./steps/commit/bugbot/marker";
 import {
     getBugbotFixIntentPayload,
     canRunBugbotAutofix,
     canRunDoUserRequest,
 } from "./steps/commit/bugbot/bugbot_fix_intent_payload";
 import { resolveCommentAutomationRoute } from './comment_automation_route_policy';
+import { commitAutofixAndResolveFindings } from './steps/commit/bugbot/commit_autofix_and_resolve_workflow';
+import { commitUserRequestIfSuccessful } from './steps/commit/bugbot/commit_user_request_workflow';
 import type { DoUserRequestParam } from "./steps/commit/user_request_use_case";
 import type { AuthenticatedUserPort, ActorAuthorizationPort } from "../ports/organization_ports";
 import type { BugbotWritePorts } from "../ports/bugbot_ports";
@@ -97,55 +96,4 @@ export async function runCommentAutomation(
         results.push(...(await options.thinkUseCase.invoke(param)));
     }
     return results;
-}
-
-async function commitAutofixAndResolveFindings(
-    param: Execution,
-    payload: NonNullable<ReturnType<typeof getBugbotFixIntentPayload>>,
-    autofixResults: Result[],
-    authenticatedUserPort: AuthenticatedUserPort,
-    bugbotWritePorts: BugbotWritePorts,
-    gitCommitPort: GitCommitPort,
-): Promise<void> {
-    const lastAutofix = autofixResults.at(-1);
-    if (!lastAutofix?.success) {
-        logInfo("Bugbot autofix did not succeed; skipping commit.");
-        return;
-    }
-
-    logInfo("Bugbot autofix succeeded; running commit and push.");
-    const autofixPayload = lastAutofix.payload as { workspacePaths?: string[] } | undefined;
-    const commitResult = await runBugbotAutofixCommitAndPush(param, {
-        branchOverride: payload.branchOverride,
-        targetFindingIds: payload.targetFindingIds,
-        workspacePaths: autofixPayload?.workspacePaths,
-    }, authenticatedUserPort, gitCommitPort);
-    if (commitResult.committed && payload.context) {
-        const ids = payload.targetFindingIds;
-        await markFindingsResolved({
-            execution: param,
-            context: payload.context,
-            resolvedFindingIds: new Set(ids),
-            normalizedResolvedIds: new Set(ids.map(sanitizeFindingIdForMarker)),
-            ports: bugbotWritePorts,
-        });
-        logInfo(`Marked ${ids.length} finding(s) as resolved.`);
-    } else if (!commitResult.committed) {
-        logInfo("No commit performed (no changes or error).");
-    }
-}
-
-async function commitUserRequestIfSuccessful(
-    param: Execution,
-    branchOverride: string | undefined,
-    results: Result[],
-    authenticatedUserPort: AuthenticatedUserPort,
-    gitCommitPort: GitCommitPort,
-): Promise<void> {
-    if (!results.at(-1)?.success) {
-        logInfo("Do user request did not succeed; skipping commit.");
-        return;
-    }
-    logInfo("Do user request succeeded; running commit and push.");
-    await runUserRequestCommitAndPush(param, { branchOverride }, authenticatedUserPort, gitCommitPort);
 }
