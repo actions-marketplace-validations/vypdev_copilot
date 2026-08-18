@@ -1,9 +1,9 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import { BranchRepository } from "../../../../data/repository/branch_repository";
-import { IssueRepository } from "../../../../data/repository/issue_repository";
+import type { BranchChangeSizePort } from "../../../ports/branch_ports";
 import { ProjectBoardCommandPort } from "../../../ports/project_board_ports";
-import { PullRequestRepository } from "../../../../data/repository/pull_request_repository";
+import type { IssueLabelsPort } from "../../../ports/issue_ports";
+import type { PullRequestBranchQueryPort } from "../../../ports/pull_request_ports";
 import { logDebugInfo, logError, logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
 import { ParamUseCase } from "../../base/param_usecase";
@@ -11,10 +11,12 @@ import { ParamUseCase } from "../../base/param_usecase";
 export class CheckChangesIssueSizeUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'CheckChangesIssueSizeUseCase';
 
-    private branchRepository = new BranchRepository();
-    private issueRepository = new IssueRepository();
-    constructor(private readonly projectBoardCommandPort: ProjectBoardCommandPort) {}
-    private pullRequestRepository = new PullRequestRepository();
+    constructor(
+        private readonly projectBoardCommandPort: ProjectBoardCommandPort,
+        private readonly issueRepository: IssueLabelsPort,
+        private readonly pullRequestRepository: PullRequestBranchQueryPort,
+        private readonly branchChangeSizePort: BranchChangeSizePort,
+    ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`);
@@ -32,7 +34,7 @@ export class CheckChangesIssueSizeUseCase implements ParamUseCase<Execution, Res
 
             const headBranch = param.commit.branch;
 
-            const { size, githubSize, reason } = await this.branchRepository.getSizeCategoryAndReason(
+            const { size, githubSize, reason } = await this.branchChangeSizePort.getSizeCategoryAndReason(
                 param.owner,
                 param.repo,
                 headBranch,

@@ -1,9 +1,8 @@
 import { isAgentConfigurationReady } from "../../../../../data/model/agent";
 import type { Execution } from "../../../../../data/model/execution";
-import { OPENCODE_AGENT_PLAN } from "../../../../../data/repository/agent_task_policy";
-import type { FindingsQueryPort } from "../../../../../data/repository/agent_ports";
-import { DefaultAgentRepositoryFactory } from "../../../../../data/repository/agent_repository_factory";
-import { PullRequestRepository } from "../../../../../data/repository/pull_request_repository";
+import { OPENCODE_AGENT_PLAN } from "../../../../../application/policies/agent_task_policy";
+import type { FindingsQueryPort } from "../../../../ports/agent_ports";
+import type { BugbotContextPorts, BugbotPullRequestQueryPort } from "../../../../../application/ports/bugbot_ports";
 import { logDebugInfo, logInfo } from "../../../../../utils/logger";
 import { getTaskEmoji } from "../../../../../utils/task_emoji";
 import { ParamUseCase } from "../../../base/param_usecase";
@@ -32,7 +31,11 @@ const TASK_ID = "DetectBugbotFixIntentUseCase";
 export class DetectBugbotFixIntentUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = TASK_ID;
 
-    private aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings();
+    constructor(
+        private readonly pullRequestQueryPort: BugbotPullRequestQueryPort,
+        private readonly aiRepository: FindingsQueryPort,
+        private readonly contextPorts: BugbotContextPorts,
+    ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`);
@@ -63,8 +66,7 @@ export class DetectBugbotFixIntentUseCase implements ParamUseCase<Execution, Res
         // On issue_comment event we may not have commit.branch; resolve from an open PR that references the issue.
         let branchOverride: string | undefined;
         if (!param.commit.branch?.trim()) {
-            const prRepo = new PullRequestRepository();
-            branchOverride = await prRepo.getHeadBranchForIssue(
+            branchOverride = await this.pullRequestQueryPort.getHeadBranchForIssue(
                 param.owner,
                 param.repo,
                 param.issueNumber,
@@ -79,7 +81,7 @@ export class DetectBugbotFixIntentUseCase implements ParamUseCase<Execution, Res
         const options: LoadBugbotContextOptions | undefined = branchOverride
             ? { branchOverride }
             : undefined;
-        const context = await loadBugbotContext(param, options);
+        const context = await loadBugbotContext(param, options, this.contextPorts);
 
         const unresolvedWithBody = context.unresolvedFindingsWithBody ?? [];
         if (unresolvedWithBody.length === 0) {
@@ -99,9 +101,8 @@ export class DetectBugbotFixIntentUseCase implements ParamUseCase<Execution, Res
         // When user replied in a PR thread, include parent comment so OpenCode knows which finding they mean.
         let parentCommentBody: string | undefined;
         if (param.pullRequest.isPullRequestReviewComment && param.pullRequest.commentInReplyToId) {
-            const prRepo = new PullRequestRepository();
             const prNumber = param.pullRequest.number;
-            const parentBody = await prRepo.getPullRequestReviewCommentBody(
+            const parentBody = await this.pullRequestQueryPort.getPullRequestReviewCommentBody(
                 param.owner,
                 param.repo,
                 prNumber,
@@ -114,10 +115,15 @@ export class DetectBugbotFixIntentUseCase implements ParamUseCase<Execution, Res
         const prompt = buildBugbotFixIntentPrompt(commentBody, unresolvedFindings, parentCommentBody);
 
         logDebugInfo(`DetectBugbotFixIntent: prompt length=${prompt.length}, unresolved findings=${unresolvedFindings.length}. Calling OpenCode Plan agent.`);
-        const response = await this.aiRepository.askAgent(param.ai, OPENCODE_AGENT_PLAN, prompt, {
-            expectJson: true,
-            schema: BUGBOT_FIX_INTENT_RESPONSE_SCHEMA as unknown as Record<string, unknown>,
-            schemaName: "bugbot_fix_intent",
+        const response = await this.aiRepository.query({
+            configuration: param.ai?.getAgentConfiguration('findings'),
+            agentId: OPENCODE_AGENT_PLAN,
+            prompt,
+            options: {
+                expectJson: true,
+                schema: BUGBOT_FIX_INTENT_RESPONSE_SCHEMA as unknown as Record<string, unknown>,
+                schemaName: 'bugbot_fix_intent',
+            },
         });
 
         if (response == null || typeof response !== "object") {

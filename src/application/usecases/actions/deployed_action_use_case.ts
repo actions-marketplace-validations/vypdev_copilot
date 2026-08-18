@@ -1,7 +1,7 @@
 import { Execution } from "../../../data/model/execution";
 import { Result } from "../../../data/model/result";
-import { BranchRepository } from "../../../data/repository/branch_repository";
-import { IssueRepository } from "../../../data/repository/issue_repository";
+import type { BranchMergePort } from "../../../application/ports/branch_ports";
+import type { IssueClosurePort, IssueLabelsPort } from "../../../application/ports/issue_ports";
 import { logDebugInfo, logError, logInfo } from "../../../utils/logger";
 import { getTaskEmoji } from "../../../utils/task_emoji";
 import { ParamUseCase } from "../base/param_usecase";
@@ -18,8 +18,11 @@ import { ParamUseCase } from "../base/param_usecase";
  */
 export class DeployedActionUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'DeployedActionUseCase';
-    private issueRepository = new IssueRepository();
-    private branchRepository = new BranchRepository();
+    constructor(
+        private readonly issueLabelsPort: IssueLabelsPort,
+        private readonly issueClosurePort: IssueClosurePort,
+        private readonly branchMergePort: BranchMergePort,
+    ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`);
@@ -58,7 +61,7 @@ export class DeployedActionUseCase implements ParamUseCase<Execution, Result[]> 
             const labelNames = param.labels.currentIssueLabels.filter(name => name !== param.labels.deploy);
             labelNames.push(param.labels.deployed);
 
-            await this.issueRepository.setLabels(
+            await this.issueLabelsPort.setLabels(
                 param.owner,
                 param.repo,
                 param.singleAction.issue,
@@ -83,7 +86,7 @@ export class DeployedActionUseCase implements ParamUseCase<Execution, Result[]> 
             const mergeResults: Result[] = [];
 
             if (param.currentConfiguration.releaseBranch) {
-                const mergeToDefaultResult = await this.branchRepository.mergeBranch(
+                const mergeToDefaultResult = await this.branchMergePort.mergeBranch(
                     param.owner,
                     param.repo,
                     param.currentConfiguration.releaseBranch,
@@ -94,7 +97,7 @@ export class DeployedActionUseCase implements ParamUseCase<Execution, Result[]> 
                 result.push(...mergeToDefaultResult);
                 mergeResults.push(...mergeToDefaultResult);
 
-                const mergeToDevelopResult = await this.branchRepository.mergeBranch(
+                const mergeToDevelopResult = await this.branchMergePort.mergeBranch(
                     param.owner,
                     param.repo,
                     param.currentConfiguration.releaseBranch,
@@ -105,7 +108,7 @@ export class DeployedActionUseCase implements ParamUseCase<Execution, Result[]> 
                 result.push(...mergeToDevelopResult);
                 mergeResults.push(...mergeToDevelopResult);
             } else if (param.currentConfiguration.hotfixBranch) {
-                const mergeToDefaultResult = await this.branchRepository.mergeBranch(
+                const mergeToDefaultResult = await this.branchMergePort.mergeBranch(
                     param.owner,
                     param.repo,
                     param.currentConfiguration.hotfixBranch,
@@ -116,7 +119,7 @@ export class DeployedActionUseCase implements ParamUseCase<Execution, Result[]> 
                 result.push(...mergeToDefaultResult);
                 mergeResults.push(...mergeToDefaultResult);
 
-                const mergeToDevelopResult = await this.branchRepository.mergeBranch(
+                const mergeToDevelopResult = await this.branchMergePort.mergeBranch(
                     param.owner,
                     param.repo,
                     param.branches.defaultBranch,
@@ -134,7 +137,7 @@ export class DeployedActionUseCase implements ParamUseCase<Execution, Result[]> 
 
             if (allMergesSucceeded) {
                 const issueNumber = Number(param.singleAction.issue);
-                const closed = await this.issueRepository.closeIssue(
+                const closed = await this.issueClosurePort.closeIssue(
                     param.owner,
                     param.repo,
                     issueNumber,

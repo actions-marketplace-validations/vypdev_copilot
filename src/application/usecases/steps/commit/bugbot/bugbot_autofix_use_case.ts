@@ -1,7 +1,8 @@
 import { isAgentConfigurationReady } from "../../../../../data/model/agent";
 import type { Execution } from "../../../../../data/model/execution";
-import type { FixerQueryPort } from "../../../../../data/repository/agent_ports";
-import { DefaultAgentRepositoryFactory } from "../../../../../data/repository/agent_repository_factory";
+import type { FixerQueryPort } from "../../../../ports/agent_ports";
+import type { BugbotContextPorts } from "../../../../../application/ports/bugbot_ports";
+import type { GitCommitPort } from "../../../../../application/ports/git_ports";
 import { logDebugInfo, logError, logInfo } from "../../../../../utils/logger";
 import { getTaskEmoji } from "../../../../../utils/task_emoji";
 import { ParamUseCase } from "../../../base/param_usecase";
@@ -31,11 +32,11 @@ export interface BugbotAutofixParam {
 export class BugbotAutofixUseCase implements ParamUseCase<BugbotAutofixParam, Result[]> {
     taskId: string = TASK_ID;
 
-    private aiRepository: FixerQueryPort;
-
-    constructor(aiRepository: FixerQueryPort = new DefaultAgentRepositoryFactory().createFixer()) {
-        this.aiRepository = aiRepository;
-    }
+    constructor(
+        private readonly aiRepository: FixerQueryPort,
+        private readonly contextPorts: BugbotContextPorts,
+        private readonly gitCommitPort: GitCommitPort,
+    ) {}
 
     async invoke(param: BugbotAutofixParam): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`);
@@ -53,11 +54,15 @@ export class BugbotAutofixUseCase implements ParamUseCase<BugbotAutofixParam, Re
             return results;
         }
 
-        const context = providedContext ?? (await loadBugbotContext(execution, branchOverride ? { branchOverride } : undefined));
+        const context = providedContext ?? (await loadBugbotContext(
+            execution,
+            branchOverride ? { branchOverride } : undefined,
+            this.contextPorts,
+        ));
 
         let workspacePathsBefore: string[];
         try {
-            workspacePathsBefore = await listWorkspacePaths();
+            workspacePathsBefore = await listWorkspacePaths(this.gitCommitPort);
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
             logError(`Bugbot autofix: unable to inspect workspace before OpenCode: ${message}`);
@@ -100,7 +105,10 @@ export class BugbotAutofixUseCase implements ParamUseCase<BugbotAutofixParam, Re
 
         logDebugInfo(`BugbotAutofix: prompt length=${prompt.length}, target finding ids=${idsToFix.length}, verifyCommands=${verifyCommands.length}.`);
         logInfo("Running OpenCode build agent to fix selected findings (changes applied in workspace).");
-        const response = await this.aiRepository.copilotMessage(execution.ai, prompt);
+        const response = await this.aiRepository.fix({
+            configuration: execution.ai?.getAgentConfiguration('fixer'),
+            prompt,
+        });
 
         logDebugInfo(`BugbotAutofix: OpenCode build agent response length=${response?.text?.length ?? 0}. Full response:\n${response?.text ?? '(none)'}`);
 
@@ -119,7 +127,7 @@ export class BugbotAutofixUseCase implements ParamUseCase<BugbotAutofixParam, Re
 
         let workspacePathsAfter: string[];
         try {
-            workspacePathsAfter = await listWorkspacePaths();
+            workspacePathsAfter = await listWorkspacePaths(this.gitCommitPort);
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
             logError(`Bugbot autofix: unable to inspect workspace after OpenCode: ${message}`);

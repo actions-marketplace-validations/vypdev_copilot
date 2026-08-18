@@ -1,4 +1,5 @@
 import * as core from '@actions/core';
+import * as github from '@actions/github';
 import { Ai } from '../data/model/ai';
 
 
@@ -15,26 +16,31 @@ import { Result } from '../data/model/result';
 import { SingleAction } from '../data/model/single_action';
 
 
-import { ProjectBoardRepository } from '../data/repository/project/project_board_repository';
 import { PublishResultUseCase } from '../application/usecases/steps/common/publish_resume_use_case';
 import { StoreConfigurationUseCase } from '../application/usecases/steps/common/store_configuration_use_case';
 import { BUGBOT_MAX_COMMENTS, BUGBOT_MIN_SEVERITY, INPUT_KEYS } from '../utils/constants';
 import { logDebugInfo, logError, logInfo } from '../utils/logger';
-import type { ManagedAgentServer } from '../data/repository/agent_ports';
+import type { ManagedAgentServer } from '../application/ports/agent_ports';
 import { OpenCodeServerLifecycleAdapter } from '../data/repository/opencode_server_lifecycle_adapter';
+import { RepositoryFactory } from '../infrastructure/composition/repository_factory';
+import { ConfigurationHandler } from '../manager/description/configuration_handler';
 import { loadProjectDetails } from './project_details_loader';
 import { mainRun } from './common_action';
 import { isEnabledInput } from './input_boolean_policy';
+import { resolveJsonInput } from './action_input_source';
 import { parseBoundedPositiveIntegerInput, parseIntegerInput } from './input_number_policy';
 import { parseDelimitedValues } from './input_values_policy';
 import { buildAgentTasksFromInputs } from './agent_input_builder';
 import { buildImageConfiguration } from './image_configuration_builder';
 import { buildSizeThresholds } from './size_threshold_builder';
 import { buildBranches } from './branches_builder';
+import { buildExecution } from './execution_builder';
 import { buildEmoji, buildImages, buildIssue, buildIssueTypes, buildLabels, buildLocale, buildProjects, buildPullRequest, buildTokens, buildWorkflows } from './configuration_builders';
 
 export async function runGitHubAction(): Promise<void> {
-    const projectRepository = new ProjectBoardRepository();
+    const eventInputs = { ...github.context.payload, eventName: github.context.eventName };
+    const repositoryFactory = new RepositoryFactory();
+    const projectRepository = repositoryFactory.createProjectBoardRepository();
 
     logInfo('GitHub Action: runGitHubAction started.');
 
@@ -263,9 +269,9 @@ export async function runGitHubAction(): Promise<void> {
     const pullRequestDesiredReviewersCount = parseIntegerInput(getInput(INPUT_KEYS.PULL_REQUEST_DESIRED_REVIEWERS_COUNT), 0);
     const pullRequestMergeTimeout = parseIntegerInput(getInput(INPUT_KEYS.PULL_REQUEST_MERGE_TIMEOUT), 0);
 
-    const execution = new Execution(
+    const execution = buildExecution({
         debug,
-        new SingleAction(
+        singleAction: new SingleAction(
             singleAction,
             singleActionIssue,
             singleActionVersion,
@@ -273,10 +279,10 @@ export async function runGitHubAction(): Promise<void> {
             singleActionChangelog,
         ),
         commitPrefixBuilder,
-        buildIssue(branchManagementAlways, reopenIssueOnPush, issueDesiredAssigneesCount),
-        buildPullRequest(pullRequestDesiredAssigneesCount, pullRequestDesiredReviewersCount, pullRequestMergeTimeout),
-        buildEmoji(titleEmoji, branchManagementEmoji),
-        buildImages({
+        issue: buildIssue(branchManagementAlways, reopenIssueOnPush, issueDesiredAssigneesCount, eventInputs),
+        pullRequest: buildPullRequest(pullRequestDesiredAssigneesCount, pullRequestDesiredReviewersCount, pullRequestMergeTimeout, eventInputs),
+        emoji: buildEmoji(titleEmoji, branchManagementEmoji),
+        images: buildImages({
             onIssue: imageConfiguration.onIssue,
             onPullRequest: imageConfiguration.onPullRequest,
             onCommit: imageConfiguration.onCommit,
@@ -284,8 +290,8 @@ export async function runGitHubAction(): Promise<void> {
             pullRequest: imageConfiguration.pullRequest,
             commit: imageConfiguration.commit,
         }),
-        buildTokens(token),
-        new Ai(
+        tokens: buildTokens(token),
+        ai: new Ai(
             opencodeServerUrl,
             opencodeModel,
             aiPullRequestDescription,
@@ -297,13 +303,13 @@ export async function runGitHubAction(): Promise<void> {
             bugbotFixVerifyCommands,
             agentTasks,
         ),
-        buildLabels({
+        labels: buildLabels({
             branching: { launcher: branchManagementLauncherLabel },
             workflow: { bug: bugLabel, bugfix: bugfixLabel, hotfix: hotfixLabel, enhancement: enhancementLabel, feature: featureLabel, release: releaseLabel, question: questionLabel, help: helpLabel, deploy: deployLabel, deployed: deployedLabel, docs: docsLabel, documentation: documentationLabel, chore: choreLabel, maintenance: maintenanceLabel },
             priorities: { high: priorityHighLabel, medium: priorityMediumLabel, low: priorityLowLabel, none: priorityNoneLabel },
             sizes: { xxl: sizeXxlLabel, xl: sizeXlLabel, l: sizeLLabel, m: sizeMLabel, s: sizeSLabel, xs: sizeXsLabel },
         }),
-        buildIssueTypes({
+        issueTypes: buildIssueTypes({
             task: { name: issueTypeTask, description: issueTypeTaskDescription, color: issueTypeTaskColor },
             bug: { name: issueTypeBug, description: issueTypeBugDescription, color: issueTypeBugColor },
             feature: { name: issueTypeFeature, description: issueTypeFeatureDescription, color: issueTypeFeatureColor },
@@ -314,8 +320,8 @@ export async function runGitHubAction(): Promise<void> {
             question: { name: issueTypeQuestion, description: issueTypeQuestionDescription, color: issueTypeQuestionColor },
             help: { name: issueTypeHelp, description: issueTypeHelpDescription, color: issueTypeHelpColor },
         }),
-        buildLocale(issueLocale, pullRequestLocale),
-        buildSizeThresholds({
+        locale: buildLocale(issueLocale, pullRequestLocale),
+        sizeThresholds: buildSizeThresholds({
             xxl: { lines: sizeXxlThresholdLines, files: sizeXxlThresholdFiles, commits: sizeXxlThresholdCommits },
             xl: { lines: sizeXlThresholdLines, files: sizeXlThresholdFiles, commits: sizeXlThresholdCommits },
             l: { lines: sizeLThresholdLines, files: sizeLThresholdFiles, commits: sizeLThresholdCommits },
@@ -323,8 +329,9 @@ export async function runGitHubAction(): Promise<void> {
             s: { lines: sizeSThresholdLines, files: sizeSThresholdFiles, commits: sizeSThresholdCommits },
             xs: { lines: sizeXsThresholdLines, files: sizeXsThresholdFiles, commits: sizeXsThresholdCommits },
         }),
-        buildBranches({
+        branches: buildBranches({
             main: mainBranch,
+            defaultBranch: mainBranch,
             development: developmentBranch,
             featureTree,
             bugfixTree,
@@ -333,25 +340,24 @@ export async function runGitHubAction(): Promise<void> {
             docsTree,
             choreTree,
         }),
-        new Release(),
-        new Hotfix(),
-        buildWorkflows(releaseWorkflow, hotfixWorkflow),
-        buildProjects({
+        release: new Release(),
+        hotfix: new Hotfix(),
+        workflows: buildWorkflows(releaseWorkflow, hotfixWorkflow),
+        projects: buildProjects({
             projects,
             issueCreated: projectColumnIssueCreated,
             pullRequestCreated: projectColumnPullRequestCreated,
             issueInProgress: projectColumnIssueInProgress,
             pullRequestInProgress: projectColumnPullRequestInProgress,
         }),
-        undefined,
-        undefined,
-    )
+        inputs: eventInputs,
+    });
 
     logDebugInfo(`Execution built. Event will be resolved in mainRun. Single action: ${execution.singleAction.currentSingleAction ?? 'none'}, AI PR description: ${execution.ai.getAiPullRequestDescription()}, bugbot min severity: ${execution.ai.getBugbotMinSeverity()}.`);
 
-    const results: Result[] = await mainRun(execution);
+    const results: Result[] = await mainRun(execution, projectRepository, repositoryFactory.createBranchRepository());
 
-    await finishWithResults(execution, results);
+    await finishWithResults(execution, results, repositoryFactory.createIssueRepository());
     } finally {
         if (managedOpencodeServer) {
             logInfo('Stopping OpenCode server...');
@@ -361,14 +367,14 @@ export async function runGitHubAction(): Promise<void> {
     }
 }
 
-async function finishWithResults(execution: Execution, results: Result[]): Promise<void> {
+async function finishWithResults(execution: Execution, results: Result[], issueRepository: ReturnType<RepositoryFactory['createIssueRepository']>): Promise<void> {
     const stepCount = results.reduce((acc, r) => acc + (r.steps?.length ?? 0), 0);
     const errorCount = results.reduce((acc, r) => acc + (r.errors?.length ?? 0), 0);
     logInfo(`Publishing result: ${results.length} result(s), ${stepCount} step(s), ${errorCount} error(s).`);
 
     execution.currentConfiguration.results = results;
-    await new PublishResultUseCase().invoke(execution);
-    await new StoreConfigurationUseCase().invoke(execution);
+    await new PublishResultUseCase(issueRepository).invoke(execution);
+    await new StoreConfigurationUseCase(new ConfigurationHandler(issueRepository)).invoke(execution);
     logInfo('Configuration stored. Finishing.');
 
     /**
@@ -382,12 +388,9 @@ async function finishWithResults(execution: Execution, results: Result[]): Promi
 function getInput(key: string, options?: { required?: boolean }): string {
     try {
         const inputVarsJson = process.env.INPUT_VARS_JSON;
-        if (inputVarsJson) {
-            const inputVars = JSON.parse(inputVarsJson);
-            const value = inputVars[`INPUT_${key.toUpperCase()}`];
-            if (value !== undefined) {
-                return value;
-            }
+        const value = resolveJsonInput(inputVarsJson, key);
+        if (value !== undefined) {
+            return value;
         }
     } catch (error) {
         logError(`Error parsing INPUT_VARS_JSON: ${JSON.stringify(error, null, 2)}`);

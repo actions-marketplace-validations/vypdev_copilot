@@ -20,11 +20,6 @@ jest.mock("../load_bugbot_context_use_case", () => ({
     loadBugbotContext: (...args: unknown[]) => mockLoadBugbotContext(...args),
 }));
 
-jest.mock("../../../../../../data/repository/ai_repository", () => ({
-    AiRepository: jest.fn().mockImplementation(() => ({ askAgent: mockAskAgent })),
-    OPENCODE_AGENT_PLAN: "plan",
-}));
-
 jest.mock("../../../../../../data/repository/pull_request_repository", () => ({
     PullRequestRepository: jest.fn().mockImplementation(() => ({
         getHeadBranchForIssue: mockGetHeadBranchForIssue,
@@ -71,7 +66,21 @@ describe("DetectBugbotFixIntentUseCase", () => {
     let useCase: DetectBugbotFixIntentUseCase;
 
     beforeEach(() => {
-        useCase = new DetectBugbotFixIntentUseCase();
+        const issuePort = { listIssueComments: jest.fn() };
+        const pullRequestPort = {
+            getHeadBranchForIssue: mockGetHeadBranchForIssue,
+            getPullRequestReviewCommentBody: mockGetPullRequestReviewCommentBody,
+            getOpenPullRequestNumbersByHeadBranch: jest.fn(),
+            listPullRequestReviewComments: jest.fn(),
+            getPullRequestHeadSha: jest.fn(),
+            getChangedFiles: jest.fn(),
+            getFilesWithFirstDiffLine: jest.fn(),
+        };
+        useCase = new DetectBugbotFixIntentUseCase(
+            pullRequestPort,
+            { query: (request: { configuration: unknown; agentId: string; prompt: string; options?: unknown }) => mockAskAgent(request.configuration, request.agentId, request.prompt, request.options) },
+            { issue: issuePort, pullRequest: pullRequestPort },
+        );
         mockLoadBugbotContext.mockReset();
         mockAskAgent.mockReset();
         mockGetHeadBranchForIssue.mockReset();
@@ -126,7 +135,8 @@ describe("DetectBugbotFixIntentUseCase", () => {
 
         expect(mockLoadBugbotContext).toHaveBeenCalledWith(
             expect.anything(),
-            expect.objectContaining({ branchOverride: "feature/42-pr" })
+            expect.objectContaining({ branchOverride: "feature/42-pr" }),
+            expect.objectContaining({ issue: expect.anything(), pullRequest: expect.anything() })
         );
     });
 

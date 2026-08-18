@@ -35,8 +35,8 @@ jest.mock("../steps/commit/bugbot/bugbot_autofix_use_case", () => ({
 
 const mockIsActorAllowedToModifyFiles = jest.fn();
 
-jest.mock("../../../data/repository/organization/organization_repository", () => ({
-    OrganizationRepository: jest.fn().mockImplementation(() => ({
+jest.mock("../../../data/repository/organization/actor_authorization_repository", () => ({
+    ActorAuthorizationRepository: jest.fn().mockImplementation(() => ({
         isActorAllowedToModifyFiles: mockIsActorAllowedToModifyFiles,
     })),
 }));
@@ -122,7 +122,18 @@ describe("IssueCommentUseCase", () => {
     let useCase: IssueCommentUseCase;
 
     beforeEach(() => {
-        useCase = new IssueCommentUseCase();
+        useCase = new IssueCommentUseCase(
+            { taskId: 'CheckIssueCommentLanguageUseCase', invoke: mockCheckLanguageInvoke },
+            { taskId: 'DetectBugbotFixIntentUseCase', invoke: mockDetectIntentInvoke },
+            { taskId: 'ThinkUseCase', invoke: mockThinkInvoke },
+            { taskId: 'BugbotAutofixUseCase', invoke: mockAutofixInvoke },
+            { taskId: 'DoUserRequestUseCase', invoke: mockDoUserRequestInvoke },
+            { updateComment: jest.fn() },
+            { isActorAllowedToModifyFiles: mockIsActorAllowedToModifyFiles },
+            { getUserFromToken: jest.fn(), getTokenUserDetails: jest.fn() },
+            { issueComments: { addComment: jest.fn(), updateComment: jest.fn() }, pullRequestComments: { createReviewWithComments: jest.fn(), updatePullRequestReviewComment: jest.fn(), listPullRequestReviewComments: jest.fn(), resolvePullRequestReviewThread: jest.fn() } },
+            { execute: jest.fn(), configureAuthor: jest.fn(), stageAll: jest.fn(), stagePaths: jest.fn(), commit: jest.fn(), push: jest.fn() },
+        );
         mockIsActorAllowedToModifyFiles.mockReset().mockResolvedValue(true);
         mockCheckLanguageInvoke.mockReset().mockResolvedValue([
             new Result({
@@ -425,7 +436,9 @@ describe("IssueCommentUseCase", () => {
         expect(mockRunUserRequestCommitAndPush).toHaveBeenCalledTimes(1);
         expect(mockRunUserRequestCommitAndPush).toHaveBeenCalledWith(
             expect.anything(),
-            expect.objectContaining({ branchOverride: "feature/296-from-issue" })
+            expect.objectContaining({ branchOverride: "feature/296-from-issue" }),
+            expect.anything(),
+            expect.anything()
         );
         expect(mockThinkInvoke).not.toHaveBeenCalled();
     });

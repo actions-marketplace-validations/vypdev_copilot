@@ -1,5 +1,5 @@
-import * as github from '@actions/github';
 import { logDebugInfo, logError } from '../../utils/logger';
+import type { GithubBranchMergeClient, GithubClientPort } from '../../application/ports/github_provider_ports';
 import { Result } from '../model/result';
 
 /**
@@ -13,6 +13,7 @@ import { Result } from '../model/result';
  * @see docs/single-actions/deploy-label-and-merge.mdx for the deploy flow and check-wait behaviour.
  */
 export class MergeRepository {
+    constructor(private readonly githubClient: GithubClientPort<GithubBranchMergeClient>) {}
 
     mergeBranch = async (
         owner: string,
@@ -24,7 +25,7 @@ export class MergeRepository {
     ): Promise<Result[]> => {
         const result: Result[] = [];
         try {
-            const octokit = github.getOctokit(token);
+            const octokit = this.githubClient.getClient(token);
             logDebugInfo(`Creating merge from ${head} into ${base}`);
 
             // Build PR body with commit list
@@ -211,7 +212,7 @@ This PR merges **${head}** into **${base}**.
 
             // If the PR workflow fails, we try to merge directly - need PAT for direct merge to ensure it can trigger workflows
             try {
-                const octokit = github.getOctokit(token);
+                const octokit = this.githubClient.getClient(token);
                 await octokit.rest.repos.merge({
                     owner: owner,
                     repo: repository,

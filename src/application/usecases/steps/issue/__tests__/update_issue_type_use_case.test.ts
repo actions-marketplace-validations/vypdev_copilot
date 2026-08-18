@@ -27,7 +27,7 @@ describe('UpdateIssueTypeUseCase', () => {
   let useCase: UpdateIssueTypeUseCase;
 
   beforeEach(() => {
-    useCase = new UpdateIssueTypeUseCase();
+    useCase = new UpdateIssueTypeUseCase({ setIssueType: mockSetIssueType });
     mockSetIssueType.mockReset();
   });
 

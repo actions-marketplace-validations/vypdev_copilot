@@ -1,7 +1,8 @@
-import * as github from "@actions/github";
 import { logDebugInfo, logError } from "../../../utils/logger";
+import type { GithubClientPort, GithubPullRequestLifecycleClient } from "../../../application/ports/github_provider_ports";
 
 export class PullRequestLifecycleRepository {
+    constructor(private readonly githubClient: GithubClientPort<GithubPullRequestLifecycleClient>) {}
     /**
      * Returns the list of open pull request numbers whose head branch equals the given branch.
      * Used to sync size/progress labels from the issue to PRs when they are updated on push.
@@ -12,7 +13,7 @@ export class PullRequestLifecycleRepository {
         headBranch: string,
         token: string,
     ): Promise<number[]> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         try {
             const { data } = await octokit.rest.pulls.list({
                 owner,
@@ -41,7 +42,7 @@ export class PullRequestLifecycleRepository {
         issueNumber: number,
         token: string
     ): Promise<string | undefined> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         const escaped = String(issueNumber).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const bodyRefRegex = new RegExp(`(?:^|[^\\d])#${escaped}(?:$|[^\\d])`);
         const headRefRegex = new RegExp(`\\b${escaped}\\b`);
@@ -98,7 +99,7 @@ export class PullRequestLifecycleRepository {
         branch: string,
         token: string,
     ) => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         await octokit.rest.pulls.update({
             owner: owner,
             repo: repository,
@@ -116,7 +117,7 @@ export class PullRequestLifecycleRepository {
         description: string,
         token: string,
     ) => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         await octokit.rest.pulls.update({
             owner: owner,
             repo: repository,

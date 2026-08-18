@@ -1,11 +1,10 @@
 import { isAgentConfigurationReady } from '../../../../data/model/agent';
 import { Execution } from '../../../../data/model/execution';
 import { Result } from '../../../../data/model/result';
-import { OPENCODE_AGENT_PLAN } from '../../../../data/repository/agent_task_policy';
-import type { FindingsQueryPort } from '../../../../data/repository/agent_ports';
-import { DefaultAgentRepositoryFactory } from '../../../../data/repository/agent_repository_factory';
-import { THINK_RESPONSE_SCHEMA } from '../../../../data/repository/agent_response_schemas';
-import { IssueRepository } from '../../../../data/repository/issue_repository';
+import { OPENCODE_AGENT_PLAN } from '../../../../application/policies/agent_task_policy';
+import type { FindingsQueryPort } from '../../../ports/agent_ports';
+import { THINK_RESPONSE_SCHEMA } from '../../../../application/policies/agent_response_schemas';
+import type { IssueDescriptionQueryPort, IssueNotificationPort } from '../../../ports/issue_ports';
 import { getThinkPrompt } from '../../../../prompts';
 import { logDebugInfo, logError, logInfo } from '../../../../utils/logger';
 import { OPENCODE_PROJECT_CONTEXT_INSTRUCTION } from '../../../../utils/opencode_project_context_instruction';
@@ -15,8 +14,14 @@ import { extractMentionQuestion, getThinkCommentBody } from './think_input_polic
 
 export class ThinkUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'ThinkUseCase';
-    private aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings();
-    private issueRepository: IssueRepository = new IssueRepository();
+    private aiRepository: FindingsQueryPort;
+    constructor(
+        private readonly issueDescriptionQueryPort: IssueDescriptionQueryPort,
+        private readonly issueNotificationPort: IssueNotificationPort,
+        aiRepository: FindingsQueryPort,
+    ) {
+        this.aiRepository = aiRepository;
+    }
 
     async invoke(param: Execution): Promise<Result[]> {
         const results: Result[] = [];
@@ -94,7 +99,7 @@ export class ThinkUseCase implements ParamUseCase<Execution, Result[]> {
                 param.issue.isIssueComment ? param.issue.number : param.issueNumber;
             let issueDescription = '';
             if (issueNumberForContext > 0) {
-                const desc = await this.issueRepository.getDescription(
+                const desc = await this.issueDescriptionQueryPort.getDescription(
                     param.owner,
                     param.repo,
                     issueNumberForContext,
@@ -115,10 +120,15 @@ export class ThinkUseCase implements ParamUseCase<Execution, Result[]> {
                 question,
             });
             logDebugInfo(`Think: calling OpenCode Plan agent (prompt length=${prompt.length}).`);
-            const response = await this.aiRepository.askAgent(param.ai, OPENCODE_AGENT_PLAN, prompt, {
-                expectJson: true,
-                schema: THINK_RESPONSE_SCHEMA as unknown as Record<string, unknown>,
-                schemaName: 'think_response',
+            const response = await this.aiRepository.query({
+                configuration: param.ai?.getAgentConfiguration('findings'),
+                agentId: OPENCODE_AGENT_PLAN,
+                prompt,
+                options: {
+                    expectJson: true,
+                    schema: THINK_RESPONSE_SCHEMA as unknown as Record<string, unknown>,
+                    schemaName: 'think_response',
+                },
             });
             const answer = extractStructuredAnswer(response);
 
@@ -153,7 +163,7 @@ export class ThinkUseCase implements ParamUseCase<Execution, Result[]> {
                 return results;
             }
 
-            await this.issueRepository.addComment(
+            await this.issueNotificationPort.addComment(
                 param.owner,
                 param.repo,
                 issueOrPrNumber,

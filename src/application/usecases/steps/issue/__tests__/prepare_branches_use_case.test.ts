@@ -66,7 +66,7 @@ describe('PrepareBranchesUseCase', () => {
 
   beforeEach(() => {
     jest.useFakeTimers();
-    useCase = new PrepareBranchesUseCase();
+    useCase = new PrepareBranchesUseCase({ moveIssueToColumn: jest.fn(), setTaskPriority: jest.fn(), setTaskSize: jest.fn() }, { fetchRemoteBranches: mockFetchRemoteBranches, getListOfBranches: mockGetListOfBranches, getCommitTag: mockGetCommitTag, createLinkedBranch: mockCreateLinkedBranch, manageBranches: mockManageBranches, removeBranch: jest.fn(), formatBranchName: jest.fn() });
     jest.clearAllMocks();
     mockFetchRemoteBranches.mockResolvedValue(undefined);
     mockGetListOfBranches.mockResolvedValue(['develop', 'main']);

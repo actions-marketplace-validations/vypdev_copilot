@@ -1,13 +1,12 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import { OPENCODE_AGENT_PLAN } from "../../../../data/repository/agent_task_policy";
-import type { FindingsQueryPort } from "../../../../data/repository/agent_ports";
-import { DefaultAgentRepositoryFactory } from "../../../../data/repository/agent_repository_factory";
+import { OPENCODE_AGENT_PLAN } from "../../../../application/policies/agent_task_policy";
+import type { FindingsQueryPort } from "../../../ports/agent_ports";
 import {
     LANGUAGE_CHECK_RESPONSE_SCHEMA,
     TRANSLATION_RESPONSE_SCHEMA,
-} from "../../../../data/repository/agent_response_schemas";
-import { IssueRepository } from "../../../../data/repository/issue_repository";
+} from "../../../../application/policies/agent_response_schemas";
+import type { IssueCommentUpdatePort } from "../../../../application/ports/issue_ports";
 import { getCheckCommentLanguagePrompt, getTranslateCommentPrompt } from "../../../../prompts";
 import { logDebugInfo, logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
@@ -16,8 +15,10 @@ import { ParamUseCase } from "../../base/param_usecase";
 export class CheckPullRequestCommentLanguageUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'CheckPullRequestCommentLanguageUseCase';
 
-    private aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings();
-    private issueRepository = new IssueRepository();
+    constructor(
+        private readonly issueRepository: IssueCommentUpdatePort,
+        private readonly aiRepository: FindingsQueryPort,
+    ) {}
     private translatedKey = `<!-- content_translated
 If you'd like this comment to be translated again, please delete the entire comment, including this message. It will then be processed as a new one.
 -->`;
@@ -43,16 +44,16 @@ If you'd like this comment to be translated again, please delete the entire comm
         const locale = param.locale.pullRequest;
         let prompt = getCheckCommentLanguagePrompt({ locale, commentBody });
         logDebugInfo(`CheckPullRequestCommentLanguage: locale=${locale}, comment length=${commentBody.length}. Calling OpenCode for language check.`);
-        const checkResponse = await this.aiRepository.askAgent(
-            param.ai,
-            OPENCODE_AGENT_PLAN,
+        const checkResponse = await this.aiRepository.query({
+            configuration: param.ai?.getAgentConfiguration('findings'),
+            agentId: OPENCODE_AGENT_PLAN,
             prompt,
-            {
+            options: {
                 expectJson: true,
                 schema: LANGUAGE_CHECK_RESPONSE_SCHEMA as unknown as Record<string, unknown>,
                 schemaName: 'language_check_response',
             },
-        );
+        });
         const status =
             checkResponse != null &&
             typeof checkResponse === 'object' &&
@@ -73,16 +74,16 @@ If you'd like this comment to be translated again, please delete the entire comm
 
         prompt = getTranslateCommentPrompt({ locale, commentBody });
         logDebugInfo(`CheckPullRequestCommentLanguage: translating comment (prompt length=${prompt.length}).`);
-        const translationResponse = await this.aiRepository.askAgent(
-            param.ai,
-            OPENCODE_AGENT_PLAN,
+        const translationResponse = await this.aiRepository.query({
+            configuration: param.ai?.getAgentConfiguration('findings'),
+            agentId: OPENCODE_AGENT_PLAN,
             prompt,
-            {
+            options: {
                 expectJson: true,
                 schema: TRANSLATION_RESPONSE_SCHEMA as unknown as Record<string, unknown>,
                 schemaName: 'translation_response',
             },
-        );
+        });
 
         const translatedText =
             translationResponse != null &&

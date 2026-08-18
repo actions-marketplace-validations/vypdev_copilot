@@ -4,7 +4,7 @@ import {
     PROGRESS_LABEL_PATTERN,
     PROGRESS_LABEL_PERCENTS,
     progressPercentToColor,
-} from '../progress_labels';
+} from '../../../application/policies/progress_labels';
 
 export interface EnsureLabelResult {
     created: boolean;

@@ -1,7 +1,6 @@
 import { INPUT_KEYS } from "../../utils/constants";
 import { extractIssueNumberFromBranch, extractIssueNumberFromPush } from "../../utils/title_utils";
-import { IssueRepository } from "../repository/issue_repository";
-import type { Execution } from "./execution";
+import type { Execution, ExecutionIssueSetupPort } from "./execution";
 
 /**
  * Resolves the issue/PR number that drives an execution and records the
@@ -10,7 +9,7 @@ import type { Execution } from "./execution";
  */
 export async function resolveExecutionIssueNumber(
     execution: Execution,
-    issueRepository: Pick<IssueRepository, "isPullRequest" | "isIssue" | "getHeadBranch">,
+    issueRepository: Pick<ExecutionIssueSetupPort, "isPullRequest" | "isIssue" | "getHeadBranch">,
 ): Promise<number | undefined> {
     if (execution.isSingleAction) {
         if (execution.inputs?.[INPUT_KEYS.SINGLE_ACTION_ISSUE]) {

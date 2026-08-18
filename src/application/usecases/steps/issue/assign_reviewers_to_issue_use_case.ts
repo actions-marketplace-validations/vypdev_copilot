@@ -1,8 +1,8 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import { IssueRepository } from "../../../../data/repository/issue_repository";
-import { OrganizationRepository } from "../../../../data/repository/organization/organization_repository";
-import { PullRequestRepository } from "../../../../data/repository/pull_request_repository";
+import type { IssueAssigneePort } from "../../../../application/ports/issue_ports";
+import type { OrganizationMembersPort } from "../../../../application/ports/organization_ports";
+import type { PullRequestReviewPort } from "../../../../application/ports/pull_request_ports";
 import { logDebugInfo, logError, logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
 import { ParamUseCase } from "../../base/param_usecase";
@@ -10,9 +10,7 @@ import { ParamUseCase } from "../../base/param_usecase";
 export class AssignReviewersToIssueUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'AssignReviewersToIssueUseCase';
     
-    private issueRepository = new IssueRepository();
-    private pullRequestRepository = new PullRequestRepository();
-    private projectRepository = new OrganizationRepository();
+    constructor(private readonly issueRepository: IssueAssigneePort, private readonly pullRequestRepository: PullRequestReviewPort, private readonly projectRepository: OrganizationMembersPort) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`)

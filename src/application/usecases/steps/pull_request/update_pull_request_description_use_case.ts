@@ -1,11 +1,10 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import { OPENCODE_AGENT_PLAN } from "../../../../data/repository/agent_task_policy";
-import type { FindingsQueryPort } from "../../../../data/repository/agent_ports";
-import { DefaultAgentRepositoryFactory } from "../../../../data/repository/agent_repository_factory";
-import { IssueRepository } from "../../../../data/repository/issue_repository";
-import { OrganizationRepository } from "../../../../data/repository/organization/organization_repository";
-import { PullRequestRepository } from "../../../../data/repository/pull_request_repository";
+import { OPENCODE_AGENT_PLAN } from "../../../../application/policies/agent_task_policy";
+import type { FindingsQueryPort } from "../../../ports/agent_ports";
+import type { IssueDescriptionQueryPort } from "../../../ports/issue_ports";
+import type { OrganizationMembersPort } from "../../../ports/organization_ports";
+import type { PullRequestDescriptionCommandPort } from "../../../ports/pull_request_ports";
 import { getUpdatePullRequestDescriptionPrompt } from "../../../../prompts";
 import { logDebugInfo, logError, logInfo } from "../../../../utils/logger";
 import { OPENCODE_PROJECT_CONTEXT_INSTRUCTION } from "../../../../utils/opencode_project_context_instruction";
@@ -15,10 +14,15 @@ import { ParamUseCase } from "../../base/param_usecase";
 export class UpdatePullRequestDescriptionUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'UpdatePullRequestDescriptionUseCase';
 
-    private aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings();
-    private pullRequestRepository = new PullRequestRepository();
-    private issueRepository = new IssueRepository();
-    private projectRepository = new OrganizationRepository();
+    private aiRepository: FindingsQueryPort;
+    constructor(
+        private readonly pullRequestDescriptionCommandPort: PullRequestDescriptionCommandPort,
+        private readonly issueDescriptionQueryPort: IssueDescriptionQueryPort,
+        private readonly organizationMembersPort: OrganizationMembersPort,
+        aiRepository: FindingsQueryPort,
+    ) {
+        this.aiRepository = aiRepository;
+    }
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId} (AI PR description).`);
@@ -48,12 +52,12 @@ export class UpdatePullRequestDescriptionUseCase implements ParamUseCase<Executi
                 `PR description will be generated from workspace diff: base "${baseBranch}", head "${headBranch}" (OpenCode agent will run git diff).`
             );
 
-            const issueDescription = await this.issueRepository.getIssueDescription(
+            const issueDescription = (await this.issueDescriptionQueryPort.getDescription(
                 param.owner,
                 param.repo,
                 param.issueNumber,
                 param.tokens.token
-            );
+            )) ?? '';
 
             if (issueDescription.length === 0) {
                 result.push(
@@ -69,7 +73,7 @@ export class UpdatePullRequestDescriptionUseCase implements ParamUseCase<Executi
                 return result;
             }
 
-            const currentProjectMembers = await this.projectRepository.getAllMembers(
+            const currentProjectMembers = await this.organizationMembersPort.getAllMembers(
                 param.owner,
                 param.tokens.token
             );
@@ -100,11 +104,11 @@ export class UpdatePullRequestDescriptionUseCase implements ParamUseCase<Executi
             });
 
             logDebugInfo(`UpdatePullRequestDescription: prompt length=${prompt.length}, issue description length=${issueDescription.length}. Calling OpenCode Plan agent.`);
-            const agentResponse = await this.aiRepository.askAgent(
-                param.ai,
-                OPENCODE_AGENT_PLAN,
-                prompt
-            );
+            const agentResponse = await this.aiRepository.query({
+                configuration: param.ai?.getAgentConfiguration('findings'),
+                agentId: OPENCODE_AGENT_PLAN,
+                prompt,
+            });
 
             const prBody =
                 typeof agentResponse === 'string'
@@ -125,7 +129,7 @@ export class UpdatePullRequestDescriptionUseCase implements ParamUseCase<Executi
                 return result;
             }
 
-            await this.pullRequestRepository.updateDescription(
+            await this.pullRequestDescriptionCommandPort.updateDescription(
                 param.owner,
                 param.repo,
                 prNumber,

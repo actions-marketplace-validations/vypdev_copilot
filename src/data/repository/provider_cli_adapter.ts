@@ -1,5 +1,5 @@
 import type { AgentConfiguration } from '../model/agent';
-import type { AgentCliPort } from './agent_ports';
+import type { AgentCliPort } from '../../infrastructure/agents/ports/agent_provider_ports';
 import { AgentCliClient } from './agent_cli_client';
 
 export interface ProviderCliExecution {

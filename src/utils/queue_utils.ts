@@ -1,11 +1,12 @@
 import { Execution } from "../data/model/execution";
 import { WorkflowRepository } from "../data/repository/workflow_repository";
+import { OctokitWorkflowClientAdapter } from "../infrastructure/github/octokit_client";
 import { logDebugInfo } from "./logger";
 
 export const waitForPreviousRuns = async (params: Execution): Promise<void> => {
     let attempts = 0;
     while (attempts < 2000) {
-      const workflowRepository = new WorkflowRepository();
+      const workflowRepository = new WorkflowRepository(new OctokitWorkflowClientAdapter());
       const activeRuns = await workflowRepository.getActivePreviousRuns(params);
       if (activeRuns.length === 0) {
         logDebugInfo("✅ No previous runs active. Continuing...");

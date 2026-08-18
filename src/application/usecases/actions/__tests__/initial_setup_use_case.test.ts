@@ -31,8 +31,8 @@ jest.mock('../../../../data/repository/release/repository_release_repository', (
 }));
 
 const mockGetUserFromToken = jest.fn();
-jest.mock('../../../../data/repository/organization/organization_repository', () => ({
-  OrganizationRepository: jest.fn().mockImplementation(() => ({
+jest.mock('../../../../data/repository/organization/authenticated_user_repository', () => ({
+  AuthenticatedUserRepository: jest.fn().mockImplementation(() => ({
     getUserFromToken: mockGetUserFromToken,
   })),
 }));
@@ -86,7 +86,14 @@ describe('InitialSetupUseCase', () => {
   let useCase: InitialSetupUseCase;
 
   beforeEach(() => {
-    useCase = new InitialSetupUseCase();
+    useCase = new InitialSetupUseCase(
+      { getUserFromToken: mockGetUserFromToken, getTokenUserDetails: jest.fn() },
+      { ensureLabels: mockEnsureLabels },
+      { ensureProgressLabels: mockEnsureProgressLabels },
+      { ensureIssueTypes: mockEnsureIssueTypes },
+      { getLatestTag: mockGetLatestTag },
+      { getDefaultBranch: mockGetDefaultBranch, createTag: mockCreateTag } as any,
+    );
     mockEnsureGitHubDirs.mockClear();
     mockCopySetupFiles.mockReturnValue({ copied: 2, skipped: 0 });
     mockHasValidSetupToken.mockReturnValue(true);

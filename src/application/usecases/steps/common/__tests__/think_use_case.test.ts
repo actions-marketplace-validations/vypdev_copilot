@@ -10,15 +10,6 @@ jest.mock('../../../../../utils/logger', () => ({
 const mockAskAgent = jest.fn();
 const mockAddComment = jest.fn();
 const mockGetDescription = jest.fn();
-jest.mock('../../../../../data/repository/ai_repository', () => ({
-  AiRepository: jest.fn().mockImplementation(() => ({ askAgent: mockAskAgent })),
-}));
-jest.mock('../../../../../data/repository/issue_repository', () => ({
-  IssueRepository: jest.fn().mockImplementation(() => ({
-    addComment: mockAddComment,
-    getDescription: mockGetDescription,
-  })),
-}));
 
 function baseParam(overrides: Record<string, unknown> = {}) {
   return {
@@ -47,7 +38,11 @@ describe('ThinkUseCase', () => {
   let useCase: ThinkUseCase;
 
   beforeEach(() => {
-    useCase = new ThinkUseCase();
+    useCase = new ThinkUseCase(
+      { getDescription: mockGetDescription },
+      { addComment: mockAddComment, openIssue: jest.fn() },
+      { query: (request: { configuration: unknown; agentId: string; prompt: string; options?: unknown }) => mockAskAgent(request.configuration, request.agentId, request.prompt, request.options) },
+    );
     mockAskAgent.mockReset();
     mockAddComment.mockReset();
     mockGetDescription.mockReset();

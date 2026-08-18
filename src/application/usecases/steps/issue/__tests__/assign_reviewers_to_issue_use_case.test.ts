@@ -22,8 +22,8 @@ jest.mock('../../../../../data/repository/issue_repository', () => ({
     getCurrentAssignees: mockGetCurrentAssignees,
   })),
 }));
-jest.mock('../../../../../data/repository/organization/organization_repository', () => ({
-  OrganizationRepository: jest.fn().mockImplementation(() => ({
+jest.mock('../../../../../data/repository/organization/organization_members_repository', () => ({
+  OrganizationMembersRepository: jest.fn().mockImplementation(() => ({
     getRandomMembers: mockGetRandomMembers,
   })),
 }));
@@ -46,7 +46,7 @@ describe('AssignReviewersToIssueUseCase', () => {
   let useCase: AssignReviewersToIssueUseCase;
 
   beforeEach(() => {
-    useCase = new AssignReviewersToIssueUseCase();
+    useCase = new AssignReviewersToIssueUseCase({ getCurrentAssignees: mockGetCurrentAssignees, assignMembersToIssue: jest.fn() }, { getCurrentReviewers: mockGetCurrentReviewers, addReviewersToPullRequest: mockAddReviewersToPullRequest }, { getAllMembers: jest.fn(), getRandomMembers: mockGetRandomMembers });
     mockGetCurrentReviewers.mockReset();
     mockGetCurrentAssignees.mockReset();
     mockGetRandomMembers.mockReset();

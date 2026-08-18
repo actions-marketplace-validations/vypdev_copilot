@@ -11,9 +11,6 @@ If you'd like this comment to be translated again, please delete the entire comm
 
 const mockAskAgent = jest.fn();
 const mockUpdateComment = jest.fn();
-jest.mock('../../../../../data/repository/ai_repository', () => ({
-  AiRepository: jest.fn().mockImplementation(() => ({ askAgent: mockAskAgent })),
-}));
 jest.mock('../../../../../data/repository/issue_repository', () => ({
   IssueRepository: jest.fn().mockImplementation(() => ({ updateComment: mockUpdateComment })),
 }));
@@ -25,7 +22,7 @@ function baseParam(overrides: Record<string, unknown> = {}) {
     issue: { number: 1, commentId: 42, commentBody: 'Hello world' },
     tokens: { token: 't' },
     locale: { issue: 'Spanish' },
-    ai: {},
+    ai: { getAgentConfiguration: () => ({ provider: 'opencode', transport: 'server', model: 'model', serverUrl: 'http://localhost' }) },
     ...overrides,
   } as unknown as Parameters<CheckIssueCommentLanguageUseCase['invoke']>[0];
 }
@@ -34,7 +31,7 @@ describe('CheckIssueCommentLanguageUseCase', () => {
   let useCase: CheckIssueCommentLanguageUseCase;
 
   beforeEach(() => {
-    useCase = new CheckIssueCommentLanguageUseCase();
+    useCase = new CheckIssueCommentLanguageUseCase({ updateComment: mockUpdateComment }, { query: (request: { configuration: unknown; agentId: string; prompt: string; options?: unknown }) => mockAskAgent(request.configuration, request.agentId, request.prompt, request.options) });
     mockAskAgent.mockReset();
     mockUpdateComment.mockReset();
   });

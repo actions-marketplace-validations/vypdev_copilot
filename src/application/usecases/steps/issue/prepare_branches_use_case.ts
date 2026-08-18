@@ -1,7 +1,7 @@
 import * as core from "@actions/core";
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import { BranchRepository } from "../../../../data/repository/branch_repository";
+import type { BranchPreparationPort } from "../../../ports/branch_ports";
 import { logDebugInfo, logError, logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
 import { ParamUseCase } from "../../base/param_usecase";
@@ -10,10 +10,11 @@ import { MoveIssueToInProgressUseCase } from "./move_issue_to_in_progress";
 import { prepareHotfixBranch } from "./prepare_hotfix_branch";
 import { prepareReleaseBranch } from "./prepare_release_branch";
 import { selectBranchPreparationStrategy } from "./branch_preparation_strategy";
+import type { ProjectBoardCommandPort } from "../../../../application/ports/project_board_ports";
 
 export class PrepareBranchesUseCase implements ParamUseCase<Execution, Result[]> {
     taskId = "PrepareBranchesUseCase";
-    private branchRepository = new BranchRepository();
+    constructor(private readonly projectBoardPort: ProjectBoardCommandPort, private readonly branchPreparationPort: BranchPreparationPort) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`);
@@ -32,7 +33,7 @@ export class PrepareBranchesUseCase implements ParamUseCase<Execution, Result[]>
                 ];
             }
 
-            await this.branchRepository.fetchRemoteBranches();
+            await this.branchPreparationPort.fetchRemoteBranches();
             result.push(
                 new Result({
                     id: this.taskId,
@@ -41,7 +42,7 @@ export class PrepareBranchesUseCase implements ParamUseCase<Execution, Result[]>
                     reminders: ["Take a coffee break while you work ☕."],
                 })
             );
-            const branches = await this.branchRepository.getListOfBranches(
+            const branches = await this.branchPreparationPort.getListOfBranches(
                 param.owner,
                 param.repo,
                 param.tokens.token
@@ -54,12 +55,12 @@ export class PrepareBranchesUseCase implements ParamUseCase<Execution, Result[]>
             });
             if (strategy === "hotfix") {
                 return result.concat(
-                    await prepareHotfixBranch(param, this.branchRepository, branches, this.taskId)
+                    await prepareHotfixBranch(param, this.branchPreparationPort, branches, this.taskId)
                 );
             }
             if (strategy === "release") {
                 return result.concat(
-                    await prepareReleaseBranch(param, this.branchRepository, branches, this.taskId)
+                    await prepareReleaseBranch(param, this.branchPreparationPort, branches, this.taskId)
                 );
             }
 
@@ -85,7 +86,7 @@ export class PrepareBranchesUseCase implements ParamUseCase<Execution, Result[]>
 
     private async prepareManagedBranch(param: Execution, issueTitle: string): Promise<Result[]> {
         logDebugInfo(`Branch type: ${param.managementBranch}`);
-        const branchesResult = await this.branchRepository.manageBranches(
+        const branchesResult = await this.branchPreparationPort.manageBranches(
             param,
             param.owner,
             param.repo,
@@ -140,7 +141,7 @@ export class PrepareBranchesUseCase implements ParamUseCase<Execution, Result[]>
             );
         }
         await new Promise((resolve) => setTimeout(resolve, 10000));
-        result.push(...(await new MoveIssueToInProgressUseCase().invoke(param)));
+        result.push(...(await new MoveIssueToInProgressUseCase(this.projectBoardPort).invoke(param)));
         return result;
     }
 

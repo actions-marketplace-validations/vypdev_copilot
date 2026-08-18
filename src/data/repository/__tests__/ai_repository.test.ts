@@ -1,14 +1,18 @@
 /**
- * Integration-style tests for AiRepository with mocked fetch.
+ * Integration-style tests for the findings/fixer capability adapters with mocked fetch.
  * Covers edge cases for the OpenCode-based architecture: missing config,
  * session/message failures, empty/invalid responses, JSON parsing, reasoning, getSessionDiff,
  * and retry behavior (OPENCODE_MAX_RETRIES).
  */
 
 import { OPENCODE_MAX_RETRIES, OPENCODE_RETRY_DELAY_MS } from '../../../utils/constants';
-import { AiRepository } from '../ai_repository';
+import { FindingsAgentAdapter } from '../ai/findings_agent_adapter';
+import { FixerAgentAdapter } from '../ai/fixer_agent_adapter';
+import type { AgentCapabilityInfrastructure } from '../ai/agent_capability_adapter';
 import { getSessionDiff } from '../opencode_session_diff_client';
 import { Ai } from '../../model/ai';
+import { OpenCodeHttpClient } from '../opencode_http_client';
+import { OPENCODE_REQUEST_TIMEOUT_MS } from '../../../utils/constants';
 
 jest.mock('../../../utils/logger', () => ({
   logDebugInfo: jest.fn(),
@@ -22,14 +26,36 @@ function createAi(serverUrl = 'http://localhost:4096', model = 'opencode/kimi-k2
   return new Ai(serverUrl, model, false, false, [], false, 'low', 20);
 }
 
-describe('AiRepository', () => {
-  let repo: AiRepository;
+function query(repository: FindingsAgentAdapter, ai: Ai, agentId: string, prompt: string, options: Record<string, unknown> = {}) {
+  return repository.query({
+    configuration: ai.getAgentConfiguration('findings'),
+    agentId,
+    prompt,
+    options,
+  });
+}
+
+function fix(repository: FixerAgentAdapter, ai: Ai, prompt: string) {
+  return repository.fix({
+    configuration: ai.getAgentConfiguration('fixer'),
+    prompt,
+  });
+}
+
+describe('Agent capability adapters', () => {
+  let repo: FindingsAgentAdapter;
+  let fixer: FixerAgentAdapter;
 
 
 
   beforeEach(() => {
     jest.useFakeTimers();
-    repo = new AiRepository();
+    const infrastructure: AgentCapabilityInfrastructure = {
+      cli: { execute: jest.fn() },
+      openCode: new OpenCodeHttpClient({ requestTimeoutMs: OPENCODE_REQUEST_TIMEOUT_MS }),
+    };
+    repo = new FindingsAgentAdapter(infrastructure);
+    fixer = new FixerAgentAdapter(infrastructure);
     mockFetch.mockReset();
     (global as unknown as { fetch: typeof fetch }).fetch = mockFetch;
   });
@@ -41,9 +67,9 @@ describe('AiRepository', () => {
       findings: { provider: 'cursor', transport: 'cli', model: 'cursor', command: 'cursor-agent' },
       fixer: { provider: 'cursor', transport: 'cli', model: 'cursor', command: 'cursor-agent' },
     });
-    const injectedRepo = new AiRepository(cli, http);
+    const injectedRepo = new FindingsAgentAdapter({ cli, openCode: http });
 
-    const result = await injectedRepo.askAgent(ai, 'findings', 'inspect', { expectJson: true, schema: { type: 'object' } });
+    const result = await query(injectedRepo, ai, 'findings', 'inspect', { expectJson: true, schema: { type: 'object' } });
 
     expect(result).toEqual({ findings: [] });
     expect(cli.execute).toHaveBeenCalledTimes(1);
@@ -58,7 +84,7 @@ describe('AiRepository', () => {
   describe('askAgent', () => {
     it('returns undefined when server URL is missing', async () => {
       const ai = createAi('', 'opencode/model');
-      const result = await repo.askAgent(ai, 'plan', 'Assess progress', {});
+      const result = await query(repo, ai, 'plan', 'Assess progress', {});
       expect(result).toBeUndefined();
       expect(mockFetch).not.toHaveBeenCalled();
     });
@@ -66,7 +92,7 @@ describe('AiRepository', () => {
     it('returns undefined when session create fails after all retries', async () => {
       const ai = createAi();
       mockFetch.mockResolvedValue({ ok: false, status: 503, text: async () => 'Unavailable' });
-      const promise = repo.askAgent(ai, 'plan', 'Prompt', {});
+      const promise = query(repo, ai, 'plan', 'Prompt', {});
       await jest.advanceTimersByTimeAsync((OPENCODE_MAX_RETRIES - 1) * OPENCODE_RETRY_DELAY_MS);
       const result = await promise;
       expect(result).toBeUndefined();
@@ -76,7 +102,7 @@ describe('AiRepository', () => {
     it('returns undefined when session create returns empty body after all retries', async () => {
       const ai = createAi();
       mockFetch.mockResolvedValue({ ok: true, text: async () => '' });
-      const promise = repo.askAgent(ai, 'plan', 'Prompt', {});
+      const promise = query(repo, ai, 'plan', 'Prompt', {});
       await jest.advanceTimersByTimeAsync((OPENCODE_MAX_RETRIES - 1) * OPENCODE_RETRY_DELAY_MS);
       const result = await promise;
       expect(result).toBeUndefined();
@@ -90,7 +116,7 @@ describe('AiRepository', () => {
       for (let i = 0; i < OPENCODE_MAX_RETRIES; i++) {
         mockFetch.mockResolvedValueOnce(sessionOk).mockResolvedValueOnce(messageFail);
       }
-      const promise = repo.askAgent(ai, 'plan', 'Prompt', {});
+      const promise = query(repo, ai, 'plan', 'Prompt', {});
       await jest.advanceTimersByTimeAsync((OPENCODE_MAX_RETRIES - 1) * OPENCODE_RETRY_DELAY_MS);
       const result = await promise;
       expect(result).toBeUndefined();
@@ -112,7 +138,7 @@ describe('AiRepository', () => {
               parts: [{ type: 'text', text: 'Just a string response' }],
             }),
         });
-      const result = await repo.askAgent(ai, 'plan', 'Prompt', {});
+      const result = await query(repo, ai, 'plan', 'Prompt', {});
       expect(result).toBe('Just a string response');
     });
 
@@ -131,7 +157,7 @@ describe('AiRepository', () => {
               parts: [{ type: 'text', text: '{"progress": 75, "summary": "Almost done"}' }],
             }),
         });
-      const result = await repo.askAgent(ai, 'plan', 'Assess', {
+      const result = await query(repo, ai, 'plan', 'Assess', {
         expectJson: true,
         schema: { type: 'object', properties: { progress: {}, summary: {} } },
       });
@@ -158,7 +184,7 @@ describe('AiRepository', () => {
               ],
             }),
         });
-      const result = await repo.askAgent(ai, 'plan', 'Assess', {
+      const result = await query(repo, ai, 'plan', 'Assess', {
         expectJson: true,
         schema: {},
       });
@@ -185,7 +211,7 @@ describe('AiRepository', () => {
               ],
             }),
         });
-      const result = await repo.askAgent(ai, 'plan', 'Assess', {
+      const result = await query(repo, ai, 'plan', 'Assess', {
         expectJson: true,
         schema: {},
       });
@@ -210,7 +236,7 @@ describe('AiRepository', () => {
               ],
             }),
         });
-      const result = await repo.askAgent(ai, 'plan', 'Assess', {
+      const result = await query(repo, ai, 'plan', 'Assess', {
         expectJson: true,
         schema: {},
         includeReasoning: true,
@@ -236,7 +262,7 @@ describe('AiRepository', () => {
       for (let i = 0; i < OPENCODE_MAX_RETRIES; i++) {
         mockFetch.mockResolvedValueOnce(sessionOk).mockResolvedValueOnce(messageInvalidJson);
       }
-      const promise = repo.askAgent(ai, 'plan', 'Assess', { expectJson: true, schema: {} });
+      const promise = query(repo, ai, 'plan', 'Assess', { expectJson: true, schema: {} });
       await jest.advanceTimersByTimeAsync((OPENCODE_MAX_RETRIES - 1) * OPENCODE_RETRY_DELAY_MS);
       const result = await promise;
       expect(result).toBeUndefined();
@@ -265,7 +291,7 @@ describe('AiRepository', () => {
               parts: [{ type: 'text', text: '{"progress": 80, "summary": "Done"}' }],
             }),
         });
-      const promise = repo.askAgent(ai, 'plan', 'Assess', { expectJson: true, schema: {} });
+      const promise = query(repo, ai, 'plan', 'Assess', { expectJson: true, schema: {} });
       await jest.advanceTimersByTimeAsync(OPENCODE_RETRY_DELAY_MS);
       const result = await promise;
       expect(result).toEqual({ progress: 80, summary: 'Done' });
@@ -284,7 +310,7 @@ describe('AiRepository', () => {
           status: 200,
           text: async () => JSON.stringify({ parts: [{ type: 'text', text: 'OK' }] }),
         });
-      await repo.askAgent(ai, 'plan', 'P', {});
+      await query(repo, ai, 'plan', 'P', {});
       expect(mockFetch).toHaveBeenNthCalledWith(1, 'http://localhost:4096/session', expect.any(Object));
     });
 
@@ -303,7 +329,7 @@ describe('AiRepository', () => {
               parts: [{ type: 'text', text: '{"answer": "ok"}' }],
             }),
         });
-      const result = await repo.askAgent(ai, 'plan', 'P', {
+      const result = await query(repo, ai, 'plan', 'P', {
         expectJson: true,
         schema: {},
       });
@@ -326,7 +352,7 @@ describe('AiRepository', () => {
       for (let i = 0; i < OPENCODE_MAX_RETRIES; i++) {
         mockFetch.mockResolvedValueOnce(sessionOk).mockResolvedValueOnce(messageEmptyText);
       }
-      const promise = repo.askAgent(ai, 'plan', 'P', { expectJson: true, schema: {} });
+      const promise = query(repo, ai, 'plan', 'P', { expectJson: true, schema: {} });
       await jest.advanceTimersByTimeAsync((OPENCODE_MAX_RETRIES - 1) * OPENCODE_RETRY_DELAY_MS);
       const result = await promise;
       expect(result).toBeUndefined();
@@ -353,7 +379,7 @@ describe('AiRepository', () => {
               ],
             }),
         });
-      const result = await repo.askAgent(ai, 'plan', 'P', { expectJson: true, schema: {} });
+      const result = await query(repo, ai, 'plan', 'P', { expectJson: true, schema: {} });
       expect(result).toEqual({ key: 'value with "nested" quote', n: 1 });
     });
 
@@ -371,7 +397,7 @@ describe('AiRepository', () => {
       for (let i = 0; i < OPENCODE_MAX_RETRIES; i++) {
         mockFetch.mockResolvedValueOnce(sessionOk).mockResolvedValueOnce(messageInvalidExtracted);
       }
-      const promise = repo.askAgent(ai, 'plan', 'P', { expectJson: true, schema: {} });
+      const promise = query(repo, ai, 'plan', 'P', { expectJson: true, schema: {} });
       await jest.advanceTimersByTimeAsync((OPENCODE_MAX_RETRIES - 1) * OPENCODE_RETRY_DELAY_MS);
       const result = await promise;
       expect(result).toBeUndefined();
@@ -388,7 +414,7 @@ describe('AiRepository', () => {
       for (let i = 0; i < OPENCODE_MAX_RETRIES; i++) {
         mockFetch.mockResolvedValueOnce(sessionOk).mockResolvedValueOnce(messageEmptyParts);
       }
-      const promise = repo.askAgent(ai, 'plan', 'P', {});
+      const promise = query(repo, ai, 'plan', 'P', {});
       await jest.advanceTimersByTimeAsync((OPENCODE_MAX_RETRIES - 1) * OPENCODE_RETRY_DELAY_MS);
       const result = await promise;
       expect(result).toBeUndefined();
@@ -409,7 +435,7 @@ describe('AiRepository', () => {
       for (let i = 0; i < OPENCODE_MAX_RETRIES; i++) {
         mockFetch.mockResolvedValueOnce(sessionOk).mockResolvedValueOnce(messageNoJson);
       }
-      const promise = repo.askAgent(ai, 'plan', 'P', { expectJson: true, schema: {} });
+      const promise = query(repo, ai, 'plan', 'P', { expectJson: true, schema: {} });
       await jest.advanceTimersByTimeAsync((OPENCODE_MAX_RETRIES - 1) * OPENCODE_RETRY_DELAY_MS);
       const result = await promise;
       expect(result).toBeUndefined();
@@ -418,7 +444,7 @@ describe('AiRepository', () => {
     it('returns undefined when session create returns invalid JSON (error with cause)', async () => {
       const ai = createAi();
       mockFetch.mockResolvedValue({ ok: true, text: async () => 'not valid json' });
-      const promise = repo.askAgent(ai, 'plan', 'P', {});
+      const promise = query(repo, ai, 'plan', 'P', {});
       await jest.advanceTimersByTimeAsync((OPENCODE_MAX_RETRIES - 1) * OPENCODE_RETRY_DELAY_MS);
       const result = await promise;
       expect(result).toBeUndefined();
@@ -439,7 +465,7 @@ describe('AiRepository', () => {
       for (let i = 0; i < OPENCODE_MAX_RETRIES; i++) {
         mockFetch.mockResolvedValueOnce(sessionOk).mockResolvedValueOnce(messageSingleQuote);
       }
-      const promise = repo.askAgent(ai, 'plan', 'P', { expectJson: true, schema: {} });
+      const promise = query(repo, ai, 'plan', 'P', { expectJson: true, schema: {} });
       await jest.advanceTimersByTimeAsync((OPENCODE_MAX_RETRIES - 1) * OPENCODE_RETRY_DELAY_MS);
       const result = await promise;
       expect(result).toBeUndefined();
@@ -449,7 +475,7 @@ describe('AiRepository', () => {
   describe('copilotMessage', () => {
     it('returns undefined when model is missing', async () => {
       const ai = createAi('http://localhost:4096', '');
-      const result = await repo.copilotMessage(ai, 'Do something');
+      const result = await fix(fixer, ai, 'Do something');
       expect(result).toBeUndefined();
       expect(mockFetch).not.toHaveBeenCalled();
     });
@@ -461,7 +487,7 @@ describe('AiRepository', () => {
       for (let i = 0; i < OPENCODE_MAX_RETRIES; i++) {
         mockFetch.mockResolvedValueOnce(sessionOk).mockResolvedValueOnce(messageFail);
       }
-      const promise = repo.copilotMessage(ai, 'Edit file');
+      const promise = fix(fixer, ai, 'Edit file');
       await jest.advanceTimersByTimeAsync((OPENCODE_MAX_RETRIES - 1) * OPENCODE_RETRY_DELAY_MS);
       const result = await promise;
       expect(result).toBeUndefined();
@@ -483,7 +509,7 @@ describe('AiRepository', () => {
               parts: [{ type: 'text', text: 'I updated the file.' }],
             }),
         });
-      const result = await repo.copilotMessage(ai, 'Edit file');
+      const result = await fix(fixer, ai, 'Edit file');
       expect(result).toEqual({ text: 'I updated the file.', sessionId: 'copilot-session-1' });
     });
   });

@@ -1,4 +1,4 @@
-import { PullRequestRepository } from "../../../../../data/repository/pull_request_repository";
+import type { BugbotPullRequestCommentWritePort } from "../../../../../application/ports/bugbot_ports";
 import type { Execution } from "../../../../../data/model/execution";
 import type { BugbotFinding, BugbotPrContext, ExistingFindingInfo } from "./types";
 import { buildCommentBody } from "./marker";
@@ -6,13 +6,8 @@ import { resolveFindingPathForPr } from "./path_validation";
 import { logInfo } from "../../../../../utils/logger";
 
 type ReviewComment = { path: string; line: number; body: string };
-type PullRequestReviewRepository = Pick<
-    PullRequestRepository,
-    "createReviewWithComments" | "updatePullRequestReviewComment"
->;
-
 export interface PullRequestReviewCommentPublisherOptions {
-    repository: PullRequestReviewRepository;
+    repository: BugbotPullRequestCommentWritePort;
     execution: Execution;
     openPrNumber: number;
     prContext: BugbotPrContext;

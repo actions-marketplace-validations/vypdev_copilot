@@ -8,8 +8,8 @@ jest.mock('../../../../../utils/logger', () => ({
 
 const mockGetAllMembers = jest.fn();
 const mockGetRandomMembers = jest.fn();
-jest.mock('../../../../../data/repository/organization/organization_repository', () => ({
-  OrganizationRepository: jest.fn().mockImplementation(() => ({
+jest.mock('../../../../../data/repository/organization/organization_members_repository', () => ({
+  OrganizationMembersRepository: jest.fn().mockImplementation(() => ({
     getAllMembers: mockGetAllMembers,
     getRandomMembers: mockGetRandomMembers,
   })),
@@ -41,7 +41,7 @@ describe('AssignMemberToIssueUseCase', () => {
   let useCase: AssignMemberToIssueUseCase;
 
   beforeEach(() => {
-    useCase = new AssignMemberToIssueUseCase();
+    useCase = new AssignMemberToIssueUseCase({ getCurrentAssignees: mockGetCurrentAssignees, assignMembersToIssue: mockAssignMembersToIssue }, { getAllMembers: mockGetAllMembers, getRandomMembers: mockGetRandomMembers });
     mockGetAllMembers.mockResolvedValue(['alice', 'bob']);
     mockGetCurrentAssignees.mockResolvedValue([]);
     mockGetRandomMembers.mockResolvedValue(['bob']);

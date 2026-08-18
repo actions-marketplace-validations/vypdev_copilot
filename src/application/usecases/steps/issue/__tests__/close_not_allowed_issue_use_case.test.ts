@@ -28,7 +28,7 @@ describe('CloseNotAllowedIssueUseCase', () => {
   let useCase: CloseNotAllowedIssueUseCase;
 
   beforeEach(() => {
-    useCase = new CloseNotAllowedIssueUseCase();
+    useCase = new CloseNotAllowedIssueUseCase({ closeIssue: mockCloseIssue, addComment: mockAddComment });
     mockCloseIssue.mockReset();
     mockAddComment.mockReset();
   });

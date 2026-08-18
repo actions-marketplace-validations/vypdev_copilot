@@ -10,7 +10,7 @@ import { ParamUseCase } from "../../base/param_usecase";
  */
 export class StoreConfigurationUseCase implements ParamUseCase<Execution, void> {
     taskId: string = 'StoreConfigurationUseCase';
-    private handler = new ConfigurationHandler();
+    constructor(private readonly handler: ConfigurationHandler) {}
 
     async invoke(param: Execution): Promise<void> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`)

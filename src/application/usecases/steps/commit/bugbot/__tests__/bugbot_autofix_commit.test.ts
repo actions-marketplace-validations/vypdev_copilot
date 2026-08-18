@@ -4,11 +4,12 @@
 
 import * as exec from "@actions/exec";
 import {
-    runBugbotAutofixCommitAndPush,
-    runUserRequestCommitAndPush,
+    runBugbotAutofixCommitAndPush as runBugbotAutofixCommitAndPushImpl,
+    runUserRequestCommitAndPush as runUserRequestCommitAndPushImpl,
 } from "../bugbot_autofix_commit";
 import type { Execution } from "../../../../../../data/model/execution";
 import { logInfo } from "../../../../../../utils/logger";
+import { GitCommitAdapter } from "../../../../../../infrastructure/git_commit_adapter";
 
 const shellQuoteParse = jest.fn();
 jest.mock("shell-quote", () => ({
@@ -22,11 +23,23 @@ jest.mock("../../../../../../utils/logger", () => ({
 }));
 
 const mockGetTokenUserDetails = jest.fn();
-jest.mock("../../../../../../data/repository/organization/organization_repository", () => ({
-    OrganizationRepository: jest.fn().mockImplementation(() => ({
+jest.mock("../../../../../../data/repository/organization/authenticated_user_repository", () => ({
+    AuthenticatedUserRepository: jest.fn().mockImplementation(() => ({
         getTokenUserDetails: mockGetTokenUserDetails,
     })),
 }));
+
+const mockGetUserFromToken = jest.fn();
+const authenticatedUserPort = { getTokenUserDetails: mockGetTokenUserDetails, getUserFromToken: mockGetUserFromToken };
+const gitCommitPort = new GitCommitAdapter();
+
+function runBugbotAutofixCommitAndPush(execution: Execution, options?: { branchOverride?: string; targetFindingIds?: string[]; workspacePaths?: string[] }) {
+    return runBugbotAutofixCommitAndPushImpl(execution, options, authenticatedUserPort, gitCommitPort);
+}
+
+function runUserRequestCommitAndPush(execution: Execution, options?: { branchOverride?: string }) {
+    return runUserRequestCommitAndPushImpl(execution, options, authenticatedUserPort, gitCommitPort);
+}
 
 const mockExec = jest.spyOn(exec, "exec") as jest.Mock;
 

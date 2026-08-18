@@ -8,8 +8,8 @@ jest.mock('../../../../../utils/logger', () => ({
 }));
 
 const mockGetAllMembers = jest.fn();
-jest.mock('../../../../../data/repository/organization/organization_repository', () => ({
-  OrganizationRepository: jest.fn().mockImplementation(() => ({
+jest.mock('../../../../../data/repository/organization/organization_members_repository', () => ({
+  OrganizationMembersRepository: jest.fn().mockImplementation(() => ({
     getAllMembers: mockGetAllMembers,
   })),
 }));
@@ -34,7 +34,7 @@ describe('CheckPermissionsUseCase', () => {
   let useCase: CheckPermissionsUseCase;
 
   beforeEach(() => {
-    useCase = new CheckPermissionsUseCase();
+    useCase = new CheckPermissionsUseCase({ getAllMembers: mockGetAllMembers, getRandomMembers: jest.fn() });
     mockGetAllMembers.mockReset();
   });
 

@@ -1,12 +1,8 @@
-import * as github from "@actions/github";
-
 import { ConfigurationHandler } from "../../manager/description/configuration_handler";
 import { shouldSkipInitialLabelsFetch } from './initial_labels_policy';
 import { branchesForManagement, typesForIssue } from "../../utils/label_utils";
 import { logDebugInfo, setGlobalLoggerDebug } from "../../utils/logger";
-import { BranchRepository } from "../repository/branch_repository";
-import { IssueRepository } from "../repository/issue_repository";
-import { OrganizationRepository } from "../repository/organization/organization_repository";
+import type { LatestTagQueryPort } from '../../application/ports/branch_ports';
 import { Ai } from "./ai";
 import { Branches } from "./branches";
 import { Commit } from "./commit";
@@ -29,6 +25,19 @@ import { Workflows } from "./workflows";
 import { resolveExecutionIssueNumber } from "./resolve_execution_issue_number";
 import { resolveIssueBranchVersion } from './resolve_issue_branch_version';
 import { restorePreviousBranchState, type PreviousBranchState } from './previous_branch_state_policy';
+
+export interface ExecutionIssueSetupPort {
+    isPullRequest(owner: string, repository: string, issueNumber: number, token: string): Promise<boolean>;
+    isIssue(owner: string, repository: string, issueNumber: number, token: string): Promise<boolean>;
+    getHeadBranch(owner: string, repository: string, issueNumber: number, token: string): Promise<string | undefined>;
+    getLabels(owner: string, repo: string, issueNumber: number, token: string): Promise<string[]>;
+    getDescription(owner: string, repo: string, issueNumber: number, token: string): Promise<string | undefined>;
+    updateDescription(owner: string, repo: string, issueNumber: number, description: string, token: string): Promise<void>;
+}
+
+export interface ExecutionOrganizationSetupPort {
+    getUserFromToken(token: string): Promise<string | undefined>;
+}
 
 export class Execution {
     debug: boolean = false;
@@ -65,11 +74,11 @@ export class Execution {
     inputs: any | undefined;
 
     get eventName(): string {
-        return this.inputs?.eventName ?? github.context.eventName;
+        return this.inputs?.eventName ?? '';
     }
 
     get actor(): string {
-        return this.inputs?.actor ?? github.context.actor;
+        return this.inputs?.actor ?? '';
     }
 
     get isSingleAction(): boolean {
@@ -89,11 +98,11 @@ export class Execution {
     }
 
     get repo(): string {
-        return this.inputs?.repo?.repo ?? github.context.repo.repo;
+        return this.inputs?.repo?.repo ?? '';
     }
 
     get owner(): string {
-        return this.inputs?.repo?.owner ?? github.context.repo.owner;
+        return this.inputs?.repo?.owner ?? '';
     }
 
     get isFeature(): boolean {
@@ -230,11 +239,12 @@ export class Execution {
         this.currentConfiguration.hotfixBranch = state.hotfixBranch;
     }
 
-    setup = async () => {
+    setup = async (
+        branchRepository: LatestTagQueryPort,
+        issueRepository: ExecutionIssueSetupPort,
+        organizationRepository: ExecutionOrganizationSetupPort,
+    ) => {
         setGlobalLoggerDebug(this.debug, this.inputs === undefined);
-
-        const issueRepository = new IssueRepository();
-        const organizationRepository = new OrganizationRepository();
 
         this.tokenUser = await organizationRepository.getUserFromToken(this.tokens.token);
         if (!this.tokenUser) {
@@ -246,7 +256,7 @@ export class Execution {
             return;
         }
 
-        this.previousConfiguration = await new ConfigurationHandler().get(this)
+        this.previousConfiguration = await new ConfigurationHandler(issueRepository).get(this)
 
         /**
          * Get labels of issue (skip if it's the initial setup and it fails)
@@ -290,8 +300,7 @@ export class Execution {
              * Nothing to do here (for now)
              */
         } else if (this.isIssue) {
-            const branchRepository = new BranchRepository();
-            const canContinue = await resolveIssueBranchVersion(this, branchRepository);
+            const canContinue = await resolveIssueBranchVersion(this, branchRepository, issueRepository);
             if (!canContinue) return;
         } else if (this.isPullRequest) {
             this.labels.currentPullRequestLabels = await issueRepository.getLabels(

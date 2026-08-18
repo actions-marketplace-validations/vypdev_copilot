@@ -1,6 +1,7 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import { IssueRepository, PROGRESS_LABEL_PATTERN } from "../../../../data/repository/issue_repository";
+import { PROGRESS_LABEL_PATTERN } from "../../../../application/policies/progress_labels";
+import type { IssueLabelsPort } from "../../../ports/issue_ports";
 import { logDebugInfo, logError, logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
 import { ParamUseCase } from "../../base/param_usecase";
@@ -13,7 +14,7 @@ import { ParamUseCase } from "../../base/param_usecase";
 export class SyncSizeAndProgressLabelsFromIssueToPrUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'SyncSizeAndProgressLabelsFromIssueToPrUseCase';
 
-    private issueRepository = new IssueRepository();
+    constructor(private readonly issueLabelsPort: IssueLabelsPort) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`);
@@ -33,7 +34,7 @@ export class SyncSizeAndProgressLabelsFromIssueToPrUseCase implements ParamUseCa
                 return result;
             }
 
-            const issueLabels = await this.issueRepository.getLabels(
+            const issueLabels = await this.issueLabelsPort.getLabels(
                 param.owner,
                 param.repo,
                 param.issueNumber,
@@ -57,7 +58,7 @@ export class SyncSizeAndProgressLabelsFromIssueToPrUseCase implements ParamUseCa
             }
 
             const prNumber = param.pullRequest.number;
-            const prLabels = await this.issueRepository.getLabels(
+            const prLabels = await this.issueLabelsPort.getLabels(
                 param.owner,
                 param.repo,
                 prNumber,
@@ -73,7 +74,7 @@ export class SyncSizeAndProgressLabelsFromIssueToPrUseCase implements ParamUseCa
             }
             const nextPrLabels = Array.from(existing);
 
-            await this.issueRepository.setLabels(
+            await this.issueLabelsPort.setLabels(
                 param.owner,
                 param.repo,
                 prNumber,

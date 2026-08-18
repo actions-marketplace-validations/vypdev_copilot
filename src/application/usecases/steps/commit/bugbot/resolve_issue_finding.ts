@@ -1,4 +1,4 @@
-import { IssueRepository } from "../../../../../data/repository/issue_repository";
+import type { BugbotIssueCommentWritePort } from "../../../../../application/ports/bugbot_ports";
 import { logDebugInfo, logError } from "../../../../../utils/logger";
 import { replaceMarkerInBody } from "./marker";
 
@@ -15,7 +15,7 @@ export interface IssueFindingResolution {
 const RESOLVED_NOTE = '\n\n---\n**Resolved** (OpenCode confirmed fixed in latest analysis).\n';
 
 export async function resolveIssueFinding(
-    repository: IssueRepository,
+    repository: BugbotIssueCommentWritePort,
     resolution: IssueFindingResolution,
     marker: string
 ): Promise<void> {

@@ -3,6 +3,7 @@
  */
 
 import { BugbotAutofixUseCase } from "../bugbot_autofix_use_case";
+import { GitCommitAdapter } from "../../../../../../infrastructure/git_commit_adapter";
 import type { BugbotContext } from "../types";
 
 const mockExec = jest.fn();
@@ -24,11 +25,6 @@ jest.mock("../load_bugbot_context_use_case", () => ({
     loadBugbotContext: (...args: unknown[]) => mockLoadBugbotContext(...args),
 }));
 
-jest.mock("../../../../../../data/repository/ai_repository", () => ({
-    AiRepository: jest.fn().mockImplementation(() => ({
-        copilotMessage: mockCopilotMessage,
-    })),
-}));
 
 function baseExecution() {
     return {
@@ -73,7 +69,22 @@ describe("BugbotAutofixUseCase", () => {
     let useCase: BugbotAutofixUseCase;
 
     beforeEach(() => {
-        useCase = new BugbotAutofixUseCase();
+        useCase = new BugbotAutofixUseCase(
+            { fix: (request: { configuration: unknown; prompt: string }) => mockCopilotMessage(request.configuration, request.prompt) },
+            {
+                issue: { listIssueComments: jest.fn() },
+                pullRequest: {
+                    getHeadBranchForIssue: jest.fn(),
+                    getPullRequestReviewCommentBody: jest.fn(),
+                    getOpenPullRequestNumbersByHeadBranch: jest.fn(),
+                    listPullRequestReviewComments: jest.fn(),
+                    getPullRequestHeadSha: jest.fn(),
+                    getChangedFiles: jest.fn(),
+                    getFilesWithFirstDiffLine: jest.fn(),
+                },
+            },
+            new GitCommitAdapter(),
+        );
         mockLoadBugbotContext.mockReset();
         mockCopilotMessage.mockReset();
         workspaceInspectionCount = 0;

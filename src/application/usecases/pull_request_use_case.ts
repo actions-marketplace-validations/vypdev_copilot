@@ -2,7 +2,7 @@ import { Execution } from "../../data/model/execution";
 import { Result } from "../../data/model/result";
 import { logDebugInfo, logError, logInfo } from "../../utils/logger";
 import { getTaskEmoji } from "../../utils/task_emoji";
-import { ParamUseCase } from "./base/param_usecase";
+import type { ParamUseCase } from "./base/param_usecase";
 import { UpdateTitleUseCase } from "./steps/common/update_title_use_case";
 import { AssignMemberToIssueUseCase } from "./steps/issue/assign_members_to_issue_use_case";
 import { AssignReviewersToIssueUseCase } from "./steps/issue/assign_reviewers_to_issue_use_case";
@@ -12,11 +12,29 @@ import type { ProjectBoardPriorityPort } from "./steps/issue/priority_size_check
 import { LinkPullRequestIssueUseCase } from "./steps/pull_request/link_pull_request_issue_use_case";
 import { LinkPullRequestProjectUseCase } from "./steps/pull_request/link_pull_request_project_use_case";
 import { SyncSizeAndProgressLabelsFromIssueToPrUseCase } from "./steps/pull_request/sync_size_and_progress_labels_from_issue_to_pr_use_case";
-import { UpdatePullRequestDescriptionUseCase } from "./steps/pull_request/update_pull_request_description_use_case";
+import type { IssueAssigneePort, IssueClosurePort, IssueDescriptionQueryPort } from "../ports/issue_ports";
+import type { OrganizationMembersPort } from "../ports/organization_ports";
+import type { PullRequestDescriptionCommandPort, PullRequestReviewPort } from "../ports/pull_request_ports";
+import type { PullRequestIssueLinkPort } from "../ports/pull_request_ports";
+import type { IssueLabelsPort, IssueTitlePort } from "../ports/issue_ports";
+import type { ProjectBoardCommandPort, ProjectBoardLinkPort } from "../ports/project_board_ports";
 
 export class PullRequestUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'PullRequestUseCase';
-    constructor(private readonly projectBoardPriorityPort: ProjectBoardPriorityPort) {}
+    constructor(
+        private readonly projectBoardPriorityPort: ProjectBoardPriorityPort,
+        private readonly pullRequestDescriptionCommandPort: PullRequestDescriptionCommandPort,
+        private readonly issueDescriptionQueryPort: IssueDescriptionQueryPort,
+        private readonly issueTitlePort: IssueTitlePort,
+        private readonly issueClosurePort: IssueClosurePort,
+        private readonly issueAssigneePort: IssueAssigneePort,
+        private readonly pullRequestReviewPort: PullRequestReviewPort,
+        private readonly organizationMembersPort: OrganizationMembersPort,
+        private readonly issueLabelsPort: IssueLabelsPort,
+        private readonly pullRequestIssueLinkPort: PullRequestIssueLinkPort,
+        private readonly projectBoardLinkPort: ProjectBoardLinkPort & ProjectBoardCommandPort,
+        private readonly updatePullRequestDescriptionUseCase: ParamUseCase<Execution, Result[]>,
+    ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`)
@@ -31,32 +49,32 @@ export class PullRequestUseCase implements ParamUseCase<Execution, Result[]> {
                 /**
                  * Update title
                  */
-                results.push(...await new UpdateTitleUseCase().invoke(param));
+                results.push(...await new UpdateTitleUseCase(this.issueTitlePort).invoke(param));
 
                 /**
                  * Assignees
                  */
-                results.push(...await new AssignMemberToIssueUseCase().invoke(param));
+                results.push(...await new AssignMemberToIssueUseCase(this.issueAssigneePort, this.organizationMembersPort).invoke(param));
 
                 /**
                  * Reviewers
                  */
-                results.push(...await new AssignReviewersToIssueUseCase().invoke(param));
+                results.push(...await new AssignReviewersToIssueUseCase(this.issueAssigneePort, this.pullRequestReviewPort, this.organizationMembersPort).invoke(param));
 
                 /**
                  * Link Pull Request to projects
                  */
-                results.push(...await new LinkPullRequestProjectUseCase().invoke(param));
+                results.push(...await new LinkPullRequestProjectUseCase(this.projectBoardLinkPort).invoke(param));
 
                 /**
                  * Link Pull Request to issue
                  */
-                results.push(...await new LinkPullRequestIssueUseCase().invoke(param));
+                results.push(...await new LinkPullRequestIssueUseCase(this.pullRequestIssueLinkPort).invoke(param));
 
                 /**
                  * Copy size and progress labels from the linked issue to this PR (corner case: PR just opened).
                  */
-                results.push(...await new SyncSizeAndProgressLabelsFromIssueToPrUseCase().invoke(param));
+                results.push(...await new SyncSizeAndProgressLabelsFromIssueToPrUseCase(this.issueLabelsPort).invoke(param));
 
                 /**
                  * Check priority pull request size
@@ -67,7 +85,7 @@ export class PullRequestUseCase implements ParamUseCase<Execution, Result[]> {
                     /**
                      * Update pull request description
                      */
-                    results.push(...await new UpdatePullRequestDescriptionUseCase().invoke(param));
+                    results.push(...await this.updatePullRequestDescriptionUseCase.invoke(param));
                 }
             } else if (param.pullRequest.isSynchronize) {
                 /**
@@ -77,13 +95,13 @@ export class PullRequestUseCase implements ParamUseCase<Execution, Result[]> {
                     /**
                      * Update pull request description
                      */
-                    results.push(...await new UpdatePullRequestDescriptionUseCase().invoke(param));
+                    results.push(...await this.updatePullRequestDescriptionUseCase.invoke(param));
                 }
             } else if (param.pullRequest.isClosed && param.pullRequest.isMerged) {
                 /**
                  * Close issue if needed
                  */
-                results.push(...await new CloseIssueAfterMergingUseCase().invoke(param));
+                results.push(...await new CloseIssueAfterMergingUseCase(this.issueClosurePort).invoke(param));
             }
         } catch (error) {
             logError(error);

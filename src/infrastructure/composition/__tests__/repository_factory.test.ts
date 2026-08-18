@@ -3,8 +3,9 @@ import { RepositoryFactory } from "../repository_factory";
 describe("RepositoryFactory", () => {
     it("creates specialized repository adapters through the composition root", () => {
         const factory = new RepositoryFactory();
-        expect(factory.createGithubClient()).toBeDefined();
-        expect(factory.createOrganizationRepository()).toBeDefined();
+        expect(factory.createOrganizationMembersRepository()).toBeDefined();
+        expect(factory.createAuthenticatedUserRepository()).toBeDefined();
+        expect(factory.createActorAuthorizationRepository()).toBeDefined();
         expect(factory.createIssueRepository()).toBeDefined();
         expect(factory.createIssueAssignmentRepository()).toBeDefined();
         expect(factory.createIssueContentRepository()).toBeDefined();

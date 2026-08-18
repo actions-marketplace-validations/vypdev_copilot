@@ -1,6 +1,6 @@
 import { Execution } from "../../../data/model/execution";
 import { Result } from "../../../data/model/result";
-import { RepositoryReleaseRepository } from "../../../data/repository/release/repository_release_repository";
+import type { RepositoryReleasePort } from "../../ports/repository_release_ports";
 import { INPUT_KEYS } from "../../../utils/constants";
 import { logError, logInfo, logWarn } from "../../../utils/logger";
 import { getTaskEmoji } from "../../../utils/task_emoji";
@@ -10,7 +10,7 @@ import { ParamUseCase } from "../base/param_usecase";
 export class CreateTagUseCase  implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'CreateTagUseCase';
     
-    private projectRepository = new RepositoryReleaseRepository();
+    constructor(private readonly repositoryReleasePort: RepositoryReleasePort) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`);
@@ -48,7 +48,7 @@ export class CreateTagUseCase  implements ParamUseCase<Execution, Result[]> {
         const tagName = `v${param.singleAction.version}`;
 
         try {
-            const sha1Tag = await this.projectRepository.createTag(
+            const sha1Tag = await this.repositoryReleasePort.createTag(
                 param.owner,
                 param.repo,
                 param.currentConfiguration.releaseBranch,

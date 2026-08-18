@@ -1,5 +1,5 @@
-import * as github from '@actions/github';
 import type { Execution } from '../../../../../data/model/execution';
+import type { BugbotWritePorts } from '../../../../../application/ports/bugbot_ports';
 import type { BugbotContext } from './types';
 import { prepareBugbotFindings, type PreparedBugbotFindings } from './prepare_bugbot_findings';
 import { markFindingsResolved } from './mark_findings_resolved_use_case';
@@ -19,19 +19,22 @@ export async function applyDetectedFindings(
     execution: Execution,
     context: BugbotContext,
     prepared: PreparedBugbotFindings,
+    ports: BugbotWritePorts,
 ): Promise<void> {
     await markFindingsResolved({
         execution,
         context,
         resolvedFindingIds: prepared.resolvedFindingIds,
         normalizedResolvedIds: prepared.normalizedResolvedIds,
+        ports,
     });
     await publishFindings({
         execution,
         context,
         findings: prepared.toPublish,
-        commitSha: github.context.sha,
+        commitSha: context.prContext?.prHeadSha ?? '',
         overflowCount: prepared.overflowCount > 0 ? prepared.overflowCount : undefined,
         overflowTitles: prepared.overflowCount > 0 ? prepared.overflowTitles : undefined,
+        ports,
     });
 }

@@ -2,19 +2,22 @@ import { Execution } from "../../data/model/execution";
 import { Result } from "../../data/model/result";
 import { logDebugInfo, logError, logInfo, logWarn } from "../../utils/logger";
 import { getTaskEmoji } from "../../utils/task_emoji";
-import { DeployedActionUseCase } from "./actions/deployed_action_use_case";
 import { ParamUseCase } from "./base/param_usecase";
-import { PublishGithubActionUseCase } from "./actions/publish_github_action_use_case";
-import { CreateReleaseUseCase } from "./actions/create_release_use_case";
-import { CreateTagUseCase } from "./actions/create_tag_use_case";
-import { ThinkUseCase } from "./steps/common/think_use_case";
-import { InitialSetupUseCase } from "./actions/initial_setup_use_case";
-import { CheckProgressUseCase } from "./actions/check_progress_use_case";
-import { RecommendStepsUseCase } from "./actions/recommend_steps_use_case";
-import { DetectPotentialProblemsUseCase } from "./steps/commit/detect_potential_problems_use_case";
 
 export class SingleActionUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'SingleActionUseCase';
+
+    constructor(
+        private readonly deployedActionUseCase: ParamUseCase<Execution, Result[]>,
+        private readonly publishGithubActionUseCase: ParamUseCase<Execution, Result[]>,
+        private readonly createReleaseUseCase: ParamUseCase<Execution, Result[]>,
+        private readonly createTagUseCase: ParamUseCase<Execution, Result[]>,
+        private readonly thinkUseCase: ParamUseCase<Execution, Result[]>,
+        private readonly initialSetupUseCase: ParamUseCase<Execution, Result[]>,
+        private readonly checkProgressUseCase: ParamUseCase<Execution, Result[]>,
+        private readonly detectPotentialProblemsUseCase: ParamUseCase<Execution, Result[]>,
+        private readonly recommendStepsUseCase: ParamUseCase<Execution, Result[]>,
+    ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`)
@@ -29,23 +32,23 @@ export class SingleActionUseCase implements ParamUseCase<Execution, Result[]> {
             logDebugInfo(`SingleAction: dispatching to handler for action: ${param.singleAction.currentSingleAction}.`);
 
             if (param.singleAction.isDeployedAction) {
-                results.push(...await new DeployedActionUseCase().invoke(param));
+                results.push(...await this.deployedActionUseCase.invoke(param));
             } else if (param.singleAction.isPublishGithubAction) {
-                results.push(...await new PublishGithubActionUseCase().invoke(param));
+                results.push(...await this.publishGithubActionUseCase.invoke(param));
             } else if (param.singleAction.isCreateReleaseAction) {
-                results.push(...await new CreateReleaseUseCase().invoke(param));
+                results.push(...await this.createReleaseUseCase.invoke(param));
             } else if (param.singleAction.isCreateTagAction) {
-                results.push(...await new CreateTagUseCase().invoke(param));
+                results.push(...await this.createTagUseCase.invoke(param));
             } else if (param.singleAction.isThinkAction) {
-                results.push(...await new ThinkUseCase().invoke(param));
+                results.push(...await this.thinkUseCase.invoke(param));
             } else if (param.singleAction.isInitialSetupAction) {
-                results.push(...await new InitialSetupUseCase().invoke(param));
+                results.push(...await this.initialSetupUseCase.invoke(param));
             } else if (param.singleAction.isCheckProgressAction) {
-                results.push(...await new CheckProgressUseCase().invoke(param));
+                results.push(...await this.checkProgressUseCase.invoke(param));
             } else if (param.singleAction.isDetectPotentialProblemsAction) {
-                results.push(...await new DetectPotentialProblemsUseCase().invoke(param));
+                results.push(...await this.detectPotentialProblemsUseCase.invoke(param));
             } else if (param.singleAction.isRecommendStepsAction) {
-                results.push(...await new RecommendStepsUseCase().invoke(param));
+                results.push(...await this.recommendStepsUseCase.invoke(param));
             }
         } catch (error) {
             logError(error);

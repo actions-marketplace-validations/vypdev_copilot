@@ -19,13 +19,8 @@ jest.mock('../../../../../data/repository/issue_repository', () => ({
   })),
 }));
 
-const mockAskAgent = jest.fn();
-jest.mock('../../../../../data/repository/ai_repository', () => ({
-  AiRepository: jest.fn().mockImplementation(() => ({ askAgent: mockAskAgent })),
-  OPENCODE_AGENT_PLAN: 'plan',
-  THINK_RESPONSE_SCHEMA: {},
-}));
 
+const mockAskAgent = jest.fn();
 function baseParam(overrides: Record<string, unknown> = {}): Execution {
   return {
     owner: 'owner',
@@ -47,7 +42,7 @@ describe('AnswerIssueHelpUseCase', () => {
   let useCase: AnswerIssueHelpUseCase;
 
   beforeEach(() => {
-    useCase = new AnswerIssueHelpUseCase();
+    useCase = new AnswerIssueHelpUseCase({ addComment: mockAddComment, openIssue: jest.fn() }, { query: (request: { configuration: unknown; agentId: string; prompt: string; options?: unknown }) => mockAskAgent(request.configuration, request.agentId, request.prompt, request.options) });
     mockAddComment.mockReset();
     mockAskAgent.mockReset();
   });

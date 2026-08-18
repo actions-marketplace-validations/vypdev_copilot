@@ -55,12 +55,6 @@ jest.mock('../../../../../data/repository/pull_request_repository', () => ({
 }));
 
 const mockAskAgent = jest.fn();
-jest.mock('../../../../../data/repository/ai_repository', () => ({
-  AiRepository: jest.fn().mockImplementation(() => ({
-    askAgent: mockAskAgent,
-  })),
-  OPENCODE_AGENT_PLAN: 'plan',
-}));
 
 function baseParam(overrides: Record<string, unknown> = {}): Execution {
   return {
@@ -80,7 +74,28 @@ describe('DetectPotentialProblemsUseCase', () => {
   let useCase: DetectPotentialProblemsUseCase;
 
   beforeEach(() => {
-    useCase = new DetectPotentialProblemsUseCase();
+    const issuePort = {
+      listIssueComments: mockListIssueComments,
+      addComment: mockAddComment,
+      updateComment: mockUpdateComment,
+    };
+    const pullRequestPort = {
+      getHeadBranchForIssue: jest.fn(),
+      getPullRequestReviewCommentBody: jest.fn(),
+      getOpenPullRequestNumbersByHeadBranch: mockGetOpenPullRequestNumbersByHeadBranch,
+      listPullRequestReviewComments: mockListPullRequestReviewComments,
+      getPullRequestHeadSha: mockGetPullRequestHeadSha,
+      getChangedFiles: mockGetChangedFiles,
+      getFilesWithFirstDiffLine: mockGetFilesWithFirstDiffLine,
+      createReviewWithComments: mockCreateReviewWithComments,
+      updatePullRequestReviewComment: mockUpdatePullRequestReviewComment,
+      resolvePullRequestReviewThread: mockResolvePullRequestReviewThread,
+    };
+    useCase = new DetectPotentialProblemsUseCase(
+      { query: (request: { configuration: unknown; agentId: string; prompt: string; options?: unknown }) => mockAskAgent(request.configuration, request.agentId, request.prompt, request.options) },
+      { issue: issuePort, pullRequest: pullRequestPort },
+      { issueComments: issuePort, pullRequestComments: pullRequestPort },
+    );
     mockListIssueComments.mockReset();
     mockAddComment.mockReset();
     mockUpdateComment.mockReset();
@@ -430,7 +445,7 @@ describe('DetectPotentialProblemsUseCase', () => {
 
     await useCase.invoke(baseParam());
 
-    expect(mockAddComment).toHaveBeenCalledWith('owner', 'repo', 42, expect.any(String), 'token', undefined);
+    expect(mockAddComment).toHaveBeenCalledWith('owner', 'repo', 42, expect.any(String), 'token', { commitSha: 'sha1' });
     expect(mockCreateReviewWithComments).not.toHaveBeenCalled();
   });
 

@@ -4,12 +4,12 @@ import { execSync } from 'child_process';
 import { Command } from 'commander';
 import * as dotenv from 'dotenv';
 import { runLocalAction } from './actions/local_action';
-import { IssueRepository } from './data/repository/issue_repository';
+import { RepositoryFactory } from './infrastructure/composition/repository_factory';
 import { ACTIONS, ERRORS, INPUT_KEYS, OPENCODE_DEFAULT_MODEL, TITLE } from './utils/constants';
 import { getSetupToken, setupEnvFileExists } from './utils/setup_files';
 import { logError, logInfo } from './utils/logger';
 import { getCliDoPrompt } from './prompts';
-import { Ai } from './data/model/ai';
+
 import { OPENCODE_PROJECT_CONTEXT_INSTRUCTION } from './utils/opencode_project_context_instruction';
 import { DefaultAgentRepositoryFactory } from './data/repository/agent_repository_factory';
 import { buildAgentTasks } from './actions/agent_configuration_builder';
@@ -109,7 +109,7 @@ program
     // Set up issue context if provided
     const parsedIssueNumber = parseInt(issueNumber);
     if (issueNumber && parsedIssueNumber > 0) {
-      const issueRepository = new IssueRepository();
+      const issueRepository = new RepositoryFactory().createIssueRepository();
       const isIssue = await issueRepository.isIssue(
         gitInfo.owner,
         gitInfo.repo,
@@ -143,7 +143,7 @@ program
       `Question: ${question.substring(0, 100)}${question.length > 100 ? '...' : ''}`,
     ];
 
-    runLocalAction(params);
+    await runLocalAction(params);
   });
 
 /**
@@ -231,13 +231,15 @@ program
     }
 
     try {
-      const ai = new Ai(serverUrl, model, false, false, [], false, 'low', 20, [], agentTasks);
       const aiRepository = new DefaultAgentRepositoryFactory().createFixer();
       const fullPrompt = getCliDoPrompt({
         projectContextInstruction: `${OPENCODE_PROJECT_CONTEXT_INSTRUCTION}\n\nRepository identity: ${gitInfo.owner}/${gitInfo.repo}\nCurrent branch: ${getCurrentBranch()}\nTreat this repository identity as authoritative context for the request.`,
         userPrompt: prompt,
       });
-      const result = await aiRepository.copilotMessage(ai, fullPrompt);
+      const result = await aiRepository.fix({
+        configuration: agentTasks.fixer,
+        prompt: fullPrompt,
+      });
 
       if (!result) {
         console.error('❌ Request failed (check OpenCode server and model).');

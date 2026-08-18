@@ -1,13 +1,16 @@
-import * as github from '@actions/github';
 import { logDebugInfo, logError } from "../../../utils/logger";
 import { Labels } from "../../model/labels";
 import { IssueTypes } from "../../model/issue_types";
+import type { GithubClientPort, GithubGraphqlClient } from "../../../application/ports/github_provider_ports";
 
 type SelectedIssueType = { name: string; description: string; color: string };
 type GetIssueId = (owner: string, repository: string, issueNumber: number, token: string) => Promise<string>;
 
 export class IssueTypeAssignmentRepository {
-    constructor(private readonly getIssueId: GetIssueId) {}
+    constructor(
+        private readonly getIssueId: GetIssueId,
+        private readonly graphqlClient: GithubClientPort<GithubGraphqlClient>,
+    ) {}
 
     setIssueType = async (
         owner: string,
@@ -19,7 +22,7 @@ export class IssueTypeAssignmentRepository {
     ): Promise<void> => {
         try {
             const selected = this.selectIssueType(labels, issueTypes);
-            const octokit = github.getOctokit(token);
+            const octokit = this.graphqlClient.getClient(token);
             logDebugInfo(`Setting issue type for issue ${issueNumber} to ${selected.name}`);
 
             const issueId = await this.getIssueId(owner, repository, issueNumber, token);

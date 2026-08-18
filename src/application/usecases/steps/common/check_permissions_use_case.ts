@@ -1,6 +1,6 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import { OrganizationRepository } from "../../../../data/repository/organization/organization_repository";
+import type { OrganizationMembersPort } from "../../../ports/organization_ports";
 import { logDebugInfo, logError, logInfo, logWarn } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
 import { ParamUseCase } from "../../base/param_usecase";
@@ -8,7 +8,7 @@ import { ParamUseCase } from "../../base/param_usecase";
 export class CheckPermissionsUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'CheckPermissionsUseCase';
     
-    private projectRepository = new OrganizationRepository();
+    constructor(private readonly organizationMembersPort: OrganizationMembersPort) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`);
@@ -41,7 +41,7 @@ export class CheckPermissionsUseCase implements ParamUseCase<Execution, Result[]
         }
 
         try {
-            const currentProjectMembers = await this.projectRepository.getAllMembers(
+            const currentProjectMembers = await this.organizationMembersPort.getAllMembers(
                 param.owner,
                 param.tokens.token,
             )

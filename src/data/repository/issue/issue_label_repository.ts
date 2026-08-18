@@ -1,10 +1,11 @@
-import * as github from "@actions/github";
 import { logDebugInfo, logError } from "../../../utils/logger";
+import type { GithubClientPort, GithubIssueLabelsClient } from "../../../application/ports/github_provider_ports";
 
 export class IssueLabelRepository {
+    constructor(private readonly githubClient: GithubClientPort<GithubIssueLabelsClient>) {}
     getLabels = async (owner: string, repository: string, issueNumber: number, token: string): Promise<string[]> => {
         if (issueNumber === -1) return [];
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         try {
             const { data: labels } = await octokit.rest.issues.listLabelsOnIssue({
                 owner,
@@ -30,7 +31,7 @@ export class IssueLabelRepository {
         labels: string[],
         token: string,
     ): Promise<void> => {
-        const octokit = github.getOctokit(token);
+        const octokit = this.githubClient.getClient(token);
         await octokit.rest.issues.setLabels({
             owner,
             repo: repository,

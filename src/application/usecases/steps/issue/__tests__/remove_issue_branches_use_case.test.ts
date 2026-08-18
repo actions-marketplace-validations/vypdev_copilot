@@ -31,7 +31,7 @@ describe('RemoveIssueBranchesUseCase', () => {
   let useCase: RemoveIssueBranchesUseCase;
 
   beforeEach(() => {
-    useCase = new RemoveIssueBranchesUseCase();
+    useCase = new RemoveIssueBranchesUseCase({ getListOfBranches: mockGetListOfBranches, removeBranch: mockRemoveBranch });
     mockGetListOfBranches.mockResolvedValue(['develop', 'main', 'feature/42-old-name']);
     mockRemoveBranch.mockResolvedValue(true);
     mockRemoveBranch.mockClear();

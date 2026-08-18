@@ -1,6 +1,6 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import { BranchRepository } from "../../../../data/repository/branch_repository";
+import type { BranchLifecyclePort } from "../../../ports/branch_ports";
 import { logDebugInfo, logError, logInfo, logWarn } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
 import { ParamUseCase } from "../../base/param_usecase";
@@ -10,7 +10,7 @@ import { ParamUseCase } from "../../base/param_usecase";
  */
 export class RemoveIssueBranchesUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'RemoveIssueBranchesUseCase';
-    private branchRepository = new BranchRepository();
+    constructor(private readonly branchLifecyclePort: BranchLifecyclePort) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`)
@@ -19,7 +19,7 @@ export class RemoveIssueBranchesUseCase implements ParamUseCase<Execution, Resul
         try {
             const branchTypes = [param.branches.featureTree, param.branches.bugfixTree];
 
-            const branches = await this.branchRepository.getListOfBranches(
+            const branches = await this.branchLifecyclePort.getListOfBranches(
                 param.owner,
                 param.repo,
                 param.tokens.token,
@@ -36,7 +36,7 @@ export class RemoveIssueBranchesUseCase implements ParamUseCase<Execution, Resul
                 if (!matchingBranch) continue;
                 branchName = matchingBranch;
                 logDebugInfo(`RemoveIssueBranches: attempting to remove branch ${branchName}.`);
-                const removed = await this.branchRepository.removeBranch(
+                const removed = await this.branchLifecyclePort.removeBranch(
                     param.owner,
                     param.repo,
                     branchName,

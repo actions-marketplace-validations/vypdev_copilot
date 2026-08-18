@@ -38,7 +38,10 @@ describe('RemoveNotNeededBranchesUseCase', () => {
   let useCase: RemoveNotNeededBranchesUseCase;
 
   beforeEach(() => {
-    useCase = new RemoveNotNeededBranchesUseCase();
+    useCase = new RemoveNotNeededBranchesUseCase(
+      { getListOfBranches: mockGetListOfBranches, removeBranch: mockRemoveBranch },
+      { formatBranchName: mockFormatBranchName },
+    );
     mockFormatBranchName.mockReturnValue('add-login');
     mockGetListOfBranches.mockResolvedValue(['feature/42-add-login', 'bugfix/42-old-name']);
     mockRemoveBranch.mockResolvedValue(true);

@@ -5,14 +5,12 @@ import { Result } from '../../../data/model/result';
 import { logDebugInfo, logError, logInfo, logWarn } from '../../../utils/logger';
 import { getTaskEmoji } from '../../../utils/task_emoji';
 import { ParamUseCase } from '../base/param_usecase';
-import { IssueRepository } from '../../../data/repository/issue_repository';
-import { BranchRepository } from '../../../data/repository/branch_repository';
-import { PullRequestRepository } from '../../../data/repository/pull_request_repository';
-import { OPENCODE_AGENT_PLAN } from '../../../data/repository/agent_task_policy';
-import type { FindingsQueryPort } from '../../../data/repository/agent_ports';
+
+import { OPENCODE_AGENT_PLAN } from '../../../application/policies/agent_task_policy';
+import type { FindingsQueryPort } from '../../ports/agent_ports';
 import type { IssueDescriptionQueryPort, IssueLabelsPort, IssueProgressPort } from '../../../application/ports/issue_ports';
 import type { PullRequestBranchQueryPort } from '../../../application/ports/pull_request_ports';
-import { DefaultAgentRepositoryFactory } from '../../../data/repository/agent_repository_factory';
+import type { BranchListQueryPort } from '../../../application/ports/branch_ports';
 import { getCheckProgressPrompt } from '../../../prompts';
 import { OPENCODE_PROJECT_CONTEXT_INSTRUCTION } from '../../../utils/opencode_project_context_instruction';
 import { findIssueBranch } from './find_issue_branch';
@@ -24,12 +22,14 @@ import { parseProgressResponse, PROGRESS_RESPONSE_SCHEMA, type ProgressAttemptRe
 
 export class CheckProgressUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'CheckProgressUseCase';
-    private issueRepository: IssueDescriptionQueryPort & IssueLabelsPort & IssueProgressPort = new IssueRepository();
-    private branchRepository: BranchRepository = new BranchRepository();
-    private pullRequestRepository: PullRequestBranchQueryPort = new PullRequestRepository();
-    private aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings();
+    private aiRepository: FindingsQueryPort;
 
-    constructor(aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings()) {
+    constructor(
+        private readonly issueRepository: IssueDescriptionQueryPort & IssueLabelsPort & IssueProgressPort,
+        private readonly branchRepository: BranchListQueryPort,
+        private readonly pullRequestRepository: PullRequestBranchQueryPort,
+        aiRepository: FindingsQueryPort,
+    ) {
         this.aiRepository = aiRepository;
     }
     async invoke(param: Execution): Promise<Result[]> {
@@ -241,20 +241,20 @@ export class CheckProgressUseCase implements ParamUseCase<Execution, Result[]> {
 
     /**
      * Calls the OpenCode agent once and returns parsed progress, summary, and reasoning.
-     * HTTP-level retries are handled by AiRepository (OPENCODE_MAX_RETRIES).
+     * HTTP-level retries are handled by the findings capability transport (OPENCODE_MAX_RETRIES).
      */
     private async fetchProgressAttempt(ai: Ai, prompt: string): Promise<ProgressAttemptResult> {
-        return parseProgressResponse(await this.aiRepository.askAgent(
-            ai,
-            OPENCODE_AGENT_PLAN,
+        return parseProgressResponse(await this.aiRepository.query({
+            configuration: ai.getAgentConfiguration('findings'),
+            agentId: OPENCODE_AGENT_PLAN,
             prompt,
-            {
+            options: {
                 expectJson: true,
                 schema: PROGRESS_RESPONSE_SCHEMA as unknown as Record<string, unknown>,
                 schemaName: 'progress_response',
                 includeReasoning: true,
             }
-        ));
+        }));
     }
 }
 

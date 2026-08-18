@@ -1,3 +1,4 @@
+import { OctokitReleaseClientAdapter } from "../../../infrastructure/github/octokit_client";
 import { RepositoryReleaseRepository } from "./repository_release_repository";
 
 const mockGetRef = jest.fn();
@@ -28,7 +29,7 @@ jest.mock("../../../utils/logger", () => ({
 }));
 
 describe("RepositoryReleaseRepository", () => {
-    const repository = new RepositoryReleaseRepository();
+    const repository = new RepositoryReleaseRepository(new OctokitReleaseClientAdapter());
 
     beforeEach(() => {
         jest.clearAllMocks();

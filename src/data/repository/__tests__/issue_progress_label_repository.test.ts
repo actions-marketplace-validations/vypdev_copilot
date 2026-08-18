@@ -1,5 +1,5 @@
 import { IssueProgressLabelRepository } from '../issue/issue_progress_label_repository';
-import { PROGRESS_LABEL_PATTERN, progressPercentToColor } from '../progress_labels';
+import { PROGRESS_LABEL_PATTERN, progressPercentToColor } from '../../../application/policies/progress_labels';
 
 describe('progress labels', () => {
     it('uses bounded red-yellow-green colors', () => {

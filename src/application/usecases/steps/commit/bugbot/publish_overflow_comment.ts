@@ -1,11 +1,9 @@
-import { IssueRepository } from "../../../../../data/repository/issue_repository";
+import type { BugbotIssueCommentWritePort } from "../../../../../application/ports/bugbot_ports";
 import type { Execution } from "../../../../../data/model/execution";
 import { logDebugInfo } from "../../../../../utils/logger";
 
-type IssueCommentRepository = Pick<IssueRepository, "addComment">;
-
 export async function publishOverflowComment(
-    repository: IssueCommentRepository,
+    repository: BugbotIssueCommentWritePort,
     execution: Execution,
     overflowCount: number,
     overflowTitles: string[],

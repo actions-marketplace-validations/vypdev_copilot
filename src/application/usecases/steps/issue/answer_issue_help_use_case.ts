@@ -7,11 +7,10 @@
 import { isAgentConfigurationReady } from '../../../../data/model/agent';
 import { Execution } from '../../../../data/model/execution';
 import { Result } from '../../../../data/model/result';
-import { OPENCODE_AGENT_PLAN } from '../../../../data/repository/agent_task_policy';
-import type { FindingsQueryPort } from '../../../../data/repository/agent_ports';
-import { DefaultAgentRepositoryFactory } from '../../../../data/repository/agent_repository_factory';
-import { THINK_RESPONSE_SCHEMA } from '../../../../data/repository/agent_response_schemas';
-import { IssueRepository } from '../../../../data/repository/issue_repository';
+import { OPENCODE_AGENT_PLAN } from '../../../../application/policies/agent_task_policy';
+import type { FindingsQueryPort } from '../../../ports/agent_ports';
+import { THINK_RESPONSE_SCHEMA } from '../../../../application/policies/agent_response_schemas';
+import type { IssueNotificationPort } from '../../../ports/issue_ports';
 import { getAnswerIssueHelpPrompt } from '../../../../prompts';
 import { logDebugInfo, logError, logInfo } from '../../../../utils/logger';
 import { OPENCODE_PROJECT_CONTEXT_INSTRUCTION } from '../../../../utils/opencode_project_context_instruction';
@@ -21,8 +20,13 @@ import { extractStructuredAnswer } from '../common/agent_answer_policy';
 
 export class AnswerIssueHelpUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'AnswerIssueHelpUseCase';
-    private aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings();
-    private issueRepository: IssueRepository = new IssueRepository();
+    private aiRepository: FindingsQueryPort;
+    constructor(
+        private readonly issueNotificationPort: IssueNotificationPort,
+        aiRepository: FindingsQueryPort,
+    ) {
+        this.aiRepository = aiRepository;
+    }
 
     async invoke(param: Execution): Promise<Result[]> {
         const results: Result[] = [];
@@ -97,10 +101,15 @@ export class AnswerIssueHelpUseCase implements ParamUseCase<Execution, Result[]>
             });
 
             logDebugInfo(`AnswerIssueHelp: prompt length=${prompt.length}, issue description length=${description.length}. Calling OpenCode Plan agent.`);
-            const response = await this.aiRepository.askAgent(param.ai, OPENCODE_AGENT_PLAN, prompt, {
-                expectJson: true,
-                schema: THINK_RESPONSE_SCHEMA as unknown as Record<string, unknown>,
-                schemaName: 'think_response',
+            const response = await this.aiRepository.query({
+                configuration: param.ai?.getAgentConfiguration('findings'),
+                agentId: OPENCODE_AGENT_PLAN,
+                prompt,
+                options: {
+                    expectJson: true,
+                    schema: THINK_RESPONSE_SCHEMA as unknown as Record<string, unknown>,
+                    schemaName: 'answer_issue_help_response',
+                },
             });
 
             const answer = extractStructuredAnswer(response);
@@ -120,7 +129,7 @@ export class AnswerIssueHelpUseCase implements ParamUseCase<Execution, Result[]>
                 return results;
             }
 
-            await this.issueRepository.addComment(
+            await this.issueNotificationPort.addComment(
                 param.owner,
                 param.repo,
                 issueNumber,

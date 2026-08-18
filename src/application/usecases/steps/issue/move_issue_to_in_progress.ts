@@ -1,6 +1,6 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import { ProjectBoardRepository } from "../../../../data/repository/project/project_board_repository";
+import type { ProjectBoardCommandPort } from "../../../../application/ports/project_board_ports";
 import { logError, logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
 import { ParamUseCase } from "../../base/param_usecase";
@@ -8,7 +8,7 @@ import { ParamUseCase } from "../../base/param_usecase";
 export class MoveIssueToInProgressUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'MoveIssueToInProgressUseCase';
     
-    private projectRepository = new ProjectBoardRepository();
+    constructor(private readonly projectRepository: ProjectBoardCommandPort) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`)

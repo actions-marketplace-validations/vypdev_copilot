@@ -1,5 +1,5 @@
 import * as core from "@actions/core";
-import * as github from "@actions/github";
+import type { GithubClientPort, GithubIssueTitleClient } from '../../application/ports/github_provider_ports';
 import { logDebugInfo } from '../../utils/logger';
 import { IssueContentRepository } from './issue/issue_content_repository';
 import { IssueMetadataRepository } from './issue/issue_metadata_repository';
@@ -13,20 +13,42 @@ import { IssueLifecycleRepository } from './issue/issue_lifecycle_repository';
 import { sanitizeIssueTitle, sanitizePullRequestTitle } from './issue_title_policy';
 import { Labels } from "../model/labels";
 import { resolveIssueTitleEmoji, resolvePullRequestTitleEmoji } from './issue_emoji_policy';
-export { PROGRESS_LABEL_PATTERN } from './progress_labels';
+export { PROGRESS_LABEL_PATTERN } from '../../application/policies/progress_labels';
 
 export class IssueRepository {
-    private readonly issueContentRepository = new IssueContentRepository();
-    private readonly issueMetadataRepository = new IssueMetadataRepository();
-    private readonly issueLabelRepository = new IssueLabelRepository();
-    private readonly issueProgressLabelRepository = new IssueProgressLabelRepository(this.issueLabelRepository);
-    private readonly issueLabelProvisioningRepository = new IssueLabelProvisioningRepository();
-    private readonly issueTypeRepository = new IssueTypeRepository();
-    private readonly issueTypeAssignmentRepository = new IssueTypeAssignmentRepository(
-        (owner, repository, issueNumber, token) => this.getId(owner, repository, issueNumber, token),
-    );
-    private readonly issueAssignmentRepository = new IssueAssignmentRepository();
-    private readonly issueLifecycleRepository = new IssueLifecycleRepository();
+    private readonly issueContentRepository: IssueContentRepository;
+    private readonly issueMetadataRepository: IssueMetadataRepository;
+    private readonly issueLabelRepository: IssueLabelRepository;
+    private readonly issueProgressLabelRepository: IssueProgressLabelRepository;
+    private readonly issueLabelProvisioningRepository: IssueLabelProvisioningRepository;
+    private readonly issueTypeRepository: IssueTypeRepository;
+    private readonly issueTypeAssignmentRepository: IssueTypeAssignmentRepository;
+    private readonly issueAssignmentRepository: IssueAssignmentRepository;
+    private readonly issueLifecycleRepository: IssueLifecycleRepository;
+    private readonly issueTitleClient: GithubClientPort<GithubIssueTitleClient>;
+
+    constructor(
+        issueContentRepository: IssueContentRepository,
+        issueMetadataRepository: IssueMetadataRepository,
+        issueLabelRepository: IssueLabelRepository,
+        issueAssignmentRepository: IssueAssignmentRepository,
+        issueLabelProvisioningRepository: IssueLabelProvisioningRepository,
+        issueTypeRepository: IssueTypeRepository,
+        issueTypeAssignmentRepository: IssueTypeAssignmentRepository,
+        issueLifecycleRepository: IssueLifecycleRepository,
+        issueTitleClient: GithubClientPort<GithubIssueTitleClient>,
+    ) {
+        this.issueContentRepository = issueContentRepository;
+        this.issueMetadataRepository = issueMetadataRepository;
+        this.issueLabelRepository = issueLabelRepository;
+        this.issueProgressLabelRepository = new IssueProgressLabelRepository(issueLabelRepository);
+        this.issueAssignmentRepository = issueAssignmentRepository;
+        this.issueLabelProvisioningRepository = issueLabelProvisioningRepository;
+        this.issueTypeRepository = issueTypeRepository;
+        this.issueTypeAssignmentRepository = issueTypeAssignmentRepository;
+        this.issueLifecycleRepository = issueLifecycleRepository;
+        this.issueTitleClient = issueTitleClient;
+    }
 
     updateTitleIssueFormat = async (
         owner: string,
@@ -40,7 +62,7 @@ export class IssueRepository {
         token: string,
     ): Promise<string | undefined> => {
         try {
-            const octokit = github.getOctokit(token);
+            const octokit = this.issueTitleClient.getClient(token);
 
             const emoji = resolveIssueTitleEmoji(labels, branchManagementAlways, branchManagementEmoji);
 
@@ -83,7 +105,7 @@ export class IssueRepository {
         token: string,
     ): Promise<string | undefined> => {
         try {
-            const octokit = github.getOctokit(token);
+            const octokit = this.issueTitleClient.getClient(token);
 
             const emoji = resolvePullRequestTitleEmoji(labels, branchManagementAlways, branchManagementEmoji);
 
@@ -118,7 +140,7 @@ export class IssueRepository {
         token: string,
     ): Promise<string | undefined> => {
         try {
-            const octokit = github.getOctokit(token);
+            const octokit = this.issueTitleClient.getClient(token);
 
             const sanitizedTitle = sanitizePullRequestTitle(issueTitle);
 
@@ -142,19 +164,19 @@ export class IssueRepository {
     };
 
 
-    updateDescription = this.issueContentRepository.updateDescription;
+    updateDescription = (...args: Parameters<IssueContentRepository["updateDescription"]>) => this.issueContentRepository.updateDescription(...args);
 
-    getDescription = this.issueContentRepository.getDescription;
+    getDescription = (...args: Parameters<IssueContentRepository["getDescription"]>) => this.issueContentRepository.getDescription(...args);
 
-    getId = this.issueMetadataRepository.getId;
+    getId = (...args: Parameters<IssueMetadataRepository["getId"]>) => this.issueMetadataRepository.getId(...args);
 
-    getMilestone = this.issueMetadataRepository.getMilestone;
+    getMilestone = (...args: Parameters<IssueMetadataRepository["getMilestone"]>) => this.issueMetadataRepository.getMilestone(...args);
 
-    getTitle = this.issueMetadataRepository.getTitle;
+    getTitle = (...args: Parameters<IssueMetadataRepository["getTitle"]>) => this.issueMetadataRepository.getTitle(...args);
 
-    getLabels = this.issueLabelRepository.getLabels;
+    getLabels = (...args: Parameters<IssueLabelRepository["getLabels"]>) => this.issueLabelRepository.getLabels(...args);
 
-    setLabels = this.issueLabelRepository.setLabels;
+    setLabels = (...args: Parameters<IssueLabelRepository["setLabels"]>) => this.issueLabelRepository.setLabels(...args);
 
     ensureProgressLabels = (
         owner: string,
@@ -164,49 +186,49 @@ export class IssueRepository {
         owner,
         repository,
         token,
-        this.ensureLabel,
+        (...args: Parameters<IssueRepository["ensureLabel"]>) => this.ensureLabel(...args),
     );
 
-    setProgressLabel = this.issueProgressLabelRepository.setProgressLabel;
+    setProgressLabel = (...args: Parameters<IssueProgressLabelRepository["setProgressLabel"]>) => this.issueProgressLabelRepository.setProgressLabel(...args);
 
-    isIssue = this.issueMetadataRepository.isIssue;
+    isIssue = (...args: Parameters<IssueMetadataRepository["isIssue"]>) => this.issueMetadataRepository.isIssue(...args);
 
-    isPullRequest = this.issueMetadataRepository.isPullRequest;
+    isPullRequest = (...args: Parameters<IssueMetadataRepository["isPullRequest"]>) => this.issueMetadataRepository.isPullRequest(...args);
 
-    getHeadBranch = this.issueMetadataRepository.getHeadBranch;
+    getHeadBranch = (...args: Parameters<IssueMetadataRepository["getHeadBranch"]>) => this.issueMetadataRepository.getHeadBranch(...args);
 
-    addComment = this.issueContentRepository.addComment;
+    addComment = (...args: Parameters<IssueContentRepository["addComment"]>) => this.issueContentRepository.addComment(...args);
 
-    updateComment = this.issueContentRepository.updateComment;
+    updateComment = (...args: Parameters<IssueContentRepository["updateComment"]>) => this.issueContentRepository.updateComment(...args);
 
-    listIssueComments = this.issueContentRepository.listIssueComments;
+    listIssueComments = (...args: Parameters<IssueContentRepository["listIssueComments"]>) => this.issueContentRepository.listIssueComments(...args);
 
-    closeIssue = this.issueLifecycleRepository.closeIssue;
+    closeIssue = (...args: Parameters<IssueLifecycleRepository["closeIssue"]>) => this.issueLifecycleRepository.closeIssue(...args);
 
-    openIssue = this.issueLifecycleRepository.openIssue;
+    openIssue = (...args: Parameters<IssueLifecycleRepository["openIssue"]>) => this.issueLifecycleRepository.openIssue(...args);
 
-    getCurrentAssignees = this.issueAssignmentRepository.getCurrentAssignees;
+    getCurrentAssignees = (...args: Parameters<IssueAssignmentRepository["getCurrentAssignees"]>) => this.issueAssignmentRepository.getCurrentAssignees(...args);
 
-    assignMembersToIssue = this.issueAssignmentRepository.assignMembersToIssue;
+    assignMembersToIssue = (...args: Parameters<IssueAssignmentRepository["assignMembersToIssue"]>) => this.issueAssignmentRepository.assignMembersToIssue(...args);
 
-    getIssueDescription = this.issueContentRepository.getIssueDescription;
+    getIssueDescription = (...args: Parameters<IssueContentRepository["getIssueDescription"]>) => this.issueContentRepository.getIssueDescription(...args);
 
 
-    setIssueType = this.issueTypeAssignmentRepository.setIssueType;
+    setIssueType = (...args: Parameters<IssueTypeAssignmentRepository["setIssueType"]>) => this.issueTypeAssignmentRepository.setIssueType(...args);
 
-    listLabelsForRepo = this.issueLabelProvisioningRepository.listLabelsForRepo;
+    listLabelsForRepo = (...args: Parameters<IssueLabelProvisioningRepository["listLabelsForRepo"]>) => this.issueLabelProvisioningRepository.listLabelsForRepo(...args);
 
-    createLabel = this.issueLabelProvisioningRepository.createLabel;
+    createLabel = (...args: Parameters<IssueLabelProvisioningRepository["createLabel"]>) => this.issueLabelProvisioningRepository.createLabel(...args);
 
-    ensureLabel = this.issueLabelProvisioningRepository.ensureLabel;
+    ensureLabel = (...args: Parameters<IssueLabelProvisioningRepository["ensureLabel"]>) => this.issueLabelProvisioningRepository.ensureLabel(...args);
 
-    ensureLabels = this.issueLabelProvisioningRepository.ensureLabels;
+    ensureLabels = (...args: Parameters<IssueLabelProvisioningRepository["ensureLabels"]>) => this.issueLabelProvisioningRepository.ensureLabels(...args);
 
-    listIssueTypes = this.issueTypeRepository.listIssueTypes;
+    listIssueTypes = (...args: Parameters<IssueTypeRepository["listIssueTypes"]>) => this.issueTypeRepository.listIssueTypes(...args);
 
-    createIssueType = this.issueTypeRepository.createIssueType;
+    createIssueType = (...args: Parameters<IssueTypeRepository["createIssueType"]>) => this.issueTypeRepository.createIssueType(...args);
 
-    ensureIssueType = this.issueTypeRepository.ensureIssueType;
+    ensureIssueType = (...args: Parameters<IssueTypeRepository["ensureIssueType"]>) => this.issueTypeRepository.ensureIssueType(...args);
 
-    ensureIssueTypes = this.issueTypeRepository.ensureIssueTypes;
+    ensureIssueTypes = (...args: Parameters<IssueTypeRepository["ensureIssueTypes"]>) => this.issueTypeRepository.ensureIssueTypes(...args);
 }

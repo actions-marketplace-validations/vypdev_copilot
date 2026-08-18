@@ -18,14 +18,7 @@ jest.mock('../../../../data/repository/issue_repository', () => ({
     getDescription: mockGetDescription,
   })),
 }));
-
 const mockAskAgent = jest.fn();
-jest.mock('../../../../data/repository/ai_repository', () => ({
-  AiRepository: jest.fn().mockImplementation(() => ({
-    askAgent: mockAskAgent,
-  })),
-  OPENCODE_AGENT_PLAN: 'plan',
-}));
 
 function baseParam(overrides: Record<string, unknown> = {}): Execution {
   return {
@@ -37,12 +30,11 @@ function baseParam(overrides: Record<string, unknown> = {}): Execution {
     ...overrides,
   } as unknown as Execution;
 }
-
 describe('RecommendStepsUseCase', () => {
   let useCase: RecommendStepsUseCase;
 
   beforeEach(() => {
-    useCase = new RecommendStepsUseCase();
+    useCase = new RecommendStepsUseCase({ getDescription: mockGetDescription }, { query: (request: { configuration: unknown; agentId: string; prompt: string; options?: unknown }) => mockAskAgent(request.configuration, request.agentId, request.prompt, request.options) });
     mockGetDescription.mockReset();
     mockAskAgent.mockReset();
   });

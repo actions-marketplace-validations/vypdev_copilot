@@ -1,29 +1,41 @@
 import { PullRequestLifecycleRepository } from "./pull_request/pull_request_lifecycle_repository";
 import { PullRequestChangesRepository } from "./pull_request/pull_request_changes_repository";
 import { PullRequestReviewRepository } from "./pull_request/pull_request_review_repository";
+import type { GithubClientPort, GithubGraphqlClient, GithubPullRequestChangesClient, GithubPullRequestLifecycleClient, GithubPullRequestReviewClient } from "../../application/ports/github_provider_ports";
 
 export class PullRequestRepository {
 
-    private readonly lifecycleRepository = new PullRequestLifecycleRepository();
-    private readonly changesRepository = new PullRequestChangesRepository();
-    private readonly reviewRepository = new PullRequestReviewRepository();
+    private readonly lifecycleRepository: PullRequestLifecycleRepository;
+    private readonly changesRepository: PullRequestChangesRepository;
+    private readonly reviewRepository: PullRequestReviewRepository;
 
-    getOpenPullRequestNumbersByHeadBranch = this.lifecycleRepository.getOpenPullRequestNumbersByHeadBranch;
-    getHeadBranchForIssue = this.lifecycleRepository.getHeadBranchForIssue;
-    isLinked = this.lifecycleRepository.isLinked;
-    updateBaseBranch = this.lifecycleRepository.updateBaseBranch;
-    updateDescription = this.lifecycleRepository.updateDescription;
+    constructor(
+        githubClient: GithubClientPort<GithubPullRequestChangesClient>,
+        graphqlClient: GithubClientPort<GithubGraphqlClient>,
+        reviewClient: GithubClientPort<GithubPullRequestReviewClient>,
+        lifecycleClient: GithubClientPort<GithubPullRequestLifecycleClient>,
+    ) {
+        this.lifecycleRepository = new PullRequestLifecycleRepository(lifecycleClient);
+        this.changesRepository = new PullRequestChangesRepository(githubClient);
+        this.reviewRepository = new PullRequestReviewRepository(reviewClient, graphqlClient);
+    }
 
-    getChangedFiles = this.changesRepository.getChangedFiles;
-    getFilesWithFirstDiffLine = this.changesRepository.getFilesWithFirstDiffLine;
-    getPullRequestChanges = this.changesRepository.getPullRequestChanges;
-    getPullRequestHeadSha = this.changesRepository.getPullRequestHeadSha;
+    getOpenPullRequestNumbersByHeadBranch = (...args: Parameters<PullRequestLifecycleRepository["getOpenPullRequestNumbersByHeadBranch"]>) => this.lifecycleRepository.getOpenPullRequestNumbersByHeadBranch(...args);
+    getHeadBranchForIssue = (...args: Parameters<PullRequestLifecycleRepository["getHeadBranchForIssue"]>) => this.lifecycleRepository.getHeadBranchForIssue(...args);
+    isLinked = (...args: Parameters<PullRequestLifecycleRepository["isLinked"]>) => this.lifecycleRepository.isLinked(...args);
+    updateBaseBranch = (...args: Parameters<PullRequestLifecycleRepository["updateBaseBranch"]>) => this.lifecycleRepository.updateBaseBranch(...args);
+    updateDescription = (...args: Parameters<PullRequestLifecycleRepository["updateDescription"]>) => this.lifecycleRepository.updateDescription(...args);
 
-    getCurrentReviewers = this.reviewRepository.getCurrentReviewers;
-    addReviewersToPullRequest = this.reviewRepository.addReviewersToPullRequest;
-    listPullRequestReviewComments = this.reviewRepository.listPullRequestReviewComments;
-    getPullRequestReviewCommentBody = this.reviewRepository.getPullRequestReviewCommentBody;
-    resolvePullRequestReviewThread = this.reviewRepository.resolvePullRequestReviewThread;
-    createReviewWithComments = this.reviewRepository.createReviewWithComments;
-    updatePullRequestReviewComment = this.reviewRepository.updatePullRequestReviewComment;
+    getChangedFiles = (...args: Parameters<PullRequestChangesRepository["getChangedFiles"]>) => this.changesRepository.getChangedFiles(...args);
+    getFilesWithFirstDiffLine = (...args: Parameters<PullRequestChangesRepository["getFilesWithFirstDiffLine"]>) => this.changesRepository.getFilesWithFirstDiffLine(...args);
+    getPullRequestChanges = (...args: Parameters<PullRequestChangesRepository["getPullRequestChanges"]>) => this.changesRepository.getPullRequestChanges(...args);
+    getPullRequestHeadSha = (...args: Parameters<PullRequestChangesRepository["getPullRequestHeadSha"]>) => this.changesRepository.getPullRequestHeadSha(...args);
+
+    getCurrentReviewers = (...args: Parameters<PullRequestReviewRepository["getCurrentReviewers"]>) => this.reviewRepository.getCurrentReviewers(...args);
+    addReviewersToPullRequest = (...args: Parameters<PullRequestReviewRepository["addReviewersToPullRequest"]>) => this.reviewRepository.addReviewersToPullRequest(...args);
+    listPullRequestReviewComments = (...args: Parameters<PullRequestReviewRepository["listPullRequestReviewComments"]>) => this.reviewRepository.listPullRequestReviewComments(...args);
+    getPullRequestReviewCommentBody = (...args: Parameters<PullRequestReviewRepository["getPullRequestReviewCommentBody"]>) => this.reviewRepository.getPullRequestReviewCommentBody(...args);
+    resolvePullRequestReviewThread = (...args: Parameters<PullRequestReviewRepository["resolvePullRequestReviewThread"]>) => this.reviewRepository.resolvePullRequestReviewThread(...args);
+    createReviewWithComments = (...args: Parameters<PullRequestReviewRepository["createReviewWithComments"]>) => this.reviewRepository.createReviewWithComments(...args);
+    updatePullRequestReviewComment = (...args: Parameters<PullRequestReviewRepository["updatePullRequestReviewComment"]>) => this.reviewRepository.updatePullRequestReviewComment(...args);
 }

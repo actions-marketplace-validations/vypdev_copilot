@@ -1,6 +1,6 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import { IssueRepository } from "../../../../data/repository/issue_repository";
+import type { IssueNotificationPort } from "../../../ports/issue_ports";
 import { getRandomElement } from "../../../../utils/list_utils";
 import { getAccumulatedLogsAsText, logError, logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
@@ -11,7 +11,7 @@ import { ParamUseCase } from "../../base/param_usecase";
  */
 export class PublishResultUseCase implements ParamUseCase<Execution, void> {
     taskId: string = 'PublishResultUseCase';
-    private issueRepository = new IssueRepository();
+    constructor(private readonly issueNotificationPort: IssueNotificationPort) {}
 
     async invoke(param: Execution): Promise<void> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`)
@@ -161,7 +161,7 @@ ${debugLogSection}
             }
 
             if (param.isSingleAction) {
-                await this.issueRepository.addComment(
+                await this.issueNotificationPort.addComment(
                     param.owner,
                     param.repo,
                     param.singleAction.issue,
@@ -169,7 +169,7 @@ ${debugLogSection}
                     param.tokens.token,
                 )
             } else if (param.isIssue) {
-                await this.issueRepository.addComment(
+                await this.issueNotificationPort.addComment(
                     param.owner,
                     param.repo,
                     param.issue.number,
@@ -177,7 +177,7 @@ ${debugLogSection}
                     param.tokens.token,
                 )
             } else if (param.isPullRequest) {
-                await this.issueRepository.addComment(
+                await this.issueNotificationPort.addComment(
                     param.owner,
                     param.repo,
                     param.pullRequest.number,
@@ -185,7 +185,7 @@ ${debugLogSection}
                     param.tokens.token,
                 )
             } else if (param.isPush && param.issueNumber > 0) {
-                await this.issueRepository.addComment(
+                await this.issueNotificationPort.addComment(
                     param.owner,
                     param.repo,
                     param.issueNumber,

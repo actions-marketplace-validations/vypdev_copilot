@@ -2,6 +2,7 @@ import * as github from '@actions/github';
 import { WorkflowRepository } from '../workflow_repository';
 import type { Execution } from '../../model/execution';
 import { WORKFLOW_STATUS } from '../../../utils/constants';
+import { OctokitWorkflowClientAdapter } from '../../../infrastructure/github/octokit_client';
 
 jest.mock('@actions/github');
 
@@ -45,7 +46,7 @@ describe('WorkflowRepository', () => {
       ];
       mockListWorkflowRuns.mockResolvedValue({ data: { workflow_runs: rawRuns } });
 
-      const repo = new WorkflowRepository();
+      const repo = new WorkflowRepository(new OctokitWorkflowClientAdapter());
       const runs = await repo.getWorkflows(mockExecution);
 
       expect(github.getOctokit).toHaveBeenCalledWith('token');
@@ -82,7 +83,7 @@ describe('WorkflowRepository', () => {
         },
       });
 
-      const repo = new WorkflowRepository();
+      const repo = new WorkflowRepository(new OctokitWorkflowClientAdapter());
       const runs = await repo.getWorkflows(mockExecution);
 
       expect(runs[0].name).toBe('unknown');
@@ -111,7 +112,7 @@ describe('WorkflowRepository', () => {
         },
       });
 
-      const repo = new WorkflowRepository();
+      const repo = new WorkflowRepository(new OctokitWorkflowClientAdapter());
       const active = await repo.getActivePreviousRuns(mockExecution);
 
       process.env.GITHUB_RUN_ID = originalEnv;

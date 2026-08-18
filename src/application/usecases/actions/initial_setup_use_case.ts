@@ -1,8 +1,8 @@
 import { Execution } from "../../../data/model/execution";
-import { BranchRepository } from "../../../data/repository/branch_repository";
-import { IssueRepository } from "../../../data/repository/issue_repository";
-import { RepositoryReleaseRepository } from "../../../data/repository/release/repository_release_repository";
-import { OrganizationRepository } from "../../../data/repository/organization/organization_repository";
+import type { LatestTagQueryPort } from "../../ports/branch_ports";
+import type { AuthenticatedUserPort } from "../../ports/organization_ports";
+import type { RepositoryReleasePort } from "../../ports/repository_release_ports";
+import type { IssueLabelProvisioningPort, IssueProgressLabelProvisioningPort, IssueTypeProvisioningPort } from "../../ports/issue_ports";
 import { Result } from "../../../data/model/result";
 import { ParamUseCase } from "../base/param_usecase";
 import { DEFAULT_INITIAL_TAG } from "../../../utils/version_utils";
@@ -12,6 +12,15 @@ import { copySetupFiles, ensureGitHubDirs, hasValidSetupToken } from "../../../u
 
 export class InitialSetupUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'InitialSetupUseCase';
+
+    constructor(
+        private readonly authenticatedUserPort: AuthenticatedUserPort,
+        private readonly issueLabelProvisioningPort: IssueLabelProvisioningPort,
+        private readonly issueProgressLabelProvisioningPort: IssueProgressLabelProvisioningPort,
+        private readonly issueTypeProvisioningPort: IssueTypeProvisioningPort,
+        private readonly latestTagQueryPort: LatestTagQueryPort,
+        private readonly repositoryReleasePort: RepositoryReleasePort,
+    ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`);
@@ -127,8 +136,7 @@ export class InitialSetupUseCase implements ParamUseCase<Execution, Result[]> {
     private async verifyGitHubAccess(param: Execution): Promise<{ success: boolean; user?: string; errors: string[] }> {
         const errors: string[] = [];
         try {
-            const organizationRepository = new OrganizationRepository();
-            const user = await organizationRepository.getUserFromToken(param.tokens.token);
+            const user = await this.authenticatedUserPort.getUserFromToken(param.tokens.token);
             return { success: true, user, errors: [] };
         } catch (error) {
             logError(`Error verifying GitHub access: ${error}`);
@@ -139,8 +147,7 @@ export class InitialSetupUseCase implements ParamUseCase<Execution, Result[]> {
 
     private async ensureLabels(param: Execution): Promise<{ success: boolean; created: number; existing: number; errors: string[] }> {
         try {
-            const issueRepository = new IssueRepository();
-            const result = await issueRepository.ensureLabels(
+            const result = await this.issueLabelProvisioningPort.ensureLabels(
                 param.owner,
                 param.repo,
                 param.labels,
@@ -160,8 +167,7 @@ export class InitialSetupUseCase implements ParamUseCase<Execution, Result[]> {
 
     private async ensureProgressLabels(param: Execution): Promise<{ created: number; existing: number; errors: string[] }> {
         try {
-            const issueRepository = new IssueRepository();
-            return await issueRepository.ensureProgressLabels(
+            return await this.issueProgressLabelProvisioningPort.ensureProgressLabels(
                 param.owner,
                 param.repo,
                 param.tokens.token
@@ -174,8 +180,7 @@ export class InitialSetupUseCase implements ParamUseCase<Execution, Result[]> {
 
     private async ensureIssueTypes(param: Execution): Promise<{ success: boolean; created: number; existing: number; errors: string[] }> {
         try {
-            const issueRepository = new IssueRepository();
-            const result = await issueRepository.ensureIssueTypes(
+            const result = await this.issueTypeProvisioningPort.ensureIssueTypes(
                 param.owner,
                 param.issueTypes,
                 param.tokens.token
@@ -198,23 +203,21 @@ export class InitialSetupUseCase implements ParamUseCase<Execution, Result[]> {
      */
     private async ensureDefaultVersion(param: Execution): Promise<{ step?: string; error?: string }> {
         try {
-            const branchRepository = new BranchRepository();
-            const existingTag = await branchRepository.getLatestTag();
+            const existingTag = await this.latestTagQueryPort.getLatestTag();
             if (existingTag !== undefined) {
                 logDebugInfo(`Repository already has version tags (latest: ${existingTag}). Skipping default tag.`);
                 return {};
             }
 
             logInfo(`🏷️  No version tags found. Creating default tag ${DEFAULT_INITIAL_TAG}...`);
-            const releaseRepository = new RepositoryReleaseRepository();
-            const defaultBranch = await releaseRepository.getDefaultBranch(param.owner, param.repo, param.tokens.token);
+            const defaultBranch = await this.repositoryReleasePort.getDefaultBranch(param.owner, param.repo, param.tokens.token);
             if (!defaultBranch) {
                 const msg = 'Could not get default branch to create initial version tag.';
                 logError(msg);
                 return { error: msg };
             }
 
-            const sha = await releaseRepository.createTag(
+            const sha = await this.repositoryReleasePort.createTag(
                 param.owner,
                 param.repo,
                 defaultBranch,

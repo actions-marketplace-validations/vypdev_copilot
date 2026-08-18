@@ -1,10 +1,9 @@
 import { isAgentConfigurationReady } from '../../../data/model/agent';
 import { Execution } from '../../../data/model/execution';
 import { Result } from '../../../data/model/result';
-import { OPENCODE_AGENT_PLAN } from '../../../data/repository/agent_task_policy';
-import type { FindingsQueryPort } from '../../../data/repository/agent_ports';
-import { DefaultAgentRepositoryFactory } from '../../../data/repository/agent_repository_factory';
-import { IssueRepository } from '../../../data/repository/issue_repository';
+import { OPENCODE_AGENT_PLAN } from '../../../application/policies/agent_task_policy';
+import type { FindingsQueryPort } from '../../ports/agent_ports';
+import type { IssueDescriptionQueryPort } from '../../ports/issue_ports';
 import { getRecommendStepsPrompt } from '../../../prompts';
 import { logDebugInfo, logError, logInfo } from '../../../utils/logger';
 import { OPENCODE_PROJECT_CONTEXT_INSTRUCTION } from '../../../utils/opencode_project_context_instruction';
@@ -13,10 +12,13 @@ import { ParamUseCase } from '../base/param_usecase';
 
 export class RecommendStepsUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'RecommendStepsUseCase';
-    private issueRepository: IssueRepository = new IssueRepository();
-    private aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings();
 
-    constructor(aiRepository: FindingsQueryPort = new DefaultAgentRepositoryFactory().createFindings()) {
+    private aiRepository: FindingsQueryPort;
+
+    constructor(
+        private readonly issueDescriptionQueryPort: IssueDescriptionQueryPort,
+        aiRepository: FindingsQueryPort,
+    ) {
         this.aiRepository = aiRepository;
     }
 
@@ -51,7 +53,7 @@ export class RecommendStepsUseCase implements ParamUseCase<Execution, Result[]> 
                 return results;
             }
 
-            const issueDescription = await this.issueRepository.getDescription(
+            const issueDescription = await this.issueDescriptionQueryPort.getDescription(
                 param.owner,
                 param.repo,
                 issueNumber,
@@ -78,11 +80,11 @@ export class RecommendStepsUseCase implements ParamUseCase<Execution, Result[]> 
 
             logDebugInfo(`RecommendSteps: prompt length=${prompt.length}, issue description length=${issueDescription.length}.`);
             logInfo(`🤖 Recommending steps using OpenCode Plan agent...`);
-            const response = await this.aiRepository.askAgent(
-                param.ai,
-                OPENCODE_AGENT_PLAN,
-                prompt
-            );
+            const response = await this.aiRepository.query({
+                configuration: param.ai?.getAgentConfiguration('findings'),
+                agentId: OPENCODE_AGENT_PLAN,
+                prompt,
+            });
 
             const steps =
                 typeof response === 'string'

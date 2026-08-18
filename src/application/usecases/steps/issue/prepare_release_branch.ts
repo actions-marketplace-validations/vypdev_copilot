@@ -1,4 +1,4 @@
-import { BranchRepository } from "../../../../data/repository/branch_repository";
+import type { BranchPreparationPort } from "../../../ports/branch_ports";
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
 import { CommitPrefixBuilderUseCase } from "../common/execute_script_use_case";
@@ -6,7 +6,7 @@ import { logDebugInfo, logWarn } from "../../../../utils/logger";
 
 export async function prepareReleaseBranch(
     param: Execution,
-    repository: BranchRepository,
+    repository: BranchPreparationPort,
     branches: string[],
     taskId: string
 ): Promise<Result[]> {

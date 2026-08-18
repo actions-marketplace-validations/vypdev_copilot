@@ -12,11 +12,6 @@ jest.mock("../../../../../utils/logger", () => ({
 
 const mockCopilotMessage = jest.fn();
 
-jest.mock("../../../../../data/repository/ai_repository", () => ({
-    AiRepository: jest.fn().mockImplementation(() => ({
-        copilotMessage: mockCopilotMessage,
-    })),
-}));
 
 function baseExecution(overrides: Record<string, unknown> = {}) {
     return {
@@ -43,7 +38,7 @@ describe("DoUserRequestUseCase", () => {
     let useCase: DoUserRequestUseCase;
 
     beforeEach(() => {
-        useCase = new DoUserRequestUseCase();
+        useCase = new DoUserRequestUseCase({ fix: (request: { configuration: unknown; prompt: string }) => mockCopilotMessage(request.configuration, request.prompt) });
         mockCopilotMessage.mockReset();
     });
 

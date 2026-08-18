@@ -2,7 +2,7 @@
  * Unit tests for publishFindings: issue comments (add/update), PR review comments (when file in prFiles), overflow.
  */
 
-import { publishFindings } from "../publish_findings_use_case";
+import { publishFindings as publishFindingsImpl, type PublishFindingsParam } from "../publish_findings_use_case";
 import type { BugbotFinding } from "../types";
 import type { BugbotContext } from "../types";
 
@@ -29,6 +29,24 @@ jest.mock("../../../../../../data/repository/pull_request_repository", () => ({
         updatePullRequestReviewComment: mockUpdatePullRequestReviewComment,
     })),
 }));
+
+const mockListPullRequestReviewComments = jest.fn();
+const mockResolvePullRequestReviewThread = jest.fn();
+
+function publishFindings(param: Omit<PublishFindingsParam, "ports">) {
+    return publishFindingsImpl({
+        ...param,
+        ports: {
+            issueComments: { addComment: mockAddComment, updateComment: mockUpdateComment },
+            pullRequestComments: {
+                createReviewWithComments: mockCreateReviewWithComments,
+                updatePullRequestReviewComment: mockUpdatePullRequestReviewComment,
+                listPullRequestReviewComments: mockListPullRequestReviewComments,
+                resolvePullRequestReviewThread: mockResolvePullRequestReviewThread,
+            },
+        },
+    });
+}
 
 function finding(overrides: Partial<BugbotFinding> = {}): BugbotFinding {
     return {

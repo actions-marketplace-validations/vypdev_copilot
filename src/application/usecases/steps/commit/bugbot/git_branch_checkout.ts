@@ -1,37 +1,35 @@
-import * as exec from "@actions/exec";
+import type { GitCommitPort } from '../../../../ports/git_ports';
 import { logDebugInfo, logError, logInfo } from "../../../../../utils/logger";
 
 const STASH_MESSAGE = "bugbot-autofix-before-checkout";
 
-async function hasUncommittedChanges(): Promise<boolean> {
+async function hasUncommittedChanges(gitCommitPort: GitCommitPort): Promise<boolean> {
     let output = "";
-    await exec.exec("git", ["status", "--porcelain"], {
-        listeners: {
-            stdout: (data: Buffer) => {
-                output += data.toString();
-            },
+    await gitCommitPort.execute("git", ["status", "--porcelain"], {
+        stdout: (data: Buffer) => {
+            output += data.toString();
         },
     });
     return output.trim().length > 0;
 }
 
 /** Infrastructure boundary for checking out a branch without losing workspace changes. */
-export async function checkoutBranch(branch: string): Promise<boolean> {
+export async function checkoutBranch(branch: string, gitCommitPort: GitCommitPort): Promise<boolean> {
     let didStash = false;
     try {
-        if (await hasUncommittedChanges()) {
+        if (await hasUncommittedChanges(gitCommitPort)) {
             logDebugInfo("Uncommitted changes present; stashing before checkout.");
-            await exec.exec("git", ["stash", "push", "-u", "-m", STASH_MESSAGE]);
+            await gitCommitPort.execute("git", ["stash", "push", "-u", "-m", STASH_MESSAGE]);
             didStash = true;
         }
 
-        await exec.exec("git", ["fetch", "origin", branch]);
-        await exec.exec("git", ["checkout", branch]);
+        await gitCommitPort.execute("git", ["fetch", "origin", branch]);
+        await gitCommitPort.execute("git", ["checkout", branch]);
         logInfo(`Checked out branch ${branch}.`);
 
         if (!didStash) return true;
         try {
-            await exec.exec("git", ["stash", "pop"]);
+            await gitCommitPort.execute("git", ["stash", "pop"]);
             logDebugInfo("Restored stashed changes after checkout.");
             return true;
         } catch (popErr) {

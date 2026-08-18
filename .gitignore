@@ -134,6 +134,10 @@ web_modules/
 # RepoWise repository-local index (managed by the global RepoWise installation)
 .repowise/
 
+# Graphify development knowledge graph (generated, never shipped)
+graphify-out/
+.graphify/
+
 # OpenCode runtime (created/removed by action or CLI)
 opencode.json
 
