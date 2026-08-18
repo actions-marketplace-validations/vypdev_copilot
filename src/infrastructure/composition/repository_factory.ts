@@ -18,7 +18,6 @@ import { IssueNotificationRepository } from "../../data/repository/issue/issue_n
 import { IssueProgressTrackingRepository } from "../../data/repository/issue/issue_progress_tracking_repository";
 import { ExecutionIssueSetupRepository } from "../../data/repository/issue/execution_issue_setup_repository";
 import { BugbotIssueRepository } from "../../data/repository/issue/bugbot_issue_repository";
-import { ProjectBoardRepository } from "../../data/repository/project/project_board_repository";
 import { PullRequestChangesRepository } from "../../data/repository/pull_request/pull_request_changes_repository";
 import { PullRequestLifecycleRepository } from "../../data/repository/pull_request/pull_request_lifecycle_repository";
 import { PullRequestReviewRepository } from "../../data/repository/pull_request/pull_request_review_repository";
@@ -42,6 +41,7 @@ import type { IssueProgressLabelProvisioningPort } from "../../application/ports
 import { GithubClientFactory } from "./github_client_factory";
 import { composeIssueUseCase } from "./issue_use_case_composition";
 import { composePullRequestUseCase } from "./pull_request_use_case_composition";
+import { createProjectBoardCompositionRoot } from "./project_board_composition_root";
 
 export class RepositoryFactory {
     private readonly githubClients = new GithubClientFactory();
@@ -90,10 +90,10 @@ export class RepositoryFactory {
     createIssueUseCase(): ReturnType<typeof composeIssueUseCase> {
         const issueMetadataRepository = this.createIssueMetadataRepository();
         return composeIssueUseCase(
-            this.createProjectBoardRepository(),
+            createProjectBoardCompositionRoot(),
             this.createOrganizationMembersRepository(),
             issueMetadataRepository,
-            this.createProjectBoardRepository(),
+            createProjectBoardCompositionRoot(),
             this.createIssueTitleRepository(issueMetadataRepository),
             this.createIssueAssignmentRepository(),
             this.createIssueClosureRepository(),
@@ -112,7 +112,7 @@ export class RepositoryFactory {
     }
     createPullRequestUseCase(): ReturnType<typeof composePullRequestUseCase> {
         return composePullRequestUseCase(
-            this.createProjectBoardRepository(),
+            createProjectBoardCompositionRoot(),
             this.createPullRequestLifecycleRepository(),
             this.createIssueContentRepository(),
             this.createIssueTitleRepository(),
@@ -122,7 +122,7 @@ export class RepositoryFactory {
             this.createOrganizationMembersRepository(),
             this.createIssueLabelRepository(),
             this.createPullRequestLifecycleRepository(),
-            this.createProjectBoardRepository(),
+            createProjectBoardCompositionRoot(),
             new UpdatePullRequestDescriptionUseCase(this.createPullRequestLifecycleRepository(), this.createIssueContentRepository(), this.createOrganizationMembersRepository(), new DefaultAgentRepositoryFactory().createFindings()),
         );
     }
@@ -189,10 +189,6 @@ export class RepositoryFactory {
         getIssueId: ConstructorParameters<typeof IssueTypeAssignmentRepository>[0],
     ): IssueTypeAssignmentRepository {
         return new IssueTypeAssignmentRepository(getIssueId, this.githubClients.createGraphqlClient());
-    }
-
-    createProjectBoardRepository(): ProjectBoardRepository {
-        return new ProjectBoardRepository(this.githubClients.createProjectClient(), this.githubClients.createGraphqlClient());
     }
 
 
