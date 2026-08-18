@@ -10,7 +10,6 @@ import { IssueMetadataRepository } from "../../data/repository/issue/issue_metad
 import { IssueTitleRepository } from "../../data/repository/issue/issue_title_repository";
 import { IssueClosureRepository } from "../../data/repository/issue/issue_closure_repository";
 import { IssueNotificationRepository } from "../../data/repository/issue/issue_notification_repository";
-import { PullRequestChangesRepository } from "../../data/repository/pull_request/pull_request_changes_repository";
 import { PullRequestLifecycleRepository } from "../../data/repository/pull_request/pull_request_lifecycle_repository";
 
 import { PullRequestReviewRepository } from "../../data/repository/pull_request/pull_request_review_repository";
@@ -28,9 +27,6 @@ export class RepositoryFactory {
     private readonly githubClients = new GithubClientFactory();
     createOrganizationGithubClient(): ReturnType<GithubClientFactory['createOrganizationClient']> {
         return this.githubClients.createOrganizationClient();
-    }
-    createPullRequestChangesClient(): ReturnType<GithubClientFactory['createPullRequestChangesClient']> {
-        return this.githubClients.createPullRequestChangesClient();
     }
     createGraphqlClient(): ReturnType<GithubClientFactory['createGraphqlClient']> {
         return this.githubClients.createGraphqlClient();
@@ -82,10 +78,6 @@ export class RepositoryFactory {
         return new IssueTypeAssignmentRepository(getIssueId, this.githubClients.createGraphqlClient());
     }
 
-
-    createPullRequestChangesRepository(): PullRequestChangesRepository {
-        return new PullRequestChangesRepository(this.createPullRequestChangesClient());
-    }
 
     createPullRequestLifecycleRepository(): PullRequestLifecycleRepository {
         return new PullRequestLifecycleRepository(this.createPullRequestLifecycleClient());
