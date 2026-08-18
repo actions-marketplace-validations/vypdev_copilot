@@ -4,6 +4,7 @@ import { createPullRequestUseCaseCompositionRoot } from '../infrastructure/compo
 import { createIssueUseCaseCompositionRoot } from '../infrastructure/composition/issue_use_case_composition_root';
 import { createIssueContentCompositionRoot } from '../infrastructure/composition/issue_content_composition_root';
 import { createIssueNotificationRepository } from '../infrastructure/composition/issue_interaction_composition_root';
+import { createActorAuthorizationRepository } from '../infrastructure/composition/actor_authorization_composition_root';
 import { createIssueLabelRepository } from '../infrastructure/composition/issue_labels_composition_root';
 import { GithubClientFactory } from '../infrastructure/composition/github_client_factory';
 import { PullRequestLifecycleRepository } from '../data/repository/pull_request/pull_request_lifecycle_repository';
@@ -17,7 +18,6 @@ import { CheckChangesIssueSizeUseCase } from '../application/usecases/steps/comm
 import { BugbotAutofixUseCase } from '../application/usecases/steps/commit/bugbot/bugbot_autofix_use_case';
 import { DoUserRequestUseCase } from '../application/usecases/steps/commit/user_request_use_case';
 import { ProjectBoardCommandPort } from '../application/ports/project_board_ports';
-import { RepositoryFactory } from '../infrastructure/composition/repository_factory';
 import { createAuthenticatedUserCompositionRoot } from '../infrastructure/composition/authenticated_user_composition_root';
 import { GitCommitAdapter } from '../infrastructure/git_commit_adapter';
 import type { MainRunRoute } from './main_run_route';
@@ -34,32 +34,29 @@ export async function dispatchMainRunRoute(
     route: MainRunRoute,
     execution: Execution,
     projectBoardCommandPort: ProjectBoardCommandPort,
-    factory: RepositoryFactory,
 ): Promise<Result[]> {
     const results: Result[] = [];
 
             switch (route) {
                 case 'single-action': {
                     logInfo(`Running SingleActionUseCase (action: ${execution.singleAction.currentSingleAction}).`);
-                    const singleActionFactory = factory;
-                    results.push(...await createSingleActionUseCase(singleActionFactory).invoke(execution));
+                    results.push(...await createSingleActionUseCase().invoke(execution));
                     break;
                 }
                 case 'issue-comment': {
                     logInfo(`Running IssueCommentUseCase for issue #${execution.issue.number}.`);
-                    const commentFactory = factory;
                     const bugbot = createBugbotCompositionRoot();
                     results.push(...await new IssueCommentUseCase(
                         new CheckIssueCommentLanguageUseCase(
                             bugbot.issue,
                             new DefaultAgentRepositoryFactory().createFindings(),
                         ),
-                        createDetectBugbotFixIntentUseCase(commentFactory),
+                        createDetectBugbotFixIntentUseCase(),
                         new ThinkUseCase(createIssueContentCompositionRoot(), createIssueNotificationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
                         new BugbotAutofixUseCase(new DefaultAgentRepositoryFactory().createFixer(), bugbot.context, new GitCommitAdapter()),
                         new DoUserRequestUseCase(new DefaultAgentRepositoryFactory().createFixer()),
                         bugbot.issue,
-                        commentFactory.createActorAuthorizationRepository(),
+                        createActorAuthorizationRepository(),
                         createAuthenticatedUserCompositionRoot(),
                         {
                             issueComments: bugbot.issue,
@@ -75,19 +72,18 @@ export async function dispatchMainRunRoute(
                     break;
                 case 'pull-request-review-comment': {
                     logInfo(`Running PullRequestReviewCommentUseCase for PR #${execution.pullRequest.number}.`);
-                    const reviewCommentFactory = factory;
                     const bugbot = createBugbotCompositionRoot();
                     results.push(...await new PullRequestReviewCommentUseCase(
                         new CheckPullRequestCommentLanguageUseCase(
                             bugbot.issue,
                             new DefaultAgentRepositoryFactory().createFindings(),
                         ),
-                        createDetectBugbotFixIntentUseCase(reviewCommentFactory),
+                        createDetectBugbotFixIntentUseCase(),
                         new ThinkUseCase(createIssueContentCompositionRoot(), createIssueNotificationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
                         new BugbotAutofixUseCase(new DefaultAgentRepositoryFactory().createFixer(), bugbot.context, new GitCommitAdapter()),
                         new DoUserRequestUseCase(new DefaultAgentRepositoryFactory().createFixer()),
                         bugbot.issue,
-                        reviewCommentFactory.createActorAuthorizationRepository(),
+                        createActorAuthorizationRepository(),
                         createAuthenticatedUserCompositionRoot(),
                         {
                             issueComments: bugbot.issue,
@@ -104,7 +100,6 @@ export async function dispatchMainRunRoute(
                 case 'push': {
                     logDebugInfo(`Push event. Branch: ${execution.commit?.branch ?? 'unknown'}, commits: ${execution.commit?.commits?.length ?? 0}, issue number: ${execution.issueNumber}.`);
                     logInfo('Running CommitUseCase.');
-                    const commitFactory = factory;
                     results.push(...await new CommitUseCase(
                         new NotifyNewCommitOnIssueUseCase(createIssueNotificationRepository()),
                         new CheckChangesIssueSizeUseCase(
@@ -113,7 +108,7 @@ export async function dispatchMainRunRoute(
                             new PullRequestLifecycleRepository(new GithubClientFactory().createPullRequestLifecycleClient()),
                             new BranchCompareRepository(new GithubClientFactory().createBranchComparisonClient()),
                         ),
-                        createDetectPotentialProblemsUseCase(commitFactory),
+                        createDetectPotentialProblemsUseCase(),
                         createCheckProgressCompositionRoot(),
                     ).invoke(execution));
                     break;

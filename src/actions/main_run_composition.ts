@@ -9,17 +9,16 @@ import { CreateTagUseCase } from '../application/usecases/actions/create_tag_use
 import { ThinkUseCase } from '../application/usecases/steps/common/think_use_case';
 import { RecommendStepsUseCase } from '../application/usecases/actions/recommend_steps_use_case';
 import { DefaultAgentRepositoryFactory } from '../data/repository/agent_repository_factory';
-import { RepositoryFactory } from '../infrastructure/composition/repository_factory';
+import { GithubClientFactory } from '../infrastructure/composition/github_client_factory';
 import { createBugbotCompositionRoot } from '../infrastructure/composition/bugbot_composition_root';
 import { createInitialSetupCompositionRoot } from '../infrastructure/composition/initial_setup_composition_root';
 import { createIssueContentCompositionRoot } from '../infrastructure/composition/issue_content_composition_root';
 import { createIssueClosureRepository, createIssueNotificationRepository } from '../infrastructure/composition/issue_interaction_composition_root';
 import { createIssueLabelRepository } from '../infrastructure/composition/issue_labels_composition_root';
 import { createRepositoryReleasePort } from '../infrastructure/composition/release_composition_root';
-import { GithubClientFactory } from '../infrastructure/composition/github_client_factory';
 import { MergeRepository } from '../data/repository/merge_repository';
 
-export function createDetectPotentialProblemsUseCase(_factory: RepositoryFactory): DetectPotentialProblemsUseCase {
+export function createDetectPotentialProblemsUseCase(): DetectPotentialProblemsUseCase {
     const bugbot = createBugbotCompositionRoot();
     return new DetectPotentialProblemsUseCase(
         new DefaultAgentRepositoryFactory().createFindings(),
@@ -28,7 +27,7 @@ export function createDetectPotentialProblemsUseCase(_factory: RepositoryFactory
     );
 }
 
-export function createDetectBugbotFixIntentUseCase(_factory: RepositoryFactory): DetectBugbotFixIntentUseCase {
+export function createDetectBugbotFixIntentUseCase(): DetectBugbotFixIntentUseCase {
     const contextPorts = createBugbotCompositionRoot().context;
     return new DetectBugbotFixIntentUseCase(
         contextPorts.pullRequest,
@@ -37,7 +36,7 @@ export function createDetectBugbotFixIntentUseCase(_factory: RepositoryFactory):
     );
 }
 
-export function createSingleActionUseCase(factory: RepositoryFactory): SingleActionUseCase {
+export function createSingleActionUseCase(): SingleActionUseCase {
     const repositoryReleasePort = createRepositoryReleasePort();
     const issueDescriptionQueryPort = createIssueContentCompositionRoot();
     return new SingleActionUseCase(
@@ -52,7 +51,7 @@ export function createSingleActionUseCase(factory: RepositoryFactory): SingleAct
         new ThinkUseCase(issueDescriptionQueryPort, createIssueNotificationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
         createInitialSetupCompositionRoot(),
         createCheckProgressCompositionRoot(),
-        createDetectPotentialProblemsUseCase(factory),
+        createDetectPotentialProblemsUseCase(),
         new RecommendStepsUseCase(issueDescriptionQueryPort, new DefaultAgentRepositoryFactory().createFindings()),
     );
 }
