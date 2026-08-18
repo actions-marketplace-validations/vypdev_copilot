@@ -222,7 +222,7 @@ export async function mainRun(
                 logInfo('Running CommitUseCase.');
                 const commitFactory = new RepositoryFactory();
                 results.push(...await new CommitUseCase(
-                    new NotifyNewCommitOnIssueUseCase(commitFactory.createIssueRepository()),
+                    new NotifyNewCommitOnIssueUseCase(commitFactory.createIssueNotificationRepository()),
                     new CheckChangesIssueSizeUseCase(
                         projectBoardCommandPort,
                         commitFactory.createIssueRepository(),
