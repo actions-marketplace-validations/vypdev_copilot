@@ -11,6 +11,7 @@ import {
     canRunBugbotAutofix,
     canRunDoUserRequest,
 } from "./steps/commit/bugbot/bugbot_fix_intent_payload";
+import { resolveCommentAutomationRoute } from './comment_automation_route_policy';
 import type { DoUserRequestParam } from "./steps/commit/user_request_use_case";
 import type { AuthenticatedUserPort, ActorAuthorizationPort } from "../ports/organization_ports";
 import type { BugbotWritePorts } from "../ports/bugbot_ports";
@@ -58,11 +59,12 @@ export async function runCommentAutomation(
         param.tokens.token
     );
     const canModifyFiles = runAutofix || canRunDoUserRequest(intentPayload);
+    const route = resolveCommentAutomationRoute(intentPayload, allowedToModifyFiles);
     if (!allowedToModifyFiles && canModifyFiles) {
         logInfo("Skipping file-modifying use cases: user is not an org member or repo owner.");
     }
 
-    if (runAutofix && intentPayload && allowedToModifyFiles) {
+    if (route === 'autofix' && intentPayload) {
         const payload = intentPayload;
         logInfo("Running bugbot autofix.");
         const autofixResults = await options.autofixUseCase.invoke({
@@ -74,7 +76,7 @@ export async function runCommentAutomation(
         });
         results.push(...autofixResults);
         await commitAutofixAndResolveFindings(param, payload, autofixResults, authenticatedUserPort, bugbotWritePorts, options.gitCommitPort);
-    } else if (!runAutofix && canRunDoUserRequest(intentPayload) && allowedToModifyFiles) {
+    } else if (route === 'do-user-request') {
         const payload = intentPayload!;
         logInfo("Running do user request.");
         const doResults = await options.doUserRequestUseCase.invoke({
@@ -84,12 +86,12 @@ export async function runCommentAutomation(
         });
         results.push(...doResults);
         await commitUserRequestIfSuccessful(param, payload.branchOverride, doResults, authenticatedUserPort, options.gitCommitPort);
-    } else if (!runAutofix) {
+    } else if (route === 'think') {
         logInfo("Skipping bugbot autofix (no fix request, no targets, or no context).");
     }
 
-    const ranAutofix = runAutofix && allowedToModifyFiles && intentPayload;
-    const ranDoRequest = canRunDoUserRequest(intentPayload) && allowedToModifyFiles;
+    const ranAutofix = route === 'autofix';
+    const ranDoRequest = route === 'do-user-request';
     if (!ranAutofix && !ranDoRequest) {
         logInfo("Running ThinkUseCase (no file-modifying action ran).");
         results.push(...(await options.thinkUseCase.invoke(param)));
