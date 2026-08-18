@@ -34,7 +34,7 @@ describe('application architecture boundaries', () => {
 
     it('keeps the GraphQL transport out of application production code', () => {
         const applicationSources = productionTypeScriptFiles(applicationRoot)
-            .filter((file) => !file.endsWith('/ports/github_provider_ports.ts'))
+            .filter((file) => !file.endsWith('/ports/github_graphql_ports.ts'))
             .map((file) => readFileSync(file, 'utf8'))
             .join('\n');
         expect(applicationSources).not.toContain('GithubGraphqlTransportClient');

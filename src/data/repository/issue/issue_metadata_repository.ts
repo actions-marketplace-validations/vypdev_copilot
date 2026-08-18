@@ -1,6 +1,8 @@
 import { logDebugInfo, logError } from "../../../utils/logger";
 import { Milestone } from '../../model/milestone';
-import type { GithubClientPort, GithubGraphqlTransportClient, GithubIssueMetadataClient } from "../../../application/ports/github_provider_ports";
+import type { GithubClientPort } from "../../../application/ports//github_client_ports";
+import type { GithubGraphqlTransportClient } from "../../../application/ports//github_graphql_ports";
+import type { GithubIssueMetadataClient } from "../../../application/ports//github_issue_ports";
 
 export class IssueMetadataRepository {
     constructor(

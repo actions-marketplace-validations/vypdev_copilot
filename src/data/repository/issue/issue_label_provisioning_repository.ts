@@ -1,5 +1,6 @@
 import { logDebugInfo, logError } from "../../../utils/logger";
-import type { GithubClientPort, GithubIssueLabelProvisioningClient } from "../../../application/ports/github_provider_ports";
+import type { GithubClientPort } from "../../../application/ports//github_client_ports";
+import type { GithubIssueLabelProvisioningClient } from "../../../application/ports//github_issue_ports";
 import { Labels } from "../../model/labels";
 import { getRequiredLabels } from "../required_labels";
 

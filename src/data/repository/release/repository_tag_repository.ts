@@ -1,4 +1,5 @@
-import type { GithubClientPort, GithubReleaseClient } from "../../../application/ports/github_provider_ports";
+import type { GithubClientPort } from "../../../application/ports//github_client_ports";
+import type { GithubReleaseClient } from "../../../application/ports//github_release_ports";
 import { logDebugInfo, logError, logInfo } from "../../../utils/logger";
 import { tagReference, tagReferencePath } from "../release_tag_policy";
 import type { RepositoryTagPort } from "../../../application/ports/repository_release_ports";

@@ -1,6 +1,7 @@
 import { getCommentWatermark } from "../../../utils/comment_watermark";
 import { logDebugInfo, logError } from "../../../utils/logger";
-import type { GithubClientPort, GithubIssueContentClient } from "../../../application/ports/github_provider_ports";
+import type { GithubClientPort } from "../../../application/ports//github_client_ports";
+import type { GithubIssueContentClient } from "../../../application/ports//github_issue_ports";
 
 export interface IssueComment {
     id: number;

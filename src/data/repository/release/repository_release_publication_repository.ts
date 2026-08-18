@@ -1,4 +1,5 @@
-import type { GithubClientPort, GithubReleaseClient } from "../../../application/ports/github_provider_ports";
+import type { GithubClientPort } from "../../../application/ports//github_client_ports";
+import type { GithubReleaseClient } from "../../../application/ports//github_release_ports";
 import { logError, logInfo } from "../../../utils/logger";
 import { hasReleaseContent, releasePayload } from "../release_content_policy";
 import { findTargetRelease, releaseIdAsString } from "../release_transition_policy";

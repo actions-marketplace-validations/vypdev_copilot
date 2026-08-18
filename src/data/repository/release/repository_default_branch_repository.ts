@@ -1,4 +1,5 @@
-import type { GithubClientPort, GithubReleaseClient } from "../../../application/ports/github_provider_ports";
+import type { GithubClientPort } from "../../../application/ports//github_client_ports";
+import type { GithubReleaseClient } from "../../../application/ports//github_release_ports";
 import { logDebugInfo, logError } from "../../../utils/logger";
 import type { RepositoryDefaultBranchPort } from "../../../application/ports/repository_release_ports";
 
