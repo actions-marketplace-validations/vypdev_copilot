@@ -10,7 +10,6 @@ describe("RepositoryFactory", () => {
         expect(factory.createIssueLabelRepository()).toBeDefined();
         expect(factory.createIssueLifecycleRepository()).toBeDefined();
         expect(factory.createIssueMetadataRepository()).toBeDefined();
-        expect(factory.createIssueProgressLabelRepository()).toBeDefined();
         expect(factory.createPullRequestChangesRepository()).toBeDefined();
         expect(factory.createPullRequestLifecycleRepository()).toBeDefined();
         expect(factory.createPullRequestReviewRepository()).toBeDefined();

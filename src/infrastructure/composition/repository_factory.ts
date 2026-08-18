@@ -6,12 +6,12 @@ import { IssueContentRepository } from "../../data/repository/issue/issue_conten
 import { IssueLabelRepository } from "../../data/repository/issue/issue_label_repository";
 import { IssueLifecycleRepository } from "../../data/repository/issue/issue_lifecycle_repository";
 import { IssueMetadataRepository } from "../../data/repository/issue/issue_metadata_repository";
-import { IssueProgressLabelRepository } from "../../data/repository/issue/issue_progress_label_repository";
 import { IssueTypeAssignmentRepository } from "../../data/repository/issue/issue_type_assignment_repository";
 import { IssueTitleRepository } from "../../data/repository/issue/issue_title_repository";
 import { IssueClosureRepository } from "../../data/repository/issue/issue_closure_repository";
 import { IssueNotificationRepository } from "../../data/repository/issue/issue_notification_repository";
 import { IssueProgressTrackingRepository } from "../../data/repository/issue/issue_progress_tracking_repository";
+import { IssueProgressLabelRepository } from "../../data/repository/issue/issue_progress_label_repository";
 import { ExecutionIssueSetupRepository } from "../../data/repository/issue/execution_issue_setup_repository";
 import { BugbotIssueRepository } from "../../data/repository/issue/bugbot_issue_repository";
 import { PullRequestChangesRepository } from "../../data/repository/pull_request/pull_request_changes_repository";
@@ -142,14 +142,12 @@ export class RepositoryFactory {
         return new IssueNotificationRepository(this.createIssueLifecycleRepository(), this.createIssueContentRepository());
     }
     createIssueLifecycleRepository(): IssueLifecycleRepository { return new IssueLifecycleRepository(this.githubClients.createIssueLifecycleClient()); }
-    createIssueProgressLabelRepository(): IssueProgressLabelRepository {
-        return new IssueProgressLabelRepository(this.createIssueLabelRepository());
-    }
     createIssueProgressTrackingRepository(): IssueProgressTrackingRepository {
+        const progressLabelRepository = new IssueProgressLabelRepository(this.createIssueLabelRepository());
         return new IssueProgressTrackingRepository(
             this.createIssueContentRepository(),
             this.createIssueLabelRepository(),
-            this.createIssueProgressLabelRepository(),
+            progressLabelRepository,
         );
     }
     createExecutionIssueSetupRepository(): ExecutionIssueSetupRepository {
