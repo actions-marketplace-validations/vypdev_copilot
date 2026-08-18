@@ -12,8 +12,8 @@ import { IssueClosureRepository } from "../../data/repository/issue/issue_closur
 import { IssueNotificationRepository } from "../../data/repository/issue/issue_notification_repository";
 import { PullRequestChangesRepository } from "../../data/repository/pull_request/pull_request_changes_repository";
 import { PullRequestLifecycleRepository } from "../../data/repository/pull_request/pull_request_lifecycle_repository";
-import { PullRequestReviewRepository } from "../../data/repository/pull_request/pull_request_review_repository";
 
+import { PullRequestReviewRepository } from "../../data/repository/pull_request/pull_request_review_repository";
 import { MergeRepository } from "../../data/repository/merge_repository";
 import { BranchCompareRepository } from "../../data/repository/branch_compare_repository";
 import { GitCliRepository } from "../../data/repository/git_cli_repository";
@@ -23,12 +23,10 @@ import { BranchPreparationRepository } from "../../data/repository/branch/branch
 import { LinkedBranchRepository } from "../../data/repository/branch/linked_branch_repository";
 import { RecommendStepsUseCase } from "../../application/usecases/actions/recommend_steps_use_case";
 import { AnswerIssueHelpUseCase } from "../../application/usecases/steps/issue/answer_issue_help_use_case";
-import { UpdatePullRequestDescriptionUseCase } from "../../application/usecases/steps/pull_request/update_pull_request_description_use_case";
 import { DefaultAgentRepositoryFactory } from "../../data/repository/agent_repository_factory";
 import { WorkflowRepository } from "../../data/repository/workflow_repository";
 import { GithubClientFactory } from "./github_client_factory";
 import { composeIssueUseCase } from "./issue_use_case_composition";
-import { composePullRequestUseCase } from "./pull_request_use_case_composition";
 import { createProjectBoardCompositionRoot } from "./project_board_composition_root";
 import { createOrganizationMembersCompositionRoot } from "./organization_members_composition_root";
 
@@ -88,22 +86,6 @@ export class RepositoryFactory {
             this.createWorkflowRepository(),
             new RecommendStepsUseCase(this.createIssueContentRepository(), new DefaultAgentRepositoryFactory().createFindings()),
             new AnswerIssueHelpUseCase(this.createIssueNotificationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
-        );
-    }
-    createPullRequestUseCase(): ReturnType<typeof composePullRequestUseCase> {
-        return composePullRequestUseCase(
-            createProjectBoardCompositionRoot(),
-            this.createPullRequestLifecycleRepository(),
-            this.createIssueContentRepository(),
-            this.createIssueTitleRepository(),
-            this.createIssueClosureRepository(),
-            this.createIssueAssignmentRepository(),
-            this.createPullRequestReviewRepository(),
-            createOrganizationMembersCompositionRoot(),
-            this.createIssueLabelRepository(),
-            this.createPullRequestLifecycleRepository(),
-            createProjectBoardCompositionRoot(),
-            new UpdatePullRequestDescriptionUseCase(this.createPullRequestLifecycleRepository(), this.createIssueContentRepository(), createOrganizationMembersCompositionRoot(), new DefaultAgentRepositoryFactory().createFindings()),
         );
     }
     createActorAuthorizationRepository(): ActorAuthorizationRepository {

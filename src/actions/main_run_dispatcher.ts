@@ -1,5 +1,6 @@
 import { createCheckProgressCompositionRoot } from '../infrastructure/composition/check_progress_composition_root';
 import { createBugbotCompositionRoot } from '../infrastructure/composition/bugbot_composition_root';
+import { createPullRequestUseCaseCompositionRoot } from '../infrastructure/composition/pull_request_use_case_composition_root';
 import * as core from '@actions/core';
 import { Execution } from '../data/model/execution';
 import { Result } from '../data/model/result';
@@ -91,7 +92,7 @@ export async function dispatchMainRunRoute(
                 }
                 case 'pull-request':
                     logInfo(`Running PullRequestUseCase for PR #${execution.pullRequest.number}.`);
-                    results.push(...await factory.createPullRequestUseCase().invoke(execution));
+                    results.push(...await createPullRequestUseCaseCompositionRoot().invoke(execution));
                     break;
                 case 'push': {
                     logDebugInfo(`Push event. Branch: ${execution.commit?.branch ?? 'unknown'}, commits: ${execution.commit?.commits?.length ?? 0}, issue number: ${execution.issueNumber}.`);
