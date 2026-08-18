@@ -1,4 +1,3 @@
-import chalk from 'chalk';
 import { Ai } from '../data/model/ai';
 
 
@@ -14,8 +13,7 @@ import { SingleAction } from '../data/model/single_action';
 
 
 import { Welcome } from '../data/model/welcome';
-import { BUGBOT_MAX_COMMENTS, BUGBOT_MIN_SEVERITY, INPUT_KEYS, TITLE } from '../utils/constants';
-import { logInfo } from '../utils/logger';
+import { BUGBOT_MAX_COMMENTS, BUGBOT_MIN_SEVERITY, INPUT_KEYS } from '../utils/constants';
 import { RepositoryFactory } from '../infrastructure/composition/repository_factory';
 
 import { getActionInputsWithDefaults } from '../utils/yml_utils';
@@ -31,7 +29,7 @@ import { buildBranches } from './branches_builder';
 import { buildExecution } from './execution_builder';
 import { buildEmoji, buildImages, buildIssue, buildIssueTypes, buildLabels, buildLocale, buildProjects, buildPullRequest, buildTokens, buildWorkflows } from './configuration_builders';
 import { mainRun } from './common_action';
-import boxen from 'boxen';
+import { renderLocalActionResults } from './local_action_output';
 
 export async function runLocalAction(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Params shape is dynamic (CLI/action inputs)
@@ -335,43 +333,5 @@ export async function runLocalAction(
 
     const results = await mainRun(execution, projectRepository, repositoryFactory.createGitCliRepository());
 
-    let content = ''
-    const stepsContent = results
-        .filter(result => result.executed && result.steps.length > 0)
-        .map(result => chalk.gray(result.steps.join('\n'))).join('\n')
-
-    if (stepsContent.length > 0) {
-        content +=  '\n' + chalk.cyan('Steps:') + '\n' + stepsContent
-    }
-
-    const errorsContent = results
-        .filter(result => !result.executed && result.errors.length > 0)
-        .map(result => chalk.gray(result.errors.join('\n'))).join('\n')
-
-    if (errorsContent.length > 0) {
-        content +=  '\n' + chalk.red('Errors:') + '\n' + errorsContent
-    }
-
-    const reminderContent = results
-        .filter(result => result.executed && result.reminders.length > 0)
-        .map(result => chalk.gray(result.reminders.join('\n'))).join('\n')
-
-    if (reminderContent.length > 0) {
-        content +=  '\n' + chalk.cyan('Reminder:') + '\n' + reminderContent
-    }
-
-    logInfo('\n')
-    logInfo(
-        boxen(
-            content,
-            {
-                padding: 1,
-                margin: 1,
-                borderStyle: 'round',
-                borderColor: 'cyan',
-                title: TITLE,
-                titleAlignment: 'center'
-            }
-        )
-    );
+    renderLocalActionResults(results);
 }
