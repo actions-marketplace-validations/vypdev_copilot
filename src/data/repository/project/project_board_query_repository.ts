@@ -2,7 +2,7 @@ import type { GithubClientPort, GithubGraphqlTransportClient, GithubOwnerTypeCli
 import { logDebugInfo, logError } from "../../../utils/logger";
 import { ProjectResult } from "../../graph/project_result";
 import { ProjectDetail } from "../../model/project_detail";
-import type { ProjectBoardContentQueryPort, ProjectBoardQueryPort } from "../../../application/ports//project_board_query_ports";
+import type { ProjectBoardContentQueryPort, ProjectBoardQueryPort } from "../../../application/ports/project_board_query_ports";
 
 export class ProjectBoardQueryRepository implements ProjectBoardQueryPort, ProjectBoardContentQueryPort {
     constructor(

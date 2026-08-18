@@ -1,6 +1,6 @@
 import { logDebugInfo } from "../../../utils/logger";
 import { authorizationForFileModification } from "../actor_modification_policy";
-import type { ActorAuthorizationPort } from "../../../application/ports//actor_authorization_ports";
+import type { ActorAuthorizationPort } from "../../../application/ports/actor_authorization_ports";
 import type { GithubClientPort, GithubActorAuthorizationClient } from "../../../application/ports/github_provider_ports";
 
 export class ActorAuthorizationRepository implements ActorAuthorizationPort {

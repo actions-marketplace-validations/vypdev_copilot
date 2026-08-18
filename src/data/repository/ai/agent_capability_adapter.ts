@@ -4,7 +4,7 @@ import { ProviderCliAdapter } from '../provider_cli_adapter';
 import { OpenCodeAgentInvoker } from '../opencode_agent_invoker';
 import { getValidatedAgentConfiguration, isValidServerAgentConfiguration } from '../agent_configuration_policy';
 import { executeAgentRequest } from '../agent_execution_policy';
-import type { AgentConfiguration } from '../../../application/ports//agent_configuration_ports';
+import type { AgentConfiguration } from '../../../application/ports/agent_configuration_ports';
 import type { AgentTask } from '../../model/agent';
 import type { AgentCliPort, OpenCodeClientPort } from '../../../infrastructure/agents/ports/agent_provider_ports';
 

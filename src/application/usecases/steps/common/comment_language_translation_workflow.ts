@@ -1,7 +1,7 @@
 import { Result } from '../../../../data/model/result';
 import { OPENCODE_AGENT_PLAN } from '../../../policies/agent_task_policy';
-import type { AgentConfiguration } from '../../../ports//agent_configuration_ports';
-import type { FindingsQueryPort } from '../../../ports//agent_findings_ports';
+import type { AgentConfiguration } from '../../../ports/agent_configuration_ports';
+import type { FindingsQueryPort } from '../../../ports/agent_findings_ports';
 import { LANGUAGE_CHECK_RESPONSE_SCHEMA, TRANSLATION_RESPONSE_SCHEMA } from '../../../policies/agent_response_schemas';
 import type { IssueCommentUpdatePort } from '../../../ports/issue_lifecycle_ports';
 import { getCheckCommentLanguagePrompt, getTranslateCommentPrompt } from '../../../../prompts';

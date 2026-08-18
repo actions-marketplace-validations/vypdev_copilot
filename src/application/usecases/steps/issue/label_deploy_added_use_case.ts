@@ -6,7 +6,7 @@ import { logDebugInfo, logError, logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
 import { ParamUseCase } from "../../base/param_usecase";
 import { MoveIssueToInProgressUseCase } from "./move_issue_to_in_progress";
-import type { ProjectBoardCommandPort } from "../../../../application/ports//project_board_command_ports";
+import type { ProjectBoardCommandPort } from "../../../../application/ports/project_board_command_ports";
 
 export class DeployAddedUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'DeployAddedUseCase';

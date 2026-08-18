@@ -1,7 +1,7 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import type { ProjectBoardCommandPort } from "../../../ports//project_board_command_ports";
-import type { ProjectBoardLinkPort } from "../../../ports//project_board_link_ports";
+import type { ProjectBoardCommandPort } from "../../../ports/project_board_command_ports";
+import type { ProjectBoardLinkPort } from "../../../ports/project_board_link_ports";
 import { logDebugInfo, logError, logInfo, logWarn } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
 import { ParamUseCase } from "../../base/param_usecase";

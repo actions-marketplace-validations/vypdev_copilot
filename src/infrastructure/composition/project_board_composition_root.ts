@@ -1,7 +1,7 @@
 import { createGraphqlTransportClient, createOwnerTypeClient, createRepositoryContextClient } from './github_project_client_factory';
-import type { ProjectBoardCommandPort } from '../../application/ports//project_board_command_ports';
-import type { ProjectBoardLinkPort } from '../../application/ports//project_board_link_ports';
-import type { ProjectBoardQueryPort } from '../../application/ports//project_board_query_ports';
+import type { ProjectBoardCommandPort } from '../../application/ports/project_board_command_ports';
+import type { ProjectBoardLinkPort } from '../../application/ports/project_board_link_ports';
+import type { ProjectBoardQueryPort } from '../../application/ports/project_board_query_ports';
 import { ProjectBoardCommandRepository } from '../../data/repository/project/project_board_command_repository';
 import { ProjectBoardLinkRepository } from '../../data/repository/project/project_board_link_repository';
 import { ProjectBoardQueryRepository } from '../../data/repository/project/project_board_query_repository';

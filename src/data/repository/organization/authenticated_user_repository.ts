@@ -1,4 +1,4 @@
-import type { AuthenticatedUserPort } from "../../../application/ports//authenticated_user_ports";
+import type { AuthenticatedUserPort } from "../../../application/ports/authenticated_user_ports";
 import type { GithubClientPort, GithubAuthenticatedUserClient } from "../../../application/ports/github_provider_ports";
 
 export class AuthenticatedUserRepository implements AuthenticatedUserPort {

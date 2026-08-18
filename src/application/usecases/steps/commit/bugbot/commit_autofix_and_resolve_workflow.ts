@@ -5,7 +5,7 @@ import { sanitizeFindingIdForMarker } from './marker';
 import { getBugbotFixIntentPayload } from './bugbot_fix_intent_payload';
 import type { Result } from '../../../../../data/model/result';
 import type { Execution } from '../../../../../data/model/execution';
-import type { AuthenticatedUserPort } from '../../../../../application/ports//authenticated_user_ports';
+import type { AuthenticatedUserPort } from '../../../../../application/ports/authenticated_user_ports';
 import type { BugbotWritePorts } from '../../../../../application/ports/bugbot_ports';
 import type { GitCommitPort } from '../../../../../application/ports/git_ports';
 

@@ -1,8 +1,8 @@
 import type { GithubClientPort, GithubGraphqlTransportClient } from "../../../application/ports/github_provider_ports";
 import { logDebugInfo, logError } from "../../../utils/logger";
 import { ProjectDetail } from "../../model/project_detail";
-import type { ProjectBoardCommandPort } from "../../../application/ports//project_board_command_ports";
-import type { ProjectBoardContentQueryPort } from "../../../application/ports//project_board_query_ports";
+import type { ProjectBoardCommandPort } from "../../../application/ports/project_board_command_ports";
+import type { ProjectBoardContentQueryPort } from "../../../application/ports/project_board_query_ports";
 
 export class ProjectBoardCommandRepository implements ProjectBoardCommandPort {
     private readonly priorityLabel = "Priority";

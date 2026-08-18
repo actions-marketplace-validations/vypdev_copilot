@@ -12,8 +12,8 @@ import { resolveCommentAutomationRoute } from './comment_automation_route_policy
 import { commitAutofixAndResolveFindings } from './steps/commit/bugbot/commit_autofix_and_resolve_workflow';
 import { commitUserRequestIfSuccessful } from './steps/commit/bugbot/commit_user_request_workflow';
 import type { DoUserRequestParam } from "./steps/commit/user_request_use_case";
-import type { AuthenticatedUserPort } from "../ports//authenticated_user_ports";
-import type { ActorAuthorizationPort } from "../ports//actor_authorization_ports";
+import type { AuthenticatedUserPort } from "../ports/authenticated_user_ports";
+import type { ActorAuthorizationPort } from "../ports/actor_authorization_ports";
 import type { BugbotWritePorts } from "../ports/bugbot_ports";
 import type { GitCommitPort } from "../ports/git_ports";
 

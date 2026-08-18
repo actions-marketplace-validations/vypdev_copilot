@@ -9,7 +9,7 @@ import { MoveIssueToInProgressUseCase } from "./move_issue_to_in_progress";
 import { prepareHotfixBranch } from "./prepare_hotfix_branch";
 import { prepareReleaseBranch } from "./prepare_release_branch";
 import { selectBranchPreparationStrategy } from "./branch_preparation_strategy";
-import type { ProjectBoardCommandPort } from "../../../../application/ports//project_board_command_ports";
+import type { ProjectBoardCommandPort } from "../../../../application/ports/project_board_command_ports";
 
 export class PrepareBranchesUseCase implements ParamUseCase<Execution, Result[]> {
     taskId = "PrepareBranchesUseCase";

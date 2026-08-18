@@ -1,7 +1,7 @@
 import { isAgentConfigurationReady } from '../../../../data/model/agent';
 import { Execution } from '../../../../data/model/execution';
 import { Result } from '../../../../data/model/result';
-import type { FindingsQueryPort } from '../../../ports//agent_findings_ports';
+import type { FindingsQueryPort } from '../../../ports/agent_findings_ports';
 import { getTaskEmoji } from '../../../../utils/task_emoji';
 import { logDebugInfo, logError, logInfo } from '../../../../utils/logger';
 import { ParamUseCase } from '../../base/param_usecase';

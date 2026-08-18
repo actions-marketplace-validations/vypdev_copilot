@@ -15,14 +15,14 @@ import { SyncSizeAndProgressLabelsFromIssueToPrUseCase } from "./steps/pull_requ
 import type { IssueAssigneePort } from "../ports/issue_management_ports";
 import type { IssueClosurePort } from "../ports/issue_lifecycle_ports";
 import type { IssueDescriptionQueryPort } from "../ports/issue_description_ports";
-import type { OrganizationMembersPort } from "../ports//organization_members_ports";
+import type { OrganizationMembersPort } from "../ports/organization_members_ports";
 import type { PullRequestDescriptionCommandPort } from "../ports/pull_request_description_ports";
 import type { PullRequestReviewPort } from "../ports/pull_request_review_ports";
 import type { PullRequestIssueLinkPort } from "../ports/pull_request_issue_link_ports";
 import type { IssueLabelsPort } from "../ports/issue_management_ports";
 import type { IssueTitlePort } from "../ports/issue_title_ports";
-import type { ProjectBoardCommandPort } from "../ports//project_board_command_ports";
-import type { ProjectBoardLinkPort } from "../ports//project_board_link_ports";
+import type { ProjectBoardCommandPort } from "../ports/project_board_command_ports";
+import type { ProjectBoardLinkPort } from "../ports/project_board_link_ports";
 
 export class PullRequestUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'PullRequestUseCase';

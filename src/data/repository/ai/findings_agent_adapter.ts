@@ -2,7 +2,7 @@ import { logDebugInfo, logInfo, logError } from '../../../utils/logger';
 import { buildAgentPrompt } from '../agent_prompt_policy';
 import { interpretFindingsResponse } from '../agent_findings_response_policy';
 import { extractTextFromParts } from '../agent_response_parser';
-import type { FindingsQueryPort, FindingsQueryRequest } from '../../../application/ports//agent_findings_ports';
+import type { FindingsQueryPort, FindingsQueryRequest } from '../../../application/ports/agent_findings_ports';
 import { AgentCapabilityAdapter, type AgentCapabilityInfrastructure } from './agent_capability_adapter';
 
 export class FindingsAgentAdapter extends AgentCapabilityAdapter implements FindingsQueryPort {

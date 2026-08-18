@@ -1,7 +1,7 @@
 import { isAgentConfigurationReady } from "../../../../../data/model/agent";
 import type { Execution } from "../../../../../data/model/execution";
 import { OPENCODE_AGENT_PLAN } from "../../../../../application/policies/agent_task_policy";
-import type { FindingsQueryPort } from "../../../../ports//agent_findings_ports";
+import type { FindingsQueryPort } from "../../../../ports/agent_findings_ports";
 import type { BugbotContextPorts, BugbotPullRequestQueryPort } from "../../../../../application/ports/bugbot_ports";
 import { logDebugInfo, logInfo } from "../../../../../utils/logger";
 import { getTaskEmoji } from "../../../../../utils/task_emoji";
