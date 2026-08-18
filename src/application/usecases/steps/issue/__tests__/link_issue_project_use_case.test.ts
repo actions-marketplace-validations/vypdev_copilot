@@ -10,11 +10,6 @@ jest.mock('../../../../../utils/logger', () => ({
 jest.useFakeTimers();
 
 const mockGetId = jest.fn();
-jest.mock('../../../../../data/repository/issue_repository', () => ({
-  IssueRepository: jest.fn().mockImplementation(() => ({
-    getId: mockGetId,
-  })),
-}));
 
 const mockLinkContentId = jest.fn();
 const mockMoveIssueToColumn = jest.fn();

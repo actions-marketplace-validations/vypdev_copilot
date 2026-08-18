@@ -6,11 +6,6 @@ jest.mock('../../../../../utils/logger', () => ({
 }));
 
 const mockSetIssueType = jest.fn();
-jest.mock('../../../../../data/repository/issue_repository', () => ({
-  IssueRepository: jest.fn().mockImplementation(() => ({
-    setIssueType: mockSetIssueType,
-  })),
-}));
 
 function baseParam() {
   return {

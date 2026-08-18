@@ -8,11 +8,6 @@ jest.mock('../../../../../utils/logger', () => ({
 }));
 
 const mockGetIssueDescription = jest.fn();
-jest.mock('../../../../../data/repository/issue_repository', () => ({
-  IssueRepository: jest.fn().mockImplementation(() => ({
-    getIssueDescription: mockGetIssueDescription,
-  })),
-}));
 
 const mockGetAllMembers = jest.fn();
 jest.mock('../../../../../data/repository/organization/organization_members_repository', () => ({
@@ -24,11 +19,6 @@ jest.mock('../../../../../data/repository/organization/organization_members_repo
 const mockAskAgent = jest.fn();
 
 const mockUpdateDescription = jest.fn();
-jest.mock('../../../../../data/repository/pull_request_repository', () => ({
-  PullRequestRepository: jest.fn().mockImplementation(() => ({
-    updateDescription: mockUpdateDescription,
-  })),
-}));
 
 function baseParam(overrides: Record<string, unknown> = {}) {
   return {

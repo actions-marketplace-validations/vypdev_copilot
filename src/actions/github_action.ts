@@ -355,9 +355,14 @@ export async function runGitHubAction(): Promise<void> {
 
     logDebugInfo(`Execution built. Event will be resolved in mainRun. Single action: ${execution.singleAction.currentSingleAction ?? 'none'}, AI PR description: ${execution.ai.getAiPullRequestDescription()}, bugbot min severity: ${execution.ai.getBugbotMinSeverity()}.`);
 
-    const results: Result[] = await mainRun(execution, projectRepository, repositoryFactory.createBranchRepository());
+    const results: Result[] = await mainRun(execution, projectRepository, repositoryFactory.createGitCliRepository());
 
-    await finishWithResults(execution, results, repositoryFactory.createIssueRepository());
+    await finishWithResults(
+        execution,
+        results,
+        repositoryFactory.createIssueNotificationRepository(),
+        repositoryFactory.createIssueContentRepository(),
+    );
     } finally {
         if (managedOpencodeServer) {
             logInfo('Stopping OpenCode server...');
@@ -367,14 +372,19 @@ export async function runGitHubAction(): Promise<void> {
     }
 }
 
-async function finishWithResults(execution: Execution, results: Result[], issueRepository: ReturnType<RepositoryFactory['createIssueRepository']>): Promise<void> {
+async function finishWithResults(
+    execution: Execution,
+    results: Result[],
+    issueNotificationPort: ReturnType<RepositoryFactory['createIssueNotificationRepository']>,
+    issueDescriptionPort: ReturnType<RepositoryFactory['createIssueContentRepository']>,
+): Promise<void> {
     const stepCount = results.reduce((acc, r) => acc + (r.steps?.length ?? 0), 0);
     const errorCount = results.reduce((acc, r) => acc + (r.errors?.length ?? 0), 0);
     logInfo(`Publishing result: ${results.length} result(s), ${stepCount} step(s), ${errorCount} error(s).`);
 
     execution.currentConfiguration.results = results;
-    await new PublishResultUseCase(issueRepository).invoke(execution);
-    await new StoreConfigurationUseCase(new ConfigurationHandler(issueRepository)).invoke(execution);
+    await new PublishResultUseCase(issueNotificationPort).invoke(execution);
+    await new StoreConfigurationUseCase(new ConfigurationHandler(issueDescriptionPort)).invoke(execution);
     logInfo('Configuration stored. Finishing.');
 
     /**

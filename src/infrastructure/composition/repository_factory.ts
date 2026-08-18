@@ -2,7 +2,7 @@
 import { ActorAuthorizationRepository } from "../../data/repository/organization/actor_authorization_repository";
 import { AuthenticatedUserRepository } from "../../data/repository/organization/authenticated_user_repository";
 import { OrganizationMembersRepository } from "../../data/repository/organization/organization_members_repository";
-import { IssueRepository } from "../../data/repository/issue_repository";
+
 import { IssueAssignmentRepository } from "../../data/repository/issue/issue_assignment_repository";
 import { IssueContentRepository } from "../../data/repository/issue/issue_content_repository";
 import { IssueLabelRepository } from "../../data/repository/issue/issue_label_repository";
@@ -16,6 +16,7 @@ import { IssueTitleRepository } from "../../data/repository/issue/issue_title_re
 import { IssueClosureRepository } from "../../data/repository/issue/issue_closure_repository";
 import { IssueNotificationRepository } from "../../data/repository/issue/issue_notification_repository";
 import { IssueProgressTrackingRepository } from "../../data/repository/issue/issue_progress_tracking_repository";
+import { ExecutionIssueSetupRepository } from "../../data/repository/issue/execution_issue_setup_repository";
 import { BugbotIssueRepository } from "../../data/repository/issue/bugbot_issue_repository";
 import { ProjectBoardRepository } from "../../data/repository/project/project_board_repository";
 import { PullRequestChangesRepository } from "../../data/repository/pull_request/pull_request_changes_repository";
@@ -23,7 +24,7 @@ import { PullRequestLifecycleRepository } from "../../data/repository/pull_reque
 import { PullRequestReviewRepository } from "../../data/repository/pull_request/pull_request_review_repository";
 import { PullRequestReviewThreadRepository } from "../../data/repository/pull_request/pull_request_review_thread_repository";
 import { BugbotPullRequestRepository } from "../../data/repository/pull_request/bugbot_pull_request_repository";
-import { PullRequestRepository } from "../../data/repository/pull_request_repository";
+
 import { RepositoryReleaseRepository } from "../../data/repository/release/repository_release_repository";
 import { OctokitBranchClientAdapter, OctokitBranchMergeClientAdapter, OctokitBranchComparisonClientAdapter, OctokitGraphqlClientAdapter, OctokitIssueAssignmentClientAdapter, OctokitIssueContentClientAdapter, OctokitIssueLabelProvisioningClientAdapter, OctokitIssueLabelsClientAdapter, OctokitIssueLifecycleClientAdapter, OctokitIssueMetadataClientAdapter, OctokitIssueTitleClientAdapter, OctokitOrganizationClientAdapter, OctokitProjectClientAdapter, OctokitPullRequestChangesClientAdapter, OctokitReleaseClientAdapter, OctokitPullRequestLifecycleClientAdapter, OctokitPullRequestReviewClientAdapter, OctokitWorkflowClientAdapter } from "../github/octokit_client";
 import { IssueUseCase } from "../../application/usecases/issue_use_case";
@@ -31,9 +32,11 @@ import { PullRequestUseCase } from "../../application/usecases/pull_request_use_
 import { InitialSetupUseCase } from "../../application/usecases/actions/initial_setup_use_case";
 import { MergeRepository } from "../../data/repository/merge_repository";
 import { BranchCompareRepository } from "../../data/repository/branch_compare_repository";
-import { BranchRepository } from "../../data/repository/branch_repository";
+import { GitCliRepository } from "../../data/repository/git_cli_repository";
 import { BranchLifecycleRepository } from "../../data/repository/branch_lifecycle_repository";
 import { BranchNameRepository } from "../../data/repository/branch_name_repository";
+import { BranchPreparationRepository } from "../../data/repository/branch/branch_preparation_repository";
+import { LinkedBranchRepository } from "../../data/repository/branch/linked_branch_repository";
 import { CheckProgressUseCase } from "../../application/usecases/actions/check_progress_use_case";
 import { RecommendStepsUseCase } from "../../application/usecases/actions/recommend_steps_use_case";
 import { AnswerIssueHelpUseCase } from "../../application/usecases/steps/issue/answer_issue_help_use_case";
@@ -58,14 +61,20 @@ export class RepositoryFactory {
     createPullRequestLifecycleClient(): OctokitPullRequestLifecycleClientAdapter {
         return new OctokitPullRequestLifecycleClientAdapter();
     }
-    createBranchRepository(): BranchRepository {
-        return new BranchRepository(this.createWorkflowRepository(), new OctokitBranchClientAdapter(), new OctokitGraphqlClientAdapter(), new BranchCompareRepository(new OctokitBranchComparisonClientAdapter()), new MergeRepository(new OctokitBranchMergeClientAdapter()));
-    }
+    createGitCliRepository(): GitCliRepository { return new GitCliRepository(); }
     createBranchLifecycleRepository(): BranchLifecycleRepository {
         return new BranchLifecycleRepository(new OctokitBranchClientAdapter());
     }
     createBranchNameRepository(): BranchNameRepository {
         return new BranchNameRepository();
+    }
+    createBranchPreparationRepository(): BranchPreparationRepository {
+        return new BranchPreparationRepository(
+            new OctokitBranchClientAdapter(),
+            this.createBranchNameRepository(),
+            new LinkedBranchRepository(this.createGraphqlClient()),
+            new GitCliRepository(),
+        );
     }
     createWorkflowRepository(): WorkflowRepository {
         return new WorkflowRepository(new OctokitWorkflowClientAdapter());
@@ -96,7 +105,7 @@ export class RepositoryFactory {
             this.createIssueNotificationRepository(),
             this.createBranchLifecycleRepository(),
             this.createBranchNameRepository(),
-            this.createBranchRepository(),
+            this.createBranchPreparationRepository(),
             this.createWorkflowRepository(),
             new RecommendStepsUseCase(this.createIssueContentRepository(), new DefaultAgentRepositoryFactory().createFindings()),
             new AnswerIssueHelpUseCase(this.createIssueNotificationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
@@ -124,7 +133,7 @@ export class RepositoryFactory {
             this.createIssueLabelProvisioningRepository(),
             this.createIssueProgressLabelProvisioningPort(),
             this.createIssueTypeRepository(),
-            this.createBranchRepository(),
+            this.createGitCliRepository(),
             this.createRepositoryReleaseRepository(),
         );
     }
@@ -141,21 +150,6 @@ export class RepositoryFactory {
         return new OrganizationMembersRepository(this.createOrganizationGithubClient());
     }
 
-    createIssueRepository(): IssueRepository {
-        const metadataRepository = this.createIssueMetadataRepository();
-        const graphqlClient = new OctokitGraphqlClientAdapter();
-        return new IssueRepository(
-            this.createIssueContentRepository(),
-            metadataRepository,
-            this.createIssueLabelRepository(),
-            this.createIssueAssignmentRepository(),
-            this.createIssueLabelProvisioningRepository(),
-            new IssueTypeRepository(graphqlClient),
-            new IssueTypeAssignmentRepository((owner, repository, issueNumber, token) => metadataRepository.getId(owner, repository, issueNumber, token), graphqlClient),
-            this.createIssueLifecycleRepository(),
-            new OctokitIssueTitleClientAdapter(),
-        );
-    }
 
     createIssueAssignmentRepository(): IssueAssignmentRepository { return new IssueAssignmentRepository(new OctokitIssueAssignmentClientAdapter()); }
     createIssueContentRepository(): IssueContentRepository { return new IssueContentRepository(new OctokitIssueContentClientAdapter()); }
@@ -183,6 +177,13 @@ export class RepositoryFactory {
             this.createIssueProgressLabelRepository(),
         );
     }
+    createExecutionIssueSetupRepository(): ExecutionIssueSetupRepository {
+        return new ExecutionIssueSetupRepository(
+            this.createIssueMetadataRepository(),
+            this.createIssueContentRepository(),
+            this.createIssueLabelRepository(),
+        );
+    }
     createIssueProgressLabelProvisioningPort(): IssueProgressLabelProvisioningPort {
         const progressRepository = this.createIssueProgressLabelRepository();
         const provisioningRepository = this.createIssueLabelProvisioningRepository();
@@ -206,9 +207,6 @@ export class RepositoryFactory {
         return new ProjectBoardRepository(new OctokitProjectClientAdapter(), new OctokitGraphqlClientAdapter());
     }
 
-    createPullRequestRepository(): PullRequestRepository {
-        return new PullRequestRepository(this.createPullRequestChangesClient(), this.createGraphqlClient(), this.createPullRequestReviewClient(), this.createPullRequestLifecycleClient());
-    }
 
     createPullRequestChangesRepository(): PullRequestChangesRepository {
         return new PullRequestChangesRepository(this.createPullRequestChangesClient());
@@ -238,5 +236,8 @@ export class RepositoryFactory {
     }
     createMergeRepository(): MergeRepository {
         return new MergeRepository(new OctokitBranchMergeClientAdapter());
+    }
+    createBranchCompareRepository(): BranchCompareRepository {
+        return new BranchCompareRepository(new OctokitBranchComparisonClientAdapter());
     }
 }

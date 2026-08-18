@@ -7,13 +7,6 @@ jest.mock('../../../../../utils/logger', () => ({
 const mockGetTitle = jest.fn();
 const mockUpdateTitleIssueFormat = jest.fn();
 const mockUpdateTitlePullRequestFormat = jest.fn();
-jest.mock('../../../../../data/repository/issue_repository', () => ({
-  IssueRepository: jest.fn().mockImplementation(() => ({
-    getTitle: mockGetTitle,
-    updateTitleIssueFormat: mockUpdateTitleIssueFormat,
-    updateTitlePullRequestFormat: mockUpdateTitlePullRequestFormat,
-  })),
-}));
 
 function baseParam(overrides: Record<string, unknown> = {}) {
   return {

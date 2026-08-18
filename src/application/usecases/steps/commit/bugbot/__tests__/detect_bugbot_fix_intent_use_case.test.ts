@@ -20,12 +20,6 @@ jest.mock("../load_bugbot_context_use_case", () => ({
     loadBugbotContext: (...args: unknown[]) => mockLoadBugbotContext(...args),
 }));
 
-jest.mock("../../../../../../data/repository/pull_request_repository", () => ({
-    PullRequestRepository: jest.fn().mockImplementation(() => ({
-        getHeadBranchForIssue: mockGetHeadBranchForIssue,
-        getPullRequestReviewCommentBody: mockGetPullRequestReviewCommentBody,
-    })),
-}));
 
 function baseExecution(overrides: Partial<Execution> = {}): Execution {
     return {

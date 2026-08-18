@@ -6,7 +6,7 @@ describe("RepositoryFactory", () => {
         expect(factory.createOrganizationMembersRepository()).toBeDefined();
         expect(factory.createAuthenticatedUserRepository()).toBeDefined();
         expect(factory.createActorAuthorizationRepository()).toBeDefined();
-        expect(factory.createIssueRepository()).toBeDefined();
+        expect(factory.createIssueMetadataRepository()).toBeDefined();
         expect(factory.createIssueAssignmentRepository()).toBeDefined();
         expect(factory.createIssueContentRepository()).toBeDefined();
         expect(factory.createIssueLabelRepository()).toBeDefined();

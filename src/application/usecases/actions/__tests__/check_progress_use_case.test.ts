@@ -19,29 +19,10 @@ const mockGetDescription = jest.fn();
 const mockSetProgressLabel = jest.fn();
 const mockGetLabels = jest.fn();
 const mockSetLabels = jest.fn();
-jest.mock('../../../../data/repository/issue_repository', () => ({
-  IssueRepository: jest.fn().mockImplementation(() => ({
-    getDescription: mockGetDescription,
-    setProgressLabel: mockSetProgressLabel,
-    getLabels: mockGetLabels,
-    setLabels: mockSetLabels,
-  })),
-  PROGRESS_LABEL_PATTERN: /^\d+%$/,
-}));
 
 const mockGetListOfBranches = jest.fn();
-jest.mock('../../../../data/repository/branch_repository', () => ({
-  BranchRepository: jest.fn().mockImplementation(() => ({
-    getListOfBranches: mockGetListOfBranches,
-  })),
-}));
 
 const mockGetOpenPullRequestNumbersByHeadBranch = jest.fn();
-jest.mock('../../../../data/repository/pull_request_repository', () => ({
-  PullRequestRepository: jest.fn().mockImplementation(() => ({
-    getOpenPullRequestNumbersByHeadBranch: mockGetOpenPullRequestNumbersByHeadBranch,
-  })),
-}));
 
 
 const mockAskAgent = jest.fn();

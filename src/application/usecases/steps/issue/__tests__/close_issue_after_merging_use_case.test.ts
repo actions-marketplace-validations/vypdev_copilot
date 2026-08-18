@@ -8,12 +8,6 @@ jest.mock('../../../../../utils/logger', () => ({
 
 const mockCloseIssue = jest.fn();
 const mockAddComment = jest.fn();
-jest.mock('../../../../../data/repository/issue_repository', () => ({
-  IssueRepository: jest.fn().mockImplementation(() => ({
-    closeIssue: mockCloseIssue,
-    addComment: mockAddComment,
-  })),
-}));
 
 function baseParam() {
   return {

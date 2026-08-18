@@ -8,11 +8,6 @@ jest.mock('../../../../../utils/logger', () => ({
 
 const mockMoveIssueToColumn = jest.fn();
 const mockExecuteWorkflow = jest.fn();
-jest.mock('../../../../../data/repository/branch_repository', () => ({
-  BranchRepository: jest.fn().mockImplementation(() => ({
-    executeWorkflow: mockExecuteWorkflow,
-  })),
-}));
 
 function baseParam(overrides: Record<string, unknown> = {}) {
   return {

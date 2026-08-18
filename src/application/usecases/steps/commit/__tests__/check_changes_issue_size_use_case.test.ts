@@ -12,22 +12,6 @@ const mockGetLabels = jest.fn();
 const mockSetTaskSize = jest.fn();
 const mockGetOpenPullRequestNumbersByHeadBranch = jest.fn();
 
-jest.mock('../../../../../data/repository/branch_repository', () => ({
-  BranchRepository: jest.fn().mockImplementation(() => ({
-    getSizeCategoryAndReason: mockGetSizeCategoryAndReason,
-  })),
-}));
-jest.mock('../../../../../data/repository/issue_repository', () => ({
-  IssueRepository: jest.fn().mockImplementation(() => ({
-    setLabels: mockSetLabels,
-    getLabels: mockGetLabels,
-  })),
-}));
-jest.mock('../../../../../data/repository/pull_request_repository', () => ({
-  PullRequestRepository: jest.fn().mockImplementation(() => ({
-    getOpenPullRequestNumbersByHeadBranch: mockGetOpenPullRequestNumbersByHeadBranch,
-  })),
-}));
 
 function baseParam(overrides: Record<string, unknown> = {}) {
   return {

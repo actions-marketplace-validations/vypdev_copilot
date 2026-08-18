@@ -17,15 +17,6 @@ const mockGetListOfBranches = jest.fn();
 const mockManageBranches = jest.fn();
 const mockGetCommitTag = jest.fn();
 const mockCreateLinkedBranch = jest.fn();
-jest.mock('../../../../../data/repository/branch_repository', () => ({
-  BranchRepository: jest.fn().mockImplementation(() => ({
-    fetchRemoteBranches: mockFetchRemoteBranches,
-    getListOfBranches: mockGetListOfBranches,
-    manageBranches: mockManageBranches,
-    getCommitTag: mockGetCommitTag,
-    createLinkedBranch: mockCreateLinkedBranch,
-  })),
-}));
 
 const mockMoveIssueToColumn = jest.fn();
 const mockMoveIssueInvoke = jest.fn();

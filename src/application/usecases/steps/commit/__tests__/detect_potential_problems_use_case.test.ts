@@ -25,13 +25,6 @@ jest.mock('../../../../../utils/logger', () => ({
 const mockListIssueComments = jest.fn();
 const mockAddComment = jest.fn();
 const mockUpdateComment = jest.fn();
-jest.mock('../../../../../data/repository/issue_repository', () => ({
-  IssueRepository: jest.fn().mockImplementation(() => ({
-    listIssueComments: mockListIssueComments,
-    addComment: mockAddComment,
-    updateComment: mockUpdateComment,
-  })),
-}));
 
 const mockGetOpenPullRequestNumbersByHeadBranch = jest.fn();
 const mockListPullRequestReviewComments = jest.fn();
@@ -41,18 +34,6 @@ const mockGetFilesWithFirstDiffLine = jest.fn();
 const mockCreateReviewWithComments = jest.fn();
 const mockUpdatePullRequestReviewComment = jest.fn();
 const mockResolvePullRequestReviewThread = jest.fn();
-jest.mock('../../../../../data/repository/pull_request_repository', () => ({
-  PullRequestRepository: jest.fn().mockImplementation(() => ({
-    getOpenPullRequestNumbersByHeadBranch: mockGetOpenPullRequestNumbersByHeadBranch,
-    listPullRequestReviewComments: mockListPullRequestReviewComments,
-    getPullRequestHeadSha: mockGetPullRequestHeadSha,
-    getChangedFiles: mockGetChangedFiles,
-    getFilesWithFirstDiffLine: mockGetFilesWithFirstDiffLine,
-    createReviewWithComments: mockCreateReviewWithComments,
-    updatePullRequestReviewComment: mockUpdatePullRequestReviewComment,
-    resolvePullRequestReviewThread: mockResolvePullRequestReviewThread,
-  })),
-}));
 
 const mockAskAgent = jest.fn();
 

@@ -38,22 +38,10 @@ jest.mock('../../../../data/repository/organization/authenticated_user_repositor
 }));
 
 const mockGetLatestTag = jest.fn();
-jest.mock('../../../../data/repository/branch_repository', () => ({
-  BranchRepository: jest.fn().mockImplementation(() => ({
-    getLatestTag: mockGetLatestTag,
-  })),
-}));
 
 const mockEnsureLabels = jest.fn();
 const mockEnsureProgressLabels = jest.fn();
 const mockEnsureIssueTypes = jest.fn();
-jest.mock('../../../../data/repository/issue_repository', () => ({
-  IssueRepository: jest.fn().mockImplementation(() => ({
-    ensureLabels: mockEnsureLabels,
-    ensureProgressLabels: mockEnsureProgressLabels,
-    ensureIssueTypes: mockEnsureIssueTypes,
-  })),
-}));
 
 function baseParam(overrides: Record<string, unknown> = {}): Execution {
   return {

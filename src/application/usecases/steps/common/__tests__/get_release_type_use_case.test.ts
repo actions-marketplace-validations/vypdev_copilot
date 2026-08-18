@@ -7,11 +7,6 @@ jest.mock('../../../../../utils/logger', () => ({
 
 const mockGetDescription = jest.fn();
 
-jest.mock('../../../../../data/repository/issue_repository', () => ({
-  IssueRepository: jest.fn().mockImplementation(() => ({
-    getDescription: mockGetDescription,
-  })),
-}));
 
 describe('GetReleaseTypeUseCase', () => {
   let useCase: GetReleaseTypeUseCase;

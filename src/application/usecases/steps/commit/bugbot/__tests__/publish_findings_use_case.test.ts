@@ -16,19 +16,7 @@ const mockUpdateComment = jest.fn();
 const mockCreateReviewWithComments = jest.fn();
 const mockUpdatePullRequestReviewComment = jest.fn();
 
-jest.mock("../../../../../../data/repository/issue_repository", () => ({
-    IssueRepository: jest.fn().mockImplementation(() => ({
-        addComment: mockAddComment,
-        updateComment: mockUpdateComment,
-    })),
-}));
 
-jest.mock("../../../../../../data/repository/pull_request_repository", () => ({
-    PullRequestRepository: jest.fn().mockImplementation(() => ({
-        createReviewWithComments: mockCreateReviewWithComments,
-        updatePullRequestReviewComment: mockUpdatePullRequestReviewComment,
-    })),
-}));
 
 const mockListPullRequestReviewComments = jest.fn();
 const mockResolvePullRequestReviewThread = jest.fn();

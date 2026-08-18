@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 function source(relativePath: string): string {
@@ -8,9 +8,16 @@ function source(relativePath: string): string {
 describe('action composition boundaries', () => {
     it('keeps CLI as an input source delegating to the local lifecycle', () => {
         const cli = readFileSync(join(__dirname, '../../cli.ts'), 'utf8');
+        const commands = readdirSync(join(__dirname, '../../cli/commands'))
+            .filter((file) => file.endsWith('.ts'))
+            .map((file) => readFileSync(join(__dirname, '../../cli/commands', file), 'utf8'))
+            .join('\n');
 
-        expect(cli).toMatch(/from ['"]\.\/actions\/local_action['"]/);
-        expect(cli).toMatch(/await runLocalAction\(/);
+        expect(cli).toMatch(/register[A-Z][A-Za-z]+Command\(program\)/);
+        expect(commands).toMatch(/from ['"]\.\.\/\.\.\/actions\/local_action['"]/);
+        expect(commands).toMatch(/await runLocalAction\(/);
+        expect(commands).not.toMatch(/from ['"][^'"]*common_action['"]/);
+        expect(commands).not.toMatch(/mainRun\(/);
         expect(cli).not.toMatch(/from ['"][^'"]*common_action['"]/);
         expect(cli).not.toMatch(/mainRun\(/);
         expect(cli).not.toMatch(/from ['"]@actions\/github['"]/);
@@ -34,7 +41,7 @@ describe('action composition boundaries', () => {
         expect(commonAction).toMatch(/LatestTagQueryPort/);
 
         expect(githubAction).toMatch(/execution_builder/);
-        expect(localAction).toMatch(/execution_builder/);
+        expect(localAction).toMatch(/local_action_execution/);
     });
 
     it('keeps shared input policies independent from lifecycles and infrastructure', () => {
