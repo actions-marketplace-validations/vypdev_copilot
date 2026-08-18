@@ -1,5 +1,5 @@
 import type { GithubBranchComparisonClient } from '../../application/ports/github_branch_ports';
-import type { GithubClientPort } from '../../application/ports/github_client_ports';
+import type { GithubClientPort } from '../../infrastructure/github/ports/github_client_provider_port';
 import { logDebugInfo, logError } from '../../utils/logger';
 import { Labels } from '../model/labels';
 import { SizeThresholds } from '../model/size_thresholds';

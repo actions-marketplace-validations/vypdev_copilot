@@ -1,5 +1,5 @@
 import { logDebugInfo, logError } from "../../../utils/logger";
-import type { GithubClientPort } from "../../../application/ports/github_client_ports";
+import type { GithubClientPort } from "../../../infrastructure/github/ports/github_client_provider_port";
 import type { GithubGraphqlTransportClient } from "../../../infrastructure/github/ports/github_graphql_transport_port";
 
 type ThreadPageInfo = { hasNextPage: boolean; endCursor: string | null };

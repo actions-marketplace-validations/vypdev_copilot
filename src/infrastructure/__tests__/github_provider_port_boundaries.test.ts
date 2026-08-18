@@ -8,13 +8,16 @@ describe('GitHub provider port boundaries', () => {
         expect(existsSync(join(portsDirectory, 'github_provider_ports.ts'))).toBe(false);
     });
 
+    it('keeps provider resolution contracts in infrastructure', () => {
+        expect(existsSync(join(portsDirectory, '..', '..', 'infrastructure', 'github', 'ports', 'github_client_provider_port.ts'))).toBe(true);
+    });
+
     it('keeps the GraphQL transport contract in infrastructure', () => {
         expect(existsSync(join(portsDirectory, '..', '..', 'infrastructure', 'github', 'ports', 'github_graphql_transport_port.ts'))).toBe(true);
     });
 
     it('keeps GitHub provider contracts grouped by capability', () => {
         for (const file of [
-            'github_client_ports.ts',
             'github_branch_ports.ts',
             'github_release_ports.ts',
             'github_identity_ports.ts',

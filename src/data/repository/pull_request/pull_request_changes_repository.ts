@@ -1,5 +1,5 @@
 import { logError } from "../../../utils/logger";
-import type { GithubClientPort } from "../../../application/ports/github_client_ports";
+import type { GithubClientPort } from "../../../infrastructure/github/ports/github_client_provider_port";
 import type { GithubPullRequestChangesClient } from "../../../application/ports/github_pull_request_ports";
 
 export class PullRequestChangesRepository {
