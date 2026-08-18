@@ -2,7 +2,6 @@ import chalk from 'chalk';
 import { Ai } from '../data/model/ai';
 
 
-import { Execution } from '../data/model/execution';
 import { Hotfix } from '../data/model/hotfix';
 
 
@@ -29,6 +28,7 @@ import { buildAgentTasksFromValues } from './agent_input_builder';
 import { buildImageConfiguration } from './image_configuration_builder';
 import { buildSizeThresholds } from './size_threshold_builder';
 import { buildBranches } from './branches_builder';
+import { buildExecution } from './execution_builder';
 import { buildEmoji, buildImages, buildIssue, buildIssueTypes, buildLabels, buildLocale, buildProjects, buildPullRequest, buildTokens, buildWorkflows } from './configuration_builders';
 import { mainRun } from './common_action';
 import boxen from 'boxen';
@@ -248,20 +248,20 @@ export async function runLocalAction(
     const pullRequestDesiredReviewersCount = parseIntegerInput(resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.PULL_REQUEST_DESIRED_REVIEWERS_COUNT), 0);
     const pullRequestMergeTimeout = parseIntegerInput(resolveActionInput(additionalParams, actionInputs, INPUT_KEYS.PULL_REQUEST_MERGE_TIMEOUT), 0);
 
-    const execution = new Execution(
+    const execution = buildExecution({
         debug,
-        new SingleAction(
-            singleAction ?? '',
-            singleActionIssue ?? '',
-            singleActionVersion ?? '',
-            singleActionTitle ?? '',
-            singleActionChangelog ?? '',
+        singleAction: new SingleAction(
+            singleAction,
+            singleActionIssue,
+            singleActionVersion,
+            singleActionTitle,
+            singleActionChangelog,
         ),
         commitPrefixBuilder,
-        buildIssue(branchManagementAlways, reopenIssueOnPush, issueDesiredAssigneesCount, additionalParams),
-        buildPullRequest(pullRequestDesiredAssigneesCount, pullRequestDesiredReviewersCount, pullRequestMergeTimeout, additionalParams),
-        buildEmoji(titleEmoji, branchManagementEmoji),
-        buildImages({
+        issue: buildIssue(branchManagementAlways, reopenIssueOnPush, issueDesiredAssigneesCount, additionalParams),
+        pullRequest: buildPullRequest(pullRequestDesiredAssigneesCount, pullRequestDesiredReviewersCount, pullRequestMergeTimeout, additionalParams),
+        emoji: buildEmoji(titleEmoji, branchManagementEmoji),
+        images: buildImages({
             onIssue: imageConfiguration.onIssue,
             onPullRequest: imageConfiguration.onPullRequest,
             onCommit: imageConfiguration.onCommit,
@@ -269,8 +269,8 @@ export async function runLocalAction(
             pullRequest: imageConfiguration.pullRequest,
             commit: imageConfiguration.commit,
         }),
-        buildTokens(token ?? ''),
-        new Ai(
+        tokens: buildTokens(token),
+        ai: new Ai(
             opencodeServerUrl,
             opencodeModel,
             aiPullRequestDescription,
@@ -282,13 +282,13 @@ export async function runLocalAction(
             bugbotFixVerifyCommands,
             agentTasks,
         ),
-        buildLabels({
+        labels: buildLabels({
             branching: { launcher: branchManagementLauncherLabel },
             workflow: { bug: bugLabel, bugfix: bugfixLabel, hotfix: hotfixLabel, enhancement: enhancementLabel, feature: featureLabel, release: releaseLabel, question: questionLabel, help: helpLabel, deploy: deployLabel, deployed: deployedLabel, docs: docsLabel, documentation: documentationLabel, chore: choreLabel, maintenance: maintenanceLabel },
             priorities: { high: priorityHighLabel, medium: priorityMediumLabel, low: priorityLowLabel, none: priorityNoneLabel },
             sizes: { xxl: sizeXxlLabel, xl: sizeXlLabel, l: sizeLLabel, m: sizeMLabel, s: sizeSLabel, xs: sizeXsLabel },
         }),
-        buildIssueTypes({
+        issueTypes: buildIssueTypes({
             task: { name: issueTypeTask, description: issueTypeTaskDescription, color: issueTypeTaskColor },
             bug: { name: issueTypeBug, description: issueTypeBugDescription, color: issueTypeBugColor },
             feature: { name: issueTypeFeature, description: issueTypeFeatureDescription, color: issueTypeFeatureColor },
@@ -299,8 +299,8 @@ export async function runLocalAction(
             question: { name: issueTypeQuestion, description: issueTypeQuestionDescription, color: issueTypeQuestionColor },
             help: { name: issueTypeHelp, description: issueTypeHelpDescription, color: issueTypeHelpColor },
         }),
-        buildLocale(issueLocale, pullRequestLocale),
-        buildSizeThresholds({
+        locale: buildLocale(issueLocale, pullRequestLocale),
+        sizeThresholds: buildSizeThresholds({
             xxl: { lines: sizeXxlThresholdLines, files: sizeXxlThresholdFiles, commits: sizeXxlThresholdCommits },
             xl: { lines: sizeXlThresholdLines, files: sizeXlThresholdFiles, commits: sizeXlThresholdCommits },
             l: { lines: sizeLThresholdLines, files: sizeLThresholdFiles, commits: sizeLThresholdCommits },
@@ -308,7 +308,7 @@ export async function runLocalAction(
             s: { lines: sizeSThresholdLines, files: sizeSThresholdFiles, commits: sizeSThresholdCommits },
             xs: { lines: sizeXsThresholdLines, files: sizeXsThresholdFiles, commits: sizeXsThresholdCommits },
         }),
-        buildBranches({
+        branches: buildBranches({
             main: mainBranch,
             defaultBranch: mainBranch,
             development: developmentBranch,
@@ -319,19 +319,19 @@ export async function runLocalAction(
             docsTree,
             choreTree,
         }),
-        new Release(),
-        new Hotfix(),
-        buildWorkflows(releaseWorkflow, hotfixWorkflow),
-        buildProjects({
+        release: new Release(),
+        hotfix: new Hotfix(),
+        workflows: buildWorkflows(releaseWorkflow, hotfixWorkflow),
+        projects: buildProjects({
             projects,
             issueCreated: projectColumnIssueCreated,
             pullRequestCreated: projectColumnPullRequestCreated,
             issueInProgress: projectColumnIssueInProgress,
             pullRequestInProgress: projectColumnPullRequestInProgress,
         }),
-        new Welcome(welcomeTitle ?? '', welcomeMessages ?? []),
-        additionalParams,
-    )
+        welcome: new Welcome(welcomeTitle ?? '', welcomeMessages ?? []),
+        inputs: additionalParams,
+    });
 
     const results = await mainRun(execution, projectRepository, repositoryFactory.createBranchRepository());
 

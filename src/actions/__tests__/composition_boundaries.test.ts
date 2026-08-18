@@ -32,6 +32,9 @@ describe('action composition boundaries', () => {
         const commonAction = source('common_action.ts');
         expect(commonAction).not.toMatch(/data\/repository\/branch_repository/);
         expect(commonAction).toMatch(/LatestTagQueryPort/);
+
+        expect(githubAction).toMatch(/execution_builder/);
+        expect(localAction).toMatch(/execution_builder/);
     });
 
     it('keeps shared input policies independent from lifecycles and infrastructure', () => {
