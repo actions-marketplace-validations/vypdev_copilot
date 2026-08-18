@@ -19,12 +19,12 @@ export async function runLocalAction(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Params shape is dynamic (CLI/action inputs)
     additionalParams: any
 ): Promise<void> {
-    const projectRepository = createProjectBoardCompositionRoot();
+    const projectBoard = createProjectBoardCompositionRoot();
 
-    const configuration = await buildLocalActionConfiguration(additionalParams, projectRepository);
+    const configuration = await buildLocalActionConfiguration(additionalParams, projectBoard.query);
     const execution = buildLocalActionExecution(configuration, additionalParams);
 
-    const results = await mainRun(execution, projectRepository, new GitCliRepository());
+    const results = await mainRun(execution, projectBoard.command, new GitCliRepository());
 
     renderLocalActionResults(results);
 }

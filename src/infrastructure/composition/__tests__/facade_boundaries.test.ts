@@ -18,7 +18,7 @@ describe('repository facade composition boundaries', () => {
         const facadePatterns = [
             /from ['"][^'"]*\/organization_repository['"]/,
             /from ['"][^'"]*\/pull_request_repository['"]/,
-            /from ['"][^'"]*\/project_board_repository['"]/,
+            /from ['"][^'"]*\/project_board_query_repository['"]/,
             /from ['"][^'"]*\/repository_release_repository['"]/,
         ];
 

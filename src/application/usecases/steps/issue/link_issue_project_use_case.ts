@@ -11,7 +11,8 @@ export class LinkIssueProjectUseCase implements ParamUseCase<Execution, Result[]
     
     constructor(
         private readonly issueRepository: IssueIdentityQueryPort,
-        private readonly projectRepository: ProjectBoardCommandPort & ProjectBoardLinkPort,
+        private readonly projectCommandRepository: ProjectBoardCommandPort,
+        private readonly projectLinkRepository: ProjectBoardLinkPort,
     ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
@@ -34,13 +35,13 @@ export class LinkIssueProjectUseCase implements ParamUseCase<Execution, Result[]
                     param.tokens.token,
                 )
 
-                let actionDone = await this.projectRepository.linkContentId(project, issueId, param.tokens.token)
+                let actionDone = await this.projectLinkRepository.linkContentId(project, issueId, param.tokens.token)
                 if (actionDone) {
                     /**
                      * Wait for 10 seconds to ensure the issue is linked to the project
                      */
                     await new Promise(resolve => setTimeout(resolve, 10000));
-                    actionDone = await this.projectRepository.moveIssueToColumn(
+                    actionDone = await this.projectCommandRepository.moveIssueToColumn(
                         project,
                         param.owner,
                         param.repo,

@@ -1,5 +1,7 @@
 import { OctokitGraphqlTransportClientAdapter, OctokitOwnerTypeClientAdapter, OctokitRepositoryContextClientAdapter } from "../../../infrastructure/github/octokit_client";
-import { ProjectBoardRepository } from "./project_board_repository";
+import { ProjectBoardCommandRepository } from "./project_board_command_repository";
+import { ProjectBoardLinkRepository } from "./project_board_link_repository";
+import { ProjectBoardQueryRepository } from "./project_board_query_repository";
 import { ProjectDetail } from "../../model/project_detail";
 
 const mockGetByUsername = jest.fn();
@@ -18,8 +20,9 @@ jest.mock("../../../utils/logger", () => ({
     logError: jest.fn(),
 }));
 
-describe("ProjectBoardRepository", () => {
-    const repository = new ProjectBoardRepository(new OctokitRepositoryContextClientAdapter(), new OctokitOwnerTypeClientAdapter(), new OctokitGraphqlTransportClientAdapter());
+describe("ProjectBoardQueryRepository", () => {
+    const queryRepository = new ProjectBoardQueryRepository(new OctokitRepositoryContextClientAdapter(), new OctokitOwnerTypeClientAdapter(), new OctokitGraphqlTransportClientAdapter());
+    const linkRepository = new ProjectBoardLinkRepository(queryRepository, new OctokitGraphqlTransportClientAdapter());
     const project = new ProjectDetail({
         id: "PVT_1",
         title: "Board",
@@ -39,7 +42,7 @@ describe("ProjectBoardRepository", () => {
             organization: { projectV2: { id: "PVT_1", title: "Board", url: "https://github.com/orgs/owner/projects/1" } },
         });
 
-        await expect(repository.getProjectDetail("1", "token")).resolves.toMatchObject({
+        await expect(queryRepository.getProjectDetail("1", "token")).resolves.toMatchObject({
             id: "PVT_1",
             title: "Board",
             type: "organization",
@@ -56,7 +59,7 @@ describe("ProjectBoardRepository", () => {
             },
         });
 
-        await expect(repository.isContentLinked(project, "content-1", "token")).resolves.toBe(true);
+        await expect(queryRepository.isContentLinked(project, "content-1", "token")).resolves.toBe(true);
     });
 
     it("does not issue a mutation when content is already linked", async () => {
@@ -69,7 +72,7 @@ describe("ProjectBoardRepository", () => {
             },
         });
 
-        await expect(repository.linkContentId(project, "content-1", "token")).resolves.toBe(false);
+        await expect(linkRepository.linkContentId(project, "content-1", "token")).resolves.toBe(false);
         expect(mockGraphql).toHaveBeenCalledTimes(1);
     });
 });

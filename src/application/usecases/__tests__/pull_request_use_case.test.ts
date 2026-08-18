@@ -86,7 +86,7 @@ describe('PullRequestUseCase', () => {
       { getAllMembers: jest.fn().mockResolvedValue([]), getRandomMembers: jest.fn() },
       { getLabels: jest.fn(), setLabels: jest.fn() },
       { isLinked: jest.fn().mockResolvedValue(true), updateBaseBranch: jest.fn(), updateDescription: jest.fn() },
-      { linkContentId: jest.fn(), moveIssueToColumn: jest.fn(), setTaskPriority: jest.fn(), setTaskSize: jest.fn() },
+      { linkContentId: jest.fn() }, { moveIssueToColumn: jest.fn(), setTaskPriority: jest.fn(), setTaskSize: jest.fn() },
       { taskId: 'UpdatePullRequestDescriptionUseCase', invoke: mockUpdateDescriptionInvoke },
     );
     const param = minimalExecution({ pullRequest: { isOpened: true, isSynchronize: false, isClosed: false, isMerged: false, action: 'opened' } });
@@ -115,7 +115,7 @@ describe('PullRequestUseCase', () => {
       { getAllMembers: jest.fn().mockResolvedValue([]), getRandomMembers: jest.fn() },
       { getLabels: jest.fn(), setLabels: jest.fn() },
       { isLinked: jest.fn().mockResolvedValue(true), updateBaseBranch: jest.fn(), updateDescription: jest.fn() },
-      { linkContentId: jest.fn(), moveIssueToColumn: jest.fn(), setTaskPriority: jest.fn(), setTaskSize: jest.fn() },
+      { linkContentId: jest.fn() }, { moveIssueToColumn: jest.fn(), setTaskPriority: jest.fn(), setTaskSize: jest.fn() },
       { taskId: 'UpdatePullRequestDescriptionUseCase', invoke: mockUpdateDescriptionInvoke },
     );
     const param = minimalExecution({
@@ -140,7 +140,7 @@ describe('PullRequestUseCase', () => {
       { getAllMembers: jest.fn().mockResolvedValue([]), getRandomMembers: jest.fn() },
       { getLabels: jest.fn(), setLabels: jest.fn() },
       { isLinked: jest.fn().mockResolvedValue(true), updateBaseBranch: jest.fn(), updateDescription: jest.fn() },
-      { linkContentId: jest.fn(), moveIssueToColumn: jest.fn(), setTaskPriority: jest.fn(), setTaskSize: jest.fn() },
+      { linkContentId: jest.fn() }, { moveIssueToColumn: jest.fn(), setTaskPriority: jest.fn(), setTaskSize: jest.fn() },
       { taskId: 'UpdatePullRequestDescriptionUseCase', invoke: mockUpdateDescriptionInvoke },
     );
     const param = minimalExecution({
@@ -166,7 +166,7 @@ describe('PullRequestUseCase', () => {
       { getAllMembers: jest.fn().mockResolvedValue([]), getRandomMembers: jest.fn() },
       { getLabels: jest.fn(), setLabels: jest.fn() },
       { isLinked: jest.fn().mockResolvedValue(true), updateBaseBranch: jest.fn(), updateDescription: jest.fn() },
-      { linkContentId: jest.fn(), moveIssueToColumn: jest.fn(), setTaskPriority: jest.fn(), setTaskSize: jest.fn() },
+      { linkContentId: jest.fn() }, { moveIssueToColumn: jest.fn(), setTaskPriority: jest.fn(), setTaskSize: jest.fn() },
       { taskId: 'UpdatePullRequestDescriptionUseCase', invoke: mockUpdateDescriptionInvoke },
     );
     const param = minimalExecution({
@@ -192,7 +192,7 @@ describe('PullRequestUseCase', () => {
       { getAllMembers: jest.fn().mockResolvedValue([]), getRandomMembers: jest.fn() },
       { getLabels: jest.fn(), setLabels: jest.fn() },
       { isLinked: jest.fn().mockResolvedValue(true), updateBaseBranch: jest.fn(), updateDescription: jest.fn() },
-      { linkContentId: jest.fn(), moveIssueToColumn: jest.fn(), setTaskPriority: jest.fn(), setTaskSize: jest.fn() },
+      { linkContentId: jest.fn() }, { moveIssueToColumn: jest.fn(), setTaskPriority: jest.fn(), setTaskSize: jest.fn() },
       { taskId: 'UpdatePullRequestDescriptionUseCase', invoke: mockUpdateDescriptionInvoke },
     );
     const param = minimalExecution();

@@ -43,7 +43,7 @@ import { buildEmoji, buildImages, buildIssue, buildIssueTypes, buildLabels, buil
 
 export async function runGitHubAction(): Promise<void> {
     const eventInputs = { ...github.context.payload, eventName: github.context.eventName };
-    const projectRepository = createProjectBoardCompositionRoot();
+    const projectBoard = createProjectBoardCompositionRoot();
 
     logInfo('GitHub Action: runGitHubAction started.');
 
@@ -119,7 +119,7 @@ export async function runGitHubAction(): Promise<void> {
     const projectIdsInput: string = getInput(INPUT_KEYS.PROJECT_IDS);
     const projectIds: string[] = parseDelimitedValues(projectIdsInput);
 
-    const projects = await loadProjectDetails(projectRepository, projectIds, token);
+    const projects = await loadProjectDetails(projectBoard.query, projectIds, token);
 
     const projectColumnIssueCreated = getInput(INPUT_KEYS.PROJECT_COLUMN_ISSUE_CREATED)
     const projectColumnPullRequestCreated = getInput(INPUT_KEYS.PROJECT_COLUMN_PULL_REQUEST_CREATED)
@@ -358,7 +358,7 @@ export async function runGitHubAction(): Promise<void> {
 
     logDebugInfo(`Execution built. Event will be resolved in mainRun. Single action: ${execution.singleAction.currentSingleAction ?? 'none'}, AI PR description: ${execution.ai.getAiPullRequestDescription()}, bugbot min severity: ${execution.ai.getBugbotMinSeverity()}.`);
 
-    const results: Result[] = await mainRun(execution, projectRepository, new GitCliRepository());
+    const results: Result[] = await mainRun(execution, projectBoard.command, new GitCliRepository());
 
     await finishWithResults(
         execution,

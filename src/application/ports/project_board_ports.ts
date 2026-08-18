@@ -4,6 +4,10 @@ export interface ProjectDetailQueryPort {
     getProjectDetail(projectId: string, token: string): Promise<ProjectDetail>;
 }
 
+export interface ProjectBoardContentQueryPort {
+    getContentId(project: ProjectDetail, owner: string, repository: string, issueOrPullRequestNumber: number, token: string): Promise<string | undefined>;
+}
+
 export interface ProjectBoardQueryPort extends ProjectDetailQueryPort {
     isContentLinked(project: ProjectDetail, contentId: string, token: string): Promise<boolean>;
 }

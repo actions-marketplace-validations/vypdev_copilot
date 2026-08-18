@@ -20,7 +20,7 @@ describe('application architecture boundaries', () => {
             /from ['"][^'"]*\/infrastructure\//,
             /DefaultAgentRepositoryFactory/,
             /new\s+RepositoryFactory\s*\(/,
-            /new\s+(IssueRepository|PullRequestRepository|OrganizationRepository|ProjectBoardRepository|BranchRepository|RepositoryReleaseRepository)\s*\(/,
+            /new\s+(IssueRepository|PullRequestRepository|OrganizationRepository|ProjectBoardQueryRepository|BranchRepository|RepositoryReleaseRepository)\s*\(/,
         ];
         const violations = productionTypeScriptFiles(applicationRoot).flatMap((file) => {
             const source = readFileSync(file, 'utf8');

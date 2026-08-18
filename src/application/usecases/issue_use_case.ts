@@ -27,7 +27,8 @@ export class IssueUseCase implements ParamUseCase<Execution, Result[]> {
         private readonly projectBoardPriorityPort: ProjectBoardPriorityPort,
         private readonly organizationMembersPort: OrganizationMembersPort,
         private readonly issueIdentityQueryPort: IssueIdentityQueryPort,
-        private readonly projectBoardPort: ProjectBoardCommandPort & ProjectBoardLinkPort,
+        private readonly projectBoardPort: ProjectBoardCommandPort,
+        private readonly projectBoardLinkPort: ProjectBoardLinkPort,
         private readonly issueTitlePort: IssueTitlePort,
         private readonly issueAssigneePort: IssueAssigneePort,
         private readonly issueClosurePort: IssueClosurePort,
@@ -77,7 +78,7 @@ export class IssueUseCase implements ParamUseCase<Execution, Result[]> {
         /**
          * Link issue to project
          */
-        results.push(...await new LinkIssueProjectUseCase(this.issueIdentityQueryPort, this.projectBoardPort).invoke(param));
+        results.push(...await new LinkIssueProjectUseCase(this.issueIdentityQueryPort, this.projectBoardPort, this.projectBoardLinkPort).invoke(param));
 
         /**
          * Check priority issue size

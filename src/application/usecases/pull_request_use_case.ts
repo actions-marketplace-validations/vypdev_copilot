@@ -32,7 +32,8 @@ export class PullRequestUseCase implements ParamUseCase<Execution, Result[]> {
         private readonly organizationMembersPort: OrganizationMembersPort,
         private readonly issueLabelsPort: IssueLabelsPort,
         private readonly pullRequestIssueLinkPort: PullRequestIssueLinkPort,
-        private readonly projectBoardLinkPort: ProjectBoardLinkPort & ProjectBoardCommandPort,
+        private readonly projectBoardLinkPort: ProjectBoardLinkPort,
+        private readonly projectBoardCommandPort: ProjectBoardCommandPort,
         private readonly updatePullRequestDescriptionUseCase: ParamUseCase<Execution, Result[]>,
     ) {}
 
@@ -64,7 +65,7 @@ export class PullRequestUseCase implements ParamUseCase<Execution, Result[]> {
                 /**
                  * Link Pull Request to projects
                  */
-                results.push(...await new LinkPullRequestProjectUseCase(this.projectBoardLinkPort).invoke(param));
+                results.push(...await new LinkPullRequestProjectUseCase(this.projectBoardCommandPort, this.projectBoardLinkPort).invoke(param));
 
                 /**
                  * Link Pull Request to issue

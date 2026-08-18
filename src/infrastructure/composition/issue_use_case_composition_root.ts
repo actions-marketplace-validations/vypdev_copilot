@@ -35,11 +35,14 @@ export function createIssueUseCaseCompositionRoot(): IssueUseCase {
         new GitCliRepository(),
     );
 
+    const projectBoard = createProjectBoardCompositionRoot();
+
     return composeIssueUseCase(
-        createProjectBoardCompositionRoot(),
+        projectBoard.command,
         createOrganizationMembersCompositionRoot(),
         issueMetadata,
-        createProjectBoardCompositionRoot(),
+        projectBoard.command,
+        projectBoard.link,
         new IssueTitleRepository(clients.createIssueTitleClient(), issueMetadata),
         new IssueAssignmentRepository(clients.createIssueAssignmentClient()),
         new IssueClosureRepository(issueLifecycle, issueContent),
