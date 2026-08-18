@@ -14,11 +14,6 @@ import { IssueNotificationRepository } from "../../data/repository/issue/issue_n
 import { MergeRepository } from "../../data/repository/merge_repository";
 import { BranchCompareRepository } from "../../data/repository/branch_compare_repository";
 import { GitCliRepository } from "../../data/repository/git_cli_repository";
-import { BranchLifecycleRepository } from "../../data/repository/branch_lifecycle_repository";
-import { BranchNameRepository } from "../../data/repository/branch_name_repository";
-import { BranchPreparationRepository } from "../../data/repository/branch/branch_preparation_repository";
-import { LinkedBranchRepository } from "../../data/repository/branch/linked_branch_repository";
-import { WorkflowRepository } from "../../data/repository/workflow_repository";
 import { GithubClientFactory } from "./github_client_factory";
 
 export class RepositoryFactory {
@@ -30,23 +25,6 @@ export class RepositoryFactory {
         return this.githubClients.createGraphqlClient();
     }
     createGitCliRepository(): GitCliRepository { return new GitCliRepository(); }
-    createBranchLifecycleRepository(): BranchLifecycleRepository {
-        return new BranchLifecycleRepository(this.githubClients.createBranchClient());
-    }
-    createBranchNameRepository(): BranchNameRepository {
-        return new BranchNameRepository();
-    }
-    createBranchPreparationRepository(): BranchPreparationRepository {
-        return new BranchPreparationRepository(
-            this.githubClients.createBranchClient(),
-            this.createBranchNameRepository(),
-            new LinkedBranchRepository(this.createGraphqlClient()),
-            new GitCliRepository(),
-        );
-    }
-    createWorkflowRepository(): WorkflowRepository {
-        return new WorkflowRepository(this.githubClients.createWorkflowClient());
-    }
     createActorAuthorizationRepository(): ActorAuthorizationRepository {
         return new ActorAuthorizationRepository(this.createOrganizationGithubClient());
     }
