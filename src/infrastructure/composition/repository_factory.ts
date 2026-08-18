@@ -91,15 +91,15 @@ export class RepositoryFactory {
     createPullRequestUseCase(): PullRequestUseCase {
         return new PullRequestUseCase(
             this.createProjectBoardRepository(),
-            this.createPullRequestRepository(),
+            this.createPullRequestLifecycleRepository(),
+            this.createIssueContentRepository(),
             this.createIssueRepository(),
             this.createIssueRepository(),
-            this.createIssueRepository(),
-            this.createIssueRepository(),
-            this.createPullRequestRepository(),
-            this.createOrganizationRepository(),
-            this.createIssueRepository(),
-            this.createPullRequestRepository(),
+            this.createIssueAssignmentRepository(),
+            this.createPullRequestReviewRepository(),
+            this.createOrganizationMembersRepository(),
+            this.createIssueLabelRepository(),
+            this.createPullRequestLifecycleRepository(),
             this.createProjectBoardRepository(),
             new UpdatePullRequestDescriptionUseCase(this.createPullRequestRepository(), this.createIssueRepository(), this.createOrganizationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
         );
