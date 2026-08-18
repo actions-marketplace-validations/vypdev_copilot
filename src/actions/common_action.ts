@@ -11,7 +11,7 @@ import { DoUserRequestUseCase } from '../application/usecases/steps/commit/user_
 import { ProjectBoardCommandPort } from '../application/ports/project_board_ports';
 import { RepositoryFactory } from '../infrastructure/composition/repository_factory';
 import { GitCommitAdapter } from '../infrastructure/git_commit_adapter';
-import type { BranchRepository } from '../data/repository/branch_repository';
+import type { LatestTagQueryPort } from '../application/ports/branch_ports';
 import { IssueCommentUseCase } from '../application/usecases/issue_comment_use_case';
 import { CheckIssueCommentLanguageUseCase } from '../application/usecases/steps/issue_comment/check_issue_comment_language_use_case';
 import { PullRequestReviewCommentUseCase } from '../application/usecases/pull_request_review_comment_use_case';
@@ -83,7 +83,7 @@ function createSingleActionUseCase(factory: RepositoryFactory): SingleActionUseC
 export async function mainRun(
     execution: Execution,
     projectBoardCommandPort: ProjectBoardCommandPort,
-    branchRepository: BranchRepository,
+    branchRepository: LatestTagQueryPort,
 ): Promise<Result[]> {
     const results: Result[] = [];
 
