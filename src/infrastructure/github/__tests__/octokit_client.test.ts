@@ -1,0 +1,62 @@
+import * as github from '@actions/github';
+import {
+    OctokitBranchClientAdapter,
+    OctokitBranchComparisonClientAdapter,
+    OctokitBranchMergeClientAdapter,
+    OctokitGraphqlClientAdapter,
+    OctokitIssueAssignmentClientAdapter,
+    OctokitIssueContentClientAdapter,
+    OctokitIssueLabelProvisioningClientAdapter,
+    OctokitIssueLabelsClientAdapter,
+    OctokitIssueLifecycleClientAdapter,
+    OctokitIssueMetadataClientAdapter,
+    OctokitIssueTitleClientAdapter,
+    OctokitOrganizationClientAdapter,
+    OctokitProjectClientAdapter,
+    OctokitPullRequestChangesClientAdapter,
+    OctokitPullRequestLifecycleClientAdapter,
+    OctokitPullRequestReviewClientAdapter,
+    OctokitReleaseClientAdapter,
+    OctokitWorkflowClientAdapter,
+} from '../octokit_client';
+
+jest.mock('@actions/github', () => ({
+    getOctokit: jest.fn(),
+}));
+
+type Adapter = { getClient(token: string): unknown };
+
+describe('Octokit client adapters contract', () => {
+    const adapters: Array<[string, new () => Adapter]> = [
+        ['branch', OctokitBranchClientAdapter],
+        ['branch comparison', OctokitBranchComparisonClientAdapter],
+        ['branch merge', OctokitBranchMergeClientAdapter],
+        ['GraphQL', OctokitGraphqlClientAdapter],
+        ['issue assignment', OctokitIssueAssignmentClientAdapter],
+        ['issue content', OctokitIssueContentClientAdapter],
+        ['issue label provisioning', OctokitIssueLabelProvisioningClientAdapter],
+        ['issue labels', OctokitIssueLabelsClientAdapter],
+        ['issue lifecycle', OctokitIssueLifecycleClientAdapter],
+        ['issue metadata', OctokitIssueMetadataClientAdapter],
+        ['issue title', OctokitIssueTitleClientAdapter],
+        ['organization', OctokitOrganizationClientAdapter],
+        ['project', OctokitProjectClientAdapter],
+        ['pull request changes', OctokitPullRequestChangesClientAdapter],
+        ['pull request lifecycle', OctokitPullRequestLifecycleClientAdapter],
+        ['pull request review', OctokitPullRequestReviewClientAdapter],
+        ['release', OctokitReleaseClientAdapter],
+        ['workflow', OctokitWorkflowClientAdapter],
+    ];
+
+    beforeEach(() => jest.clearAllMocks());
+
+    it.each(adapters)('%s forwards the token and preserves the provider client', (_name, AdapterClass) => {
+        const providerClient = { rest: {} };
+        jest.mocked(github.getOctokit).mockReturnValue(providerClient as ReturnType<typeof github.getOctokit>);
+
+        const result = new AdapterClass().getClient('token-under-test');
+
+        expect(github.getOctokit).toHaveBeenCalledWith('token-under-test');
+        expect(result).toBe(providerClient);
+    });
+});

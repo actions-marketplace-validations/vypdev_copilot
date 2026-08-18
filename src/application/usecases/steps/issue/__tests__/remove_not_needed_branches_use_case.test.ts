@@ -1,13 +1,8 @@
-import * as core from '@actions/core';
 import { RemoveNotNeededBranchesUseCase } from '../remove_not_needed_branches_use_case';
 
 jest.mock('../../../../../utils/logger', () => ({
   logInfo: jest.fn(),
   logError: jest.fn(),
-}));
-
-jest.mock('@actions/core', () => ({
-  setFailed: jest.fn(),
 }));
 
 const mockFormatBranchName = jest.fn();
@@ -40,10 +35,9 @@ describe('RemoveNotNeededBranchesUseCase', () => {
     mockRemoveBranch.mockResolvedValue(true);
   });
 
-  it('calls setFailed and returns when issue title is empty', async () => {
+  it('returns a result when issue title is empty', async () => {
     const param = baseParam({ issue: { title: '' } });
     const results = await useCase.invoke(param);
-    expect(core.setFailed).toHaveBeenCalledWith('Issue title not available.');
     expect(results.some((r) => r.steps?.some((s) => s.includes('title was not found')))).toBe(true);
   });
 

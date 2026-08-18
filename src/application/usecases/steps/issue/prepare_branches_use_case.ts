@@ -1,4 +1,3 @@
-import * as core from "@actions/core";
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
 import type { BranchPreparationPort } from "../../../ports/branch_ports";
@@ -22,7 +21,6 @@ export class PrepareBranchesUseCase implements ParamUseCase<Execution, Result[]>
         try {
             const issueTitle = param.issue.title ?? "";
             if (!param.labels.isMandatoryBranchedLabel && issueTitle.length === 0) {
-                core.setFailed("Issue title not available.");
                 return [
                     new Result({
                         id: this.taskId,

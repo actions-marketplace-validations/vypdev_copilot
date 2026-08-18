@@ -1,4 +1,3 @@
-import * as core from "@actions/core";
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
 import type { BranchLifecyclePort, BranchNamePort } from "../../../ports/branch_ports";
@@ -88,7 +87,6 @@ export class RemoveNotNeededBranchesUseCase implements ParamUseCase<Execution, R
     }
 
     private missingTitleResult(): Result[] {
-        core.setFailed("Issue title not available.");
         return [
             new Result({
                 id: this.taskId,
