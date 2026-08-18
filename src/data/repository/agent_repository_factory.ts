@@ -1,4 +1,5 @@
-import type { AgentCliPort, FindingsQueryPort, FixerQueryPort, OpenCodeClientPort } from './agent_ports';
+import type { FindingsQueryPort, FixerQueryPort } from '../../application/ports/agent_ports';
+import type { AgentCliPort, OpenCodeClientPort } from '../../infrastructure/agents/ports/agent_provider_ports';
 import { AgentCliClient } from './agent_cli_client';
 import { AiRepository } from './ai_repository';
 import { OpenCodeHttpClient } from './opencode_http_client';

@@ -1,4 +1,4 @@
-import type { OpenCodeClientPort } from './agent_ports';
+import type { OpenCodeClientPort } from '../../infrastructure/agents/ports/agent_provider_ports';
 import type { OpenCodeMessageRequest } from './opencode_http_client';
 import { withOpenCodeRetry } from './opencode_retry';
 

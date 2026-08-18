@@ -1,6 +1,6 @@
 import { isAgentConfigurationReady } from "../../../../../data/model/agent";
 import type { Execution } from "../../../../../data/model/execution";
-import type { FixerQueryPort } from "../../../../../data/repository/agent_ports";
+import type { FixerQueryPort } from "../../../../ports/agent_ports";
 import type { BugbotContextPorts } from "../../../../../application/ports/bugbot_ports";
 import type { GitCommitPort } from "../../../../../application/ports/git_ports";
 import { logDebugInfo, logError, logInfo } from "../../../../../utils/logger";

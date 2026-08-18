@@ -1,4 +1,4 @@
-import type { AgentCliPort, OpenCodeClientPort } from '../agent_ports';
+import type { AgentCliPort, OpenCodeClientPort } from '../../../infrastructure/agents/ports/agent_provider_ports';
 import { DefaultAgentRepositoryFactory } from '../agent_repository_factory';
 
 describe('DefaultAgentRepositoryFactory', () => {

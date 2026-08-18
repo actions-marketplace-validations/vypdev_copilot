@@ -1,11 +1,12 @@
-import type { Ai } from '../model/ai';
+import type { Ai } from '../../data/model/ai';
 import type {
     AgentExecutionRequest,
     AgentExecutionResult,
     FindingsResult,
     FixerResult,
-} from '../model/agent_execution';
+} from '../../data/model/agent_execution';
 
+/** Application-facing options for an agent query. */
 export interface AgentQueryOptions {
     expectJson?: boolean;
     schema?: Record<string, unknown>;
@@ -13,10 +14,12 @@ export interface AgentQueryOptions {
     includeReasoning?: boolean;
 }
 
+/** Transitional semantic port; its Ai argument will be replaced by an application request in the next AI slice. */
 export interface FindingsQueryPort {
     askAgent(ai: Ai, agentId: string, prompt: string, options?: AgentQueryOptions): Promise<string | Record<string, unknown> | undefined>;
 }
 
+/** Transitional semantic port; its Ai argument will be replaced by an application request in the next AI slice. */
 export interface FixerQueryPort {
     copilotMessage(ai: Ai, prompt: string): Promise<{ text: string; sessionId: string } | undefined>;
 }
@@ -28,27 +31,6 @@ export interface ManagedAgentServer {
 
 export interface AgentServerLifecyclePort {
     start(options?: { port?: number; hostname?: string; cwd?: string }): Promise<ManagedAgentServer>;
-}
-export interface AgentCliPort {
-    execute(request: {
-        command: string;
-        prompt: string;
-        timeoutMs: number;
-        signal?: AbortSignal;
-        cwd?: string;
-        maxOutputBytes?: number;
-    }): Promise<string>;
-}
-
-export interface OpenCodeClientPort {
-    sendMessage(request: {
-        serverUrl: string;
-        providerID: string;
-        modelID: string;
-        agent: string;
-        prompt: string;
-        signal?: AbortSignal;
-    }): Promise<{ parts: unknown; sessionId: string }>;
 }
 
 export interface FindingsAgentPort {

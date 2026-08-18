@@ -1,7 +1,7 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
 import { OPENCODE_AGENT_PLAN } from "../../../../data/repository/agent_task_policy";
-import type { FindingsQueryPort } from "../../../../data/repository/agent_ports";
+import type { FindingsQueryPort } from "../../../ports/agent_ports";
 import {
     LANGUAGE_CHECK_RESPONSE_SCHEMA,
     TRANSLATION_RESPONSE_SCHEMA,

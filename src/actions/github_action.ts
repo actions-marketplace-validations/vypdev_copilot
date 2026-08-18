@@ -20,7 +20,7 @@ import { PublishResultUseCase } from '../application/usecases/steps/common/publi
 import { StoreConfigurationUseCase } from '../application/usecases/steps/common/store_configuration_use_case';
 import { BUGBOT_MAX_COMMENTS, BUGBOT_MIN_SEVERITY, INPUT_KEYS } from '../utils/constants';
 import { logDebugInfo, logError, logInfo } from '../utils/logger';
-import type { ManagedAgentServer } from '../data/repository/agent_ports';
+import type { ManagedAgentServer } from '../application/ports/agent_ports';
 import { OpenCodeServerLifecycleAdapter } from '../data/repository/opencode_server_lifecycle_adapter';
 import { RepositoryFactory } from '../infrastructure/composition/repository_factory';
 import { ConfigurationHandler } from '../manager/description/configuration_handler';

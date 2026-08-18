@@ -2,7 +2,7 @@ import { isAgentConfigurationReady } from '../../../../data/model/agent';
 import { Execution } from '../../../../data/model/execution';
 import { Result } from '../../../../data/model/result';
 import { OPENCODE_AGENT_PLAN } from '../../../../data/repository/agent_task_policy';
-import type { FindingsQueryPort } from '../../../../data/repository/agent_ports';
+import type { FindingsQueryPort } from '../../../ports/agent_ports';
 import { THINK_RESPONSE_SCHEMA } from '../../../../data/repository/agent_response_schemas';
 import type { IssueDescriptionQueryPort, IssueNotificationPort } from '../../../ports/issue_ports';
 import { getThinkPrompt } from '../../../../prompts';

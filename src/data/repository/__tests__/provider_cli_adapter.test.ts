@@ -1,5 +1,5 @@
 import { ProviderCliAdapter } from '../provider_cli_adapter';
-import type { AgentCliPort } from '../agent_ports';
+import type { AgentCliPort } from '../../../infrastructure/agents/ports/agent_provider_ports';
 
 describe('ProviderCliAdapter', () => {
     it('delegates a resolved CLI configuration without changing the prompt', async () => {
