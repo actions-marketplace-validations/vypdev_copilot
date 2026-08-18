@@ -1,6 +1,6 @@
 /**
  * Unit tests for CLI commands.
- * Mocks execSync (getGitInfo), runLocalAction, IssueRepository, and the fixer port.
+ * Mocks execSync (getGitInfo), runLocalAction, IssueMetadataRepository, and the fixer port.
  */
 
 import { execSync } from 'child_process';
@@ -22,8 +22,8 @@ jest.mock('../utils/logger', () => ({
 }));
 
 const mockIsIssue = jest.fn();
-jest.mock('../data/repository/issue_repository', () => ({
-  IssueRepository: jest.fn().mockImplementation(() => ({
+jest.mock('../data/repository/issue/issue_metadata_repository', () => ({
+  IssueMetadataRepository: jest.fn().mockImplementation(() => ({
     isIssue: mockIsIssue,
   })),
 }));

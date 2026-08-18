@@ -109,8 +109,8 @@ program
     // Set up issue context if provided
     const parsedIssueNumber = parseInt(issueNumber);
     if (issueNumber && parsedIssueNumber > 0) {
-      const issueRepository = new RepositoryFactory().createIssueRepository();
-      const isIssue = await issueRepository.isIssue(
+      const issueMetadataRepository = new RepositoryFactory().createIssueMetadataRepository();
+      const isIssue = await issueMetadataRepository.isIssue(
         gitInfo.owner,
         gitInfo.repo,
         parsedIssueNumber,

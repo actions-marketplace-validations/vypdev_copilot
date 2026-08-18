@@ -2,7 +2,7 @@
 import { ActorAuthorizationRepository } from "../../data/repository/organization/actor_authorization_repository";
 import { AuthenticatedUserRepository } from "../../data/repository/organization/authenticated_user_repository";
 import { OrganizationMembersRepository } from "../../data/repository/organization/organization_members_repository";
-import { IssueRepository } from "../../data/repository/issue_repository";
+
 import { IssueAssignmentRepository } from "../../data/repository/issue/issue_assignment_repository";
 import { IssueContentRepository } from "../../data/repository/issue/issue_content_repository";
 import { IssueLabelRepository } from "../../data/repository/issue/issue_label_repository";
@@ -153,21 +153,6 @@ export class RepositoryFactory {
         return new OrganizationMembersRepository(this.createOrganizationGithubClient());
     }
 
-    createIssueRepository(): IssueRepository {
-        const metadataRepository = this.createIssueMetadataRepository();
-        const graphqlClient = new OctokitGraphqlClientAdapter();
-        return new IssueRepository(
-            this.createIssueContentRepository(),
-            metadataRepository,
-            this.createIssueLabelRepository(),
-            this.createIssueAssignmentRepository(),
-            this.createIssueLabelProvisioningRepository(),
-            new IssueTypeRepository(graphqlClient),
-            new IssueTypeAssignmentRepository((owner, repository, issueNumber, token) => metadataRepository.getId(owner, repository, issueNumber, token), graphqlClient),
-            this.createIssueLifecycleRepository(),
-            new OctokitIssueTitleClientAdapter(),
-        );
-    }
 
     createIssueAssignmentRepository(): IssueAssignmentRepository { return new IssueAssignmentRepository(new OctokitIssueAssignmentClientAdapter()); }
     createIssueContentRepository(): IssueContentRepository { return new IssueContentRepository(new OctokitIssueContentClientAdapter()); }
