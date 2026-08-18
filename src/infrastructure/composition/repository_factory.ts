@@ -13,7 +13,6 @@ import { IssueNotificationRepository } from "../../data/repository/issue/issue_n
 import { PullRequestChangesRepository } from "../../data/repository/pull_request/pull_request_changes_repository";
 import { PullRequestLifecycleRepository } from "../../data/repository/pull_request/pull_request_lifecycle_repository";
 import { PullRequestReviewRepository } from "../../data/repository/pull_request/pull_request_review_repository";
-import { PullRequestReviewThreadRepository } from "../../data/repository/pull_request/pull_request_review_thread_repository";
 
 import { MergeRepository } from "../../data/repository/merge_repository";
 import { BranchCompareRepository } from "../../data/repository/branch_compare_repository";
@@ -145,9 +144,6 @@ export class RepositoryFactory {
         return new PullRequestReviewRepository(this.createPullRequestReviewClient(), this.createGraphqlClient());
     }
 
-    createPullRequestReviewThreadRepository(): PullRequestReviewThreadRepository {
-        return new PullRequestReviewThreadRepository(this.createGraphqlClient());
-    }
 
     createMergeRepository(): MergeRepository {
         return new MergeRepository(this.githubClients.createBranchMergeClient());
