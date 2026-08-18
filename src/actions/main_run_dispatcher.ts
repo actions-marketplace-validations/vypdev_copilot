@@ -3,6 +3,7 @@ import { createBugbotCompositionRoot } from '../infrastructure/composition/bugbo
 import { createPullRequestUseCaseCompositionRoot } from '../infrastructure/composition/pull_request_use_case_composition_root';
 import { createIssueUseCaseCompositionRoot } from '../infrastructure/composition/issue_use_case_composition_root';
 import { createIssueContentCompositionRoot } from '../infrastructure/composition/issue_content_composition_root';
+import { createIssueNotificationRepository } from '../infrastructure/composition/issue_interaction_composition_root';
 import { GithubClientFactory } from '../infrastructure/composition/github_client_factory';
 import { PullRequestLifecycleRepository } from '../data/repository/pull_request/pull_request_lifecycle_repository';
 import { BranchCompareRepository } from '../data/repository/branch_compare_repository';
@@ -53,7 +54,7 @@ export async function dispatchMainRunRoute(
                             new DefaultAgentRepositoryFactory().createFindings(),
                         ),
                         createDetectBugbotFixIntentUseCase(commentFactory),
-                        new ThinkUseCase(createIssueContentCompositionRoot(), commentFactory.createIssueNotificationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
+                        new ThinkUseCase(createIssueContentCompositionRoot(), createIssueNotificationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
                         new BugbotAutofixUseCase(new DefaultAgentRepositoryFactory().createFixer(), bugbot.context, new GitCommitAdapter()),
                         new DoUserRequestUseCase(new DefaultAgentRepositoryFactory().createFixer()),
                         bugbot.issue,
@@ -81,7 +82,7 @@ export async function dispatchMainRunRoute(
                             new DefaultAgentRepositoryFactory().createFindings(),
                         ),
                         createDetectBugbotFixIntentUseCase(reviewCommentFactory),
-                        new ThinkUseCase(createIssueContentCompositionRoot(), reviewCommentFactory.createIssueNotificationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
+                        new ThinkUseCase(createIssueContentCompositionRoot(), createIssueNotificationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
                         new BugbotAutofixUseCase(new DefaultAgentRepositoryFactory().createFixer(), bugbot.context, new GitCommitAdapter()),
                         new DoUserRequestUseCase(new DefaultAgentRepositoryFactory().createFixer()),
                         bugbot.issue,
@@ -104,7 +105,7 @@ export async function dispatchMainRunRoute(
                     logInfo('Running CommitUseCase.');
                     const commitFactory = factory;
                     results.push(...await new CommitUseCase(
-                        new NotifyNewCommitOnIssueUseCase(commitFactory.createIssueNotificationRepository()),
+                        new NotifyNewCommitOnIssueUseCase(createIssueNotificationRepository()),
                         new CheckChangesIssueSizeUseCase(
                             projectBoardCommandPort,
                             commitFactory.createIssueLabelRepository(),

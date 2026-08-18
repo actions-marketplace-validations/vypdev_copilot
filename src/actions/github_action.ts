@@ -26,6 +26,7 @@ import { RepositoryFactory } from '../infrastructure/composition/repository_fact
 import { GitCliRepository } from '../data/repository/git_cli_repository';
 import { createIssueContentCompositionRoot } from '../infrastructure/composition/issue_content_composition_root';
 import type { IssueContentRepository } from '../data/repository/issue/issue_content_repository';
+import { createIssueNotificationRepository } from '../infrastructure/composition/issue_interaction_composition_root';
 import { createProjectBoardCompositionRoot } from '../infrastructure/composition/project_board_composition_root';
 import { ConfigurationHandler } from '../manager/description/configuration_handler';
 import { loadProjectDetails } from './project_details_loader';
@@ -364,7 +365,7 @@ export async function runGitHubAction(): Promise<void> {
     await finishWithResults(
         execution,
         results,
-        repositoryFactory.createIssueNotificationRepository(),
+        createIssueNotificationRepository(),
         createIssueContentCompositionRoot(),
     );
     } finally {
@@ -379,7 +380,7 @@ export async function runGitHubAction(): Promise<void> {
 async function finishWithResults(
     execution: Execution,
     results: Result[],
-    issueNotificationPort: ReturnType<RepositoryFactory['createIssueNotificationRepository']>,
+    issueNotificationPort: ReturnType<typeof createIssueNotificationRepository>,
     issueDescriptionPort: IssueContentRepository,
 ): Promise<void> {
     const stepCount = results.reduce((acc, r) => acc + (r.steps?.length ?? 0), 0);

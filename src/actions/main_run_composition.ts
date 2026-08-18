@@ -13,6 +13,7 @@ import { RepositoryFactory } from '../infrastructure/composition/repository_fact
 import { createBugbotCompositionRoot } from '../infrastructure/composition/bugbot_composition_root';
 import { createInitialSetupCompositionRoot } from '../infrastructure/composition/initial_setup_composition_root';
 import { createIssueContentCompositionRoot } from '../infrastructure/composition/issue_content_composition_root';
+import { createIssueClosureRepository, createIssueNotificationRepository } from '../infrastructure/composition/issue_interaction_composition_root';
 import { createRepositoryReleasePort } from '../infrastructure/composition/release_composition_root';
 import { GithubClientFactory } from '../infrastructure/composition/github_client_factory';
 import { MergeRepository } from '../data/repository/merge_repository';
@@ -41,13 +42,13 @@ export function createSingleActionUseCase(factory: RepositoryFactory): SingleAct
     return new SingleActionUseCase(
         new DeployedActionUseCase(
             factory.createIssueLabelRepository(),
-            factory.createIssueClosureRepository(),
+            createIssueClosureRepository(),
             new MergeRepository(new GithubClientFactory().createBranchMergeClient()),
         ),
         new PublishGithubActionUseCase(repositoryReleasePort),
         new CreateReleaseUseCase(repositoryReleasePort),
         new CreateTagUseCase(repositoryReleasePort),
-        new ThinkUseCase(issueDescriptionQueryPort, factory.createIssueNotificationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
+        new ThinkUseCase(issueDescriptionQueryPort, createIssueNotificationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
         createInitialSetupCompositionRoot(),
         createCheckProgressCompositionRoot(),
         createDetectPotentialProblemsUseCase(factory),
