@@ -31,6 +31,7 @@ Full documentation: **[docs.page/vypdev/copilot](https://docs.page/vypdev/copilo
 | [Troubleshooting](https://docs.page/vypdev/copilot/troubleshooting) | Common issues and solutions |
 | [Support](https://docs.page/vypdev/copilot/support) | How to get help |
 | [Architecture and repository capabilities](docs/repository-architecture.md) | Clean Architecture target, capability ports, composition roots |
+| [Total architecture reconstruction plan](docs/total-architecture-reconstruction-plan.md) | Full capability partitioning, facade retirement, composition and boundary plan |
 | [Graphify development workflow](docs/graphify-development.md) | Local topology graph and impact analysis complementary to RepoWise |
 
 ---
