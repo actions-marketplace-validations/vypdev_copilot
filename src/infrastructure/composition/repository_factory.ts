@@ -1,4 +1,5 @@
 import { OrganizationRepository } from "../../data/repository/organization/organization_repository";
+import { AuthenticatedUserRepository } from "../../data/repository/organization/authenticated_user_repository";
 import { IssueRepository } from "../../data/repository/issue_repository";
 import { IssueAssignmentRepository } from "../../data/repository/issue/issue_assignment_repository";
 import { IssueContentRepository } from "../../data/repository/issue/issue_content_repository";
@@ -29,6 +30,7 @@ import { AnswerIssueHelpUseCase } from "../../application/usecases/steps/issue/a
 import { UpdatePullRequestDescriptionUseCase } from "../../application/usecases/steps/pull_request/update_pull_request_description_use_case";
 import { DefaultAgentRepositoryFactory } from "../../data/repository/agent_repository_factory";
 import { WorkflowRepository } from "../../data/repository/workflow_repository";
+import type { IssueProgressLabelProvisioningPort } from "../../application/ports/issue_ports";
 
 export class RepositoryFactory {
     createOrganizationGithubClient(): OctokitOrganizationClientAdapter {
@@ -99,15 +101,18 @@ export class RepositoryFactory {
         );
     }
     createInitialSetupUseCase(): InitialSetupUseCase {
-        const issueRepository = this.createIssueRepository();
         return new InitialSetupUseCase(
-            this.createOrganizationRepository(),
-            issueRepository,
-            issueRepository,
-            issueRepository,
+            this.createAuthenticatedUserRepository(),
+            this.createIssueLabelProvisioningRepository(),
+            this.createIssueProgressLabelProvisioningPort(),
+            this.createIssueTypeRepository(),
             this.createBranchRepository(),
             this.createRepositoryReleaseRepository(),
         );
+    }
+
+    createAuthenticatedUserRepository(): AuthenticatedUserRepository {
+        return new AuthenticatedUserRepository(this.createOrganizationGithubClient());
     }
 
     createOrganizationRepository(): OrganizationRepository {
@@ -138,6 +143,18 @@ export class RepositoryFactory {
     createIssueLifecycleRepository(): IssueLifecycleRepository { return new IssueLifecycleRepository(new OctokitIssueLifecycleClientAdapter()); }
     createIssueProgressLabelRepository(): IssueProgressLabelRepository {
         return new IssueProgressLabelRepository(this.createIssueLabelRepository());
+    }
+    createIssueProgressLabelProvisioningPort(): IssueProgressLabelProvisioningPort {
+        const progressRepository = this.createIssueProgressLabelRepository();
+        const provisioningRepository = this.createIssueLabelProvisioningRepository();
+        return {
+            ensureProgressLabels: (owner, repository, token) => progressRepository.ensureProgressLabels(
+                owner,
+                repository,
+                token,
+                provisioningRepository.ensureLabel,
+            ),
+        };
     }
     createIssueTypeRepository(): IssueTypeRepository { return new IssueTypeRepository(new OctokitGraphqlClientAdapter()); }
     createIssueTypeAssignmentRepository(
