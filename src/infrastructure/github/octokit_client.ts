@@ -1,5 +1,5 @@
 import * as github from "@actions/github";
-import type { GithubBranchClient, GithubBranchComparisonClient, GithubBranchMergeClient, GithubClientPort, GithubGraphqlClient, GithubProjectClient, GithubReleaseClient, GithubIssueAssignmentClient, GithubIssueContentClient, GithubIssueLabelProvisioningClient, GithubIssueLabelsClient, GithubIssueLifecycleClient, GithubIssueMetadataClient, GithubIssueTitleClient, GithubOrganizationClient, GithubPullRequestChangesClient, GithubPullRequestLifecycleClient, GithubPullRequestReviewClient, GithubWorkflowClient } from "../../data/repository/github/github_client_port";
+import type { GithubBranchClient, GithubBranchComparisonClient, GithubBranchMergeClient, GithubClientPort, GithubGraphqlClient, GithubProjectClient, GithubReleaseClient, GithubIssueAssignmentClient, GithubIssueContentClient, GithubIssueLabelProvisioningClient, GithubIssueLabelsClient, GithubIssueLifecycleClient, GithubIssueMetadataClient, GithubIssueTitleClient, GithubOrganizationClient, GithubPullRequestChangesClient, GithubPullRequestLifecycleClient, GithubPullRequestReviewClient, GithubWorkflowClient } from "../../application/ports/github_provider_ports";
 
 
 export class OctokitWorkflowClientAdapter implements GithubClientPort<GithubWorkflowClient> {

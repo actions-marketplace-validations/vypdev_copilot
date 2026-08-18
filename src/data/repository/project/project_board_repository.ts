@@ -1,4 +1,4 @@
-import type { GithubClientPort, GithubGraphqlClient, GithubProjectClient } from "../../../data/repository/github/github_client_port";
+import type { GithubClientPort, GithubGraphqlClient, GithubProjectClient } from "../../../application/ports/github_provider_ports";
 import { logDebugInfo, logError } from "../../../utils/logger";
 import { paginateCursor } from "../github/github_pagination_adapter";
 import { ProjectResult } from "../../graph/project_result";

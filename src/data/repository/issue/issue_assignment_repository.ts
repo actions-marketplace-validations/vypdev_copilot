@@ -1,5 +1,5 @@
 import { logDebugInfo, logError } from "../../../utils/logger";
-import type { GithubClientPort, GithubIssueAssignmentClient } from "../github/github_client_port";
+import type { GithubClientPort, GithubIssueAssignmentClient } from "../../../application/ports/github_provider_ports";
 
 export class IssueAssignmentRepository {
     constructor(private readonly githubClient: GithubClientPort<GithubIssueAssignmentClient>) {}

@@ -2,7 +2,7 @@ import type { ActorAuthorizationPort, AuthenticatedUserPort, OrganizationMembers
 import { ActorAuthorizationRepository } from "./actor_authorization_repository";
 import { AuthenticatedUserRepository } from "./authenticated_user_repository";
 import { OrganizationMembersRepository } from "./organization_members_repository";
-import type { GithubClientPort, GithubOrganizationClient } from "../github/github_client_port";
+import type { GithubClientPort, GithubOrganizationClient } from "../../../application/ports/github_provider_ports";
 
 /**
  * Compatibility facade for callers that still need the complete organization capability.

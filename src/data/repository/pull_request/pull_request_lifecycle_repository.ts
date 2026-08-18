@@ -1,5 +1,5 @@
 import { logDebugInfo, logError } from "../../../utils/logger";
-import type { GithubClientPort, GithubPullRequestLifecycleClient } from "../github/github_client_port";
+import type { GithubClientPort, GithubPullRequestLifecycleClient } from "../../../application/ports/github_provider_ports";
 
 export class PullRequestLifecycleRepository {
     constructor(private readonly githubClient: GithubClientPort<GithubPullRequestLifecycleClient>) {}

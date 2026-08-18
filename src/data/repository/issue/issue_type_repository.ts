@@ -1,6 +1,6 @@
 import { logError } from "../../../utils/logger";
 import { IssueTypes } from '../../model/issue_types';
-import type { GithubClientPort, GithubGraphqlClient } from "../github/github_client_port";
+import type { GithubClientPort, GithubGraphqlClient } from "../../../application/ports/github_provider_ports";
 
 export type IssueType = { id: string; name: string };
 export type IssueTypeEnsureResult = { created: boolean; existed: boolean };

@@ -1,5 +1,5 @@
 import * as core from "@actions/core";
-import type { GithubClientPort, GithubIssueTitleClient } from './github/github_client_port';
+import type { GithubClientPort, GithubIssueTitleClient } from '../../application/ports/github_provider_ports';
 import { logDebugInfo } from '../../utils/logger';
 import { IssueContentRepository } from './issue/issue_content_repository';
 import { IssueMetadataRepository } from './issue/issue_metadata_repository';

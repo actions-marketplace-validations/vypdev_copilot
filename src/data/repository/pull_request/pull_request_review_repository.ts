@@ -1,6 +1,6 @@
 import { PullRequestReviewThreadRepository } from "./pull_request_review_thread_repository";
 import { logDebugInfo, logError } from "../../../utils/logger";
-import type { GithubClientPort, GithubGraphqlClient, GithubPullRequestReviewClient } from "../github/github_client_port";
+import type { GithubClientPort, GithubGraphqlClient, GithubPullRequestReviewClient } from "../../../application/ports/github_provider_ports";
 
 export class PullRequestReviewRepository {
     constructor(
