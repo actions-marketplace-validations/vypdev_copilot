@@ -10,8 +10,6 @@ import { IssueTypeAssignmentRepository } from "../../data/repository/issue/issue
 import { IssueTitleRepository } from "../../data/repository/issue/issue_title_repository";
 import { IssueClosureRepository } from "../../data/repository/issue/issue_closure_repository";
 import { IssueNotificationRepository } from "../../data/repository/issue/issue_notification_repository";
-import { IssueProgressTrackingRepository } from "../../data/repository/issue/issue_progress_tracking_repository";
-import { IssueProgressLabelRepository } from "../../data/repository/issue/issue_progress_label_repository";
 import { BugbotIssueRepository } from "../../data/repository/issue/bugbot_issue_repository";
 import { PullRequestChangesRepository } from "../../data/repository/pull_request/pull_request_changes_repository";
 import { PullRequestLifecycleRepository } from "../../data/repository/pull_request/pull_request_lifecycle_repository";
@@ -26,7 +24,6 @@ import { BranchLifecycleRepository } from "../../data/repository/branch_lifecycl
 import { BranchNameRepository } from "../../data/repository/branch_name_repository";
 import { BranchPreparationRepository } from "../../data/repository/branch/branch_preparation_repository";
 import { LinkedBranchRepository } from "../../data/repository/branch/linked_branch_repository";
-import { CheckProgressUseCase } from "../../application/usecases/actions/check_progress_use_case";
 import { RecommendStepsUseCase } from "../../application/usecases/actions/recommend_steps_use_case";
 import { AnswerIssueHelpUseCase } from "../../application/usecases/steps/issue/answer_issue_help_use_case";
 import { UpdatePullRequestDescriptionUseCase } from "../../application/usecases/steps/pull_request/update_pull_request_description_use_case";
@@ -73,15 +70,6 @@ export class RepositoryFactory {
     createWorkflowRepository(): WorkflowRepository {
         return new WorkflowRepository(this.githubClients.createWorkflowClient());
     }
-    createCheckProgressUseCase(): CheckProgressUseCase {
-        return new CheckProgressUseCase(
-            this.createIssueProgressTrackingRepository(),
-            this.createBranchLifecycleRepository(),
-            this.createPullRequestLifecycleRepository(),
-            new DefaultAgentRepositoryFactory().createFindings(),
-        );
-    }
-
     createIssueUseCase(): ReturnType<typeof composeIssueUseCase> {
         const issueMetadataRepository = this.createIssueMetadataRepository();
         return composeIssueUseCase(
@@ -141,14 +129,6 @@ export class RepositoryFactory {
         return new IssueNotificationRepository(this.createIssueLifecycleRepository(), this.createIssueContentRepository());
     }
     createIssueLifecycleRepository(): IssueLifecycleRepository { return new IssueLifecycleRepository(this.githubClients.createIssueLifecycleClient()); }
-    createIssueProgressTrackingRepository(): IssueProgressTrackingRepository {
-        const progressLabelRepository = new IssueProgressLabelRepository(this.createIssueLabelRepository());
-        return new IssueProgressTrackingRepository(
-            this.createIssueContentRepository(),
-            this.createIssueLabelRepository(),
-            progressLabelRepository,
-        );
-    }
     createIssueTypeAssignmentRepository(
         getIssueId: ConstructorParameters<typeof IssueTypeAssignmentRepository>[0],
     ): IssueTypeAssignmentRepository {

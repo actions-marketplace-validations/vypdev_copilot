@@ -1,3 +1,4 @@
+import { createCheckProgressCompositionRoot } from '../infrastructure/composition/check_progress_composition_root';
 import * as core from '@actions/core';
 import { Execution } from '../data/model/execution';
 import { Result } from '../data/model/result';
@@ -102,7 +103,7 @@ export async function dispatchMainRunRoute(
                             commitFactory.createBranchCompareRepository(),
                         ),
                         createDetectPotentialProblemsUseCase(commitFactory),
-                        commitFactory.createCheckProgressUseCase(),
+                        createCheckProgressCompositionRoot(),
                     ).invoke(execution));
                     break;
                 }

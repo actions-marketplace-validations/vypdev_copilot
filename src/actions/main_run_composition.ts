@@ -1,3 +1,4 @@
+import { createCheckProgressCompositionRoot } from '../infrastructure/composition/check_progress_composition_root';
 import { DetectPotentialProblemsUseCase } from '../application/usecases/steps/commit/detect_potential_problems_use_case';
 import { DetectBugbotFixIntentUseCase } from '../application/usecases/steps/commit/bugbot/detect_bugbot_fix_intent_use_case';
 import { SingleActionUseCase } from '../application/usecases/single_action_use_case';
@@ -55,7 +56,7 @@ export function createSingleActionUseCase(factory: RepositoryFactory): SingleAct
         new CreateTagUseCase(repositoryReleasePort),
         new ThinkUseCase(issueDescriptionQueryPort, factory.createIssueNotificationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
         createInitialSetupCompositionRoot(),
-        factory.createCheckProgressUseCase(),
+        createCheckProgressCompositionRoot(),
         createDetectPotentialProblemsUseCase(factory),
         new RecommendStepsUseCase(issueDescriptionQueryPort, new DefaultAgentRepositoryFactory().createFindings()),
     );
