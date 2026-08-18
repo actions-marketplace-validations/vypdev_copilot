@@ -1,8 +1,8 @@
 import { logDebugInfo } from "../../../utils/logger";
 import { authorizationForFileModification } from "../actor_modification_policy";
 import type { ActorAuthorizationPort } from "../../../application/ports/actor_authorization_ports";
-import type { GithubClientPort } from "../../../application/ports//github_client_ports";
-import type { GithubActorAuthorizationClient } from "../../../application/ports//github_identity_ports";
+import type { GithubClientPort } from "../../../application/ports/github_client_ports";
+import type { GithubActorAuthorizationClient } from "../../../application/ports/github_identity_ports";
 
 export class ActorAuthorizationRepository implements ActorAuthorizationPort {
     constructor(private readonly githubClient: GithubClientPort<GithubActorAuthorizationClient>) {}

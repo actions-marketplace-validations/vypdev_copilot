@@ -1,7 +1,8 @@
 import { createIssueContentClient } from './github_issue_client_factory';
 import { createGraphqlTransportClient } from './github_project_client_factory';
 import { createPullRequestChangesClient, createPullRequestLifecycleClient, createPullRequestReviewClient } from './github_pull_request_client_factory';
-import type { BugbotContextPorts, BugbotWritePorts } from '../../application/ports/bugbot_ports';
+import type { BugbotContextPorts } from '../../application/ports/bugbot_context_ports';
+import type { BugbotWritePorts } from '../../application/ports/bugbot_write_ports';
 import { BugbotIssueRepository } from '../../data/repository/issue/bugbot_issue_repository';
 import { IssueContentRepository } from '../../data/repository/issue/issue_content_repository';
 import { BugbotPullRequestRepository } from '../../data/repository/pull_request/bugbot_pull_request_repository';

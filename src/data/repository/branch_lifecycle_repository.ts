@@ -1,6 +1,6 @@
 import type { BranchLifecyclePort } from '../../application/ports/branch_lifecycle_ports';
-import type { GithubBranchClient } from '../../application/ports//github_branch_ports';
-import type { GithubClientPort } from '../../application/ports//github_client_ports';
+import type { GithubBranchClient } from '../../application/ports/github_branch_ports';
+import type { GithubClientPort } from '../../application/ports/github_client_ports';
 import { logDebugInfo, logError } from '../../utils/logger';
 
 export class BranchLifecycleRepository implements BranchLifecyclePort {

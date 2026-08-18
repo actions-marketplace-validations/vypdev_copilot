@@ -1,8 +1,8 @@
 import { logDebugInfo, logError } from "../../../utils/logger";
 import { Labels } from "../../model/labels";
 import { IssueTypes } from "../../model/issue_types";
-import type { GithubClientPort } from "../../../application/ports//github_client_ports";
-import type { GithubGraphqlTransportClient } from "../../../application/ports//github_graphql_ports";
+import type { GithubClientPort } from "../../../application/ports/github_client_ports";
+import type { GithubGraphqlTransportClient } from "../../../application/ports/github_graphql_ports";
 
 type SelectedIssueType = { name: string; description: string; color: string };
 type GetIssueId = (owner: string, repository: string, issueNumber: number, token: string) => Promise<string>;

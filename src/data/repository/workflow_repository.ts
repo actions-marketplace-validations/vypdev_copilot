@@ -1,8 +1,8 @@
 import { Execution } from "../model/execution";
 import { WorkflowRun } from "../model/workflow_run";
 import { WORKFLOW_ACTIVE_STATUSES } from "../../utils/constants";
-import type { GithubClientPort } from "../../application/ports//github_client_ports";
-import type { GithubWorkflowClient } from "../../application/ports//github_workflow_ports";
+import type { GithubClientPort } from "../../application/ports/github_client_ports";
+import type { GithubWorkflowClient } from "../../application/ports/github_workflow_ports";
 
 
 export class WorkflowRepository {

@@ -1,5 +1,5 @@
-import type { GithubClientPort } from '../../../application/ports//github_client_ports';
-import type { GithubGraphqlTransportClient } from '../../../application/ports//github_graphql_ports';
+import type { GithubClientPort } from '../../../application/ports/github_client_ports';
+import type { GithubGraphqlTransportClient } from '../../../application/ports/github_graphql_ports';
 import { Result } from '../../model/result';
 import { LinkedBranchResponse } from '../../graph/linked_branch_response';
 import { RepositoryResponse } from '../../graph/repository_response';

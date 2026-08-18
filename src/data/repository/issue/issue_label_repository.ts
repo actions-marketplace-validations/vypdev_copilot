@@ -1,6 +1,6 @@
 import { logDebugInfo, logError } from "../../../utils/logger";
-import type { GithubClientPort } from "../../../application/ports//github_client_ports";
-import type { GithubIssueLabelsClient } from "../../../application/ports//github_issue_ports";
+import type { GithubClientPort } from "../../../application/ports/github_client_ports";
+import type { GithubIssueLabelsClient } from "../../../application/ports/github_issue_ports";
 
 export class IssueLabelRepository {
     constructor(private readonly githubClient: GithubClientPort<GithubIssueLabelsClient>) {}

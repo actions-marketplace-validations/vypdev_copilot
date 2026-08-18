@@ -1,5 +1,5 @@
-import type { GithubBranchClient } from '../../../application/ports//github_branch_ports';
-import type { GithubClientPort } from '../../../application/ports//github_client_ports';
+import type { GithubBranchClient } from '../../../application/ports/github_branch_ports';
+import type { GithubClientPort } from '../../../application/ports/github_client_ports';
 import type { BranchPreparationPort } from '../../../application/ports/branch_preparation_ports';
 import type { Execution } from '../../model/execution';
 import { Result } from '../../model/result';

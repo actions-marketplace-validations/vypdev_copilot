@@ -1,6 +1,6 @@
 import { logDebugInfo, logError } from "../../../utils/logger";
-import type { GithubClientPort } from "../../../application/ports//github_client_ports";
-import type { GithubGraphqlTransportClient } from "../../../application/ports//github_graphql_ports";
+import type { GithubClientPort } from "../../../application/ports/github_client_ports";
+import type { GithubGraphqlTransportClient } from "../../../application/ports/github_graphql_ports";
 
 type ThreadPageInfo = { hasNextPage: boolean; endCursor: string | null };
 type ThreadNode = {

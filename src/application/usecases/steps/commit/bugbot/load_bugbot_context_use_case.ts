@@ -3,7 +3,8 @@
  */
 
 import type { Execution } from "../../../../../data/model/execution";
-import type { BugbotContextPorts, BugbotPullRequestContextPort } from "../../../../../application/ports/bugbot_ports";
+import type { BugbotContextPorts } from "../../../../../application/ports/bugbot_context_ports";
+import type { BugbotPullRequestReadPort } from "../../../../../application/ports/bugbot_pull_request_read_ports";
 import type { BugbotContext } from "./types";
 import {
     buildPreviousFindingsBlock,
@@ -30,7 +31,7 @@ function emptyBugbotContext(): BugbotContext {
 }
 
 async function loadOpenPullRequestComments(
-    repository: BugbotPullRequestContextPort,
+    repository: BugbotPullRequestReadPort,
     owner: string,
     repo: string,
     openPrNumbers: number[],
@@ -47,7 +48,7 @@ async function loadOpenPullRequestComments(
 }
 
 async function loadPullRequestContext(
-    repository: BugbotPullRequestContextPort,
+    repository: BugbotPullRequestReadPort,
     owner: string,
     repo: string,
     openPrNumber: number | undefined,

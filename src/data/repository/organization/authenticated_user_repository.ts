@@ -1,6 +1,6 @@
 import type { AuthenticatedUserPort } from "../../../application/ports/authenticated_user_ports";
-import type { GithubClientPort } from "../../../application/ports//github_client_ports";
-import type { GithubAuthenticatedUserClient } from "../../../application/ports//github_identity_ports";
+import type { GithubClientPort } from "../../../application/ports/github_client_ports";
+import type { GithubAuthenticatedUserClient } from "../../../application/ports/github_identity_ports";
 
 export class AuthenticatedUserRepository implements AuthenticatedUserPort {
     constructor(private readonly githubClient: GithubClientPort<GithubAuthenticatedUserClient>) {}

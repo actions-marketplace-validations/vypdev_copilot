@@ -1,4 +1,4 @@
-import type { BugbotIssueCommentWritePort } from "../../../../../application/ports/bugbot_ports";
+import type { BugbotIssueCommentWritePort } from "../../../../../application/ports/bugbot_issue_write_ports";
 import { logDebugInfo, logError } from "../../../../../utils/logger";
 import { replaceMarkerInBody } from "./marker";
 

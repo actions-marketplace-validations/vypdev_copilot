@@ -18,7 +18,7 @@ const mockGetFilesWithFirstDiffLine = jest.fn();
 
 
 
-import type { BugbotContextPorts } from "../../../../../../application/ports/bugbot_ports";
+import type { BugbotContextPorts } from "../../../../../../application/ports/bugbot_context_ports";
 
 const testPorts: BugbotContextPorts = {
     issue: { listIssueComments: mockListIssueComments },
