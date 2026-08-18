@@ -247,4 +247,7 @@ export class RepositoryFactory {
     createMergeRepository(): MergeRepository {
         return new MergeRepository(new OctokitBranchMergeClientAdapter());
     }
+    createBranchCompareRepository(): BranchCompareRepository {
+        return new BranchCompareRepository(new OctokitBranchComparisonClientAdapter());
+    }
 }

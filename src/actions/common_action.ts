@@ -225,9 +225,9 @@ export async function mainRun(
                     new NotifyNewCommitOnIssueUseCase(commitFactory.createIssueNotificationRepository()),
                     new CheckChangesIssueSizeUseCase(
                         projectBoardCommandPort,
-                        commitFactory.createIssueRepository(),
-                        commitFactory.createPullRequestRepository(),
-                        commitFactory.createBranchRepository(),
+                        commitFactory.createIssueLabelRepository(),
+                        commitFactory.createPullRequestLifecycleRepository(),
+                        commitFactory.createBranchCompareRepository(),
                     ),
                     createDetectPotentialProblemsUseCase(commitFactory),
                     commitFactory.createCheckProgressUseCase(),
