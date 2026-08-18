@@ -1,6 +1,5 @@
 
 import { ActorAuthorizationRepository } from "../../data/repository/organization/actor_authorization_repository";
-import { OrganizationMembersRepository } from "../../data/repository/organization/organization_members_repository";
 
 import { IssueAssignmentRepository } from "../../data/repository/issue/issue_assignment_repository";
 import { IssueContentRepository } from "../../data/repository/issue/issue_content_repository";
@@ -41,6 +40,7 @@ import { GithubClientFactory } from "./github_client_factory";
 import { composeIssueUseCase } from "./issue_use_case_composition";
 import { composePullRequestUseCase } from "./pull_request_use_case_composition";
 import { createProjectBoardCompositionRoot } from "./project_board_composition_root";
+import { createOrganizationMembersCompositionRoot } from "./organization_members_composition_root";
 
 export class RepositoryFactory {
     private readonly githubClients = new GithubClientFactory();
@@ -90,7 +90,7 @@ export class RepositoryFactory {
         const issueMetadataRepository = this.createIssueMetadataRepository();
         return composeIssueUseCase(
             createProjectBoardCompositionRoot(),
-            this.createOrganizationMembersRepository(),
+            createOrganizationMembersCompositionRoot(),
             issueMetadataRepository,
             createProjectBoardCompositionRoot(),
             this.createIssueTitleRepository(issueMetadataRepository),
@@ -118,20 +118,15 @@ export class RepositoryFactory {
             this.createIssueClosureRepository(),
             this.createIssueAssignmentRepository(),
             this.createPullRequestReviewRepository(),
-            this.createOrganizationMembersRepository(),
+            createOrganizationMembersCompositionRoot(),
             this.createIssueLabelRepository(),
             this.createPullRequestLifecycleRepository(),
             createProjectBoardCompositionRoot(),
-            new UpdatePullRequestDescriptionUseCase(this.createPullRequestLifecycleRepository(), this.createIssueContentRepository(), this.createOrganizationMembersRepository(), new DefaultAgentRepositoryFactory().createFindings()),
+            new UpdatePullRequestDescriptionUseCase(this.createPullRequestLifecycleRepository(), this.createIssueContentRepository(), createOrganizationMembersCompositionRoot(), new DefaultAgentRepositoryFactory().createFindings()),
         );
     }
     createActorAuthorizationRepository(): ActorAuthorizationRepository {
         return new ActorAuthorizationRepository(this.createOrganizationGithubClient());
-    }
-
-
-    createOrganizationMembersRepository(): OrganizationMembersRepository {
-        return new OrganizationMembersRepository(this.createOrganizationGithubClient());
     }
 
 
