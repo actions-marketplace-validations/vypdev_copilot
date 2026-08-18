@@ -1,9 +1,9 @@
 import { isAgentConfigurationReady } from '../../../../data/model/agent';
 import { Execution } from '../../../../data/model/execution';
 import { Result } from '../../../../data/model/result';
-import { OPENCODE_AGENT_PLAN } from '../../../../data/repository/agent_task_policy';
+import { OPENCODE_AGENT_PLAN } from '../../../../application/policies/agent_task_policy';
 import type { FindingsQueryPort } from '../../../ports/agent_ports';
-import { THINK_RESPONSE_SCHEMA } from '../../../../data/repository/agent_response_schemas';
+import { THINK_RESPONSE_SCHEMA } from '../../../../application/policies/agent_response_schemas';
 import type { IssueDescriptionQueryPort, IssueNotificationPort } from '../../../ports/issue_ports';
 import { getThinkPrompt } from '../../../../prompts';
 import { logDebugInfo, logError, logInfo } from '../../../../utils/logger';

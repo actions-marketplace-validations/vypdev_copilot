@@ -1,11 +1,11 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import { OPENCODE_AGENT_PLAN } from "../../../../data/repository/agent_task_policy";
+import { OPENCODE_AGENT_PLAN } from "../../../../application/policies/agent_task_policy";
 import type { FindingsQueryPort } from "../../../ports/agent_ports";
 import {
     LANGUAGE_CHECK_RESPONSE_SCHEMA,
     TRANSLATION_RESPONSE_SCHEMA,
-} from "../../../../data/repository/agent_response_schemas";
+} from "../../../../application/policies/agent_response_schemas";
 import type { IssueCommentUpdatePort } from "../../../../application/ports/issue_ports";
 import { getCheckCommentLanguagePrompt, getTranslateCommentPrompt } from "../../../../prompts";
 import { logDebugInfo, logInfo } from "../../../../utils/logger";

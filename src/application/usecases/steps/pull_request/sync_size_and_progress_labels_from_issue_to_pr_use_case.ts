@@ -1,6 +1,6 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import { PROGRESS_LABEL_PATTERN } from "../../../../data/repository/progress_labels";
+import { PROGRESS_LABEL_PATTERN } from "../../../../application/policies/progress_labels";
 import type { IssueLabelsPort } from "../../../ports/issue_ports";
 import { logDebugInfo, logError, logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";

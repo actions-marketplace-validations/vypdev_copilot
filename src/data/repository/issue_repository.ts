@@ -13,7 +13,7 @@ import { IssueLifecycleRepository } from './issue/issue_lifecycle_repository';
 import { sanitizeIssueTitle, sanitizePullRequestTitle } from './issue_title_policy';
 import { Labels } from "../model/labels";
 import { resolveIssueTitleEmoji, resolvePullRequestTitleEmoji } from './issue_emoji_policy';
-export { PROGRESS_LABEL_PATTERN } from './progress_labels';
+export { PROGRESS_LABEL_PATTERN } from '../../application/policies/progress_labels';
 
 export class IssueRepository {
     private readonly issueContentRepository: IssueContentRepository;

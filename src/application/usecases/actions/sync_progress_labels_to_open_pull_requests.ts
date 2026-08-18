@@ -1,4 +1,4 @@
-import { PROGRESS_LABEL_PATTERN } from '../../../data/repository/progress_labels';
+import { PROGRESS_LABEL_PATTERN } from '../../../application/policies/progress_labels';
 import type { IssueLabelsPort } from '../../../application/ports/issue_ports';
 import type { PullRequestBranchQueryPort } from '../../../application/ports/pull_request_ports';
 import { logInfo } from '../../../utils/logger';

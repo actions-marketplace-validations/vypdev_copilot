@@ -6,7 +6,7 @@ import { logDebugInfo, logError, logInfo, logWarn } from '../../../utils/logger'
 import { getTaskEmoji } from '../../../utils/task_emoji';
 import { ParamUseCase } from '../base/param_usecase';
 
-import { OPENCODE_AGENT_PLAN } from '../../../data/repository/agent_task_policy';
+import { OPENCODE_AGENT_PLAN } from '../../../application/policies/agent_task_policy';
 import type { FindingsQueryPort } from '../../ports/agent_ports';
 import type { IssueDescriptionQueryPort, IssueLabelsPort, IssueProgressPort } from '../../../application/ports/issue_ports';
 import type { PullRequestBranchQueryPort } from '../../../application/ports/pull_request_ports';

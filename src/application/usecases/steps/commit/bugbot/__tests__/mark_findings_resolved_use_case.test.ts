@@ -4,8 +4,7 @@
  */
 
 import { markFindingsResolved as markFindingsResolvedImpl, type MarkFindingsResolvedParam } from "../mark_findings_resolved_use_case";
-import { IssueRepository } from "../../../../../../data/repository/issue_repository";
-import { PullRequestRepository } from "../../../../../../data/repository/pull_request_repository";
+
 import type { BugbotContext, ExistingByFindingId } from "../types";
 import type { Execution } from "../../../../../../data/model/execution";
 
@@ -20,19 +19,6 @@ const mockListPrReviewComments = jest.fn();
 const mockUpdatePrReviewComment = jest.fn();
 const mockResolveThread = jest.fn();
 
-jest.mock("../../../../../../data/repository/issue_repository", () => ({
-    IssueRepository: jest.fn().mockImplementation(() => ({
-        updateComment: mockUpdateComment,
-    })),
-}));
-
-jest.mock("../../../../../../data/repository/pull_request_repository", () => ({
-    PullRequestRepository: jest.fn().mockImplementation(() => ({
-        listPullRequestReviewComments: mockListPrReviewComments,
-        updatePullRequestReviewComment: mockUpdatePrReviewComment,
-        resolvePullRequestReviewThread: mockResolveThread,
-    })),
-}));
 
 function markFindingsResolved(param: Omit<MarkFindingsResolvedParam, "ports">) {
     return markFindingsResolvedImpl({
