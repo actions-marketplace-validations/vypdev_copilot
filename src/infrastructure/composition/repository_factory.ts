@@ -16,11 +16,13 @@ import { IssueTitleRepository } from "../../data/repository/issue/issue_title_re
 import { IssueClosureRepository } from "../../data/repository/issue/issue_closure_repository";
 import { IssueNotificationRepository } from "../../data/repository/issue/issue_notification_repository";
 import { IssueProgressTrackingRepository } from "../../data/repository/issue/issue_progress_tracking_repository";
+import { BugbotIssueRepository } from "../../data/repository/issue/bugbot_issue_repository";
 import { ProjectBoardRepository } from "../../data/repository/project/project_board_repository";
 import { PullRequestChangesRepository } from "../../data/repository/pull_request/pull_request_changes_repository";
 import { PullRequestLifecycleRepository } from "../../data/repository/pull_request/pull_request_lifecycle_repository";
 import { PullRequestReviewRepository } from "../../data/repository/pull_request/pull_request_review_repository";
 import { PullRequestReviewThreadRepository } from "../../data/repository/pull_request/pull_request_review_thread_repository";
+import { BugbotPullRequestRepository } from "../../data/repository/pull_request/bugbot_pull_request_repository";
 import { PullRequestRepository } from "../../data/repository/pull_request_repository";
 import { RepositoryReleaseRepository } from "../../data/repository/release/repository_release_repository";
 import { OctokitBranchClientAdapter, OctokitBranchMergeClientAdapter, OctokitBranchComparisonClientAdapter, OctokitGraphqlClientAdapter, OctokitIssueAssignmentClientAdapter, OctokitIssueContentClientAdapter, OctokitIssueLabelProvisioningClientAdapter, OctokitIssueLabelsClientAdapter, OctokitIssueLifecycleClientAdapter, OctokitIssueMetadataClientAdapter, OctokitIssueTitleClientAdapter, OctokitOrganizationClientAdapter, OctokitProjectClientAdapter, OctokitPullRequestChangesClientAdapter, OctokitReleaseClientAdapter, OctokitPullRequestLifecycleClientAdapter, OctokitPullRequestReviewClientAdapter, OctokitWorkflowClientAdapter } from "../github/octokit_client";
@@ -157,6 +159,7 @@ export class RepositoryFactory {
 
     createIssueAssignmentRepository(): IssueAssignmentRepository { return new IssueAssignmentRepository(new OctokitIssueAssignmentClientAdapter()); }
     createIssueContentRepository(): IssueContentRepository { return new IssueContentRepository(new OctokitIssueContentClientAdapter()); }
+    createBugbotIssueRepository(): BugbotIssueRepository { return new BugbotIssueRepository(this.createIssueContentRepository()); }
     createIssueLabelRepository(): IssueLabelRepository { return new IssueLabelRepository(new OctokitIssueLabelsClientAdapter()); }
     createIssueLabelProvisioningRepository(): IssueLabelProvisioningRepository { return new IssueLabelProvisioningRepository(new OctokitIssueLabelProvisioningClientAdapter()); }
     createIssueMetadataRepository(): IssueMetadataRepository { return new IssueMetadataRepository(new OctokitIssueMetadataClientAdapter(), new OctokitGraphqlClientAdapter()); }
@@ -221,6 +224,13 @@ export class RepositoryFactory {
 
     createPullRequestReviewThreadRepository(): PullRequestReviewThreadRepository {
         return new PullRequestReviewThreadRepository(this.createGraphqlClient());
+    }
+    createBugbotPullRequestRepository(): BugbotPullRequestRepository {
+        return new BugbotPullRequestRepository(
+            this.createPullRequestLifecycleRepository(),
+            this.createPullRequestChangesRepository(),
+            this.createPullRequestReviewRepository(),
+        );
     }
 
     createRepositoryReleaseRepository(): RepositoryReleaseRepository {
