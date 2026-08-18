@@ -91,7 +91,7 @@ export async function mainRun(
     logDebugInfo(`Event: ${execution.eventName}, actor: ${execution.actor}, repo: ${execution.owner}/${execution.repo}, debug: ${execution.debug}`);
 
     const setupFactory = new RepositoryFactory();
-    await execution.setup(branchRepository, setupFactory.createIssueRepository(), setupFactory.createOrganizationRepository());
+    await execution.setup(branchRepository, setupFactory.createIssueRepository(), setupFactory.createAuthenticatedUserRepository());
     clearAccumulatedLogs();
 
     logDebugInfo(`Setup done. Issue number: ${execution.issueNumber}, isSingleAction: ${execution.isSingleAction}, isIssue: ${execution.isIssue}, isPullRequest: ${execution.isPullRequest}, isPush: ${execution.isPush}`);
@@ -176,8 +176,8 @@ export async function mainRun(
                     new BugbotAutofixUseCase(new DefaultAgentRepositoryFactory().createFixer(), createBugbotContextPorts(commentFactory), new GitCommitAdapter()),
                     new DoUserRequestUseCase(new DefaultAgentRepositoryFactory().createFixer()),
                     commentFactory.createIssueRepository(),
-                    commentFactory.createOrganizationRepository(),
-                    commentFactory.createOrganizationRepository(),
+                    commentFactory.createActorAuthorizationRepository(),
+                    commentFactory.createAuthenticatedUserRepository(),
                     {
                         issueComments: commentFactory.createIssueRepository(),
                         pullRequestComments: commentFactory.createPullRequestRepository(),
@@ -203,8 +203,8 @@ export async function mainRun(
                     new BugbotAutofixUseCase(new DefaultAgentRepositoryFactory().createFixer(), createBugbotContextPorts(reviewCommentFactory), new GitCommitAdapter()),
                     new DoUserRequestUseCase(new DefaultAgentRepositoryFactory().createFixer()),
                     reviewCommentFactory.createIssueRepository(),
-                    reviewCommentFactory.createOrganizationRepository(),
-                    reviewCommentFactory.createOrganizationRepository(),
+                    reviewCommentFactory.createActorAuthorizationRepository(),
+                    reviewCommentFactory.createAuthenticatedUserRepository(),
                     {
                         issueComments: reviewCommentFactory.createIssueRepository(),
                         pullRequestComments: reviewCommentFactory.createPullRequestRepository(),

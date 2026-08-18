@@ -22,8 +22,8 @@ jest.mock('../../../../../data/repository/issue_repository', () => ({
     getCurrentAssignees: mockGetCurrentAssignees,
   })),
 }));
-jest.mock('../../../../../data/repository/organization/organization_repository', () => ({
-  OrganizationRepository: jest.fn().mockImplementation(() => ({
+jest.mock('../../../../../data/repository/organization/organization_members_repository', () => ({
+  OrganizationMembersRepository: jest.fn().mockImplementation(() => ({
     getRandomMembers: mockGetRandomMembers,
   })),
 }));

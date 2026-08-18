@@ -1,4 +1,5 @@
-import { OrganizationRepository } from "../../data/repository/organization/organization_repository";
+
+import { ActorAuthorizationRepository } from "../../data/repository/organization/actor_authorization_repository";
 import { AuthenticatedUserRepository } from "../../data/repository/organization/authenticated_user_repository";
 import { OrganizationMembersRepository } from "../../data/repository/organization/organization_members_repository";
 import { IssueRepository } from "../../data/repository/issue_repository";
@@ -129,10 +130,11 @@ export class RepositoryFactory {
     createAuthenticatedUserRepository(): AuthenticatedUserRepository {
         return new AuthenticatedUserRepository(this.createOrganizationGithubClient());
     }
-
-    createOrganizationRepository(): OrganizationRepository {
-        return new OrganizationRepository(this.createOrganizationGithubClient());
+    createActorAuthorizationRepository(): ActorAuthorizationRepository {
+        return new ActorAuthorizationRepository(this.createOrganizationGithubClient());
     }
+
+
     createOrganizationMembersRepository(): OrganizationMembersRepository {
         return new OrganizationMembersRepository(this.createOrganizationGithubClient());
     }
