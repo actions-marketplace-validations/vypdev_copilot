@@ -62,17 +62,17 @@ function createDetectBugbotFixIntentUseCase(factory: RepositoryFactory): DetectB
 
 function createSingleActionUseCase(factory: RepositoryFactory): SingleActionUseCase {
     const repositoryReleasePort = factory.createRepositoryReleaseRepository();
-    const issueDescriptionQueryPort = factory.createIssueRepository();
+    const issueDescriptionQueryPort = factory.createIssueContentRepository();
     return new SingleActionUseCase(
         new DeployedActionUseCase(
-            factory.createIssueRepository(),
-            factory.createIssueRepository(),
-            factory.createBranchRepository(),
+            factory.createIssueLabelRepository(),
+            factory.createIssueClosureRepository(),
+            factory.createMergeRepository(),
         ),
         new PublishGithubActionUseCase(repositoryReleasePort),
         new CreateReleaseUseCase(repositoryReleasePort),
         new CreateTagUseCase(repositoryReleasePort),
-        new ThinkUseCase(issueDescriptionQueryPort, factory.createIssueRepository(), new DefaultAgentRepositoryFactory().createFindings()),
+        new ThinkUseCase(issueDescriptionQueryPort, factory.createIssueNotificationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
         factory.createInitialSetupUseCase(),
         factory.createCheckProgressUseCase(),
         createDetectPotentialProblemsUseCase(factory),

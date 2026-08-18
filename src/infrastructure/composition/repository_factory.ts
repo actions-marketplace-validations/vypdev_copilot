@@ -236,4 +236,7 @@ export class RepositoryFactory {
     createRepositoryReleaseRepository(): RepositoryReleaseRepository {
         return new RepositoryReleaseRepository(new OctokitReleaseClientAdapter());
     }
+    createMergeRepository(): MergeRepository {
+        return new MergeRepository(new OctokitBranchMergeClientAdapter());
+    }
 }
