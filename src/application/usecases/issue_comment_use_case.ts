@@ -5,7 +5,8 @@ import { runCommentAutomation } from "./comment_automation_use_case";
 import type { BugbotAutofixParam } from "./steps/commit/bugbot/bugbot_autofix_use_case";
 import type { DoUserRequestParam } from "./steps/commit/user_request_use_case";
 import type { IssueCommentUpdatePort } from "../ports/issue_lifecycle_ports";
-import type { AuthenticatedUserPort, ActorAuthorizationPort } from "../ports/organization_ports";
+import type { AuthenticatedUserPort } from "../ports//authenticated_user_ports";
+import type { ActorAuthorizationPort } from "../ports//actor_authorization_ports";
 import type { BugbotWritePorts } from "../ports/bugbot_ports";
 import type { GitCommitPort } from "../ports/git_ports";
 

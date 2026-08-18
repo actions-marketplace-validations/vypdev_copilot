@@ -16,13 +16,14 @@ import { RemoveIssueBranchesUseCase } from "./steps/issue/remove_issue_branches_
 import { RemoveNotNeededBranchesUseCase } from "./steps/issue/remove_not_needed_branches_use_case";
 import { UpdateIssueTypeUseCase } from "./steps/issue/update_issue_type_use_case";
 import type { ProjectBoardPriorityPort } from "./steps/issue/priority_size_check_use_case";
-import type { OrganizationMembersPort } from "../ports/organization_ports";
+import type { OrganizationMembersPort } from "../ports//organization_members_ports";
 import type { IssueAssigneePort, IssueTypeAssignmentPort } from "../ports/issue_management_ports";
 import type { IssueClosurePort, IssueNotificationPort } from "../ports/issue_lifecycle_ports";
 import type { IssueDescriptionQueryPort } from "../ports/issue_description_ports";
 import type { IssueIdentityQueryPort } from "../ports/issue_identity_ports";
 import type { IssueTitlePort } from "../ports/issue_title_ports";
-import type { ProjectBoardCommandPort, ProjectBoardLinkPort } from "../ports/project_board_ports";
+import type { ProjectBoardCommandPort } from "../ports//project_board_command_ports";
+import type { ProjectBoardLinkPort } from "../ports//project_board_link_ports";
 import type { BranchLifecyclePort, BranchNamePort } from "../ports/branch_lifecycle_ports";
 import type { BranchPreparationPort } from "../ports/branch_preparation_ports";
 import type { BranchWorkflowPort } from "../ports/branch_workflow_ports";

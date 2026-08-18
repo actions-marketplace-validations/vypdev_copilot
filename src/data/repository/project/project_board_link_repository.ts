@@ -1,7 +1,8 @@
 import type { GithubClientPort, GithubGraphqlTransportClient } from "../../../application/ports/github_provider_ports";
 import { logDebugInfo } from "../../../utils/logger";
 import { ProjectDetail } from "../../model/project_detail";
-import type { ProjectBoardLinkPort, ProjectBoardQueryPort } from "../../../application/ports/project_board_ports";
+import type { ProjectBoardLinkPort } from "../../../application/ports//project_board_link_ports";
+import type { ProjectBoardQueryPort } from "../../../application/ports//project_board_query_ports";
 
 export class ProjectBoardLinkRepository implements ProjectBoardLinkPort {
     constructor(

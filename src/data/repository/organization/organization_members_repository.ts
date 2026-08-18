@@ -1,6 +1,6 @@
 import { logDebugInfo, logError } from "../../../utils/logger";
 import { collectOrganizationMembers, selectAvailableMembers } from "../project_members_policy";
-import type { OrganizationMembersPort } from "../../../application/ports/organization_ports";
+import type { OrganizationMembersPort } from "../../../application/ports//organization_members_ports";
 import type { GithubClientPort, GithubOrganizationMembersClient } from "../../../application/ports/github_provider_ports";
 
 export class OrganizationMembersRepository implements OrganizationMembersPort {

@@ -18,7 +18,7 @@ import { NotifyNewCommitOnIssueUseCase } from '../application/usecases/steps/com
 import { CheckChangesIssueSizeUseCase } from '../application/usecases/steps/commit/check_changes_issue_size_use_case';
 import { BugbotAutofixUseCase } from '../application/usecases/steps/commit/bugbot/bugbot_autofix_use_case';
 import { DoUserRequestUseCase } from '../application/usecases/steps/commit/user_request_use_case';
-import { ProjectBoardCommandPort } from '../application/ports/project_board_ports';
+import { ProjectBoardCommandPort } from '../application/ports/project_board_command_ports';
 import { createAuthenticatedUserCompositionRoot } from '../infrastructure/composition/authenticated_user_composition_root';
 import { GitCommitAdapter } from '../infrastructure/git_commit_adapter';
 import type { MainRunRoute } from './main_run_route';

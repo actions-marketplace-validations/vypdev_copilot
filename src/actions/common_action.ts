@@ -1,7 +1,7 @@
 import * as core from '@actions/core';
 import { Execution } from '../data/model/execution';
 import { Result } from '../data/model/result';
-import { ProjectBoardCommandPort } from '../application/ports/project_board_ports';
+import { ProjectBoardCommandPort } from '../application/ports/project_board_command_ports';
 import { createAuthenticatedUserCompositionRoot } from '../infrastructure/composition/authenticated_user_composition_root';
 import { createExecutionIssueSetupCompositionRoot } from '../infrastructure/composition/execution_issue_setup_composition_root';
 import type { LatestTagQueryPort } from '../application/ports/branch_tag_ports';

@@ -1,5 +1,5 @@
 import type { Execution } from '../../../../../data/model/execution';
-import type { AuthenticatedUserPort } from '../../../../../application/ports/organization_ports';
+import type { AuthenticatedUserPort } from '../../../../../application/ports//authenticated_user_ports';
 import type { GitCommitPort } from '../../../../../application/ports/git_ports';
 import { buildBugbotCommitMessage, buildUserRequestCommitMessage } from './commit_message_policy';
 import {
