@@ -12,12 +12,6 @@ jest.mock('../../../../../utils/list_utils', () => ({
 
 const mockAddComment = jest.fn();
 const mockOpenIssue = jest.fn();
-jest.mock('../../../../../data/repository/issue_repository', () => ({
-  IssueRepository: jest.fn().mockImplementation(() => ({
-    addComment: mockAddComment,
-    openIssue: mockOpenIssue,
-  })),
-}));
 
 const mockInvoke = jest.fn();
 jest.mock('../../common/execute_script_use_case', () => ({

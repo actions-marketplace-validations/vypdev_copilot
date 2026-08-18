@@ -47,13 +47,6 @@ jest.mock('../../../../data/repository/branch_repository', () => ({
 const mockEnsureLabels = jest.fn();
 const mockEnsureProgressLabels = jest.fn();
 const mockEnsureIssueTypes = jest.fn();
-jest.mock('../../../../data/repository/issue_repository', () => ({
-  IssueRepository: jest.fn().mockImplementation(() => ({
-    ensureLabels: mockEnsureLabels,
-    ensureProgressLabels: mockEnsureProgressLabels,
-    ensureIssueTypes: mockEnsureIssueTypes,
-  })),
-}));
 
 function baseParam(overrides: Record<string, unknown> = {}): Execution {
   return {

@@ -17,12 +17,6 @@ jest.mock('../../../../../data/repository/organization/organization_members_repo
 
 const mockGetCurrentAssignees = jest.fn();
 const mockAssignMembersToIssue = jest.fn();
-jest.mock('../../../../../data/repository/issue_repository', () => ({
-  IssueRepository: jest.fn().mockImplementation(() => ({
-    getCurrentAssignees: mockGetCurrentAssignees,
-    assignMembersToIssue: mockAssignMembersToIssue,
-  })),
-}));
 
 function baseParam(overrides: Record<string, unknown> = {}) {
   return {

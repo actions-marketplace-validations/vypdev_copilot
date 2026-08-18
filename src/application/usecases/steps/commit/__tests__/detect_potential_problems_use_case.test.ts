@@ -25,13 +25,6 @@ jest.mock('../../../../../utils/logger', () => ({
 const mockListIssueComments = jest.fn();
 const mockAddComment = jest.fn();
 const mockUpdateComment = jest.fn();
-jest.mock('../../../../../data/repository/issue_repository', () => ({
-  IssueRepository: jest.fn().mockImplementation(() => ({
-    listIssueComments: mockListIssueComments,
-    addComment: mockAddComment,
-    updateComment: mockUpdateComment,
-  })),
-}));
 
 const mockGetOpenPullRequestNumbersByHeadBranch = jest.fn();
 const mockListPullRequestReviewComments = jest.fn();

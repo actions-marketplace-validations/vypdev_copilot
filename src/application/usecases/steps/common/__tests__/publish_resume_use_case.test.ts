@@ -13,11 +13,6 @@ jest.mock('../../../../../utils/list_utils', () => ({
 }));
 
 const mockAddComment = jest.fn();
-jest.mock('../../../../../data/repository/issue_repository', () => ({
-  IssueRepository: jest.fn().mockImplementation(() => ({
-    addComment: mockAddComment,
-  })),
-}));
 
 function baseParam(overrides: Record<string, unknown> = {}) {
   const defaultConfig = { results: [new Result({ id: 'x', success: true, executed: true, steps: ['Step 1'] })] };

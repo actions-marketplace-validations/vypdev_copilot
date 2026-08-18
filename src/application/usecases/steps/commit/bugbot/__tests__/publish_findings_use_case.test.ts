@@ -16,12 +16,6 @@ const mockUpdateComment = jest.fn();
 const mockCreateReviewWithComments = jest.fn();
 const mockUpdatePullRequestReviewComment = jest.fn();
 
-jest.mock("../../../../../../data/repository/issue_repository", () => ({
-    IssueRepository: jest.fn().mockImplementation(() => ({
-        addComment: mockAddComment,
-        updateComment: mockUpdateComment,
-    })),
-}));
 
 
 const mockListPullRequestReviewComments = jest.fn();

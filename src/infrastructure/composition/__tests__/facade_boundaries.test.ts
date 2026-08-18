@@ -16,7 +16,6 @@ describe('repository facade composition boundaries', () => {
         const sourceRoot = join(__dirname, '../../..');
         const allowedConsumer = join(sourceRoot, 'infrastructure/composition/repository_factory.ts');
         const facadePatterns = [
-            /from ['"][^'"]*\/issue_repository['"]/, 
             /from ['"][^'"]*\/organization_repository['"]/, 
             /from ['"][^'"]*\/pull_request_repository['"]/, 
             /from ['"][^'"]*\/branch_repository['"]/, 

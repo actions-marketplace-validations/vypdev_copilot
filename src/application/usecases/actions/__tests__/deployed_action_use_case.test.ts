@@ -20,12 +20,6 @@ jest.mock('../../../../utils/logger', () => ({
 
 const mockSetLabels = jest.fn();
 const mockCloseIssue = jest.fn();
-jest.mock('../../../../data/repository/issue_repository', () => ({
-  IssueRepository: jest.fn().mockImplementation(() => ({
-    setLabels: mockSetLabels,
-    closeIssue: mockCloseIssue,
-  })),
-}));
 
 const mockMergeBranch = jest.fn();
 jest.mock('../../../../data/repository/branch_repository', () => ({

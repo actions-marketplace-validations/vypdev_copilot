@@ -9,13 +9,6 @@ jest.mock('../../../../../utils/logger', () => ({
 const mockGetLabels = jest.fn();
 const mockSetLabels = jest.fn();
 
-jest.mock('../../../../../data/repository/issue_repository', () => ({
-  IssueRepository: jest.fn().mockImplementation(() => ({
-    getLabels: mockGetLabels,
-    setLabels: mockSetLabels,
-  })),
-  PROGRESS_LABEL_PATTERN: /^\d+%$/,
-}));
 
 const defaultSizeLabels = ['size: XS', 'size: S', 'size: M', 'size: L', 'size: XL', 'size: XXL'];
 

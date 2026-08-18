@@ -17,12 +17,6 @@ jest.mock('../../../../../data/repository/branch_repository', () => ({
     getSizeCategoryAndReason: mockGetSizeCategoryAndReason,
   })),
 }));
-jest.mock('../../../../../data/repository/issue_repository', () => ({
-  IssueRepository: jest.fn().mockImplementation(() => ({
-    setLabels: mockSetLabels,
-    getLabels: mockGetLabels,
-  })),
-}));
 
 function baseParam(overrides: Record<string, unknown> = {}) {
   return {

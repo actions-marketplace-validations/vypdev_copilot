@@ -16,11 +16,6 @@ const mockGetPullRequestHeadSha = jest.fn();
 const mockGetChangedFiles = jest.fn();
 const mockGetFilesWithFirstDiffLine = jest.fn();
 
-jest.mock("../../../../../../data/repository/issue_repository", () => ({
-    IssueRepository: jest.fn().mockImplementation(() => ({
-        listIssueComments: mockListIssueComments,
-    })),
-}));
 
 
 import type { BugbotContextPorts } from "../../../../../../application/ports/bugbot_ports";

@@ -13,11 +13,6 @@ jest.mock('../../../../../utils/task_emoji', () => ({
 }));
 
 const mockAddComment = jest.fn();
-jest.mock('../../../../../data/repository/issue_repository', () => ({
-  IssueRepository: jest.fn().mockImplementation(() => ({
-    addComment: mockAddComment,
-  })),
-}));
 
 
 const mockAskAgent = jest.fn();

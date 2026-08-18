@@ -33,14 +33,6 @@ jest.mock('../../repository/organization/authenticated_user_repository', () => (
     getUserFromToken: mockGetUserFromToken,
   })),
 }));
-jest.mock('../../repository/issue_repository', () => ({
-  IssueRepository: jest.fn().mockImplementation(() => ({
-    getLabels: mockGetLabels,
-    isPullRequest: mockIsPullRequest,
-    isIssue: mockIsIssue,
-    getHeadBranch: mockGetHeadBranch,
-  })),
-}));
 jest.mock('../../../manager/description/configuration_handler', () => ({
   ConfigurationHandler: jest.fn().mockImplementation(() => ({
     get: mockConfigGet,

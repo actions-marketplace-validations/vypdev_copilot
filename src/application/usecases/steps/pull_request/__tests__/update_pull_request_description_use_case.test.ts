@@ -8,11 +8,6 @@ jest.mock('../../../../../utils/logger', () => ({
 }));
 
 const mockGetIssueDescription = jest.fn();
-jest.mock('../../../../../data/repository/issue_repository', () => ({
-  IssueRepository: jest.fn().mockImplementation(() => ({
-    getIssueDescription: mockGetIssueDescription,
-  })),
-}));
 
 const mockGetAllMembers = jest.fn();
 jest.mock('../../../../../data/repository/organization/organization_members_repository', () => ({

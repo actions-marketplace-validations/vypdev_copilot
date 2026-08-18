@@ -11,9 +11,6 @@ If you'd like this comment to be translated again, please delete the entire comm
 
 const mockAskAgent = jest.fn();
 const mockUpdateComment = jest.fn();
-jest.mock('../../../../../data/repository/issue_repository', () => ({
-  IssueRepository: jest.fn().mockImplementation(() => ({ updateComment: mockUpdateComment })),
-}));
 
 function baseParam(overrides: Record<string, unknown> = {}) {
   return {
