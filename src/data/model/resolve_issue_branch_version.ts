@@ -1,4 +1,4 @@
-import type { LatestTagQueryPort } from '../../application/ports/branch_ports';
+import type { LatestTagQueryPort } from '../../application/ports/branch_tag_ports';
 import type { Execution } from './execution';
 import { resolveHotfixBranchVersion } from './resolve_hotfix_branch_version';
 import { resolveReleaseBranchVersion } from './resolve_release_branch_version';

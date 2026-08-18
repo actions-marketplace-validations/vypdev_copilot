@@ -4,7 +4,7 @@ import { Result } from '../data/model/result';
 import { ProjectBoardCommandPort } from '../application/ports/project_board_ports';
 import { createAuthenticatedUserCompositionRoot } from '../infrastructure/composition/authenticated_user_composition_root';
 import { createExecutionIssueSetupCompositionRoot } from '../infrastructure/composition/execution_issue_setup_composition_root';
-import type { LatestTagQueryPort } from '../application/ports/branch_ports';
+import type { LatestTagQueryPort } from '../application/ports/branch_tag_ports';
 import { clearAccumulatedLogs, logDebugInfo, logError, logInfo } from '../utils/logger';
 import { TITLE } from '../utils/constants';
 import chalk from 'chalk';

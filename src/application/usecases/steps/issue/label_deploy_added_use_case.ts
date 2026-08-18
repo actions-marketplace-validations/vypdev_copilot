@@ -1,6 +1,6 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import type { BranchWorkflowPort } from "../../../ports/branch_ports";
+import type { BranchWorkflowPort } from "../../../ports/branch_workflow_ports";
 import { extractChangelogUpToAdditionalContext, injectJsonAsMarkdownBlock } from "../../../../utils/content_utils";
 import { logDebugInfo, logError, logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";

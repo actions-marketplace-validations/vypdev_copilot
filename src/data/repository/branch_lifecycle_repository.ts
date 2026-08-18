@@ -1,4 +1,4 @@
-import type { BranchLifecyclePort } from '../../application/ports/branch_ports';
+import type { BranchLifecyclePort } from '../../application/ports/branch_lifecycle_ports';
 import type { GithubBranchClient, GithubClientPort } from '../../application/ports/github_provider_ports';
 import { logDebugInfo, logError } from '../../utils/logger';
 

@@ -1,6 +1,6 @@
 import { Execution } from "../../../data/model/execution";
 import { Result } from "../../../data/model/result";
-import type { BranchMergePort } from "../../../application/ports/branch_ports";
+import type { BranchMergePort } from "../../../application/ports/branch_merge_ports";
 import type { IssueClosurePort } from "../../../application/ports/issue_lifecycle_ports";
 import type { IssueLabelsPort } from "../../../application/ports/issue_management_ports";
 import { logDebugInfo, logError, logInfo } from "../../../utils/logger";

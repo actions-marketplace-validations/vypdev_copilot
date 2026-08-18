@@ -1,4 +1,4 @@
-import type { BranchPreparationPort } from "../../../ports/branch_ports";
+import type { BranchPreparationPort } from "../../../ports/branch_preparation_ports";
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
 import { CommitPrefixBuilderUseCase } from "../common/execute_script_use_case";

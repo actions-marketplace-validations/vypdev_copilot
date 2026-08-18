@@ -23,7 +23,9 @@ import type { IssueDescriptionQueryPort } from "../ports/issue_description_ports
 import type { IssueIdentityQueryPort } from "../ports/issue_identity_ports";
 import type { IssueTitlePort } from "../ports/issue_title_ports";
 import type { ProjectBoardCommandPort, ProjectBoardLinkPort } from "../ports/project_board_ports";
-import type { BranchLifecyclePort, BranchNamePort, BranchPreparationPort, BranchWorkflowPort } from "../ports/branch_ports";
+import type { BranchLifecyclePort, BranchNamePort } from "../ports/branch_lifecycle_ports";
+import type { BranchPreparationPort } from "../ports/branch_preparation_ports";
+import type { BranchWorkflowPort } from "../ports/branch_workflow_ports";
 
 export class IssueUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'IssueUseCase';

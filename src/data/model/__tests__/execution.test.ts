@@ -58,7 +58,7 @@ import { ACTIONS, INPUT_KEYS } from '../../../utils/constants';
 import { Ai } from '../ai';
 import { Branches } from '../branches';
 import { Emoji } from '../emoji';
-import type { LatestTagQueryPort } from '../../../application/ports/branch_ports';
+import type { LatestTagQueryPort } from '../../../application/ports/branch_tag_ports';
 import { Execution } from '../execution';
 import { Hotfix } from '../hotfix';
 import { Images } from '../images';

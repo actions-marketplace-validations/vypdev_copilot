@@ -1,5 +1,5 @@
 import { Execution } from "../../../data/model/execution";
-import type { LatestTagQueryPort } from "../../ports/branch_ports";
+import type { LatestTagQueryPort } from "../../ports/branch_tag_ports";
 import type { AuthenticatedUserPort } from "../../ports/organization_ports";
 import type { RepositoryTagPort, RepositoryDefaultBranchPort } from "../../ports/repository_release_ports";
 import type { IssueLabelProvisioningPort, IssueProgressLabelProvisioningPort, IssueTypeProvisioningPort } from "../../ports/issue_management_ports";

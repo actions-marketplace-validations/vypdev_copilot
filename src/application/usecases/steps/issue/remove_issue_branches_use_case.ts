@@ -1,6 +1,6 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import type { BranchLifecyclePort } from "../../../ports/branch_ports";
+import type { BranchLifecyclePort } from "../../../ports/branch_lifecycle_ports";
 import { logDebugInfo, logError, logInfo, logWarn } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
 import { ParamUseCase } from "../../base/param_usecase";

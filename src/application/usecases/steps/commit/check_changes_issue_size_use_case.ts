@@ -1,6 +1,6 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import type { BranchChangeSizePort } from "../../../ports/branch_ports";
+import type { BranchChangeSizePort } from "../../../ports/branch_change_ports";
 import { ProjectBoardCommandPort } from "../../../ports/project_board_ports";
 import type { IssueLabelsPort } from "../../../ports/issue_management_ports";
 import type { PullRequestBranchQueryPort } from "../../../ports/pull_request_ports";
