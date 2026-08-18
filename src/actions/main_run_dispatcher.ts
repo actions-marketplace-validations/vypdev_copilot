@@ -5,6 +5,7 @@ import { createIssueUseCaseCompositionRoot } from '../infrastructure/composition
 import { createIssueContentCompositionRoot } from '../infrastructure/composition/issue_content_composition_root';
 import { GithubClientFactory } from '../infrastructure/composition/github_client_factory';
 import { PullRequestLifecycleRepository } from '../data/repository/pull_request/pull_request_lifecycle_repository';
+import { BranchCompareRepository } from '../data/repository/branch_compare_repository';
 import * as core from '@actions/core';
 import { Execution } from '../data/model/execution';
 import { Result } from '../data/model/result';
@@ -108,7 +109,7 @@ export async function dispatchMainRunRoute(
                             projectBoardCommandPort,
                             commitFactory.createIssueLabelRepository(),
                             new PullRequestLifecycleRepository(new GithubClientFactory().createPullRequestLifecycleClient()),
-                            commitFactory.createBranchCompareRepository(),
+                            new BranchCompareRepository(new GithubClientFactory().createBranchComparisonClient()),
                         ),
                         createDetectPotentialProblemsUseCase(commitFactory),
                         createCheckProgressCompositionRoot(),

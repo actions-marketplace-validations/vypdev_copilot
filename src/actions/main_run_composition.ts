@@ -14,6 +14,8 @@ import { createBugbotCompositionRoot } from '../infrastructure/composition/bugbo
 import { createInitialSetupCompositionRoot } from '../infrastructure/composition/initial_setup_composition_root';
 import { createIssueContentCompositionRoot } from '../infrastructure/composition/issue_content_composition_root';
 import { createRepositoryReleasePort } from '../infrastructure/composition/release_composition_root';
+import { GithubClientFactory } from '../infrastructure/composition/github_client_factory';
+import { MergeRepository } from '../data/repository/merge_repository';
 
 export function createDetectPotentialProblemsUseCase(_factory: RepositoryFactory): DetectPotentialProblemsUseCase {
     const bugbot = createBugbotCompositionRoot();
@@ -40,7 +42,7 @@ export function createSingleActionUseCase(factory: RepositoryFactory): SingleAct
         new DeployedActionUseCase(
             factory.createIssueLabelRepository(),
             factory.createIssueClosureRepository(),
-            factory.createMergeRepository(),
+            new MergeRepository(new GithubClientFactory().createBranchMergeClient()),
         ),
         new PublishGithubActionUseCase(repositoryReleasePort),
         new CreateReleaseUseCase(repositoryReleasePort),

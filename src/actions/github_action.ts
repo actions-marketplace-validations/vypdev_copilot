@@ -23,6 +23,7 @@ import { logDebugInfo, logError, logInfo } from '../utils/logger';
 import type { ManagedAgentServer } from '../application/ports/agent_ports';
 import { OpenCodeServerLifecycleAdapter } from '../data/repository/opencode_server_lifecycle_adapter';
 import { RepositoryFactory } from '../infrastructure/composition/repository_factory';
+import { GitCliRepository } from '../data/repository/git_cli_repository';
 import { createIssueContentCompositionRoot } from '../infrastructure/composition/issue_content_composition_root';
 import type { IssueContentRepository } from '../data/repository/issue/issue_content_repository';
 import { createProjectBoardCompositionRoot } from '../infrastructure/composition/project_board_composition_root';
@@ -358,7 +359,7 @@ export async function runGitHubAction(): Promise<void> {
 
     logDebugInfo(`Execution built. Event will be resolved in mainRun. Single action: ${execution.singleAction.currentSingleAction ?? 'none'}, AI PR description: ${execution.ai.getAiPullRequestDescription()}, bugbot min severity: ${execution.ai.getBugbotMinSeverity()}.`);
 
-    const results: Result[] = await mainRun(execution, projectRepository, repositoryFactory.createGitCliRepository());
+    const results: Result[] = await mainRun(execution, projectRepository, new GitCliRepository());
 
     await finishWithResults(
         execution,

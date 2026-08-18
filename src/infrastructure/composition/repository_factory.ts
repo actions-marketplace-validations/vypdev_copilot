@@ -11,9 +11,6 @@ import { IssueTitleRepository } from "../../data/repository/issue/issue_title_re
 import { IssueClosureRepository } from "../../data/repository/issue/issue_closure_repository";
 import { IssueNotificationRepository } from "../../data/repository/issue/issue_notification_repository";
 
-import { MergeRepository } from "../../data/repository/merge_repository";
-import { BranchCompareRepository } from "../../data/repository/branch_compare_repository";
-import { GitCliRepository } from "../../data/repository/git_cli_repository";
 import { GithubClientFactory } from "./github_client_factory";
 
 export class RepositoryFactory {
@@ -24,7 +21,6 @@ export class RepositoryFactory {
     createGraphqlClient(): ReturnType<GithubClientFactory['createGraphqlClient']> {
         return this.githubClients.createGraphqlClient();
     }
-    createGitCliRepository(): GitCliRepository { return new GitCliRepository(); }
     createActorAuthorizationRepository(): ActorAuthorizationRepository {
         return new ActorAuthorizationRepository(this.createOrganizationGithubClient());
     }
@@ -50,10 +46,4 @@ export class RepositoryFactory {
 
 
 
-    createMergeRepository(): MergeRepository {
-        return new MergeRepository(this.githubClients.createBranchMergeClient());
-    }
-    createBranchCompareRepository(): BranchCompareRepository {
-        return new BranchCompareRepository(this.githubClients.createBranchComparisonClient());
-    }
 }
