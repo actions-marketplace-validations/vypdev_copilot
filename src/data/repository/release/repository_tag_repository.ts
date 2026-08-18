@@ -1,12 +1,9 @@
 import type { GithubClientPort, GithubReleaseClient } from "../../../application/ports/github_provider_ports";
 import { logDebugInfo, logError, logInfo } from "../../../utils/logger";
-import { hasReleaseContent, releasePayload } from "../release_content_policy";
-import { findTargetRelease, releaseIdAsString } from "../release_transition_policy";
-import { releaseName, tagReference, tagReferencePath } from "../release_tag_policy";
-import type { RepositoryReleasePort } from "../../../application/ports/repository_release_ports";
+import { tagReference, tagReferencePath } from "../release_tag_policy";
+import type { RepositoryTagPort } from "../../../application/ports/repository_release_ports";
 
-/** Adapter for GitHub repository tags, releases, and default-branch metadata. */
-export class RepositoryReleaseRepository implements RepositoryReleasePort {
+export class RepositoryTagRepository implements RepositoryTagPort {
     constructor(private readonly githubClient: GithubClientPort<GithubReleaseClient>) {}
 
     private findTag = async (
@@ -76,95 +73,6 @@ export class RepositoryReleaseRepository implements RepositoryReleasePort {
             });
         }
     };
-
-    updateRelease = async (
-        owner: string,
-        repository: string,
-        sourceTag: string,
-        targetTag: string,
-        token: string,
-    ): Promise<string | undefined> => {
-        const octokit = this.githubClient.getClient(token);
-        const { data: sourceRelease } = await octokit.rest.repos.getReleaseByTag({
-            owner,
-            repo: repository,
-            tag: sourceTag,
-        });
-        if (!hasReleaseContent(sourceRelease)) {
-            logError(`The '${sourceTag}' tag does not exist in the remote repository`);
-            return undefined;
-        }
-
-        const { data: releases } = await octokit.rest.repos.listReleases({ owner, repo: repository });
-        const targetRelease = findTargetRelease(releases, targetTag, (release) => release.tag_name);
-        let targetReleaseId: number;
-        if (targetRelease) {
-            await octokit.rest.repos.updateRelease({
-                owner,
-                repo: repository,
-                release_id: targetRelease.id,
-                name: sourceRelease.name,
-                body: sourceRelease.body,
-                draft: sourceRelease.draft,
-                prerelease: sourceRelease.prerelease,
-            });
-            targetReleaseId = targetRelease.id;
-        } else {
-            const payload = releasePayload(targetTag, sourceRelease);
-            const { data: newRelease } = await octokit.rest.repos.createRelease({
-                owner,
-                repo: repository,
-                ...payload,
-            });
-            targetReleaseId = newRelease.id;
-        }
-
-        logInfo(`Updated release for targetTag '${targetTag}'`);
-        return releaseIdAsString(targetReleaseId);
-    };
-
-    createRelease = async (
-        owner: string,
-        repository: string,
-        version: string,
-        title: string,
-        changelog: string,
-        token: string,
-    ): Promise<string | undefined> => {
-        try {
-            const octokit = this.githubClient.getClient(token);
-            const { data: release } = await octokit.rest.repos.createRelease({
-                owner,
-                repo: repository,
-                tag_name: version,
-                name: releaseName(version, title),
-                body: changelog,
-                draft: false,
-                prerelease: false,
-            });
-            return release.html_url;
-        } catch (error) {
-            logError(`Error creating release: ${error}`);
-            return undefined;
-        }
-    };
-
-    getDefaultBranch = async (
-        owner: string,
-        repository: string,
-        token: string,
-    ): Promise<string | undefined> => {
-        try {
-            const octokit = this.githubClient.getClient(token);
-            const { data } = await octokit.rest.repos.get({ owner, repo: repository });
-            logDebugInfo(`Default branch for ${owner}/${repository}: ${data.default_branch}`);
-            return data.default_branch;
-        } catch (error) {
-            logError(`Error getting default branch for ${owner}/${repository}: ${error}`);
-            return undefined;
-        }
-    };
-
     createTag = async (
         owner: string,
         repository: string,

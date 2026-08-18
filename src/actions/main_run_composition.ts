@@ -15,7 +15,8 @@ import { createInitialSetupCompositionRoot } from '../infrastructure/composition
 import { createIssueContentCompositionRoot } from '../infrastructure/composition/issue_content_composition_root';
 import { createIssueClosureRepository, createIssueNotificationRepository } from '../infrastructure/composition/issue_interaction_composition_root';
 import { createIssueLabelRepository } from '../infrastructure/composition/issue_labels_composition_root';
-import { createRepositoryReleasePort } from '../infrastructure/composition/release_composition_root';
+import { RepositoryTagRepository } from '../data/repository/release/repository_tag_repository';
+import { RepositoryReleasePublicationRepository } from '../data/repository/release/repository_release_publication_repository';
 import { MergeRepository } from '../data/repository/merge_repository';
 
 export function createDetectPotentialProblemsUseCase(): DetectPotentialProblemsUseCase {
@@ -37,7 +38,8 @@ export function createDetectBugbotFixIntentUseCase(): DetectBugbotFixIntentUseCa
 }
 
 export function createSingleActionUseCase(): SingleActionUseCase {
-    const repositoryReleasePort = createRepositoryReleasePort();
+    const repositoryTagPort = new RepositoryTagRepository(new GithubClientFactory().createReleaseClient());
+    const repositoryReleasePort = new RepositoryReleasePublicationRepository(new GithubClientFactory().createReleaseClient());
     const issueDescriptionQueryPort = createIssueContentCompositionRoot();
     return new SingleActionUseCase(
         new DeployedActionUseCase(
@@ -45,9 +47,9 @@ export function createSingleActionUseCase(): SingleActionUseCase {
             createIssueClosureRepository(),
             new MergeRepository(new GithubClientFactory().createBranchMergeClient()),
         ),
-        new PublishGithubActionUseCase(repositoryReleasePort),
+        new PublishGithubActionUseCase(repositoryTagPort, repositoryReleasePort),
         new CreateReleaseUseCase(repositoryReleasePort),
-        new CreateTagUseCase(repositoryReleasePort),
+        new CreateTagUseCase(repositoryTagPort),
         new ThinkUseCase(issueDescriptionQueryPort, createIssueNotificationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
         createInitialSetupCompositionRoot(),
         createCheckProgressCompositionRoot(),

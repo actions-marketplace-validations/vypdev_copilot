@@ -14,7 +14,7 @@ jest.mock('../../../../utils/task_emoji', () => ({
 
 const mockUpdateTag = jest.fn();
 const mockUpdateRelease = jest.fn();
-jest.mock('../../../../data/repository/release/repository_release_repository', () => ({
+jest.mock('../../../../data/repository/release/repository_release_publication_repository', () => ({
   RepositoryReleaseRepository: jest.fn().mockImplementation(() => ({
     updateTag: mockUpdateTag,
     updateRelease: mockUpdateRelease,
@@ -35,7 +35,7 @@ describe('PublishGithubActionUseCase', () => {
   let useCase: PublishGithubActionUseCase;
 
   beforeEach(() => {
-    useCase = new PublishGithubActionUseCase({ updateTag: mockUpdateTag, updateRelease: mockUpdateRelease } as any);
+    useCase = new PublishGithubActionUseCase({ updateTag: mockUpdateTag } as any, { updateRelease: mockUpdateRelease } as any);
     mockUpdateTag.mockResolvedValue(undefined);
     mockUpdateRelease.mockReset();
   });

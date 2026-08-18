@@ -4,7 +4,8 @@ import { IssueLabelRepository } from "../../data/repository/issue/issue_label_re
 import { IssueProgressLabelRepository } from "../../data/repository/issue/issue_progress_label_repository";
 import { IssueTypeRepository } from "../../data/repository/issue/issue_type_repository";
 import { AuthenticatedUserRepository } from "../../data/repository/organization/authenticated_user_repository";
-import { RepositoryReleaseRepository } from "../../data/repository/release/repository_release_repository";
+import { RepositoryDefaultBranchRepository } from "../../data/repository/release/repository_default_branch_repository";
+import { RepositoryTagRepository } from "../../data/repository/release/repository_tag_repository";
 import { GitCliRepository } from "../../data/repository/git_cli_repository";
 import { GithubClientFactory } from "./github_client_factory";
 import { composeInitialSetupUseCase } from "./initial_setup_use_case_composition";
@@ -31,6 +32,7 @@ export function createInitialSetupCompositionRoot(): InitialSetupUseCase {
         },
         new IssueTypeRepository(clients.createGraphqlTransportClient()),
         new GitCliRepository(),
-        new RepositoryReleaseRepository(clients.createReleaseClient()),
+        new RepositoryDefaultBranchRepository(clients.createReleaseClient()),
+        new RepositoryTagRepository(clients.createReleaseClient()),
     );
 }

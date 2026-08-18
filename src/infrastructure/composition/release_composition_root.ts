@@ -1,7 +1,7 @@
-import type { RepositoryReleasePort } from "../../application/ports/repository_release_ports";
-import { RepositoryReleaseRepository } from "../../data/repository/release/repository_release_repository";
+import type { RepositoryReleasePublicationPort } from "../../application/ports/repository_release_ports";
+import { RepositoryReleasePublicationRepository } from "../../data/repository/release/repository_release_publication_repository";
 import { GithubClientFactory } from "./github_client_factory";
 
-export function createRepositoryReleasePort(): RepositoryReleasePort {
-    return new RepositoryReleaseRepository(new GithubClientFactory().createReleaseClient());
+export function createRepositoryReleasePort(): RepositoryReleasePublicationPort {
+    return new RepositoryReleasePublicationRepository(new GithubClientFactory().createReleaseClient());
 }
