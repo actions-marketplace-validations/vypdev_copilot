@@ -1,4 +1,4 @@
-import type { AgentServerLifecyclePort, ManagedAgentServer } from '../../application/ports/agent_ports';
+import type { AgentServerLifecyclePort, ManagedAgentServer } from '../../application/ports//agent_server_ports';
 import { startOpencodeServer } from '../../utils/opencode_server';
 
 /** Infrastructure adapter for the managed OpenCode server lifecycle. */

@@ -7,7 +7,7 @@ import { getTaskEmoji } from '../../../utils/task_emoji';
 import { ParamUseCase } from '../base/param_usecase';
 
 import { OPENCODE_AGENT_PLAN } from '../../../application/policies/agent_task_policy';
-import type { FindingsQueryPort } from '../../ports/agent_ports';
+import type { FindingsQueryPort } from '../../ports//agent_findings_ports';
 import type { IssueDescriptionQueryPort } from '../../../application/ports/issue_description_ports';
 import type { IssueLabelsPort, IssueProgressPort } from '../../../application/ports/issue_management_ports';
 import type { PullRequestBranchQueryPort } from '../../../application/ports/pull_request_branch_ports';
