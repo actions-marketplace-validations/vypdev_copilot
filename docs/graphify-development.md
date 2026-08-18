@@ -18,7 +18,7 @@ Install the official Graphify Labs package in an isolated Python environment. Th
 
 ```bash
 python3 -m venv /tmp/copilot-graphify-venv
-/tmp/copilot-graphify-venv/bin/python -m pip install graphifyy
+/tmp/copilot-graphify-venv/bin/python -m pip install 'graphifyy==0.9.46'
 /tmp/copilot-graphify-venv/bin/graphify hermes install
 ```
 
