@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import { runLocalAction } from '../../actions/local_action';
-import { RepositoryFactory } from '../../infrastructure/composition/repository_factory';
+import { createIssueMetadataCompositionRoot } from '../../infrastructure/composition/issue_metadata_composition_root';
 import { ACTIONS, INPUT_KEYS, OPENCODE_DEFAULT_MODEL, TITLE } from '../../utils/constants';
 import { logError } from '../../utils/logger';
 import { getGitInfo } from '../../cli_context';
@@ -66,7 +66,7 @@ program
     // Set up issue context if provided
     const parsedIssueNumber = parseInt(issueNumber);
     if (issueNumber && parsedIssueNumber > 0) {
-      const issueMetadataRepository = new RepositoryFactory().createIssueMetadataRepository();
+      const issueMetadataRepository = createIssueMetadataCompositionRoot();
       const isIssue = await issueMetadataRepository.isIssue(
         gitInfo.owner,
         gitInfo.repo,

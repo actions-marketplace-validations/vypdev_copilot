@@ -5,8 +5,8 @@ import { IssueAssignmentRepository } from "../../data/repository/issue/issue_ass
 import { IssueContentRepository } from "../../data/repository/issue/issue_content_repository";
 import { IssueLabelRepository } from "../../data/repository/issue/issue_label_repository";
 import { IssueLifecycleRepository } from "../../data/repository/issue/issue_lifecycle_repository";
-import { IssueMetadataRepository } from "../../data/repository/issue/issue_metadata_repository";
 import { IssueTypeAssignmentRepository } from "../../data/repository/issue/issue_type_assignment_repository";
+import { IssueMetadataRepository } from "../../data/repository/issue/issue_metadata_repository";
 import { IssueTitleRepository } from "../../data/repository/issue/issue_title_repository";
 import { IssueClosureRepository } from "../../data/repository/issue/issue_closure_repository";
 import { IssueNotificationRepository } from "../../data/repository/issue/issue_notification_repository";
@@ -67,9 +67,9 @@ export class RepositoryFactory {
     createIssueAssignmentRepository(): IssueAssignmentRepository { return new IssueAssignmentRepository(this.githubClients.createIssueAssignmentClient()); }
     createIssueContentRepository(): IssueContentRepository { return new IssueContentRepository(this.githubClients.createIssueContentClient()); }
     createIssueLabelRepository(): IssueLabelRepository { return new IssueLabelRepository(this.githubClients.createIssueLabelsClient()); }
-    createIssueMetadataRepository(): IssueMetadataRepository { return new IssueMetadataRepository(this.githubClients.createIssueMetadataClient(), this.githubClients.createGraphqlClient()); }
-    createIssueTitleRepository(metadataRepository = this.createIssueMetadataRepository()): IssueTitleRepository {
-        return new IssueTitleRepository(this.githubClients.createIssueTitleClient(), metadataRepository);
+    createIssueTitleRepository(metadataRepository?: ConstructorParameters<typeof IssueTitleRepository>[1]): IssueTitleRepository {
+        const metadata = metadataRepository ?? new IssueMetadataRepository(this.githubClients.createIssueMetadataClient(), this.githubClients.createGraphqlClient());
+        return new IssueTitleRepository(this.githubClients.createIssueTitleClient(), metadata);
     }
     createIssueClosureRepository(): IssueClosureRepository {
         return new IssueClosureRepository(this.createIssueLifecycleRepository(), this.createIssueContentRepository());
