@@ -12,11 +12,14 @@ import type { ProjectBoardPriorityPort } from "./steps/issue/priority_size_check
 import { LinkPullRequestIssueUseCase } from "./steps/pull_request/link_pull_request_issue_use_case";
 import { LinkPullRequestProjectUseCase } from "./steps/pull_request/link_pull_request_project_use_case";
 import { SyncSizeAndProgressLabelsFromIssueToPrUseCase } from "./steps/pull_request/sync_size_and_progress_labels_from_issue_to_pr_use_case";
-import type { IssueAssigneePort, IssueClosurePort, IssueDescriptionQueryPort } from "../ports/issue_ports";
+import type { IssueAssigneePort } from "../ports/issue_management_ports";
+import type { IssueClosurePort } from "../ports/issue_lifecycle_ports";
+import type { IssueDescriptionQueryPort } from "../ports/issue_description_ports";
 import type { OrganizationMembersPort } from "../ports/organization_ports";
 import type { PullRequestDescriptionCommandPort, PullRequestReviewPort } from "../ports/pull_request_ports";
 import type { PullRequestIssueLinkPort } from "../ports/pull_request_ports";
-import type { IssueLabelsPort, IssueTitlePort } from "../ports/issue_ports";
+import type { IssueLabelsPort } from "../ports/issue_management_ports";
+import type { IssueTitlePort } from "../ports/issue_title_ports";
 import type { ProjectBoardCommandPort, ProjectBoardLinkPort } from "../ports/project_board_ports";
 
 export class PullRequestUseCase implements ParamUseCase<Execution, Result[]> {

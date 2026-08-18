@@ -2,7 +2,7 @@ import { Execution } from "../../../data/model/execution";
 import type { LatestTagQueryPort } from "../../ports/branch_ports";
 import type { AuthenticatedUserPort } from "../../ports/organization_ports";
 import type { RepositoryTagPort, RepositoryDefaultBranchPort } from "../../ports/repository_release_ports";
-import type { IssueLabelProvisioningPort, IssueProgressLabelProvisioningPort, IssueTypeProvisioningPort } from "../../ports/issue_ports";
+import type { IssueLabelProvisioningPort, IssueProgressLabelProvisioningPort, IssueTypeProvisioningPort } from "../../ports/issue_management_ports";
 import { Result } from "../../../data/model/result";
 import { ParamUseCase } from "../base/param_usecase";
 import { DEFAULT_INITIAL_TAG } from "../../../utils/version_utils";

@@ -6,7 +6,7 @@ import type { LatestTagQueryPort } from '../../application/ports/branch_ports';
 import type { Execution } from './execution';
 import { GetReleaseTypeUseCase } from '../../application/usecases/steps/common/get_release_type_use_case';
 import { GetReleaseVersionUseCase } from '../../application/usecases/steps/common/get_release_version_use_case';
-import type { IssueDescriptionQueryPort } from '../../application/ports/issue_ports';
+import type { IssueDescriptionQueryPort } from '../../application/ports/issue_description_ports';
 
 export async function resolveReleaseBranchVersion(
     execution: Execution,

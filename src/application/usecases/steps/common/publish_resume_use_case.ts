@@ -1,6 +1,6 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import type { IssueNotificationPort } from "../../../ports/issue_ports";
+import type { IssueNotificationPort } from "../../../ports/issue_lifecycle_ports";
 import { getRandomElement } from "../../../../utils/list_utils";
 import { getAccumulatedLogsAsText, logError, logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";

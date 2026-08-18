@@ -1,6 +1,6 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import type { IssueDescriptionQueryPort } from "../../../../application/ports/issue_ports";
+import type { IssueDescriptionQueryPort } from "../../../../application/ports/issue_description_ports";
 import { extractReleaseType } from "../../../../utils/content_utils";
 import { logError, logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";

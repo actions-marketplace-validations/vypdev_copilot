@@ -2,7 +2,7 @@ import { Result } from '../../../../data/model/result';
 import { OPENCODE_AGENT_PLAN } from '../../../policies/agent_task_policy';
 import type { AgentConfiguration, FindingsQueryPort } from '../../../ports/agent_ports';
 import { LANGUAGE_CHECK_RESPONSE_SCHEMA, TRANSLATION_RESPONSE_SCHEMA } from '../../../policies/agent_response_schemas';
-import type { IssueCommentUpdatePort } from '../../../ports/issue_ports';
+import type { IssueCommentUpdatePort } from '../../../ports/issue_lifecycle_ports';
 import { getCheckCommentLanguagePrompt, getTranslateCommentPrompt } from '../../../../prompts';
 import { logDebugInfo, logInfo } from '../../../../utils/logger';
 import { getTaskEmoji } from '../../../../utils/task_emoji';

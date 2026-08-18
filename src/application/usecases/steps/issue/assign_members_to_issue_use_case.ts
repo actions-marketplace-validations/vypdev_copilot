@@ -1,6 +1,6 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import type { IssueAssigneePort } from "../../../../application/ports/issue_ports";
+import type { IssueAssigneePort } from "../../../../application/ports/issue_management_ports";
 import type { OrganizationMembersPort } from "../../../../application/ports/organization_ports";
 import { logDebugInfo, logError, logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";

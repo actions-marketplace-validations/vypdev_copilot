@@ -1,6 +1,6 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import type { IssueTitlePort } from "../../../../application/ports/issue_ports";
+import type { IssueTitlePort } from "../../../../application/ports/issue_title_ports";
 import { logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
 import { ParamUseCase } from "../../base/param_usecase";

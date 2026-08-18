@@ -2,7 +2,7 @@ import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
 import type { BranchChangeSizePort } from "../../../ports/branch_ports";
 import { ProjectBoardCommandPort } from "../../../ports/project_board_ports";
-import type { IssueLabelsPort } from "../../../ports/issue_ports";
+import type { IssueLabelsPort } from "../../../ports/issue_management_ports";
 import type { PullRequestBranchQueryPort } from "../../../ports/pull_request_ports";
 import { logDebugInfo, logError, logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";

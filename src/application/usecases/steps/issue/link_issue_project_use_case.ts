@@ -1,6 +1,6 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import type { IssueIdentityQueryPort } from "../../../../application/ports/issue_ports";
+import type { IssueIdentityQueryPort } from "../../../../application/ports/issue_identity_ports";
 import type { ProjectBoardCommandPort, ProjectBoardLinkPort } from "../../../../application/ports/project_board_ports";
 import { logDebugInfo, logError, logInfo, logWarn } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
