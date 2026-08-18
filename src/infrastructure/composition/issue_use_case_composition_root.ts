@@ -1,3 +1,7 @@
+import { createBranchClient } from './github_branch_client_factory';
+import { createIssueAssignmentClient, createIssueContentClient, createIssueLifecycleClient, createIssueMetadataClient, createIssueTitleClient } from './github_issue_client_factory';
+import { createGraphqlTransportClient } from './github_project_client_factory';
+import { createWorkflowClient } from './github_workflow_client_factory';
 import { IssueUseCase } from '../../application/usecases/issue_use_case';
 import { AnswerIssueHelpUseCase } from '../../application/usecases/steps/issue/answer_issue_help_use_case';
 import { RecommendStepsUseCase } from '../../application/usecases/actions/recommend_steps_use_case';
@@ -19,19 +23,17 @@ import { WorkflowRepository } from '../../data/repository/workflow_repository';
 import { composeIssueUseCase } from './issue_use_case_composition';
 import { createOrganizationMembersCompositionRoot } from './organization_members_composition_root';
 import { createProjectBoardCompositionRoot } from './project_board_composition_root';
-import { GithubClientFactory } from './github_client_factory';
 
 export function createIssueUseCaseCompositionRoot(): IssueUseCase {
-    const clients = new GithubClientFactory();
-    const issueMetadata = new IssueMetadataRepository(clients.createIssueMetadataClient(), clients.createGraphqlTransportClient());
-    const issueContent = new IssueContentRepository(clients.createIssueContentClient());
-    const issueLifecycle = new IssueLifecycleRepository(clients.createIssueLifecycleClient());
+    const issueMetadata = new IssueMetadataRepository(createIssueMetadataClient(), createGraphqlTransportClient());
+    const issueContent = new IssueContentRepository(createIssueContentClient());
+    const issueLifecycle = new IssueLifecycleRepository(createIssueLifecycleClient());
     const issueNotification = new IssueNotificationRepository(issueLifecycle, issueContent);
     const branchName = new BranchNameRepository();
     const branchPreparation = new BranchPreparationRepository(
-        clients.createBranchClient(),
+        createBranchClient(),
         branchName,
-        new LinkedBranchRepository(clients.createGraphqlTransportClient()),
+        new LinkedBranchRepository(createGraphqlTransportClient()),
         new GitCliRepository(),
     );
 
@@ -43,19 +45,19 @@ export function createIssueUseCaseCompositionRoot(): IssueUseCase {
         issueMetadata,
         projectBoard.command,
         projectBoard.link,
-        new IssueTitleRepository(clients.createIssueTitleClient(), issueMetadata),
-        new IssueAssignmentRepository(clients.createIssueAssignmentClient()),
+        new IssueTitleRepository(createIssueTitleClient(), issueMetadata),
+        new IssueAssignmentRepository(createIssueAssignmentClient()),
         new IssueClosureRepository(issueLifecycle, issueContent),
         new IssueTypeAssignmentRepository(
             (owner, repository, issueNumber, token) => issueMetadata.getId(owner, repository, issueNumber, token),
-            clients.createGraphqlTransportClient(),
+            createGraphqlTransportClient(),
         ),
         issueContent,
         issueNotification,
-        new BranchLifecycleRepository(clients.createBranchClient()),
+        new BranchLifecycleRepository(createBranchClient()),
         branchName,
         branchPreparation,
-        new WorkflowRepository(clients.createWorkflowClient()),
+        new WorkflowRepository(createWorkflowClient()),
         new RecommendStepsUseCase(issueContent, createFindingsQueryPort()),
         new AnswerIssueHelpUseCase(issueNotification, createFindingsQueryPort()),
     );

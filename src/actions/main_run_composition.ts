@@ -1,3 +1,5 @@
+import { createBranchMergeClient } from '../infrastructure/composition/github_branch_client_factory';
+import { createReleaseClient } from '../infrastructure/composition/github_release_client_factory';
 import { createCheckProgressCompositionRoot } from '../infrastructure/composition/check_progress_composition_root';
 import { DetectPotentialProblemsUseCase } from '../application/usecases/steps/commit/detect_potential_problems_use_case';
 import { DetectBugbotFixIntentUseCase } from '../application/usecases/steps/commit/bugbot/detect_bugbot_fix_intent_use_case';
@@ -9,7 +11,6 @@ import { CreateTagUseCase } from '../application/usecases/actions/create_tag_use
 import { ThinkUseCase } from '../application/usecases/steps/common/think_use_case';
 import { RecommendStepsUseCase } from '../application/usecases/actions/recommend_steps_use_case';
 import { createFindingsQueryPort } from '../infrastructure/composition/agent_capability_composition_root';
-import { GithubClientFactory } from '../infrastructure/composition/github_client_factory';
 import { createBugbotCompositionRoot } from '../infrastructure/composition/bugbot_composition_root';
 import { createInitialSetupCompositionRoot } from '../infrastructure/composition/initial_setup_composition_root';
 import { createIssueContentCompositionRoot } from '../infrastructure/composition/issue_content_composition_root';
@@ -38,14 +39,14 @@ export function createDetectBugbotFixIntentUseCase(): DetectBugbotFixIntentUseCa
 }
 
 export function createSingleActionUseCase(): SingleActionUseCase {
-    const repositoryTagPort = new RepositoryTagRepository(new GithubClientFactory().createReleaseClient());
-    const repositoryReleasePort = new RepositoryReleasePublicationRepository(new GithubClientFactory().createReleaseClient());
+    const repositoryTagPort = new RepositoryTagRepository(createReleaseClient());
+    const repositoryReleasePort = new RepositoryReleasePublicationRepository(createReleaseClient());
     const issueDescriptionQueryPort = createIssueContentCompositionRoot();
     return new SingleActionUseCase(
         new DeployedActionUseCase(
             createIssueLabelRepository(),
             createIssueClosureRepository(),
-            new MergeRepository(new GithubClientFactory().createBranchMergeClient()),
+            new MergeRepository(createBranchMergeClient()),
         ),
         new PublishGithubActionUseCase(repositoryTagPort, repositoryReleasePort),
         new CreateReleaseUseCase(repositoryReleasePort),

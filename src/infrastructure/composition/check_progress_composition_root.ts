@@ -1,3 +1,6 @@
+import { createBranchClient } from './github_branch_client_factory';
+import { createIssueContentClient, createIssueLabelsClient } from './github_issue_client_factory';
+import { createPullRequestLifecycleClient } from './github_pull_request_client_factory';
 import { CheckProgressUseCase } from "../../application/usecases/actions/check_progress_use_case";
 import { createFindingsQueryPort } from './agent_capability_composition_root';
 import { IssueContentRepository } from "../../data/repository/issue/issue_content_repository";
@@ -6,19 +9,17 @@ import { IssueProgressLabelRepository } from "../../data/repository/issue/issue_
 import { IssueProgressTrackingRepository } from "../../data/repository/issue/issue_progress_tracking_repository";
 import { BranchLifecycleRepository } from "../../data/repository/branch_lifecycle_repository";
 import { PullRequestLifecycleRepository } from "../../data/repository/pull_request/pull_request_lifecycle_repository";
-import { GithubClientFactory } from "./github_client_factory";
 
 export function createCheckProgressCompositionRoot(): CheckProgressUseCase {
-    const clients = new GithubClientFactory();
-    const labels = new IssueLabelRepository(clients.createIssueLabelsClient());
+    const labels = new IssueLabelRepository(createIssueLabelsClient());
     return new CheckProgressUseCase(
         new IssueProgressTrackingRepository(
-            new IssueContentRepository(clients.createIssueContentClient()),
+            new IssueContentRepository(createIssueContentClient()),
             labels,
-            new IssueProgressLabelRepository(new IssueLabelRepository(clients.createIssueLabelsClient())),
+            new IssueProgressLabelRepository(new IssueLabelRepository(createIssueLabelsClient())),
         ),
-        new BranchLifecycleRepository(clients.createBranchClient()),
-        new PullRequestLifecycleRepository(clients.createPullRequestLifecycleClient()),
+        new BranchLifecycleRepository(createBranchClient()),
+        new PullRequestLifecycleRepository(createPullRequestLifecycleClient()),
         createFindingsQueryPort(),
     );
 }

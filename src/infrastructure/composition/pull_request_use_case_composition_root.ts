@@ -1,3 +1,6 @@
+import { createIssueAssignmentClient, createIssueContentClient, createIssueLabelsClient, createIssueLifecycleClient, createIssueMetadataClient, createIssueTitleClient } from './github_issue_client_factory';
+import { createGraphqlTransportClient } from './github_project_client_factory';
+import { createPullRequestLifecycleClient, createPullRequestReviewClient } from './github_pull_request_client_factory';
 import { PullRequestUseCase } from '../../application/usecases/pull_request_use_case';
 import { UpdatePullRequestDescriptionUseCase } from '../../application/usecases/steps/pull_request/update_pull_request_description_use_case';
 import { createFindingsQueryPort } from './agent_capability_composition_root';
@@ -13,14 +16,12 @@ import { PullRequestReviewRepository } from '../../data/repository/pull_request/
 import { composePullRequestUseCase } from './pull_request_use_case_composition';
 import { createOrganizationMembersCompositionRoot } from './organization_members_composition_root';
 import { createProjectBoardCompositionRoot } from './project_board_composition_root';
-import { GithubClientFactory } from './github_client_factory';
 
 export function createPullRequestUseCaseCompositionRoot(): PullRequestUseCase {
-    const clients = new GithubClientFactory();
-    const issueLifecycle = new IssueLifecycleRepository(clients.createIssueLifecycleClient());
-    const issueContent = new IssueContentRepository(clients.createIssueContentClient());
-    const pullRequestLifecycle = new PullRequestLifecycleRepository(clients.createPullRequestLifecycleClient());
-    const issueMetadata = new IssueMetadataRepository(clients.createIssueMetadataClient(), clients.createGraphqlTransportClient());
+    const issueLifecycle = new IssueLifecycleRepository(createIssueLifecycleClient());
+    const issueContent = new IssueContentRepository(createIssueContentClient());
+    const pullRequestLifecycle = new PullRequestLifecycleRepository(createPullRequestLifecycleClient());
+    const issueMetadata = new IssueMetadataRepository(createIssueMetadataClient(), createGraphqlTransportClient());
     const organizationMembers = createOrganizationMembersCompositionRoot();
 
     const projectBoard = createProjectBoardCompositionRoot();
@@ -29,12 +30,12 @@ export function createPullRequestUseCaseCompositionRoot(): PullRequestUseCase {
         projectBoard.command,
         pullRequestLifecycle,
         issueContent,
-        new IssueTitleRepository(clients.createIssueTitleClient(), issueMetadata),
+        new IssueTitleRepository(createIssueTitleClient(), issueMetadata),
         new IssueClosureRepository(issueLifecycle, issueContent),
-        new IssueAssignmentRepository(clients.createIssueAssignmentClient()),
-        new PullRequestReviewRepository(clients.createPullRequestReviewClient(), clients.createGraphqlTransportClient()),
+        new IssueAssignmentRepository(createIssueAssignmentClient()),
+        new PullRequestReviewRepository(createPullRequestReviewClient(), createGraphqlTransportClient()),
         organizationMembers,
-        new IssueLabelRepository(clients.createIssueLabelsClient()),
+        new IssueLabelRepository(createIssueLabelsClient()),
         pullRequestLifecycle,
         projectBoard.link,
         projectBoard.command,

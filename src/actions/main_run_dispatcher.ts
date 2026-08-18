@@ -1,3 +1,5 @@
+import { createBranchComparisonClient } from '../infrastructure/composition/github_branch_client_factory';
+import { createPullRequestLifecycleClient } from '../infrastructure/composition/github_pull_request_client_factory';
 import { createCheckProgressCompositionRoot } from '../infrastructure/composition/check_progress_composition_root';
 import { createBugbotCompositionRoot } from '../infrastructure/composition/bugbot_composition_root';
 import { createPullRequestUseCaseCompositionRoot } from '../infrastructure/composition/pull_request_use_case_composition_root';
@@ -6,7 +8,6 @@ import { createIssueContentCompositionRoot } from '../infrastructure/composition
 import { createIssueNotificationRepository } from '../infrastructure/composition/issue_interaction_composition_root';
 import { createActorAuthorizationRepository } from '../infrastructure/composition/actor_authorization_composition_root';
 import { createIssueLabelRepository } from '../infrastructure/composition/issue_labels_composition_root';
-import { GithubClientFactory } from '../infrastructure/composition/github_client_factory';
 import { PullRequestLifecycleRepository } from '../data/repository/pull_request/pull_request_lifecycle_repository';
 import { BranchCompareRepository } from '../data/repository/branch_compare_repository';
 import * as core from '@actions/core';
@@ -105,8 +106,8 @@ export async function dispatchMainRunRoute(
                         new CheckChangesIssueSizeUseCase(
                             projectBoardCommandPort,
                             createIssueLabelRepository(),
-                            new PullRequestLifecycleRepository(new GithubClientFactory().createPullRequestLifecycleClient()),
-                            new BranchCompareRepository(new GithubClientFactory().createBranchComparisonClient()),
+                            new PullRequestLifecycleRepository(createPullRequestLifecycleClient()),
+                            new BranchCompareRepository(createBranchComparisonClient()),
                         ),
                         createDetectPotentialProblemsUseCase(),
                         createCheckProgressCompositionRoot(),

@@ -1,3 +1,7 @@
+import { createAuthenticatedUserClient } from './github_identity_client_factory';
+import { createIssueLabelProvisioningClient, createIssueLabelsClient } from './github_issue_client_factory';
+import { createGraphqlTransportClient } from './github_project_client_factory';
+import { createReleaseClient } from './github_release_client_factory';
 import { InitialSetupUseCase } from "../../application/usecases/actions/initial_setup_use_case";
 import { IssueLabelProvisioningRepository } from "../../data/repository/issue/issue_label_provisioning_repository";
 import { IssueLabelRepository } from "../../data/repository/issue/issue_label_repository";
@@ -7,20 +11,18 @@ import { AuthenticatedUserRepository } from "../../data/repository/organization/
 import { RepositoryDefaultBranchRepository } from "../../data/repository/release/repository_default_branch_repository";
 import { RepositoryTagRepository } from "../../data/repository/release/repository_tag_repository";
 import { GitCliRepository } from "../../data/repository/git_cli_repository";
-import { GithubClientFactory } from "./github_client_factory";
 import { composeInitialSetupUseCase } from "./initial_setup_use_case_composition";
 
 export function createInitialSetupCompositionRoot(): InitialSetupUseCase {
-    const clients = new GithubClientFactory();
     const progressLabels = new IssueProgressLabelRepository(
-        new IssueLabelRepository(clients.createIssueLabelsClient()),
+        new IssueLabelRepository(createIssueLabelsClient()),
     );
     const labelProvisioning = new IssueLabelProvisioningRepository(
-        clients.createIssueLabelProvisioningClient(),
+        createIssueLabelProvisioningClient(),
     );
 
     return composeInitialSetupUseCase(
-        new AuthenticatedUserRepository(clients.createAuthenticatedUserClient()),
+        new AuthenticatedUserRepository(createAuthenticatedUserClient()),
         labelProvisioning,
         {
             ensureProgressLabels: (owner, repository, token) => progressLabels.ensureProgressLabels(
@@ -30,9 +32,9 @@ export function createInitialSetupCompositionRoot(): InitialSetupUseCase {
                 labelProvisioning.ensureLabel,
             ),
         },
-        new IssueTypeRepository(clients.createGraphqlTransportClient()),
+        new IssueTypeRepository(createGraphqlTransportClient()),
         new GitCliRepository(),
-        new RepositoryDefaultBranchRepository(clients.createReleaseClient()),
-        new RepositoryTagRepository(clients.createReleaseClient()),
+        new RepositoryDefaultBranchRepository(createReleaseClient()),
+        new RepositoryTagRepository(createReleaseClient()),
     );
 }
