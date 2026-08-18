@@ -10,31 +10,21 @@ import { ThinkUseCase } from '../application/usecases/steps/common/think_use_cas
 import { RecommendStepsUseCase } from '../application/usecases/actions/recommend_steps_use_case';
 import { DefaultAgentRepositoryFactory } from '../data/repository/agent_repository_factory';
 import { RepositoryFactory } from '../infrastructure/composition/repository_factory';
+import { createBugbotCompositionRoot } from '../infrastructure/composition/bugbot_composition_root';
 import { createInitialSetupCompositionRoot } from '../infrastructure/composition/initial_setup_composition_root';
 import { createRepositoryReleasePort } from '../infrastructure/composition/release_composition_root';
-import type { BugbotContextPorts, BugbotWritePorts } from '../application/ports/bugbot_ports';
 
-export function createDetectPotentialProblemsUseCase(factory: RepositoryFactory): DetectPotentialProblemsUseCase {
-    const issueRepository = factory.createBugbotIssueRepository();
-    const pullRequestRepository = factory.createBugbotPullRequestRepository();
-    const contextPorts: BugbotContextPorts = { issue: issueRepository, pullRequest: pullRequestRepository };
-    const writePorts: BugbotWritePorts = { issueComments: issueRepository, pullRequestComments: pullRequestRepository };
+export function createDetectPotentialProblemsUseCase(_factory: RepositoryFactory): DetectPotentialProblemsUseCase {
+    const bugbot = createBugbotCompositionRoot();
     return new DetectPotentialProblemsUseCase(
         new DefaultAgentRepositoryFactory().createFindings(),
-        contextPorts,
-        writePorts,
+        bugbot.context,
+        bugbot.write,
     );
 }
 
-export function createBugbotContextPorts(factory: RepositoryFactory) {
-    return {
-        issue: factory.createBugbotIssueRepository(),
-        pullRequest: factory.createBugbotPullRequestRepository(),
-    };
-}
-
-export function createDetectBugbotFixIntentUseCase(factory: RepositoryFactory): DetectBugbotFixIntentUseCase {
-    const contextPorts = createBugbotContextPorts(factory);
+export function createDetectBugbotFixIntentUseCase(_factory: RepositoryFactory): DetectBugbotFixIntentUseCase {
+    const contextPorts = createBugbotCompositionRoot().context;
     return new DetectBugbotFixIntentUseCase(
         contextPorts.pullRequest,
         new DefaultAgentRepositoryFactory().createFindings(),

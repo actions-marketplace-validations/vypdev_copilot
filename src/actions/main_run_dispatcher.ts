@@ -1,4 +1,5 @@
 import { createCheckProgressCompositionRoot } from '../infrastructure/composition/check_progress_composition_root';
+import { createBugbotCompositionRoot } from '../infrastructure/composition/bugbot_composition_root';
 import * as core from '@actions/core';
 import { Execution } from '../data/model/execution';
 import { Result } from '../data/model/result';
@@ -12,7 +13,7 @@ import { RepositoryFactory } from '../infrastructure/composition/repository_fact
 import { createAuthenticatedUserCompositionRoot } from '../infrastructure/composition/authenticated_user_composition_root';
 import { GitCommitAdapter } from '../infrastructure/git_commit_adapter';
 import type { MainRunRoute } from './main_run_route';
-import { createDetectPotentialProblemsUseCase, createBugbotContextPorts, createDetectBugbotFixIntentUseCase, createSingleActionUseCase } from './main_run_composition';
+import { createDetectPotentialProblemsUseCase, createDetectBugbotFixIntentUseCase, createSingleActionUseCase } from './main_run_composition';
 import { IssueCommentUseCase } from '../application/usecases/issue_comment_use_case';
 import { CheckIssueCommentLanguageUseCase } from '../application/usecases/steps/issue_comment/check_issue_comment_language_use_case';
 import { PullRequestReviewCommentUseCase } from '../application/usecases/pull_request_review_comment_use_case';
@@ -39,21 +40,22 @@ export async function dispatchMainRunRoute(
                 case 'issue-comment': {
                     logInfo(`Running IssueCommentUseCase for issue #${execution.issue.number}.`);
                     const commentFactory = factory;
+                    const bugbot = createBugbotCompositionRoot();
                     results.push(...await new IssueCommentUseCase(
                         new CheckIssueCommentLanguageUseCase(
-                            commentFactory.createBugbotIssueRepository(),
+                            bugbot.issue,
                             new DefaultAgentRepositoryFactory().createFindings(),
                         ),
                         createDetectBugbotFixIntentUseCase(commentFactory),
                         new ThinkUseCase(commentFactory.createIssueContentRepository(), commentFactory.createIssueNotificationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
-                        new BugbotAutofixUseCase(new DefaultAgentRepositoryFactory().createFixer(), createBugbotContextPorts(commentFactory), new GitCommitAdapter()),
+                        new BugbotAutofixUseCase(new DefaultAgentRepositoryFactory().createFixer(), bugbot.context, new GitCommitAdapter()),
                         new DoUserRequestUseCase(new DefaultAgentRepositoryFactory().createFixer()),
-                        commentFactory.createBugbotIssueRepository(),
+                        bugbot.issue,
                         commentFactory.createActorAuthorizationRepository(),
                         createAuthenticatedUserCompositionRoot(),
                         {
-                            issueComments: commentFactory.createBugbotIssueRepository(),
-                            pullRequestComments: commentFactory.createBugbotPullRequestRepository(),
+                            issueComments: bugbot.issue,
+                            pullRequestComments: bugbot.pullRequest,
                         },
                         new GitCommitAdapter(),
                     ).invoke(execution));
@@ -66,21 +68,22 @@ export async function dispatchMainRunRoute(
                 case 'pull-request-review-comment': {
                     logInfo(`Running PullRequestReviewCommentUseCase for PR #${execution.pullRequest.number}.`);
                     const reviewCommentFactory = factory;
+                    const bugbot = createBugbotCompositionRoot();
                     results.push(...await new PullRequestReviewCommentUseCase(
                         new CheckPullRequestCommentLanguageUseCase(
-                            reviewCommentFactory.createBugbotIssueRepository(),
+                            bugbot.issue,
                             new DefaultAgentRepositoryFactory().createFindings(),
                         ),
                         createDetectBugbotFixIntentUseCase(reviewCommentFactory),
                         new ThinkUseCase(reviewCommentFactory.createIssueContentRepository(), reviewCommentFactory.createIssueNotificationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
-                        new BugbotAutofixUseCase(new DefaultAgentRepositoryFactory().createFixer(), createBugbotContextPorts(reviewCommentFactory), new GitCommitAdapter()),
+                        new BugbotAutofixUseCase(new DefaultAgentRepositoryFactory().createFixer(), bugbot.context, new GitCommitAdapter()),
                         new DoUserRequestUseCase(new DefaultAgentRepositoryFactory().createFixer()),
-                        reviewCommentFactory.createBugbotIssueRepository(),
+                        bugbot.issue,
                         reviewCommentFactory.createActorAuthorizationRepository(),
                         createAuthenticatedUserCompositionRoot(),
                         {
-                            issueComments: reviewCommentFactory.createBugbotIssueRepository(),
-                            pullRequestComments: reviewCommentFactory.createBugbotPullRequestRepository(),
+                            issueComments: bugbot.issue,
+                            pullRequestComments: bugbot.pullRequest,
                         },
                         new GitCommitAdapter(),
                     ).invoke(execution));

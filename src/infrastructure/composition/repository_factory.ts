@@ -10,12 +10,10 @@ import { IssueTypeAssignmentRepository } from "../../data/repository/issue/issue
 import { IssueTitleRepository } from "../../data/repository/issue/issue_title_repository";
 import { IssueClosureRepository } from "../../data/repository/issue/issue_closure_repository";
 import { IssueNotificationRepository } from "../../data/repository/issue/issue_notification_repository";
-import { BugbotIssueRepository } from "../../data/repository/issue/bugbot_issue_repository";
 import { PullRequestChangesRepository } from "../../data/repository/pull_request/pull_request_changes_repository";
 import { PullRequestLifecycleRepository } from "../../data/repository/pull_request/pull_request_lifecycle_repository";
 import { PullRequestReviewRepository } from "../../data/repository/pull_request/pull_request_review_repository";
 import { PullRequestReviewThreadRepository } from "../../data/repository/pull_request/pull_request_review_thread_repository";
-import { BugbotPullRequestRepository } from "../../data/repository/pull_request/bugbot_pull_request_repository";
 
 import { MergeRepository } from "../../data/repository/merge_repository";
 import { BranchCompareRepository } from "../../data/repository/branch_compare_repository";
@@ -116,7 +114,6 @@ export class RepositoryFactory {
 
     createIssueAssignmentRepository(): IssueAssignmentRepository { return new IssueAssignmentRepository(this.githubClients.createIssueAssignmentClient()); }
     createIssueContentRepository(): IssueContentRepository { return new IssueContentRepository(this.githubClients.createIssueContentClient()); }
-    createBugbotIssueRepository(): BugbotIssueRepository { return new BugbotIssueRepository(this.createIssueContentRepository()); }
     createIssueLabelRepository(): IssueLabelRepository { return new IssueLabelRepository(this.githubClients.createIssueLabelsClient()); }
     createIssueMetadataRepository(): IssueMetadataRepository { return new IssueMetadataRepository(this.githubClients.createIssueMetadataClient(), this.githubClients.createGraphqlClient()); }
     createIssueTitleRepository(metadataRepository = this.createIssueMetadataRepository()): IssueTitleRepository {
@@ -150,13 +147,6 @@ export class RepositoryFactory {
 
     createPullRequestReviewThreadRepository(): PullRequestReviewThreadRepository {
         return new PullRequestReviewThreadRepository(this.createGraphqlClient());
-    }
-    createBugbotPullRequestRepository(): BugbotPullRequestRepository {
-        return new BugbotPullRequestRepository(
-            this.createPullRequestLifecycleRepository(),
-            this.createPullRequestChangesRepository(),
-            this.createPullRequestReviewRepository(),
-        );
     }
 
     createMergeRepository(): MergeRepository {
