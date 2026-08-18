@@ -9,6 +9,7 @@ import { ThinkUseCase } from '../application/usecases/steps/common/think_use_cas
 import { RecommendStepsUseCase } from '../application/usecases/actions/recommend_steps_use_case';
 import { DefaultAgentRepositoryFactory } from '../data/repository/agent_repository_factory';
 import { RepositoryFactory } from '../infrastructure/composition/repository_factory';
+import { createInitialSetupCompositionRoot } from '../infrastructure/composition/initial_setup_composition_root';
 import type { BugbotContextPorts, BugbotWritePorts } from '../application/ports/bugbot_ports';
 
 export function createDetectPotentialProblemsUseCase(factory: RepositoryFactory): DetectPotentialProblemsUseCase {
@@ -52,7 +53,7 @@ export function createSingleActionUseCase(factory: RepositoryFactory): SingleAct
         new CreateReleaseUseCase(repositoryReleasePort),
         new CreateTagUseCase(repositoryReleasePort),
         new ThinkUseCase(issueDescriptionQueryPort, factory.createIssueNotificationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
-        factory.createInitialSetupUseCase(),
+        createInitialSetupCompositionRoot(),
         factory.createCheckProgressUseCase(),
         createDetectPotentialProblemsUseCase(factory),
         new RecommendStepsUseCase(issueDescriptionQueryPort, new DefaultAgentRepositoryFactory().createFindings()),

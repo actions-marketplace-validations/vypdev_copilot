@@ -14,7 +14,7 @@ function productionTypeScriptFiles(directory: string): string[] {
 describe('repository facade composition boundaries', () => {
     it('keeps compatibility facade imports inside the composition root', () => {
         const sourceRoot = join(__dirname, '../../..');
-        const allowedConsumer = join(sourceRoot, 'infrastructure/composition/repository_factory.ts');
+        const compositionRoot = join(sourceRoot, 'infrastructure/composition');
         const facadePatterns = [
             /from ['"][^'"]*\/organization_repository['"]/,
             /from ['"][^'"]*\/pull_request_repository['"]/,
@@ -23,7 +23,7 @@ describe('repository facade composition boundaries', () => {
         ];
 
         const violations = productionTypeScriptFiles(sourceRoot).flatMap((file) => {
-            if (file === allowedConsumer) {
+            if (file.startsWith(compositionRoot)) {
                 return [];
             }
             const content = readFileSync(file, 'utf8');

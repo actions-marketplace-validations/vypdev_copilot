@@ -43,7 +43,6 @@ import type { IssueProgressLabelProvisioningPort } from "../../application/ports
 import { GithubClientFactory } from "./github_client_factory";
 import { composeIssueUseCase } from "./issue_use_case_composition";
 import { composePullRequestUseCase } from "./pull_request_use_case_composition";
-import { composeInitialSetupUseCase } from "./initial_setup_use_case_composition";
 
 export class RepositoryFactory {
     private readonly githubClients = new GithubClientFactory();
@@ -128,17 +127,6 @@ export class RepositoryFactory {
             new UpdatePullRequestDescriptionUseCase(this.createPullRequestLifecycleRepository(), this.createIssueContentRepository(), this.createOrganizationMembersRepository(), new DefaultAgentRepositoryFactory().createFindings()),
         );
     }
-    createInitialSetupUseCase(): ReturnType<typeof composeInitialSetupUseCase> {
-        return composeInitialSetupUseCase(
-            this.createAuthenticatedUserRepository(),
-            this.createIssueLabelProvisioningRepository(),
-            this.createIssueProgressLabelProvisioningPort(),
-            this.createIssueTypeRepository(),
-            this.createGitCliRepository(),
-            this.createRepositoryReleaseRepository(),
-        );
-    }
-
     createAuthenticatedUserRepository(): AuthenticatedUserRepository {
         return new AuthenticatedUserRepository(this.createOrganizationGithubClient());
     }
