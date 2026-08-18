@@ -1,9 +1,9 @@
 import { Command } from 'commander';
 import { runAgentAuthenticationPreflight } from '../../data/repository/agent_authentication_preflight';
 import { createFixerQueryPort } from '../../infrastructure/composition/agent_capability_composition_root';
-import { buildAgentTasks } from '../../actions/agent_configuration_builder';
 import { getCliDoPrompt } from '../../prompts';
-import { OPENCODE_DEFAULT_MODEL, TITLE } from '../../utils/constants';
+import { buildDoAgentTasks, formatDoJsonResponse } from './do_policy';
+import { TITLE } from '../../utils/constants';
 import { logError } from '../../utils/logger';
 import { OPENCODE_PROJECT_CONTEXT_INSTRUCTION } from '../../utils/opencode_project_context_instruction';
 import { getGitInfo, getCurrentBranch } from '../../cli_context';
@@ -44,27 +44,7 @@ program
       return;
     }
 
-    const serverUrl = cleanCliArgument(options.opencodeServerUrl) || process.env.OPENCODE_SERVER_URL || 'http://127.0.0.1:4096';
-    const model = cleanCliArgument(options.opencodeModel) || process.env.OPENCODE_MODEL || OPENCODE_DEFAULT_MODEL;
-    const agentProvider = cleanCliArgument(options.agentProvider) || process.env.AGENT_PROVIDER || 'opencode';
-    const agentTransport = cleanCliArgument(options.agentTransport) || process.env.AGENT_TRANSPORT || 'server';
-    const agentModel = cleanCliArgument(options.agentModel) || process.env.AGENT_MODEL || model;
-    const agentCommand = cleanCliArgument(options.agentCommand) || process.env.AGENT_COMMAND;
-    const agentTasks = buildAgentTasks({
-      provider: agentProvider,
-      transport: agentTransport,
-      model: agentModel,
-      serverUrl,
-      command: agentCommand,
-      findings: {
-        provider: cleanCliArgument(options.findingsProvider), transport: cleanCliArgument(options.findingsTransport),
-        model: cleanCliArgument(options.findingsModel), command: cleanCliArgument(options.findingsCommand),
-      },
-      fixer: {
-        provider: cleanCliArgument(options.fixerProvider), transport: cleanCliArgument(options.fixerTransport),
-        model: cleanCliArgument(options.fixerModel), command: cleanCliArgument(options.fixerCommand),
-      },
-    });
+    const agentTasks = buildDoAgentTasks(options);
     const authPreflight = runAgentAuthenticationPreflight(agentTasks.findings);
     if (authPreflight.check.status === 'missing') {
       const message = `❌ ${authPreflight.check.message}`;
@@ -75,11 +55,6 @@ program
       if (authPreflight.mode === 'warn') console.warn(`⚠️ ${authPreflight.check.message}`);
     }
     const outputFormat = cleanCliArgument(options.output) || 'text';
-
-    if (agentTasks.findings.transport === 'server' && !serverUrl) {
-      console.log('❌ OpenCode server URL required for server transport. Set OPENCODE_SERVER_URL or use --opencode-server-url');
-      return;
-    }
 
     try {
       const aiRepository = createFixerQueryPort();
@@ -100,7 +75,7 @@ program
       const { text, sessionId } = result;
 
       if (outputFormat === 'json') {
-        console.log(JSON.stringify({ response: text, sessionId }, null, 2));
+        console.log(formatDoJsonResponse(text, sessionId));
         return;
       }
 
