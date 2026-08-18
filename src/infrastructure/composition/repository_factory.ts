@@ -26,7 +26,6 @@ import { PullRequestReviewThreadRepository } from "../../data/repository/pull_re
 import { BugbotPullRequestRepository } from "../../data/repository/pull_request/bugbot_pull_request_repository";
 
 import { RepositoryReleaseRepository } from "../../data/repository/release/repository_release_repository";
-import { InitialSetupUseCase } from "../../application/usecases/actions/initial_setup_use_case";
 import { MergeRepository } from "../../data/repository/merge_repository";
 import { BranchCompareRepository } from "../../data/repository/branch_compare_repository";
 import { GitCliRepository } from "../../data/repository/git_cli_repository";
@@ -44,6 +43,7 @@ import type { IssueProgressLabelProvisioningPort } from "../../application/ports
 import { GithubClientFactory } from "./github_client_factory";
 import { composeIssueUseCase } from "./issue_use_case_composition";
 import { composePullRequestUseCase } from "./pull_request_use_case_composition";
+import { composeInitialSetupUseCase } from "./initial_setup_use_case_composition";
 
 export class RepositoryFactory {
     private readonly githubClients = new GithubClientFactory();
@@ -128,8 +128,8 @@ export class RepositoryFactory {
             new UpdatePullRequestDescriptionUseCase(this.createPullRequestLifecycleRepository(), this.createIssueContentRepository(), this.createOrganizationMembersRepository(), new DefaultAgentRepositoryFactory().createFindings()),
         );
     }
-    createInitialSetupUseCase(): InitialSetupUseCase {
-        return new InitialSetupUseCase(
+    createInitialSetupUseCase(): ReturnType<typeof composeInitialSetupUseCase> {
+        return composeInitialSetupUseCase(
             this.createAuthenticatedUserRepository(),
             this.createIssueLabelProvisioningRepository(),
             this.createIssueProgressLabelProvisioningPort(),
