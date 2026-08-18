@@ -1,6 +1,6 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import type { PullRequestIssueLinkPort } from "../../../ports/pull_request_ports";
+import type { PullRequestIssueLinkPort } from "../../../ports/pull_request_issue_link_ports";
 import { logError, logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
 import { ParamUseCase } from "../../base/param_usecase";
