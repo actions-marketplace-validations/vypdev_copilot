@@ -11,6 +11,7 @@ import { IssueMetadataRepository } from "../../data/repository/issue/issue_metad
 import { IssueProgressLabelRepository } from "../../data/repository/issue/issue_progress_label_repository";
 import { IssueTypeRepository } from "../../data/repository/issue/issue_type_repository";
 import { IssueTypeAssignmentRepository } from "../../data/repository/issue/issue_type_assignment_repository";
+import { IssueTitleRepository } from "../../data/repository/issue/issue_title_repository";
 import { ProjectBoardRepository } from "../../data/repository/project/project_board_repository";
 import { PullRequestChangesRepository } from "../../data/repository/pull_request/pull_request_changes_repository";
 import { PullRequestLifecycleRepository } from "../../data/repository/pull_request/pull_request_lifecycle_repository";
@@ -72,7 +73,7 @@ export class RepositoryFactory {
             this.createOrganizationMembersRepository(),
             issueMetadataRepository,
             this.createProjectBoardRepository(),
-            this.createIssueRepository(),
+            this.createIssueTitleRepository(issueMetadataRepository),
             this.createIssueAssignmentRepository(),
             this.createIssueRepository(),
             this.createIssueTypeAssignmentRepository(
@@ -93,7 +94,7 @@ export class RepositoryFactory {
             this.createProjectBoardRepository(),
             this.createPullRequestLifecycleRepository(),
             this.createIssueContentRepository(),
-            this.createIssueRepository(),
+            this.createIssueTitleRepository(),
             this.createIssueRepository(),
             this.createIssueAssignmentRepository(),
             this.createPullRequestReviewRepository(),
@@ -147,6 +148,9 @@ export class RepositoryFactory {
     createIssueLabelRepository(): IssueLabelRepository { return new IssueLabelRepository(new OctokitIssueLabelsClientAdapter()); }
     createIssueLabelProvisioningRepository(): IssueLabelProvisioningRepository { return new IssueLabelProvisioningRepository(new OctokitIssueLabelProvisioningClientAdapter()); }
     createIssueMetadataRepository(): IssueMetadataRepository { return new IssueMetadataRepository(new OctokitIssueMetadataClientAdapter(), new OctokitGraphqlClientAdapter()); }
+    createIssueTitleRepository(metadataRepository = this.createIssueMetadataRepository()): IssueTitleRepository {
+        return new IssueTitleRepository(new OctokitIssueTitleClientAdapter(), metadataRepository);
+    }
     createIssueLifecycleRepository(): IssueLifecycleRepository { return new IssueLifecycleRepository(new OctokitIssueLifecycleClientAdapter()); }
     createIssueProgressLabelRepository(): IssueProgressLabelRepository {
         return new IssueProgressLabelRepository(this.createIssueLabelRepository());
