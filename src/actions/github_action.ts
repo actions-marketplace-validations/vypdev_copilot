@@ -22,7 +22,6 @@ import { BUGBOT_MAX_COMMENTS, BUGBOT_MIN_SEVERITY, INPUT_KEYS } from '../utils/c
 import { logDebugInfo, logError, logInfo } from '../utils/logger';
 import type { ManagedAgentServer } from '../application/ports/agent_ports';
 import { OpenCodeServerLifecycleAdapter } from '../data/repository/opencode_server_lifecycle_adapter';
-import { RepositoryFactory } from '../infrastructure/composition/repository_factory';
 import { GitCliRepository } from '../data/repository/git_cli_repository';
 import { createIssueContentCompositionRoot } from '../infrastructure/composition/issue_content_composition_root';
 import type { IssueContentRepository } from '../data/repository/issue/issue_content_repository';
@@ -44,7 +43,6 @@ import { buildEmoji, buildImages, buildIssue, buildIssueTypes, buildLabels, buil
 
 export async function runGitHubAction(): Promise<void> {
     const eventInputs = { ...github.context.payload, eventName: github.context.eventName };
-    const repositoryFactory = new RepositoryFactory();
     const projectRepository = createProjectBoardCompositionRoot();
 
     logInfo('GitHub Action: runGitHubAction started.');
