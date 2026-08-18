@@ -71,12 +71,11 @@ export class RepositoryFactory {
         return new IssueTitleRepository(this.githubClients.createIssueTitleClient(), metadata);
     }
     createIssueClosureRepository(): IssueClosureRepository {
-        return new IssueClosureRepository(this.createIssueLifecycleRepository(), new IssueContentRepository(this.githubClients.createIssueContentClient()));
+        return new IssueClosureRepository(new IssueLifecycleRepository(this.githubClients.createIssueLifecycleClient()), new IssueContentRepository(this.githubClients.createIssueContentClient()));
     }
     createIssueNotificationRepository(): IssueNotificationRepository {
-        return new IssueNotificationRepository(this.createIssueLifecycleRepository(), new IssueContentRepository(this.githubClients.createIssueContentClient()));
+        return new IssueNotificationRepository(new IssueLifecycleRepository(this.githubClients.createIssueLifecycleClient()), new IssueContentRepository(this.githubClients.createIssueContentClient()));
     }
-    createIssueLifecycleRepository(): IssueLifecycleRepository { return new IssueLifecycleRepository(this.githubClients.createIssueLifecycleClient()); }
     createIssueTypeAssignmentRepository(
         getIssueId: ConstructorParameters<typeof IssueTypeAssignmentRepository>[0],
     ): IssueTypeAssignmentRepository {
