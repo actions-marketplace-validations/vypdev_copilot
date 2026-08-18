@@ -8,7 +8,7 @@ import { CreateReleaseUseCase } from '../application/usecases/actions/create_rel
 import { CreateTagUseCase } from '../application/usecases/actions/create_tag_use_case';
 import { ThinkUseCase } from '../application/usecases/steps/common/think_use_case';
 import { RecommendStepsUseCase } from '../application/usecases/actions/recommend_steps_use_case';
-import { DefaultAgentRepositoryFactory } from '../data/repository/agent_repository_factory';
+import { createFindingsQueryPort } from '../infrastructure/composition/agent_capability_composition_root';
 import { GithubClientFactory } from '../infrastructure/composition/github_client_factory';
 import { createBugbotCompositionRoot } from '../infrastructure/composition/bugbot_composition_root';
 import { createInitialSetupCompositionRoot } from '../infrastructure/composition/initial_setup_composition_root';
@@ -22,7 +22,7 @@ import { MergeRepository } from '../data/repository/merge_repository';
 export function createDetectPotentialProblemsUseCase(): DetectPotentialProblemsUseCase {
     const bugbot = createBugbotCompositionRoot();
     return new DetectPotentialProblemsUseCase(
-        new DefaultAgentRepositoryFactory().createFindings(),
+        createFindingsQueryPort(),
         bugbot.context,
         bugbot.write,
     );
@@ -32,7 +32,7 @@ export function createDetectBugbotFixIntentUseCase(): DetectBugbotFixIntentUseCa
     const contextPorts = createBugbotCompositionRoot().context;
     return new DetectBugbotFixIntentUseCase(
         contextPorts.pullRequest,
-        new DefaultAgentRepositoryFactory().createFindings(),
+        createFindingsQueryPort(),
         contextPorts,
     );
 }
@@ -50,11 +50,11 @@ export function createSingleActionUseCase(): SingleActionUseCase {
         new PublishGithubActionUseCase(repositoryTagPort, repositoryReleasePort),
         new CreateReleaseUseCase(repositoryReleasePort),
         new CreateTagUseCase(repositoryTagPort),
-        new ThinkUseCase(issueDescriptionQueryPort, createIssueNotificationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
+        new ThinkUseCase(issueDescriptionQueryPort, createIssueNotificationRepository(), createFindingsQueryPort()),
         createInitialSetupCompositionRoot(),
         createCheckProgressCompositionRoot(),
         createDetectPotentialProblemsUseCase(),
-        new RecommendStepsUseCase(issueDescriptionQueryPort, new DefaultAgentRepositoryFactory().createFindings()),
+        new RecommendStepsUseCase(issueDescriptionQueryPort, createFindingsQueryPort()),
     );
 }
 

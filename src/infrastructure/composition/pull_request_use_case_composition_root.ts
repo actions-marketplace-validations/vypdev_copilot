@@ -1,6 +1,6 @@
 import { PullRequestUseCase } from '../../application/usecases/pull_request_use_case';
 import { UpdatePullRequestDescriptionUseCase } from '../../application/usecases/steps/pull_request/update_pull_request_description_use_case';
-import { DefaultAgentRepositoryFactory } from '../../data/repository/agent_repository_factory';
+import { createFindingsQueryPort } from './agent_capability_composition_root';
 import { IssueAssignmentRepository } from '../../data/repository/issue/issue_assignment_repository';
 import { IssueClosureRepository } from '../../data/repository/issue/issue_closure_repository';
 import { IssueContentRepository } from '../../data/repository/issue/issue_content_repository';
@@ -42,7 +42,7 @@ export function createPullRequestUseCaseCompositionRoot(): PullRequestUseCase {
             pullRequestLifecycle,
             issueContent,
             organizationMembers,
-            new DefaultAgentRepositoryFactory().createFindings(),
+            createFindingsQueryPort(),
         ),
     );
 }

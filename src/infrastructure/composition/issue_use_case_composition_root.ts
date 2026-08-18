@@ -1,7 +1,7 @@
 import { IssueUseCase } from '../../application/usecases/issue_use_case';
 import { AnswerIssueHelpUseCase } from '../../application/usecases/steps/issue/answer_issue_help_use_case';
 import { RecommendStepsUseCase } from '../../application/usecases/actions/recommend_steps_use_case';
-import { DefaultAgentRepositoryFactory } from '../../data/repository/agent_repository_factory';
+import { createFindingsQueryPort } from './agent_capability_composition_root';
 import { BranchLifecycleRepository } from '../../data/repository/branch_lifecycle_repository';
 import { BranchNameRepository } from '../../data/repository/branch_name_repository';
 import { BranchPreparationRepository } from '../../data/repository/branch/branch_preparation_repository';
@@ -56,7 +56,7 @@ export function createIssueUseCaseCompositionRoot(): IssueUseCase {
         branchName,
         branchPreparation,
         new WorkflowRepository(clients.createWorkflowClient()),
-        new RecommendStepsUseCase(issueContent, new DefaultAgentRepositoryFactory().createFindings()),
-        new AnswerIssueHelpUseCase(issueNotification, new DefaultAgentRepositoryFactory().createFindings()),
+        new RecommendStepsUseCase(issueContent, createFindingsQueryPort()),
+        new AnswerIssueHelpUseCase(issueNotification, createFindingsQueryPort()),
     );
 }

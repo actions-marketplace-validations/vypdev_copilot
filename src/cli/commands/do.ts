@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import { runAgentAuthenticationPreflight } from '../../data/repository/agent_authentication_preflight';
-import { DefaultAgentRepositoryFactory } from '../../data/repository/agent_repository_factory';
+import { createFixerQueryPort } from '../../infrastructure/composition/agent_capability_composition_root';
 import { buildAgentTasks } from '../../actions/agent_configuration_builder';
 import { getCliDoPrompt } from '../../prompts';
 import { OPENCODE_DEFAULT_MODEL, TITLE } from '../../utils/constants';
@@ -82,7 +82,7 @@ program
     }
 
     try {
-      const aiRepository = new DefaultAgentRepositoryFactory().createFixer();
+      const aiRepository = createFixerQueryPort();
       const fullPrompt = getCliDoPrompt({
         projectContextInstruction: `${OPENCODE_PROJECT_CONTEXT_INSTRUCTION}\n\nRepository identity: ${gitInfo.owner}/${gitInfo.repo}\nCurrent branch: ${getCurrentBranch()}\nTreat this repository identity as authoritative context for the request.`,
         userPrompt: prompt,

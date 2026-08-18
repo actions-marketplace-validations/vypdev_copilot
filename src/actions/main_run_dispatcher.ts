@@ -27,7 +27,7 @@ import { CheckIssueCommentLanguageUseCase } from '../application/usecases/steps/
 import { PullRequestReviewCommentUseCase } from '../application/usecases/pull_request_review_comment_use_case';
 import { CheckPullRequestCommentLanguageUseCase } from '../application/usecases/steps/pull_request_review_comment/check_pull_request_comment_language_use_case';
 import { ThinkUseCase } from '../application/usecases/steps/common/think_use_case';
-import { DefaultAgentRepositoryFactory } from '../data/repository/agent_repository_factory';
+import { createFindingsQueryPort, createFixerQueryPort } from '../infrastructure/composition/agent_capability_composition_root';
 import { logDebugInfo, logError, logInfo } from '../utils/logger';
 
 export async function dispatchMainRunRoute(
@@ -49,12 +49,12 @@ export async function dispatchMainRunRoute(
                     results.push(...await new IssueCommentUseCase(
                         new CheckIssueCommentLanguageUseCase(
                             bugbot.issue,
-                            new DefaultAgentRepositoryFactory().createFindings(),
+                            createFindingsQueryPort(),
                         ),
                         createDetectBugbotFixIntentUseCase(),
-                        new ThinkUseCase(createIssueContentCompositionRoot(), createIssueNotificationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
-                        new BugbotAutofixUseCase(new DefaultAgentRepositoryFactory().createFixer(), bugbot.context, new GitCommitAdapter()),
-                        new DoUserRequestUseCase(new DefaultAgentRepositoryFactory().createFixer()),
+                        new ThinkUseCase(createIssueContentCompositionRoot(), createIssueNotificationRepository(), createFindingsQueryPort()),
+                        new BugbotAutofixUseCase(createFixerQueryPort(), bugbot.context, new GitCommitAdapter()),
+                        new DoUserRequestUseCase(createFixerQueryPort()),
                         bugbot.issue,
                         createActorAuthorizationRepository(),
                         createAuthenticatedUserCompositionRoot(),
@@ -76,12 +76,12 @@ export async function dispatchMainRunRoute(
                     results.push(...await new PullRequestReviewCommentUseCase(
                         new CheckPullRequestCommentLanguageUseCase(
                             bugbot.issue,
-                            new DefaultAgentRepositoryFactory().createFindings(),
+                            createFindingsQueryPort(),
                         ),
                         createDetectBugbotFixIntentUseCase(),
-                        new ThinkUseCase(createIssueContentCompositionRoot(), createIssueNotificationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
-                        new BugbotAutofixUseCase(new DefaultAgentRepositoryFactory().createFixer(), bugbot.context, new GitCommitAdapter()),
-                        new DoUserRequestUseCase(new DefaultAgentRepositoryFactory().createFixer()),
+                        new ThinkUseCase(createIssueContentCompositionRoot(), createIssueNotificationRepository(), createFindingsQueryPort()),
+                        new BugbotAutofixUseCase(createFixerQueryPort(), bugbot.context, new GitCommitAdapter()),
+                        new DoUserRequestUseCase(createFixerQueryPort()),
                         bugbot.issue,
                         createActorAuthorizationRepository(),
                         createAuthenticatedUserCompositionRoot(),
