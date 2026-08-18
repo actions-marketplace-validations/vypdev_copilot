@@ -1,10 +1,10 @@
 import { logDebugInfo, logError } from "../../../utils/logger";
 import { collectOrganizationMembers, selectAvailableMembers } from "../project_members_policy";
 import type { OrganizationMembersPort } from "../../../application/ports/organization_ports";
-import type { GithubClientPort, GithubOrganizationClient } from "../../../application/ports/github_provider_ports";
+import type { GithubClientPort, GithubOrganizationMembersClient } from "../../../application/ports/github_provider_ports";
 
 export class OrganizationMembersRepository implements OrganizationMembersPort {
-    constructor(private readonly githubClient: GithubClientPort<GithubOrganizationClient>) {}
+    constructor(private readonly githubClient: GithubClientPort<GithubOrganizationMembersClient>) {}
     getRandomMembers = async (
         organization: string,
         membersToAdd: number,

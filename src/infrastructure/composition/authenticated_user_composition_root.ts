@@ -3,5 +3,5 @@ import { GithubClientFactory } from "./github_client_factory";
 
 export function createAuthenticatedUserCompositionRoot(): AuthenticatedUserRepository {
     const clients = new GithubClientFactory();
-    return new AuthenticatedUserRepository(clients.createOrganizationClient());
+    return new AuthenticatedUserRepository(clients.createAuthenticatedUserClient());
 }

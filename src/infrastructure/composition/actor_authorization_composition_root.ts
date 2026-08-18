@@ -2,5 +2,5 @@ import { ActorAuthorizationRepository } from '../../data/repository/organization
 import { GithubClientFactory } from './github_client_factory';
 
 export function createActorAuthorizationRepository(): ActorAuthorizationRepository {
-    return new ActorAuthorizationRepository(new GithubClientFactory().createOrganizationClient());
+    return new ActorAuthorizationRepository(new GithubClientFactory().createActorAuthorizationClient());
 }

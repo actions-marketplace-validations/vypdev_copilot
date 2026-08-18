@@ -1,8 +1,8 @@
 import type { AuthenticatedUserPort } from "../../../application/ports/organization_ports";
-import type { GithubClientPort, GithubOrganizationClient } from "../../../application/ports/github_provider_ports";
+import type { GithubClientPort, GithubAuthenticatedUserClient } from "../../../application/ports/github_provider_ports";
 
 export class AuthenticatedUserRepository implements AuthenticatedUserPort {
-    constructor(private readonly githubClient: GithubClientPort<GithubOrganizationClient>) {}
+    constructor(private readonly githubClient: GithubClientPort<GithubAuthenticatedUserClient>) {}
     getUserFromToken = async (token: string): Promise<string> => {
         const octokit = this.githubClient.getClient(token);
         const { data: user } = await octokit.rest.users.getAuthenticated();

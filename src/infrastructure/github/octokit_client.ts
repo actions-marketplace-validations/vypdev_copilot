@@ -1,12 +1,18 @@
 import { getOctokitClient } from "./octokit_client_factory";
-import type { GithubBranchClient, GithubBranchComparisonClient, GithubBranchMergeClient, GithubClientPort, GithubGraphqlClient, GithubProjectClient, GithubReleaseClient, GithubIssueAssignmentClient, GithubIssueContentClient, GithubIssueLabelProvisioningClient, GithubIssueLabelsClient, GithubIssueLifecycleClient, GithubIssueMetadataClient, GithubIssueTitleClient, GithubOrganizationClient, GithubPullRequestChangesClient, GithubPullRequestLifecycleClient, GithubPullRequestReviewClient, GithubWorkflowClient } from "../../application/ports/github_provider_ports";
+import type { GithubAuthenticatedUserClient, GithubActorAuthorizationClient, GithubOrganizationMembersClient, GithubBranchClient, GithubBranchComparisonClient, GithubBranchMergeClient, GithubClientPort, GithubGraphqlClient, GithubProjectClient, GithubReleaseClient, GithubIssueAssignmentClient, GithubIssueContentClient, GithubIssueLabelProvisioningClient, GithubIssueLabelsClient, GithubIssueLifecycleClient, GithubIssueMetadataClient, GithubIssueTitleClient, GithubPullRequestChangesClient, GithubPullRequestLifecycleClient, GithubPullRequestReviewClient, GithubWorkflowClient } from "../../application/ports/github_provider_ports";
 
 
 export class OctokitWorkflowClientAdapter implements GithubClientPort<GithubWorkflowClient> {
     getClient(token: string): GithubWorkflowClient { return getOctokitClient<GithubWorkflowClient>(token); }
 }
-export class OctokitOrganizationClientAdapter implements GithubClientPort<GithubOrganizationClient> {
-    getClient(token: string): GithubOrganizationClient { return getOctokitClient<GithubOrganizationClient>(token); }
+export class OctokitAuthenticatedUserClientAdapter implements GithubClientPort<GithubAuthenticatedUserClient> {
+    getClient(token: string): GithubAuthenticatedUserClient { return getOctokitClient<GithubAuthenticatedUserClient>(token); }
+}
+export class OctokitActorAuthorizationClientAdapter implements GithubClientPort<GithubActorAuthorizationClient> {
+    getClient(token: string): GithubActorAuthorizationClient { return getOctokitClient<GithubActorAuthorizationClient>(token); }
+}
+export class OctokitOrganizationMembersClientAdapter implements GithubClientPort<GithubOrganizationMembersClient> {
+    getClient(token: string): GithubOrganizationMembersClient { return getOctokitClient<GithubOrganizationMembersClient>(token); }
 }
 export class OctokitPullRequestChangesClientAdapter implements GithubClientPort<GithubPullRequestChangesClient> {
     getClient(token: string): GithubPullRequestChangesClient { return getOctokitClient<GithubPullRequestChangesClient>(token); }

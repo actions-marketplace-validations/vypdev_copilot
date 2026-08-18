@@ -19,7 +19,7 @@ export function createInitialSetupCompositionRoot(): InitialSetupUseCase {
     );
 
     return composeInitialSetupUseCase(
-        new AuthenticatedUserRepository(clients.createOrganizationClient()),
+        new AuthenticatedUserRepository(clients.createAuthenticatedUserClient()),
         labelProvisioning,
         {
             ensureProgressLabels: (owner, repository, token) => progressLabels.ensureProgressLabels(
