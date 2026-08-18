@@ -1,5 +1,6 @@
 import { OrganizationRepository } from "../../data/repository/organization/organization_repository";
 import { AuthenticatedUserRepository } from "../../data/repository/organization/authenticated_user_repository";
+import { OrganizationMembersRepository } from "../../data/repository/organization/organization_members_repository";
 import { IssueRepository } from "../../data/repository/issue_repository";
 import { IssueAssignmentRepository } from "../../data/repository/issue/issue_assignment_repository";
 import { IssueContentRepository } from "../../data/repository/issue/issue_content_repository";
@@ -65,16 +66,19 @@ export class RepositoryFactory {
     }
 
     createIssueUseCase(): IssueUseCase {
+        const issueMetadataRepository = this.createIssueMetadataRepository();
         return new IssueUseCase(
             this.createProjectBoardRepository(),
-            this.createOrganizationRepository(),
-            this.createIssueRepository(),
+            this.createOrganizationMembersRepository(),
+            issueMetadataRepository,
             this.createProjectBoardRepository(),
             this.createIssueRepository(),
+            this.createIssueAssignmentRepository(),
             this.createIssueRepository(),
-            this.createIssueRepository(),
-            this.createIssueRepository(),
-            this.createIssueRepository(),
+            this.createIssueTypeAssignmentRepository(
+                (owner, repository, issueNumber, token) => issueMetadataRepository.getId(owner, repository, issueNumber, token),
+            ),
+            this.createIssueContentRepository(),
             this.createIssueRepository(),
             this.createBranchRepository(),
             this.createBranchRepository(),
@@ -117,6 +121,9 @@ export class RepositoryFactory {
 
     createOrganizationRepository(): OrganizationRepository {
         return new OrganizationRepository(this.createOrganizationGithubClient());
+    }
+    createOrganizationMembersRepository(): OrganizationMembersRepository {
+        return new OrganizationMembersRepository(this.createOrganizationGithubClient());
     }
 
     createIssueRepository(): IssueRepository {
