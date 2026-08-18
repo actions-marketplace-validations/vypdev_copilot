@@ -1,5 +1,5 @@
 import { getOctokitClient } from "./octokit_client_factory";
-import type { GithubAuthenticatedUserClient, GithubActorAuthorizationClient, GithubOrganizationMembersClient, GithubOwnerTypeClient, GithubRepositoryContextClient, GithubBranchClient, GithubBranchComparisonClient, GithubBranchMergeClient, GithubClientPort, GithubGraphqlClient, GithubReleaseClient, GithubIssueAssignmentClient, GithubIssueContentClient, GithubIssueLabelProvisioningClient, GithubIssueLabelsClient, GithubIssueLifecycleClient, GithubIssueMetadataClient, GithubIssueTitleClient, GithubPullRequestChangesClient, GithubPullRequestLifecycleClient, GithubPullRequestReviewClient, GithubWorkflowClient } from "../../application/ports/github_provider_ports";
+import type { GithubAuthenticatedUserClient, GithubActorAuthorizationClient, GithubOrganizationMembersClient, GithubOwnerTypeClient, GithubRepositoryContextClient, GithubBranchClient, GithubBranchComparisonClient, GithubBranchMergeClient, GithubClientPort, GithubGraphqlTransportClient, GithubReleaseClient, GithubIssueAssignmentClient, GithubIssueContentClient, GithubIssueLabelProvisioningClient, GithubIssueLabelsClient, GithubIssueLifecycleClient, GithubIssueMetadataClient, GithubIssueTitleClient, GithubPullRequestChangesClient, GithubPullRequestLifecycleClient, GithubPullRequestReviewClient, GithubWorkflowClient } from "../../application/ports/github_provider_ports";
 
 
 export class OctokitWorkflowClientAdapter implements GithubClientPort<GithubWorkflowClient> {
@@ -17,8 +17,8 @@ export class OctokitOrganizationMembersClientAdapter implements GithubClientPort
 export class OctokitPullRequestChangesClientAdapter implements GithubClientPort<GithubPullRequestChangesClient> {
     getClient(token: string): GithubPullRequestChangesClient { return getOctokitClient<GithubPullRequestChangesClient>(token); }
 }
-export class OctokitGraphqlClientAdapter implements GithubClientPort<GithubGraphqlClient> {
-    getClient(token: string): GithubGraphqlClient { return getOctokitClient<GithubGraphqlClient>(token); }
+export class OctokitGraphqlTransportClientAdapter implements GithubClientPort<GithubGraphqlTransportClient> {
+    getClient(token: string): GithubGraphqlTransportClient { return getOctokitClient<GithubGraphqlTransportClient>(token); }
 }
 export class OctokitPullRequestReviewClientAdapter implements GithubClientPort<GithubPullRequestReviewClient> {
     getClient(token: string): GithubPullRequestReviewClient { return getOctokitClient<GithubPullRequestReviewClient>(token); }

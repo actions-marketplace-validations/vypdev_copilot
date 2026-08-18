@@ -20,7 +20,7 @@ export function createPullRequestUseCaseCompositionRoot(): PullRequestUseCase {
     const issueLifecycle = new IssueLifecycleRepository(clients.createIssueLifecycleClient());
     const issueContent = new IssueContentRepository(clients.createIssueContentClient());
     const pullRequestLifecycle = new PullRequestLifecycleRepository(clients.createPullRequestLifecycleClient());
-    const issueMetadata = new IssueMetadataRepository(clients.createIssueMetadataClient(), clients.createGraphqlClient());
+    const issueMetadata = new IssueMetadataRepository(clients.createIssueMetadataClient(), clients.createGraphqlTransportClient());
     const organizationMembers = createOrganizationMembersCompositionRoot();
 
     return composePullRequestUseCase(
@@ -30,7 +30,7 @@ export function createPullRequestUseCaseCompositionRoot(): PullRequestUseCase {
         new IssueTitleRepository(clients.createIssueTitleClient(), issueMetadata),
         new IssueClosureRepository(issueLifecycle, issueContent),
         new IssueAssignmentRepository(clients.createIssueAssignmentClient()),
-        new PullRequestReviewRepository(clients.createPullRequestReviewClient(), clients.createGraphqlClient()),
+        new PullRequestReviewRepository(clients.createPullRequestReviewClient(), clients.createGraphqlTransportClient()),
         organizationMembers,
         new IssueLabelRepository(clients.createIssueLabelsClient()),
         pullRequestLifecycle,

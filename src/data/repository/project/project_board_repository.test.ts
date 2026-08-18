@@ -1,4 +1,4 @@
-import { OctokitGraphqlClientAdapter, OctokitOwnerTypeClientAdapter, OctokitRepositoryContextClientAdapter } from "../../../infrastructure/github/octokit_client";
+import { OctokitGraphqlTransportClientAdapter, OctokitOwnerTypeClientAdapter, OctokitRepositoryContextClientAdapter } from "../../../infrastructure/github/octokit_client";
 import { ProjectBoardRepository } from "./project_board_repository";
 import { ProjectDetail } from "../../model/project_detail";
 
@@ -19,7 +19,7 @@ jest.mock("../../../utils/logger", () => ({
 }));
 
 describe("ProjectBoardRepository", () => {
-    const repository = new ProjectBoardRepository(new OctokitRepositoryContextClientAdapter(), new OctokitOwnerTypeClientAdapter(), new OctokitGraphqlClientAdapter());
+    const repository = new ProjectBoardRepository(new OctokitRepositoryContextClientAdapter(), new OctokitOwnerTypeClientAdapter(), new OctokitGraphqlTransportClientAdapter());
     const project = new ProjectDetail({
         id: "PVT_1",
         title: "Board",

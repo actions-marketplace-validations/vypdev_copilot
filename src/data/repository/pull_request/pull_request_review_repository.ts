@@ -1,11 +1,11 @@
 import { PullRequestReviewThreadRepository } from "./pull_request_review_thread_repository";
 import { logDebugInfo, logError } from "../../../utils/logger";
-import type { GithubClientPort, GithubGraphqlClient, GithubPullRequestReviewClient } from "../../../application/ports/github_provider_ports";
+import type { GithubClientPort, GithubGraphqlTransportClient, GithubPullRequestReviewClient } from "../../../application/ports/github_provider_ports";
 
 export class PullRequestReviewRepository {
     constructor(
         private readonly githubClient: GithubClientPort<GithubPullRequestReviewClient>,
-        graphqlClient: GithubClientPort<GithubGraphqlClient>,
+        graphqlClient: GithubClientPort<GithubGraphqlTransportClient>,
     ) {
         this.pullRequestReviewThreadRepository = new PullRequestReviewThreadRepository(graphqlClient);
     }

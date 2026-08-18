@@ -20,7 +20,7 @@ export function createBugbotCompositionRoot(): BugbotCompositionRoot {
     const pullRequest = new BugbotPullRequestRepository(
         new PullRequestLifecycleRepository(clients.createPullRequestLifecycleClient()),
         new PullRequestChangesRepository(clients.createPullRequestChangesClient()),
-        new PullRequestReviewRepository(clients.createPullRequestReviewClient(), clients.createGraphqlClient()),
+        new PullRequestReviewRepository(clients.createPullRequestReviewClient(), clients.createGraphqlTransportClient()),
     );
     return {
         issue,

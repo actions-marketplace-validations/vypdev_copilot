@@ -1,4 +1,4 @@
-import type { GithubClientPort, GithubGraphqlClient, GithubOwnerTypeClient, GithubRepositoryContextClient } from "../../../application/ports/github_provider_ports";
+import type { GithubClientPort, GithubGraphqlTransportClient, GithubOwnerTypeClient, GithubRepositoryContextClient } from "../../../application/ports/github_provider_ports";
 import { logDebugInfo, logError } from "../../../utils/logger";
 import { paginateCursor } from "../github/github_pagination_adapter";
 import { ProjectResult } from "../../graph/project_result";
@@ -10,7 +10,7 @@ export class ProjectBoardRepository implements ProjectBoardCommandPort, ProjectB
     constructor(
         private readonly repositoryContextClient: GithubClientPort<GithubRepositoryContextClient>,
         private readonly ownerTypeClient: GithubClientPort<GithubOwnerTypeClient>,
-        private readonly graphqlClient: GithubClientPort<GithubGraphqlClient>,
+        private readonly graphqlClient: GithubClientPort<GithubGraphqlTransportClient>,
     ) {}
 
     private readonly priorityLabel = "Priority";

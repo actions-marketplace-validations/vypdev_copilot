@@ -1,5 +1,5 @@
 import { IssueMetadataRepository } from '../issue_metadata_repository';
-import { OctokitGraphqlClientAdapter, OctokitIssueMetadataClientAdapter } from '../../../../infrastructure/github/octokit_client';
+import { OctokitGraphqlTransportClientAdapter, OctokitIssueMetadataClientAdapter } from '../../../../infrastructure/github/octokit_client';
 
 const mockGet = jest.fn();
 const mockPullGet = jest.fn();
@@ -13,7 +13,7 @@ jest.mock('@actions/github', () => ({
 }));
 
 describe('IssueMetadataRepository', () => {
-    const repository = new IssueMetadataRepository(new OctokitIssueMetadataClientAdapter(), new OctokitGraphqlClientAdapter());
+    const repository = new IssueMetadataRepository(new OctokitIssueMetadataClientAdapter(), new OctokitGraphqlTransportClientAdapter());
 
     beforeEach(() => jest.clearAllMocks());
 

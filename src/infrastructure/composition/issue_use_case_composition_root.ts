@@ -23,7 +23,7 @@ import { GithubClientFactory } from './github_client_factory';
 
 export function createIssueUseCaseCompositionRoot(): IssueUseCase {
     const clients = new GithubClientFactory();
-    const issueMetadata = new IssueMetadataRepository(clients.createIssueMetadataClient(), clients.createGraphqlClient());
+    const issueMetadata = new IssueMetadataRepository(clients.createIssueMetadataClient(), clients.createGraphqlTransportClient());
     const issueContent = new IssueContentRepository(clients.createIssueContentClient());
     const issueLifecycle = new IssueLifecycleRepository(clients.createIssueLifecycleClient());
     const issueNotification = new IssueNotificationRepository(issueLifecycle, issueContent);
@@ -31,7 +31,7 @@ export function createIssueUseCaseCompositionRoot(): IssueUseCase {
     const branchPreparation = new BranchPreparationRepository(
         clients.createBranchClient(),
         branchName,
-        new LinkedBranchRepository(clients.createGraphqlClient()),
+        new LinkedBranchRepository(clients.createGraphqlTransportClient()),
         new GitCliRepository(),
     );
 
@@ -45,7 +45,7 @@ export function createIssueUseCaseCompositionRoot(): IssueUseCase {
         new IssueClosureRepository(issueLifecycle, issueContent),
         new IssueTypeAssignmentRepository(
             (owner, repository, issueNumber, token) => issueMetadata.getId(owner, repository, issueNumber, token),
-            clients.createGraphqlClient(),
+            clients.createGraphqlTransportClient(),
         ),
         issueContent,
         issueNotification,

@@ -1,13 +1,13 @@
 import { logError } from "../../../utils/logger";
 import { IssueTypes } from '../../model/issue_types';
-import type { GithubClientPort, GithubGraphqlClient } from "../../../application/ports/github_provider_ports";
+import type { GithubClientPort, GithubGraphqlTransportClient } from "../../../application/ports/github_provider_ports";
 
 export type IssueType = { id: string; name: string };
 export type IssueTypeEnsureResult = { created: boolean; existed: boolean };
 export type IssueTypeEnsureSummary = { created: number; existing: number; errors: string[] };
 
 export class IssueTypeRepository {
-    constructor(private readonly graphqlClient: GithubClientPort<GithubGraphqlClient>) {}
+    constructor(private readonly graphqlClient: GithubClientPort<GithubGraphqlTransportClient>) {}
     listIssueTypes = async (owner: string, token: string): Promise<IssueType[]> => {
         const octokit = this.graphqlClient.getClient(token);
         const { organization } = await octokit.graphql<{ organization: { id: string; issueTypes: { nodes: IssueType[] } } | null }>(`

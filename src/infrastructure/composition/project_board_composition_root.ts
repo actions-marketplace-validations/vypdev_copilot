@@ -6,6 +6,6 @@ export function createProjectBoardCompositionRoot(): ProjectBoardRepository {
     return new ProjectBoardRepository(
         clients.createRepositoryContextClient(),
         clients.createOwnerTypeClient(),
-        clients.createGraphqlClient(),
+        clients.createGraphqlTransportClient(),
     );
 }

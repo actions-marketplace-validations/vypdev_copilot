@@ -32,6 +32,13 @@ describe('application architecture boundaries', () => {
         expect(violations).toEqual([]);
     });
 
+    it('keeps the GraphQL transport out of application production code', () => {
+        const applicationSources = productionTypeScriptFiles(applicationRoot)
+            .filter((file) => !file.endsWith('/ports/github_provider_ports.ts'))
+            .map((file) => readFileSync(file, 'utf8'))
+            .join('\n');
+        expect(applicationSources).not.toContain('GithubGraphqlTransportClient');
+    });
     it('keeps Execution independent from repository composition', () => {
         const executionSource = readFileSync(join(__dirname, '../../data/model/execution.ts'), 'utf8');
         expect(executionSource).not.toMatch(/RepositoryFactory|OrganizationRepository|Octokit(?:AuthenticatedUser|ActorAuthorization|OrganizationMembers)ClientAdapter/);

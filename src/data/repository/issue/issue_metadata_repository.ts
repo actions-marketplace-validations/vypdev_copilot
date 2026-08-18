@@ -1,11 +1,11 @@
 import { logDebugInfo, logError } from "../../../utils/logger";
 import { Milestone } from '../../model/milestone';
-import type { GithubClientPort, GithubGraphqlClient, GithubIssueMetadataClient } from "../../../application/ports/github_provider_ports";
+import type { GithubClientPort, GithubGraphqlTransportClient, GithubIssueMetadataClient } from "../../../application/ports/github_provider_ports";
 
 export class IssueMetadataRepository {
     constructor(
         private readonly metadataClient: GithubClientPort<GithubIssueMetadataClient>,
-        private readonly graphqlClient: GithubClientPort<GithubGraphqlClient>,
+        private readonly graphqlClient: GithubClientPort<GithubGraphqlTransportClient>,
     ) {}
 
     getId = async (

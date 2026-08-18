@@ -29,7 +29,7 @@ export function createInitialSetupCompositionRoot(): InitialSetupUseCase {
                 labelProvisioning.ensureLabel,
             ),
         },
-        new IssueTypeRepository(clients.createGraphqlClient()),
+        new IssueTypeRepository(clients.createGraphqlTransportClient()),
         new GitCliRepository(),
         new RepositoryReleaseRepository(clients.createReleaseClient()),
     );

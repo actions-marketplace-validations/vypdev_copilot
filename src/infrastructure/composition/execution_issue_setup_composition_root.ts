@@ -7,7 +7,7 @@ import { GithubClientFactory } from "./github_client_factory";
 export function createExecutionIssueSetupCompositionRoot(): ExecutionIssueSetupRepository {
     const clients = new GithubClientFactory();
     return new ExecutionIssueSetupRepository(
-        new IssueMetadataRepository(clients.createIssueMetadataClient(), clients.createGraphqlClient()),
+        new IssueMetadataRepository(clients.createIssueMetadataClient(), clients.createGraphqlTransportClient()),
         new IssueContentRepository(clients.createIssueContentClient()),
         new IssueLabelRepository(clients.createIssueLabelsClient()),
     );
