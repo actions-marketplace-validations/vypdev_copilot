@@ -8,6 +8,7 @@
 
 
 import { RepositoryFactory } from '../infrastructure/composition/repository_factory';
+import { createProjectBoardCompositionRoot } from '../infrastructure/composition/project_board_composition_root';
 
 import { mainRun } from './common_action';
 import { renderLocalActionResults } from './local_action_output';
@@ -19,7 +20,7 @@ export async function runLocalAction(
     additionalParams: any
 ): Promise<void> {
     const repositoryFactory = new RepositoryFactory();
-    const projectRepository = repositoryFactory.createProjectBoardRepository();
+    const projectRepository = createProjectBoardCompositionRoot();
 
     const configuration = await buildLocalActionConfiguration(additionalParams, projectRepository);
     const execution = buildLocalActionExecution(configuration, additionalParams);

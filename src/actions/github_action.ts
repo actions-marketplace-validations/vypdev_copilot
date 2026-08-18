@@ -23,6 +23,7 @@ import { logDebugInfo, logError, logInfo } from '../utils/logger';
 import type { ManagedAgentServer } from '../application/ports/agent_ports';
 import { OpenCodeServerLifecycleAdapter } from '../data/repository/opencode_server_lifecycle_adapter';
 import { RepositoryFactory } from '../infrastructure/composition/repository_factory';
+import { createProjectBoardCompositionRoot } from '../infrastructure/composition/project_board_composition_root';
 import { ConfigurationHandler } from '../manager/description/configuration_handler';
 import { loadProjectDetails } from './project_details_loader';
 import { mainRun } from './common_action';
@@ -40,7 +41,7 @@ import { buildEmoji, buildImages, buildIssue, buildIssueTypes, buildLabels, buil
 export async function runGitHubAction(): Promise<void> {
     const eventInputs = { ...github.context.payload, eventName: github.context.eventName };
     const repositoryFactory = new RepositoryFactory();
-    const projectRepository = repositoryFactory.createProjectBoardRepository();
+    const projectRepository = createProjectBoardCompositionRoot();
 
     logInfo('GitHub Action: runGitHubAction started.');
 
