@@ -23,12 +23,6 @@ jest.mock("../../../../../../data/repository/issue_repository", () => ({
     })),
 }));
 
-jest.mock("../../../../../../data/repository/pull_request_repository", () => ({
-    PullRequestRepository: jest.fn().mockImplementation(() => ({
-        createReviewWithComments: mockCreateReviewWithComments,
-        updatePullRequestReviewComment: mockUpdatePullRequestReviewComment,
-    })),
-}));
 
 const mockListPullRequestReviewComments = jest.fn();
 const mockResolvePullRequestReviewThread = jest.fn();

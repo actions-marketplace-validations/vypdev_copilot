@@ -22,15 +22,6 @@ jest.mock("../../../../../../data/repository/issue_repository", () => ({
     })),
 }));
 
-jest.mock("../../../../../../data/repository/pull_request_repository", () => ({
-    PullRequestRepository: jest.fn().mockImplementation(() => ({
-        getOpenPullRequestNumbersByHeadBranch: mockGetOpenPullRequestNumbersByHeadBranch,
-        listPullRequestReviewComments: mockListPullRequestReviewComments,
-        getPullRequestHeadSha: mockGetPullRequestHeadSha,
-        getChangedFiles: mockGetChangedFiles,
-        getFilesWithFirstDiffLine: mockGetFilesWithFirstDiffLine,
-    })),
-}));
 
 import type { BugbotContextPorts } from "../../../../../../application/ports/bugbot_ports";
 

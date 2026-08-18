@@ -11,12 +11,6 @@ const mockGetCurrentAssignees = jest.fn();
 const mockGetRandomMembers = jest.fn();
 const mockAddReviewersToPullRequest = jest.fn();
 
-jest.mock('../../../../../data/repository/pull_request_repository', () => ({
-  PullRequestRepository: jest.fn().mockImplementation(() => ({
-    getCurrentReviewers: mockGetCurrentReviewers,
-    addReviewersToPullRequest: mockAddReviewersToPullRequest,
-  })),
-}));
 jest.mock('../../../../../data/repository/issue_repository', () => ({
   IssueRepository: jest.fn().mockImplementation(() => ({
     getCurrentAssignees: mockGetCurrentAssignees,

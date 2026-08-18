@@ -37,11 +37,6 @@ jest.mock('../../../../data/repository/branch_repository', () => ({
 }));
 
 const mockGetOpenPullRequestNumbersByHeadBranch = jest.fn();
-jest.mock('../../../../data/repository/pull_request_repository', () => ({
-  PullRequestRepository: jest.fn().mockImplementation(() => ({
-    getOpenPullRequestNumbersByHeadBranch: mockGetOpenPullRequestNumbersByHeadBranch,
-  })),
-}));
 
 
 const mockAskAgent = jest.fn();

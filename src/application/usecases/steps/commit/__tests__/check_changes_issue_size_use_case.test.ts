@@ -23,11 +23,6 @@ jest.mock('../../../../../data/repository/issue_repository', () => ({
     getLabels: mockGetLabels,
   })),
 }));
-jest.mock('../../../../../data/repository/pull_request_repository', () => ({
-  PullRequestRepository: jest.fn().mockImplementation(() => ({
-    getOpenPullRequestNumbersByHeadBranch: mockGetOpenPullRequestNumbersByHeadBranch,
-  })),
-}));
 
 function baseParam(overrides: Record<string, unknown> = {}) {
   return {

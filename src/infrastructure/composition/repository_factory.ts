@@ -24,7 +24,7 @@ import { PullRequestLifecycleRepository } from "../../data/repository/pull_reque
 import { PullRequestReviewRepository } from "../../data/repository/pull_request/pull_request_review_repository";
 import { PullRequestReviewThreadRepository } from "../../data/repository/pull_request/pull_request_review_thread_repository";
 import { BugbotPullRequestRepository } from "../../data/repository/pull_request/bugbot_pull_request_repository";
-import { PullRequestRepository } from "../../data/repository/pull_request_repository";
+
 import { RepositoryReleaseRepository } from "../../data/repository/release/repository_release_repository";
 import { OctokitBranchClientAdapter, OctokitBranchMergeClientAdapter, OctokitBranchComparisonClientAdapter, OctokitGraphqlClientAdapter, OctokitIssueAssignmentClientAdapter, OctokitIssueContentClientAdapter, OctokitIssueLabelProvisioningClientAdapter, OctokitIssueLabelsClientAdapter, OctokitIssueLifecycleClientAdapter, OctokitIssueMetadataClientAdapter, OctokitIssueTitleClientAdapter, OctokitOrganizationClientAdapter, OctokitProjectClientAdapter, OctokitPullRequestChangesClientAdapter, OctokitReleaseClientAdapter, OctokitPullRequestLifecycleClientAdapter, OctokitPullRequestReviewClientAdapter, OctokitWorkflowClientAdapter } from "../github/octokit_client";
 import { IssueUseCase } from "../../application/usecases/issue_use_case";
@@ -225,9 +225,6 @@ export class RepositoryFactory {
         return new ProjectBoardRepository(new OctokitProjectClientAdapter(), new OctokitGraphqlClientAdapter());
     }
 
-    createPullRequestRepository(): PullRequestRepository {
-        return new PullRequestRepository(this.createPullRequestChangesClient(), this.createGraphqlClient(), this.createPullRequestReviewClient(), this.createPullRequestLifecycleClient());
-    }
 
     createPullRequestChangesRepository(): PullRequestChangesRepository {
         return new PullRequestChangesRepository(this.createPullRequestChangesClient());

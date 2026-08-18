@@ -24,11 +24,6 @@ jest.mock('../../../../../data/repository/organization/organization_members_repo
 const mockAskAgent = jest.fn();
 
 const mockUpdateDescription = jest.fn();
-jest.mock('../../../../../data/repository/pull_request_repository', () => ({
-  PullRequestRepository: jest.fn().mockImplementation(() => ({
-    updateDescription: mockUpdateDescription,
-  })),
-}));
 
 function baseParam(overrides: Record<string, unknown> = {}) {
   return {

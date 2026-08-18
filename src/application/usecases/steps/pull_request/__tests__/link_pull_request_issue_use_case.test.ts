@@ -10,13 +10,6 @@ jest.useFakeTimers();
 const mockIsLinked = jest.fn();
 const mockUpdateBaseBranch = jest.fn();
 const mockUpdateDescription = jest.fn();
-jest.mock('../../../../../data/repository/pull_request_repository', () => ({
-  PullRequestRepository: jest.fn().mockImplementation(() => ({
-    isLinked: mockIsLinked,
-    updateBaseBranch: mockUpdateBaseBranch,
-    updateDescription: mockUpdateDescription,
-  })),
-}));
 
 function baseParam() {
   return {
