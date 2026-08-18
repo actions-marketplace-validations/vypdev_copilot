@@ -12,6 +12,7 @@ import { DefaultAgentRepositoryFactory } from '../data/repository/agent_reposito
 import { RepositoryFactory } from '../infrastructure/composition/repository_factory';
 import { createBugbotCompositionRoot } from '../infrastructure/composition/bugbot_composition_root';
 import { createInitialSetupCompositionRoot } from '../infrastructure/composition/initial_setup_composition_root';
+import { createIssueContentCompositionRoot } from '../infrastructure/composition/issue_content_composition_root';
 import { createRepositoryReleasePort } from '../infrastructure/composition/release_composition_root';
 
 export function createDetectPotentialProblemsUseCase(_factory: RepositoryFactory): DetectPotentialProblemsUseCase {
@@ -34,7 +35,7 @@ export function createDetectBugbotFixIntentUseCase(_factory: RepositoryFactory):
 
 export function createSingleActionUseCase(factory: RepositoryFactory): SingleActionUseCase {
     const repositoryReleasePort = createRepositoryReleasePort();
-    const issueDescriptionQueryPort = factory.createIssueContentRepository();
+    const issueDescriptionQueryPort = createIssueContentCompositionRoot();
     return new SingleActionUseCase(
         new DeployedActionUseCase(
             factory.createIssueLabelRepository(),

@@ -65,17 +65,16 @@ export class RepositoryFactory {
 
 
     createIssueAssignmentRepository(): IssueAssignmentRepository { return new IssueAssignmentRepository(this.githubClients.createIssueAssignmentClient()); }
-    createIssueContentRepository(): IssueContentRepository { return new IssueContentRepository(this.githubClients.createIssueContentClient()); }
     createIssueLabelRepository(): IssueLabelRepository { return new IssueLabelRepository(this.githubClients.createIssueLabelsClient()); }
     createIssueTitleRepository(metadataRepository?: ConstructorParameters<typeof IssueTitleRepository>[1]): IssueTitleRepository {
         const metadata = metadataRepository ?? new IssueMetadataRepository(this.githubClients.createIssueMetadataClient(), this.githubClients.createGraphqlClient());
         return new IssueTitleRepository(this.githubClients.createIssueTitleClient(), metadata);
     }
     createIssueClosureRepository(): IssueClosureRepository {
-        return new IssueClosureRepository(this.createIssueLifecycleRepository(), this.createIssueContentRepository());
+        return new IssueClosureRepository(this.createIssueLifecycleRepository(), new IssueContentRepository(this.githubClients.createIssueContentClient()));
     }
     createIssueNotificationRepository(): IssueNotificationRepository {
-        return new IssueNotificationRepository(this.createIssueLifecycleRepository(), this.createIssueContentRepository());
+        return new IssueNotificationRepository(this.createIssueLifecycleRepository(), new IssueContentRepository(this.githubClients.createIssueContentClient()));
     }
     createIssueLifecycleRepository(): IssueLifecycleRepository { return new IssueLifecycleRepository(this.githubClients.createIssueLifecycleClient()); }
     createIssueTypeAssignmentRepository(

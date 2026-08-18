@@ -5,7 +5,6 @@ describe("RepositoryFactory", () => {
         const factory = new RepositoryFactory();
         expect(factory.createActorAuthorizationRepository()).toBeDefined();
         expect(factory.createIssueAssignmentRepository()).toBeDefined();
-        expect(factory.createIssueContentRepository()).toBeDefined();
         expect(factory.createIssueLabelRepository()).toBeDefined();
         expect(factory.createIssueLifecycleRepository()).toBeDefined();
         expect(factory.createPullRequestChangesRepository()).toBeDefined();

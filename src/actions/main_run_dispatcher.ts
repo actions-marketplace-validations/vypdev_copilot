@@ -2,6 +2,7 @@ import { createCheckProgressCompositionRoot } from '../infrastructure/compositio
 import { createBugbotCompositionRoot } from '../infrastructure/composition/bugbot_composition_root';
 import { createPullRequestUseCaseCompositionRoot } from '../infrastructure/composition/pull_request_use_case_composition_root';
 import { createIssueUseCaseCompositionRoot } from '../infrastructure/composition/issue_use_case_composition_root';
+import { createIssueContentCompositionRoot } from '../infrastructure/composition/issue_content_composition_root';
 import * as core from '@actions/core';
 import { Execution } from '../data/model/execution';
 import { Result } from '../data/model/result';
@@ -49,7 +50,7 @@ export async function dispatchMainRunRoute(
                             new DefaultAgentRepositoryFactory().createFindings(),
                         ),
                         createDetectBugbotFixIntentUseCase(commentFactory),
-                        new ThinkUseCase(commentFactory.createIssueContentRepository(), commentFactory.createIssueNotificationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
+                        new ThinkUseCase(createIssueContentCompositionRoot(), commentFactory.createIssueNotificationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
                         new BugbotAutofixUseCase(new DefaultAgentRepositoryFactory().createFixer(), bugbot.context, new GitCommitAdapter()),
                         new DoUserRequestUseCase(new DefaultAgentRepositoryFactory().createFixer()),
                         bugbot.issue,
@@ -77,7 +78,7 @@ export async function dispatchMainRunRoute(
                             new DefaultAgentRepositoryFactory().createFindings(),
                         ),
                         createDetectBugbotFixIntentUseCase(reviewCommentFactory),
-                        new ThinkUseCase(reviewCommentFactory.createIssueContentRepository(), reviewCommentFactory.createIssueNotificationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
+                        new ThinkUseCase(createIssueContentCompositionRoot(), reviewCommentFactory.createIssueNotificationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
                         new BugbotAutofixUseCase(new DefaultAgentRepositoryFactory().createFixer(), bugbot.context, new GitCommitAdapter()),
                         new DoUserRequestUseCase(new DefaultAgentRepositoryFactory().createFixer()),
                         bugbot.issue,

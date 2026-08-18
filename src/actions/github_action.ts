@@ -23,6 +23,8 @@ import { logDebugInfo, logError, logInfo } from '../utils/logger';
 import type { ManagedAgentServer } from '../application/ports/agent_ports';
 import { OpenCodeServerLifecycleAdapter } from '../data/repository/opencode_server_lifecycle_adapter';
 import { RepositoryFactory } from '../infrastructure/composition/repository_factory';
+import { createIssueContentCompositionRoot } from '../infrastructure/composition/issue_content_composition_root';
+import type { IssueContentRepository } from '../data/repository/issue/issue_content_repository';
 import { createProjectBoardCompositionRoot } from '../infrastructure/composition/project_board_composition_root';
 import { ConfigurationHandler } from '../manager/description/configuration_handler';
 import { loadProjectDetails } from './project_details_loader';
@@ -362,7 +364,7 @@ export async function runGitHubAction(): Promise<void> {
         execution,
         results,
         repositoryFactory.createIssueNotificationRepository(),
-        repositoryFactory.createIssueContentRepository(),
+        createIssueContentCompositionRoot(),
     );
     } finally {
         if (managedOpencodeServer) {
@@ -377,7 +379,7 @@ async function finishWithResults(
     execution: Execution,
     results: Result[],
     issueNotificationPort: ReturnType<RepositoryFactory['createIssueNotificationRepository']>,
-    issueDescriptionPort: ReturnType<RepositoryFactory['createIssueContentRepository']>,
+    issueDescriptionPort: IssueContentRepository,
 ): Promise<void> {
     const stepCount = results.reduce((acc, r) => acc + (r.steps?.length ?? 0), 0);
     const errorCount = results.reduce((acc, r) => acc + (r.errors?.length ?? 0), 0);
