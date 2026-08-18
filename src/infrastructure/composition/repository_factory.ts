@@ -10,9 +10,7 @@ import { IssueMetadataRepository } from "../../data/repository/issue/issue_metad
 import { IssueTitleRepository } from "../../data/repository/issue/issue_title_repository";
 import { IssueClosureRepository } from "../../data/repository/issue/issue_closure_repository";
 import { IssueNotificationRepository } from "../../data/repository/issue/issue_notification_repository";
-import { PullRequestLifecycleRepository } from "../../data/repository/pull_request/pull_request_lifecycle_repository";
 
-import { PullRequestReviewRepository } from "../../data/repository/pull_request/pull_request_review_repository";
 import { MergeRepository } from "../../data/repository/merge_repository";
 import { BranchCompareRepository } from "../../data/repository/branch_compare_repository";
 import { GitCliRepository } from "../../data/repository/git_cli_repository";
@@ -30,12 +28,6 @@ export class RepositoryFactory {
     }
     createGraphqlClient(): ReturnType<GithubClientFactory['createGraphqlClient']> {
         return this.githubClients.createGraphqlClient();
-    }
-    createPullRequestReviewClient(): ReturnType<GithubClientFactory['createPullRequestReviewClient']> {
-        return this.githubClients.createPullRequestReviewClient();
-    }
-    createPullRequestLifecycleClient(): ReturnType<GithubClientFactory['createPullRequestLifecycleClient']> {
-        return this.githubClients.createPullRequestLifecycleClient();
     }
     createGitCliRepository(): GitCliRepository { return new GitCliRepository(); }
     createBranchLifecycleRepository(): BranchLifecycleRepository {
@@ -78,14 +70,6 @@ export class RepositoryFactory {
         return new IssueTypeAssignmentRepository(getIssueId, this.githubClients.createGraphqlClient());
     }
 
-
-    createPullRequestLifecycleRepository(): PullRequestLifecycleRepository {
-        return new PullRequestLifecycleRepository(this.createPullRequestLifecycleClient());
-    }
-
-    createPullRequestReviewRepository(): PullRequestReviewRepository {
-        return new PullRequestReviewRepository(this.createPullRequestReviewClient(), this.createGraphqlClient());
-    }
 
 
     createMergeRepository(): MergeRepository {
