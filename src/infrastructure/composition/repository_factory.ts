@@ -28,6 +28,7 @@ import { InitialSetupUseCase } from "../../application/usecases/actions/initial_
 import { MergeRepository } from "../../data/repository/merge_repository";
 import { BranchCompareRepository } from "../../data/repository/branch_compare_repository";
 import { BranchRepository } from "../../data/repository/branch_repository";
+import { BranchLifecycleRepository } from "../../data/repository/branch_lifecycle_repository";
 import { CheckProgressUseCase } from "../../application/usecases/actions/check_progress_use_case";
 import { RecommendStepsUseCase } from "../../application/usecases/actions/recommend_steps_use_case";
 import { AnswerIssueHelpUseCase } from "../../application/usecases/steps/issue/answer_issue_help_use_case";
@@ -54,6 +55,9 @@ export class RepositoryFactory {
     }
     createBranchRepository(): BranchRepository {
         return new BranchRepository(this.createWorkflowRepository(), new OctokitBranchClientAdapter(), new OctokitGraphqlClientAdapter(), new BranchCompareRepository(new OctokitBranchComparisonClientAdapter()), new MergeRepository(new OctokitBranchMergeClientAdapter()));
+    }
+    createBranchLifecycleRepository(): BranchLifecycleRepository {
+        return new BranchLifecycleRepository(new OctokitBranchClientAdapter());
     }
     createWorkflowRepository(): WorkflowRepository {
         return new WorkflowRepository(new OctokitWorkflowClientAdapter());
@@ -83,10 +87,10 @@ export class RepositoryFactory {
             ),
             this.createIssueContentRepository(),
             this.createIssueNotificationRepository(),
+            this.createBranchLifecycleRepository(),
             this.createBranchRepository(),
             this.createBranchRepository(),
-            this.createBranchRepository(),
-            this.createBranchRepository(),
+            this.createWorkflowRepository(),
             new RecommendStepsUseCase(this.createIssueContentRepository(), new DefaultAgentRepositoryFactory().createFindings()),
             new AnswerIssueHelpUseCase(this.createIssueNotificationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
         );
