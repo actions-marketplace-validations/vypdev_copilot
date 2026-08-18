@@ -1,4 +1,4 @@
-import { getOctokitClient } from "./octokit_client_factory";
+import { getOctokitClient } from "./octokit_client_resolver";
 import type { GithubAuthenticatedUserClient, GithubActorAuthorizationClient, GithubOrganizationMembersClient, GithubOwnerTypeClient, GithubRepositoryContextClient } from "../../application/ports/github_identity_ports";
 import type { GithubBranchClient, GithubBranchComparisonClient, GithubBranchMergeClient } from "../../application/ports/github_branch_ports";
 import type { GithubClientPort } from "./ports/github_client_provider_port";
