@@ -33,8 +33,8 @@ import { waitForPreviousRuns } from '../utils/queue_utils';
 import { resolveMainRunRoute } from './main_run_route';
 
 function createDetectPotentialProblemsUseCase(factory: RepositoryFactory): DetectPotentialProblemsUseCase {
-    const issueRepository = factory.createIssueRepository();
-    const pullRequestRepository = factory.createPullRequestRepository();
+    const issueRepository = factory.createBugbotIssueRepository();
+    const pullRequestRepository = factory.createBugbotPullRequestRepository();
     const contextPorts: BugbotContextPorts = { issue: issueRepository, pullRequest: pullRequestRepository };
     const writePorts: BugbotWritePorts = { issueComments: issueRepository, pullRequestComments: pullRequestRepository };
     return new DetectPotentialProblemsUseCase(
@@ -46,8 +46,8 @@ function createDetectPotentialProblemsUseCase(factory: RepositoryFactory): Detec
 
 function createBugbotContextPorts(factory: RepositoryFactory) {
     return {
-        issue: factory.createIssueRepository(),
-        pullRequest: factory.createPullRequestRepository(),
+        issue: factory.createBugbotIssueRepository(),
+        pullRequest: factory.createBugbotPullRequestRepository(),
     };
 }
 
@@ -62,17 +62,17 @@ function createDetectBugbotFixIntentUseCase(factory: RepositoryFactory): DetectB
 
 function createSingleActionUseCase(factory: RepositoryFactory): SingleActionUseCase {
     const repositoryReleasePort = factory.createRepositoryReleaseRepository();
-    const issueDescriptionQueryPort = factory.createIssueRepository();
+    const issueDescriptionQueryPort = factory.createIssueContentRepository();
     return new SingleActionUseCase(
         new DeployedActionUseCase(
-            factory.createIssueRepository(),
-            factory.createIssueRepository(),
-            factory.createBranchRepository(),
+            factory.createIssueLabelRepository(),
+            factory.createIssueClosureRepository(),
+            factory.createMergeRepository(),
         ),
         new PublishGithubActionUseCase(repositoryReleasePort),
         new CreateReleaseUseCase(repositoryReleasePort),
         new CreateTagUseCase(repositoryReleasePort),
-        new ThinkUseCase(issueDescriptionQueryPort, factory.createIssueRepository(), new DefaultAgentRepositoryFactory().createFindings()),
+        new ThinkUseCase(issueDescriptionQueryPort, factory.createIssueNotificationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
         factory.createInitialSetupUseCase(),
         factory.createCheckProgressUseCase(),
         createDetectPotentialProblemsUseCase(factory),
@@ -168,19 +168,19 @@ export async function mainRun(
                 const commentFactory = new RepositoryFactory();
                 results.push(...await new IssueCommentUseCase(
                     new CheckIssueCommentLanguageUseCase(
-                        commentFactory.createIssueRepository(),
+                        commentFactory.createBugbotIssueRepository(),
                         new DefaultAgentRepositoryFactory().createFindings(),
                     ),
                     createDetectBugbotFixIntentUseCase(commentFactory),
-                    new ThinkUseCase(commentFactory.createIssueRepository(), commentFactory.createIssueRepository(), new DefaultAgentRepositoryFactory().createFindings()),
+                    new ThinkUseCase(commentFactory.createIssueContentRepository(), commentFactory.createIssueNotificationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
                     new BugbotAutofixUseCase(new DefaultAgentRepositoryFactory().createFixer(), createBugbotContextPorts(commentFactory), new GitCommitAdapter()),
                     new DoUserRequestUseCase(new DefaultAgentRepositoryFactory().createFixer()),
-                    commentFactory.createIssueRepository(),
+                    commentFactory.createBugbotIssueRepository(),
                     commentFactory.createActorAuthorizationRepository(),
                     commentFactory.createAuthenticatedUserRepository(),
                     {
-                        issueComments: commentFactory.createIssueRepository(),
-                        pullRequestComments: commentFactory.createPullRequestRepository(),
+                        issueComments: commentFactory.createBugbotIssueRepository(),
+                        pullRequestComments: commentFactory.createBugbotPullRequestRepository(),
                     },
                     new GitCommitAdapter(),
                 ).invoke(execution));
@@ -195,19 +195,19 @@ export async function mainRun(
                 const reviewCommentFactory = new RepositoryFactory();
                 results.push(...await new PullRequestReviewCommentUseCase(
                     new CheckPullRequestCommentLanguageUseCase(
-                        reviewCommentFactory.createIssueRepository(),
+                        reviewCommentFactory.createBugbotIssueRepository(),
                         new DefaultAgentRepositoryFactory().createFindings(),
                     ),
                     createDetectBugbotFixIntentUseCase(reviewCommentFactory),
-                    new ThinkUseCase(reviewCommentFactory.createIssueRepository(), reviewCommentFactory.createIssueRepository(), new DefaultAgentRepositoryFactory().createFindings()),
+                    new ThinkUseCase(reviewCommentFactory.createIssueContentRepository(), reviewCommentFactory.createIssueNotificationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
                     new BugbotAutofixUseCase(new DefaultAgentRepositoryFactory().createFixer(), createBugbotContextPorts(reviewCommentFactory), new GitCommitAdapter()),
                     new DoUserRequestUseCase(new DefaultAgentRepositoryFactory().createFixer()),
-                    reviewCommentFactory.createIssueRepository(),
+                    reviewCommentFactory.createBugbotIssueRepository(),
                     reviewCommentFactory.createActorAuthorizationRepository(),
                     reviewCommentFactory.createAuthenticatedUserRepository(),
                     {
-                        issueComments: reviewCommentFactory.createIssueRepository(),
-                        pullRequestComments: reviewCommentFactory.createPullRequestRepository(),
+                        issueComments: reviewCommentFactory.createBugbotIssueRepository(),
+                        pullRequestComments: reviewCommentFactory.createBugbotPullRequestRepository(),
                     },
                     new GitCommitAdapter(),
                 ).invoke(execution));
