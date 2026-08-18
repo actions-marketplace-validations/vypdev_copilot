@@ -26,7 +26,6 @@ import { PullRequestReviewThreadRepository } from "../../data/repository/pull_re
 import { BugbotPullRequestRepository } from "../../data/repository/pull_request/bugbot_pull_request_repository";
 
 import { RepositoryReleaseRepository } from "../../data/repository/release/repository_release_repository";
-import { IssueUseCase } from "../../application/usecases/issue_use_case";
 import { PullRequestUseCase } from "../../application/usecases/pull_request_use_case";
 import { InitialSetupUseCase } from "../../application/usecases/actions/initial_setup_use_case";
 import { MergeRepository } from "../../data/repository/merge_repository";
@@ -44,6 +43,7 @@ import { DefaultAgentRepositoryFactory } from "../../data/repository/agent_repos
 import { WorkflowRepository } from "../../data/repository/workflow_repository";
 import type { IssueProgressLabelProvisioningPort } from "../../application/ports/issue_ports";
 import { GithubClientFactory } from "./github_client_factory";
+import { composeIssueUseCase } from "./issue_use_case_composition";
 
 export class RepositoryFactory {
     private readonly githubClients = new GithubClientFactory();
@@ -89,9 +89,9 @@ export class RepositoryFactory {
         );
     }
 
-    createIssueUseCase(): IssueUseCase {
+    createIssueUseCase(): ReturnType<typeof composeIssueUseCase> {
         const issueMetadataRepository = this.createIssueMetadataRepository();
-        return new IssueUseCase(
+        return composeIssueUseCase(
             this.createProjectBoardRepository(),
             this.createOrganizationMembersRepository(),
             issueMetadataRepository,
