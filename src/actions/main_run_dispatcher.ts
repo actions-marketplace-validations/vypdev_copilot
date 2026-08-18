@@ -8,6 +8,7 @@ import { BugbotAutofixUseCase } from '../application/usecases/steps/commit/bugbo
 import { DoUserRequestUseCase } from '../application/usecases/steps/commit/user_request_use_case';
 import { ProjectBoardCommandPort } from '../application/ports/project_board_ports';
 import { RepositoryFactory } from '../infrastructure/composition/repository_factory';
+import { createAuthenticatedUserCompositionRoot } from '../infrastructure/composition/authenticated_user_composition_root';
 import { GitCommitAdapter } from '../infrastructure/git_commit_adapter';
 import type { MainRunRoute } from './main_run_route';
 import { createDetectPotentialProblemsUseCase, createBugbotContextPorts, createDetectBugbotFixIntentUseCase, createSingleActionUseCase } from './main_run_composition';
@@ -48,7 +49,7 @@ export async function dispatchMainRunRoute(
                         new DoUserRequestUseCase(new DefaultAgentRepositoryFactory().createFixer()),
                         commentFactory.createBugbotIssueRepository(),
                         commentFactory.createActorAuthorizationRepository(),
-                        commentFactory.createAuthenticatedUserRepository(),
+                        createAuthenticatedUserCompositionRoot(),
                         {
                             issueComments: commentFactory.createBugbotIssueRepository(),
                             pullRequestComments: commentFactory.createBugbotPullRequestRepository(),
@@ -75,7 +76,7 @@ export async function dispatchMainRunRoute(
                         new DoUserRequestUseCase(new DefaultAgentRepositoryFactory().createFixer()),
                         reviewCommentFactory.createBugbotIssueRepository(),
                         reviewCommentFactory.createActorAuthorizationRepository(),
-                        reviewCommentFactory.createAuthenticatedUserRepository(),
+                        createAuthenticatedUserCompositionRoot(),
                         {
                             issueComments: reviewCommentFactory.createBugbotIssueRepository(),
                             pullRequestComments: reviewCommentFactory.createBugbotPullRequestRepository(),

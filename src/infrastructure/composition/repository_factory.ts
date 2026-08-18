@@ -1,6 +1,5 @@
 
 import { ActorAuthorizationRepository } from "../../data/repository/organization/actor_authorization_repository";
-import { AuthenticatedUserRepository } from "../../data/repository/organization/authenticated_user_repository";
 import { OrganizationMembersRepository } from "../../data/repository/organization/organization_members_repository";
 
 import { IssueAssignmentRepository } from "../../data/repository/issue/issue_assignment_repository";
@@ -125,9 +124,6 @@ export class RepositoryFactory {
             createProjectBoardCompositionRoot(),
             new UpdatePullRequestDescriptionUseCase(this.createPullRequestLifecycleRepository(), this.createIssueContentRepository(), this.createOrganizationMembersRepository(), new DefaultAgentRepositoryFactory().createFindings()),
         );
-    }
-    createAuthenticatedUserRepository(): AuthenticatedUserRepository {
-        return new AuthenticatedUserRepository(this.createOrganizationGithubClient());
     }
     createActorAuthorizationRepository(): ActorAuthorizationRepository {
         return new ActorAuthorizationRepository(this.createOrganizationGithubClient());
