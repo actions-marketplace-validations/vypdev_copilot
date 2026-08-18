@@ -12,7 +12,7 @@ jest.mock('boxen', () => jest.fn((text: string) => text));
 
 import { mainRun as productionMainRun } from '../common_action';
 import type { ProjectBoardCommandPort } from '../../application/ports/project_board_ports';
-import type { BranchRepository } from '../../data/repository/branch_repository';
+import type { LatestTagQueryPort } from '../../application/ports/branch_ports';
 import type { Execution } from '../../data/model/execution';
 import { Result } from '../../data/model/result';
 
@@ -99,7 +99,7 @@ function mockExecution(overrides: Record<string, unknown> = {}): Execution {
 const runMain = (execution: Execution) => productionMainRun(
   execution,
   {} as ProjectBoardCommandPort,
-  {} as BranchRepository,
+  {} as LatestTagQueryPort,
 );
 
 describe('mainRun', () => {

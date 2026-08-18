@@ -333,7 +333,7 @@ export async function runLocalAction(
         inputs: additionalParams,
     });
 
-    const results = await mainRun(execution, projectRepository, repositoryFactory.createBranchRepository());
+    const results = await mainRun(execution, projectRepository, repositoryFactory.createGitCliRepository());
 
     let content = ''
     const stepsContent = results

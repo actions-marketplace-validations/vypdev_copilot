@@ -32,12 +32,11 @@ import { PullRequestUseCase } from "../../application/usecases/pull_request_use_
 import { InitialSetupUseCase } from "../../application/usecases/actions/initial_setup_use_case";
 import { MergeRepository } from "../../data/repository/merge_repository";
 import { BranchCompareRepository } from "../../data/repository/branch_compare_repository";
-import { BranchRepository } from "../../data/repository/branch_repository";
+import { GitCliRepository } from "../../data/repository/git_cli_repository";
 import { BranchLifecycleRepository } from "../../data/repository/branch_lifecycle_repository";
 import { BranchNameRepository } from "../../data/repository/branch_name_repository";
 import { BranchPreparationRepository } from "../../data/repository/branch/branch_preparation_repository";
 import { LinkedBranchRepository } from "../../data/repository/branch/linked_branch_repository";
-import { GitCliRepository } from "../../data/repository/git_cli_repository";
 import { CheckProgressUseCase } from "../../application/usecases/actions/check_progress_use_case";
 import { RecommendStepsUseCase } from "../../application/usecases/actions/recommend_steps_use_case";
 import { AnswerIssueHelpUseCase } from "../../application/usecases/steps/issue/answer_issue_help_use_case";
@@ -62,9 +61,7 @@ export class RepositoryFactory {
     createPullRequestLifecycleClient(): OctokitPullRequestLifecycleClientAdapter {
         return new OctokitPullRequestLifecycleClientAdapter();
     }
-    createBranchRepository(): BranchRepository {
-        return new BranchRepository(this.createWorkflowRepository(), new OctokitBranchClientAdapter(), new OctokitGraphqlClientAdapter(), new BranchCompareRepository(new OctokitBranchComparisonClientAdapter()), new MergeRepository(new OctokitBranchMergeClientAdapter()));
-    }
+    createGitCliRepository(): GitCliRepository { return new GitCliRepository(); }
     createBranchLifecycleRepository(): BranchLifecycleRepository {
         return new BranchLifecycleRepository(new OctokitBranchClientAdapter());
     }
@@ -136,7 +133,7 @@ export class RepositoryFactory {
             this.createIssueLabelProvisioningRepository(),
             this.createIssueProgressLabelProvisioningPort(),
             this.createIssueTypeRepository(),
-            this.createBranchRepository(),
+            this.createGitCliRepository(),
             this.createRepositoryReleaseRepository(),
         );
     }

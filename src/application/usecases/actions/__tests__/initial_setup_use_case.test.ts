@@ -38,11 +38,6 @@ jest.mock('../../../../data/repository/organization/authenticated_user_repositor
 }));
 
 const mockGetLatestTag = jest.fn();
-jest.mock('../../../../data/repository/branch_repository', () => ({
-  BranchRepository: jest.fn().mockImplementation(() => ({
-    getLatestTag: mockGetLatestTag,
-  })),
-}));
 
 const mockEnsureLabels = jest.fn();
 const mockEnsureProgressLabels = jest.fn();

@@ -21,11 +21,6 @@ const mockGetLabels = jest.fn();
 const mockSetLabels = jest.fn();
 
 const mockGetListOfBranches = jest.fn();
-jest.mock('../../../../data/repository/branch_repository', () => ({
-  BranchRepository: jest.fn().mockImplementation(() => ({
-    getListOfBranches: mockGetListOfBranches,
-  })),
-}));
 
 const mockGetOpenPullRequestNumbersByHeadBranch = jest.fn();
 

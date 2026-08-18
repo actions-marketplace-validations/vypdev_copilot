@@ -355,7 +355,7 @@ export async function runGitHubAction(): Promise<void> {
 
     logDebugInfo(`Execution built. Event will be resolved in mainRun. Single action: ${execution.singleAction.currentSingleAction ?? 'none'}, AI PR description: ${execution.ai.getAiPullRequestDescription()}, bugbot min severity: ${execution.ai.getBugbotMinSeverity()}.`);
 
-    const results: Result[] = await mainRun(execution, projectRepository, repositoryFactory.createBranchRepository());
+    const results: Result[] = await mainRun(execution, projectRepository, repositoryFactory.createGitCliRepository());
 
     await finishWithResults(
         execution,

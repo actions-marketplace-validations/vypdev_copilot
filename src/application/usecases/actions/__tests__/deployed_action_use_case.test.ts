@@ -22,11 +22,6 @@ const mockSetLabels = jest.fn();
 const mockCloseIssue = jest.fn();
 
 const mockMergeBranch = jest.fn();
-jest.mock('../../../../data/repository/branch_repository', () => ({
-  BranchRepository: jest.fn().mockImplementation(() => ({
-    mergeBranch: mockMergeBranch,
-  })),
-}));
 
 function baseParam(overrides: Record<string, unknown> = {}): Execution {
   return {

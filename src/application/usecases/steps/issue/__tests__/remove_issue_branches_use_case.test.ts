@@ -8,12 +8,6 @@ jest.mock('../../../../../utils/logger', () => ({
 
 const mockGetListOfBranches = jest.fn();
 const mockRemoveBranch = jest.fn();
-jest.mock('../../../../../data/repository/branch_repository', () => ({
-  BranchRepository: jest.fn().mockImplementation(() => ({
-    getListOfBranches: mockGetListOfBranches,
-    removeBranch: mockRemoveBranch,
-  })),
-}));
 
 function baseParam(overrides: Record<string, unknown> = {}) {
   return {

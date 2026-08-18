@@ -38,11 +38,6 @@ jest.mock('../../../manager/description/configuration_handler', () => ({
     get: mockConfigGet,
   })),
 }));
-jest.mock('../../repository/branch_repository', () => ({
-  BranchRepository: jest.fn().mockImplementation(() => ({
-    getLatestTag: mockGetLatestTag,
-  })),
-}));
 jest.mock('../../../application/usecases/steps/common/get_release_version_use_case', () => ({
   GetReleaseVersionUseCase: jest.fn().mockImplementation(() => ({
     invoke: mockGetReleaseVersionInvoke,
@@ -63,7 +58,7 @@ import { ACTIONS, INPUT_KEYS } from '../../../utils/constants';
 import { Ai } from '../ai';
 import { Branches } from '../branches';
 import { Emoji } from '../emoji';
-import type { BranchRepository } from '../../repository/branch_repository';
+import type { LatestTagQueryPort } from '../../../application/ports/branch_ports';
 import { Execution } from '../execution';
 import { Hotfix } from '../hotfix';
 import { Images } from '../images';
@@ -239,7 +234,7 @@ function buildExecution(inputs?: Record<string, unknown>, overrides?: Partial<{
   );
 }
 
-const branchRepository = { getLatestTag: mockGetLatestTag } as unknown as BranchRepository;
+const branchRepository = { getLatestTag: mockGetLatestTag } as unknown as LatestTagQueryPort;
 
 const setupIssuePort = {
   getLabels: mockGetLabels,
