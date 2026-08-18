@@ -19,13 +19,8 @@ jest.mock('../../../../../data/repository/issue_repository', () => ({
   })),
 }));
 
-const mockAskAgent = jest.fn();
-jest.mock('../../../../../data/repository/ai_repository', () => ({
-  AiRepository: jest.fn().mockImplementation(() => ({ query: (request: { configuration: unknown; agentId: string; prompt: string; options?: unknown }) => mockAskAgent(request.configuration, request.agentId, request.prompt, request.options) })),
-  OPENCODE_AGENT_PLAN: 'plan',
-  THINK_RESPONSE_SCHEMA: {},
-}));
 
+const mockAskAgent = jest.fn();
 function baseParam(overrides: Record<string, unknown> = {}): Execution {
   return {
     owner: 'owner',

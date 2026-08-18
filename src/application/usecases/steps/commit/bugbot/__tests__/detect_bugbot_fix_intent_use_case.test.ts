@@ -20,11 +20,6 @@ jest.mock("../load_bugbot_context_use_case", () => ({
     loadBugbotContext: (...args: unknown[]) => mockLoadBugbotContext(...args),
 }));
 
-jest.mock("../../../../../../data/repository/ai_repository", () => ({
-    AiRepository: jest.fn().mockImplementation(() => ({ query: (request: { configuration: unknown; agentId: string; prompt: string; options?: unknown }) => mockAskAgent(request.configuration, request.agentId, request.prompt, request.options) })),
-    OPENCODE_AGENT_PLAN: "plan",
-}));
-
 jest.mock("../../../../../../data/repository/pull_request_repository", () => ({
     PullRequestRepository: jest.fn().mockImplementation(() => ({
         getHeadBranchForIssue: mockGetHeadBranchForIssue,

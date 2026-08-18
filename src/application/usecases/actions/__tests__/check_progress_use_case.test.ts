@@ -1,7 +1,7 @@
 /**
  * Integration-style tests for CheckProgressUseCase with the OpenCode-based flow.
  * Covers edge cases: missing AI config, no issue/branch/description, AI returns undefined/invalid
- * progress, progress 0% (single call; HTTP retries are in AiRepository), success path with label updates.
+ * progress, progress 0% (single call; HTTP retries are in the findings adapter), success path with label updates.
  */
 
 import { CheckProgressUseCase } from '../check_progress_use_case';
@@ -43,14 +43,8 @@ jest.mock('../../../../data/repository/pull_request_repository', () => ({
   })),
 }));
 
-const mockAskAgent = jest.fn();
-jest.mock('../../../../data/repository/ai_repository', () => ({
-  AiRepository: jest.fn().mockImplementation(() => ({
-    query: (request: { configuration: unknown; agentId: string; prompt: string; options?: unknown }) => mockAskAgent(request.configuration, request.agentId, request.prompt, request.options),
-  })),
-  OPENCODE_AGENT_PLAN: 'plan',
-}));
 
+const mockAskAgent = jest.fn();
 function baseParam(overrides: Record<string, unknown> = {}): Execution {
   const branches = {
     main: 'main',
@@ -195,7 +189,7 @@ describe('CheckProgressUseCase', () => {
     expect(mockAskAgent).toHaveBeenCalledTimes(1);
   });
 
-  it('returns error when progress is 0% (single call; HTTP retries are in AiRepository)', async () => {
+  it('returns error when progress is 0% (single call; HTTP retries are in the findings adapter)', async () => {
     mockGetDescription.mockResolvedValue('Issue body');
     mockAskAgent.mockResolvedValue({ progress: 0, summary: 'No progress yet' });
     mockGetOpenPullRequestNumbersByHeadBranch.mockResolvedValue([]);

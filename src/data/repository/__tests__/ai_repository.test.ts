@@ -1,14 +1,18 @@
 /**
- * Integration-style tests for AiRepository with mocked fetch.
+ * Integration-style tests for the findings/fixer capability adapters with mocked fetch.
  * Covers edge cases for the OpenCode-based architecture: missing config,
  * session/message failures, empty/invalid responses, JSON parsing, reasoning, getSessionDiff,
  * and retry behavior (OPENCODE_MAX_RETRIES).
  */
 
 import { OPENCODE_MAX_RETRIES, OPENCODE_RETRY_DELAY_MS } from '../../../utils/constants';
-import { AiRepository } from '../ai_repository';
+import { FindingsAgentAdapter } from '../ai/findings_agent_adapter';
+import { FixerAgentAdapter } from '../ai/fixer_agent_adapter';
+import type { AgentCapabilityInfrastructure } from '../ai/agent_capability_adapter';
 import { getSessionDiff } from '../opencode_session_diff_client';
 import { Ai } from '../../model/ai';
+import { OpenCodeHttpClient } from '../opencode_http_client';
+import { OPENCODE_REQUEST_TIMEOUT_MS } from '../../../utils/constants';
 
 jest.mock('../../../utils/logger', () => ({
   logDebugInfo: jest.fn(),
@@ -22,7 +26,7 @@ function createAi(serverUrl = 'http://localhost:4096', model = 'opencode/kimi-k2
   return new Ai(serverUrl, model, false, false, [], false, 'low', 20);
 }
 
-function query(repository: AiRepository, ai: Ai, agentId: string, prompt: string, options: Record<string, unknown> = {}) {
+function query(repository: FindingsAgentAdapter, ai: Ai, agentId: string, prompt: string, options: Record<string, unknown> = {}) {
   return repository.query({
     configuration: ai.getAgentConfiguration('findings'),
     agentId,
@@ -31,21 +35,27 @@ function query(repository: AiRepository, ai: Ai, agentId: string, prompt: string
   });
 }
 
-function fix(repository: AiRepository, ai: Ai, prompt: string) {
+function fix(repository: FixerAgentAdapter, ai: Ai, prompt: string) {
   return repository.fix({
     configuration: ai.getAgentConfiguration('fixer'),
     prompt,
   });
 }
 
-describe('AiRepository', () => {
-  let repo: AiRepository;
+describe('Agent capability adapters', () => {
+  let repo: FindingsAgentAdapter;
+  let fixer: FixerAgentAdapter;
 
 
 
   beforeEach(() => {
     jest.useFakeTimers();
-    repo = new AiRepository();
+    const infrastructure: AgentCapabilityInfrastructure = {
+      cli: { execute: jest.fn() },
+      openCode: new OpenCodeHttpClient({ requestTimeoutMs: OPENCODE_REQUEST_TIMEOUT_MS }),
+    };
+    repo = new FindingsAgentAdapter(infrastructure);
+    fixer = new FixerAgentAdapter(infrastructure);
     mockFetch.mockReset();
     (global as unknown as { fetch: typeof fetch }).fetch = mockFetch;
   });
@@ -57,7 +67,7 @@ describe('AiRepository', () => {
       findings: { provider: 'cursor', transport: 'cli', model: 'cursor', command: 'cursor-agent' },
       fixer: { provider: 'cursor', transport: 'cli', model: 'cursor', command: 'cursor-agent' },
     });
-    const injectedRepo = new AiRepository(cli, http);
+    const injectedRepo = new FindingsAgentAdapter({ cli, openCode: http });
 
     const result = await query(injectedRepo, ai, 'findings', 'inspect', { expectJson: true, schema: { type: 'object' } });
 
@@ -465,7 +475,7 @@ describe('AiRepository', () => {
   describe('copilotMessage', () => {
     it('returns undefined when model is missing', async () => {
       const ai = createAi('http://localhost:4096', '');
-      const result = await fix(repo, ai, 'Do something');
+      const result = await fix(fixer, ai, 'Do something');
       expect(result).toBeUndefined();
       expect(mockFetch).not.toHaveBeenCalled();
     });
@@ -477,7 +487,7 @@ describe('AiRepository', () => {
       for (let i = 0; i < OPENCODE_MAX_RETRIES; i++) {
         mockFetch.mockResolvedValueOnce(sessionOk).mockResolvedValueOnce(messageFail);
       }
-      const promise = fix(repo, ai, 'Edit file');
+      const promise = fix(fixer, ai, 'Edit file');
       await jest.advanceTimersByTimeAsync((OPENCODE_MAX_RETRIES - 1) * OPENCODE_RETRY_DELAY_MS);
       const result = await promise;
       expect(result).toBeUndefined();
@@ -499,7 +509,7 @@ describe('AiRepository', () => {
               parts: [{ type: 'text', text: 'I updated the file.' }],
             }),
         });
-      const result = await fix(repo, ai, 'Edit file');
+      const result = await fix(fixer, ai, 'Edit file');
       expect(result).toEqual({ text: 'I updated the file.', sessionId: 'copilot-session-1' });
     });
   });

@@ -2,7 +2,7 @@ import type { AgentCliPort, OpenCodeClientPort } from '../../../infrastructure/a
 import { DefaultAgentRepositoryFactory } from '../agent_repository_factory';
 
 describe('DefaultAgentRepositoryFactory', () => {
-    it('creates separate capability views over one injected repository composition', () => {
+    it('creates independent semantic adapters over shared technical infrastructure', () => {
         const cli: AgentCliPort = { execute: jest.fn().mockResolvedValue('ok') };
         const openCode: OpenCodeClientPort = { sendMessage: jest.fn() };
         const factory = new DefaultAgentRepositoryFactory({ cli, openCode });
@@ -10,6 +10,8 @@ describe('DefaultAgentRepositoryFactory', () => {
         const findings = factory.createFindings();
         const fixer = factory.createFixer();
 
-        expect(findings).toBe(fixer);
+        expect(findings).not.toBe(fixer);
+        expect(typeof findings.query).toBe('function');
+        expect(typeof fixer.fix).toBe('function');
     });
 });

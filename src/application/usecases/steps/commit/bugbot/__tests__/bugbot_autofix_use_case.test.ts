@@ -25,11 +25,6 @@ jest.mock("../load_bugbot_context_use_case", () => ({
     loadBugbotContext: (...args: unknown[]) => mockLoadBugbotContext(...args),
 }));
 
-jest.mock("../../../../../../data/repository/ai_repository", () => ({
-    AiRepository: jest.fn().mockImplementation(() => ({
-        fix: (request: { configuration: unknown; prompt: string }) => mockCopilotMessage(request.configuration, request.prompt),
-    })),
-}));
 
 function baseExecution() {
     return {

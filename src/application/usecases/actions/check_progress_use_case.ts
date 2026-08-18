@@ -241,7 +241,7 @@ export class CheckProgressUseCase implements ParamUseCase<Execution, Result[]> {
 
     /**
      * Calls the OpenCode agent once and returns parsed progress, summary, and reasoning.
-     * HTTP-level retries are handled by AiRepository (OPENCODE_MAX_RETRIES).
+     * HTTP-level retries are handled by the findings capability transport (OPENCODE_MAX_RETRIES).
      */
     private async fetchProgressAttempt(ai: Ai, prompt: string): Promise<ProgressAttemptResult> {
         return parseProgressResponse(await this.aiRepository.query({

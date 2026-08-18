@@ -12,11 +12,6 @@ jest.mock("../../../../../utils/logger", () => ({
 
 const mockCopilotMessage = jest.fn();
 
-jest.mock("../../../../../data/repository/ai_repository", () => ({
-    AiRepository: jest.fn().mockImplementation(() => ({
-        fix: (request: { configuration: unknown; prompt: string }) => mockCopilotMessage(request.configuration, request.prompt),
-    })),
-}));
 
 function baseExecution(overrides: Record<string, unknown> = {}) {
     return {
