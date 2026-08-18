@@ -348,3 +348,5 @@ export async function buildLocalActionConfiguration(
         pullRequestMergeTimeout,
     };
 }
+
+export type LocalActionConfiguration = Awaited<ReturnType<typeof buildLocalActionConfiguration>>;

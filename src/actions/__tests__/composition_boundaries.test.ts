@@ -41,7 +41,7 @@ describe('action composition boundaries', () => {
         expect(commonAction).toMatch(/LatestTagQueryPort/);
 
         expect(githubAction).toMatch(/execution_builder/);
-        expect(localAction).toMatch(/execution_builder/);
+        expect(localAction).toMatch(/local_action_execution/);
     });
 
     it('keeps shared input policies independent from lifecycles and infrastructure', () => {
