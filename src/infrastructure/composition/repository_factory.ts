@@ -4,7 +4,6 @@ import { ActorAuthorizationRepository } from "../../data/repository/organization
 import { IssueAssignmentRepository } from "../../data/repository/issue/issue_assignment_repository";
 import { IssueContentRepository } from "../../data/repository/issue/issue_content_repository";
 import { IssueLabelRepository } from "../../data/repository/issue/issue_label_repository";
-import { IssueLabelProvisioningRepository } from "../../data/repository/issue/issue_label_provisioning_repository";
 import { IssueLifecycleRepository } from "../../data/repository/issue/issue_lifecycle_repository";
 import { IssueMetadataRepository } from "../../data/repository/issue/issue_metadata_repository";
 import { IssueProgressLabelRepository } from "../../data/repository/issue/issue_progress_label_repository";
@@ -35,7 +34,6 @@ import { AnswerIssueHelpUseCase } from "../../application/usecases/steps/issue/a
 import { UpdatePullRequestDescriptionUseCase } from "../../application/usecases/steps/pull_request/update_pull_request_description_use_case";
 import { DefaultAgentRepositoryFactory } from "../../data/repository/agent_repository_factory";
 import { WorkflowRepository } from "../../data/repository/workflow_repository";
-import type { IssueProgressLabelProvisioningPort } from "../../application/ports/issue_ports";
 import { GithubClientFactory } from "./github_client_factory";
 import { composeIssueUseCase } from "./issue_use_case_composition";
 import { composePullRequestUseCase } from "./pull_request_use_case_composition";
@@ -134,7 +132,6 @@ export class RepositoryFactory {
     createIssueContentRepository(): IssueContentRepository { return new IssueContentRepository(this.githubClients.createIssueContentClient()); }
     createBugbotIssueRepository(): BugbotIssueRepository { return new BugbotIssueRepository(this.createIssueContentRepository()); }
     createIssueLabelRepository(): IssueLabelRepository { return new IssueLabelRepository(this.githubClients.createIssueLabelsClient()); }
-    createIssueLabelProvisioningRepository(): IssueLabelProvisioningRepository { return new IssueLabelProvisioningRepository(this.githubClients.createIssueLabelProvisioningClient()); }
     createIssueMetadataRepository(): IssueMetadataRepository { return new IssueMetadataRepository(this.githubClients.createIssueMetadataClient(), this.githubClients.createGraphqlClient()); }
     createIssueTitleRepository(metadataRepository = this.createIssueMetadataRepository()): IssueTitleRepository {
         return new IssueTitleRepository(this.githubClients.createIssueTitleClient(), metadataRepository);
@@ -162,18 +159,6 @@ export class RepositoryFactory {
             this.createIssueContentRepository(),
             this.createIssueLabelRepository(),
         );
-    }
-    createIssueProgressLabelProvisioningPort(): IssueProgressLabelProvisioningPort {
-        const progressRepository = this.createIssueProgressLabelRepository();
-        const provisioningRepository = this.createIssueLabelProvisioningRepository();
-        return {
-            ensureProgressLabels: (owner, repository, token) => progressRepository.ensureProgressLabels(
-                owner,
-                repository,
-                token,
-                provisioningRepository.ensureLabel,
-            ),
-        };
     }
     createIssueTypeRepository(): IssueTypeRepository { return new IssueTypeRepository(this.githubClients.createGraphqlClient()); }
     createIssueTypeAssignmentRepository(
