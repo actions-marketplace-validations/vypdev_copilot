@@ -91,7 +91,7 @@ export async function mainRun(
     logDebugInfo(`Event: ${execution.eventName}, actor: ${execution.actor}, repo: ${execution.owner}/${execution.repo}, debug: ${execution.debug}`);
 
     const setupFactory = new RepositoryFactory();
-    await execution.setup(branchRepository, setupFactory.createIssueRepository(), setupFactory.createAuthenticatedUserRepository());
+    await execution.setup(branchRepository, setupFactory.createExecutionIssueSetupRepository(), setupFactory.createAuthenticatedUserRepository());
     clearAccumulatedLogs();
 
     logDebugInfo(`Setup done. Issue number: ${execution.issueNumber}, isSingleAction: ${execution.isSingleAction}, isIssue: ${execution.isIssue}, isPullRequest: ${execution.isPullRequest}, isPush: ${execution.isPush}`);
