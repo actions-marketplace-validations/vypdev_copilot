@@ -12,6 +12,8 @@ import { IssueProgressLabelRepository } from "../../data/repository/issue/issue_
 import { IssueTypeRepository } from "../../data/repository/issue/issue_type_repository";
 import { IssueTypeAssignmentRepository } from "../../data/repository/issue/issue_type_assignment_repository";
 import { IssueTitleRepository } from "../../data/repository/issue/issue_title_repository";
+import { IssueClosureRepository } from "../../data/repository/issue/issue_closure_repository";
+import { IssueNotificationRepository } from "../../data/repository/issue/issue_notification_repository";
 import { ProjectBoardRepository } from "../../data/repository/project/project_board_repository";
 import { PullRequestChangesRepository } from "../../data/repository/pull_request/pull_request_changes_repository";
 import { PullRequestLifecycleRepository } from "../../data/repository/pull_request/pull_request_lifecycle_repository";
@@ -75,18 +77,18 @@ export class RepositoryFactory {
             this.createProjectBoardRepository(),
             this.createIssueTitleRepository(issueMetadataRepository),
             this.createIssueAssignmentRepository(),
-            this.createIssueRepository(),
+            this.createIssueClosureRepository(),
             this.createIssueTypeAssignmentRepository(
                 (owner, repository, issueNumber, token) => issueMetadataRepository.getId(owner, repository, issueNumber, token),
             ),
             this.createIssueContentRepository(),
-            this.createIssueRepository(),
+            this.createIssueNotificationRepository(),
             this.createBranchRepository(),
             this.createBranchRepository(),
             this.createBranchRepository(),
             this.createBranchRepository(),
-            new RecommendStepsUseCase(this.createIssueRepository(), new DefaultAgentRepositoryFactory().createFindings()),
-            new AnswerIssueHelpUseCase(this.createIssueRepository(), new DefaultAgentRepositoryFactory().createFindings()),
+            new RecommendStepsUseCase(this.createIssueContentRepository(), new DefaultAgentRepositoryFactory().createFindings()),
+            new AnswerIssueHelpUseCase(this.createIssueNotificationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
         );
     }
     createPullRequestUseCase(): PullRequestUseCase {
@@ -95,7 +97,7 @@ export class RepositoryFactory {
             this.createPullRequestLifecycleRepository(),
             this.createIssueContentRepository(),
             this.createIssueTitleRepository(),
-            this.createIssueRepository(),
+            this.createIssueClosureRepository(),
             this.createIssueAssignmentRepository(),
             this.createPullRequestReviewRepository(),
             this.createOrganizationMembersRepository(),
@@ -150,6 +152,12 @@ export class RepositoryFactory {
     createIssueMetadataRepository(): IssueMetadataRepository { return new IssueMetadataRepository(new OctokitIssueMetadataClientAdapter(), new OctokitGraphqlClientAdapter()); }
     createIssueTitleRepository(metadataRepository = this.createIssueMetadataRepository()): IssueTitleRepository {
         return new IssueTitleRepository(new OctokitIssueTitleClientAdapter(), metadataRepository);
+    }
+    createIssueClosureRepository(): IssueClosureRepository {
+        return new IssueClosureRepository(this.createIssueLifecycleRepository(), this.createIssueContentRepository());
+    }
+    createIssueNotificationRepository(): IssueNotificationRepository {
+        return new IssueNotificationRepository(this.createIssueLifecycleRepository(), this.createIssueContentRepository());
     }
     createIssueLifecycleRepository(): IssueLifecycleRepository { return new IssueLifecycleRepository(new OctokitIssueLifecycleClientAdapter()); }
     createIssueProgressLabelRepository(): IssueProgressLabelRepository {
