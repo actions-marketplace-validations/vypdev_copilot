@@ -12,7 +12,6 @@ import { IssueClosureRepository } from "../../data/repository/issue/issue_closur
 import { IssueNotificationRepository } from "../../data/repository/issue/issue_notification_repository";
 import { IssueProgressTrackingRepository } from "../../data/repository/issue/issue_progress_tracking_repository";
 import { IssueProgressLabelRepository } from "../../data/repository/issue/issue_progress_label_repository";
-import { ExecutionIssueSetupRepository } from "../../data/repository/issue/execution_issue_setup_repository";
 import { BugbotIssueRepository } from "../../data/repository/issue/bugbot_issue_repository";
 import { PullRequestChangesRepository } from "../../data/repository/pull_request/pull_request_changes_repository";
 import { PullRequestLifecycleRepository } from "../../data/repository/pull_request/pull_request_lifecycle_repository";
@@ -148,13 +147,6 @@ export class RepositoryFactory {
             this.createIssueContentRepository(),
             this.createIssueLabelRepository(),
             progressLabelRepository,
-        );
-    }
-    createExecutionIssueSetupRepository(): ExecutionIssueSetupRepository {
-        return new ExecutionIssueSetupRepository(
-            this.createIssueMetadataRepository(),
-            this.createIssueContentRepository(),
-            this.createIssueLabelRepository(),
         );
     }
     createIssueTypeAssignmentRepository(

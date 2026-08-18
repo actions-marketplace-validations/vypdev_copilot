@@ -4,6 +4,7 @@ import { Result } from '../data/model/result';
 import { ProjectBoardCommandPort } from '../application/ports/project_board_ports';
 import { RepositoryFactory } from '../infrastructure/composition/repository_factory';
 import { createAuthenticatedUserCompositionRoot } from '../infrastructure/composition/authenticated_user_composition_root';
+import { createExecutionIssueSetupCompositionRoot } from '../infrastructure/composition/execution_issue_setup_composition_root';
 import type { LatestTagQueryPort } from '../application/ports/branch_ports';
 import { clearAccumulatedLogs, logDebugInfo, logError, logInfo } from '../utils/logger';
 import { TITLE } from '../utils/constants';
@@ -24,7 +25,7 @@ export async function mainRun(
     logDebugInfo(`Event: ${execution.eventName}, actor: ${execution.actor}, repo: ${execution.owner}/${execution.repo}, debug: ${execution.debug}`);
 
     const factory = new RepositoryFactory();
-    await execution.setup(latestTagQueryPort, factory.createExecutionIssueSetupRepository(), createAuthenticatedUserCompositionRoot());
+    await execution.setup(latestTagQueryPort, createExecutionIssueSetupCompositionRoot(), createAuthenticatedUserCompositionRoot());
     clearAccumulatedLogs();
 
     logDebugInfo(`Setup done. Issue number: ${execution.issueNumber}, isSingleAction: ${execution.isSingleAction}, isIssue: ${execution.isIssue}, isPullRequest: ${execution.isPullRequest}, isPush: ${execution.isPush}`);
