@@ -202,6 +202,25 @@ The migration is complete only when:
 - full tests, typecheck, lint, build, and `git diff --check` pass;
 - the final tree is clean and the published SHA is verified.
 
+## Current composition and boundary status
+
+The current entry-point topology is intentionally split:
+
+- `src/cli.ts` parses command-line input and delegates to `runLocalAction`.
+- `src/actions/local_action.ts` owns the local execution lifecycle.
+- `src/actions/github_action.ts` owns the GitHub Action lifecycle and GitHub event input mapping.
+- `src/actions/action_input_source.ts` contains only pure input-source policies shared by those entry points.
+- `src/actions/common_action.ts` orchestrates application use cases and depends on `LatestTagQueryPort`, not on the concrete `BranchRepository` facade.
+- `src/infrastructure/composition/repository_factory.ts` is the only production composition root allowed to import the compatibility repository facades.
+
+These boundaries are enforced by executable architecture tests:
+
+- `src/actions/__tests__/composition_boundaries.test.ts`;
+- `src/infrastructure/composition/__tests__/facade_boundaries.test.ts`;
+- `src/application/__tests__/architecture_boundaries.test.ts`.
+
+The facade rule is deliberate: a compatibility facade may remain while it composes specialized capability adapters, but new production consumers must depend on semantic ports. Tests may instantiate concrete adapters directly to verify their contracts; that does not make them production dependencies.
+
 ## Current migration status
 
 The first migration slices are implemented and published:
