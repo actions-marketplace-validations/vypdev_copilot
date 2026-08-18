@@ -7,7 +7,6 @@ import { IssueLabelRepository } from "../../data/repository/issue/issue_label_re
 import { IssueLifecycleRepository } from "../../data/repository/issue/issue_lifecycle_repository";
 import { IssueMetadataRepository } from "../../data/repository/issue/issue_metadata_repository";
 import { IssueProgressLabelRepository } from "../../data/repository/issue/issue_progress_label_repository";
-import { IssueTypeRepository } from "../../data/repository/issue/issue_type_repository";
 import { IssueTypeAssignmentRepository } from "../../data/repository/issue/issue_type_assignment_repository";
 import { IssueTitleRepository } from "../../data/repository/issue/issue_title_repository";
 import { IssueClosureRepository } from "../../data/repository/issue/issue_closure_repository";
@@ -160,7 +159,6 @@ export class RepositoryFactory {
             this.createIssueLabelRepository(),
         );
     }
-    createIssueTypeRepository(): IssueTypeRepository { return new IssueTypeRepository(this.githubClients.createGraphqlClient()); }
     createIssueTypeAssignmentRepository(
         getIssueId: ConstructorParameters<typeof IssueTypeAssignmentRepository>[0],
     ): IssueTypeAssignmentRepository {
