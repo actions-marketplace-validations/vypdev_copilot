@@ -25,7 +25,6 @@ import { PullRequestReviewRepository } from "../../data/repository/pull_request/
 import { PullRequestReviewThreadRepository } from "../../data/repository/pull_request/pull_request_review_thread_repository";
 import { BugbotPullRequestRepository } from "../../data/repository/pull_request/bugbot_pull_request_repository";
 
-import { RepositoryReleaseRepository } from "../../data/repository/release/repository_release_repository";
 import { MergeRepository } from "../../data/repository/merge_repository";
 import { BranchCompareRepository } from "../../data/repository/branch_compare_repository";
 import { GitCliRepository } from "../../data/repository/git_cli_repository";
@@ -220,9 +219,6 @@ export class RepositoryFactory {
         );
     }
 
-    createRepositoryReleaseRepository(): RepositoryReleaseRepository {
-        return new RepositoryReleaseRepository(this.githubClients.createReleaseClient());
-    }
     createMergeRepository(): MergeRepository {
         return new MergeRepository(this.githubClients.createBranchMergeClient());
     }

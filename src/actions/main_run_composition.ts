@@ -10,6 +10,7 @@ import { RecommendStepsUseCase } from '../application/usecases/actions/recommend
 import { DefaultAgentRepositoryFactory } from '../data/repository/agent_repository_factory';
 import { RepositoryFactory } from '../infrastructure/composition/repository_factory';
 import { createInitialSetupCompositionRoot } from '../infrastructure/composition/initial_setup_composition_root';
+import { createRepositoryReleasePort } from '../infrastructure/composition/release_composition_root';
 import type { BugbotContextPorts, BugbotWritePorts } from '../application/ports/bugbot_ports';
 
 export function createDetectPotentialProblemsUseCase(factory: RepositoryFactory): DetectPotentialProblemsUseCase {
@@ -41,7 +42,7 @@ export function createDetectBugbotFixIntentUseCase(factory: RepositoryFactory): 
 }
 
 export function createSingleActionUseCase(factory: RepositoryFactory): SingleActionUseCase {
-    const repositoryReleasePort = factory.createRepositoryReleaseRepository();
+    const repositoryReleasePort = createRepositoryReleasePort();
     const issueDescriptionQueryPort = factory.createIssueContentRepository();
     return new SingleActionUseCase(
         new DeployedActionUseCase(

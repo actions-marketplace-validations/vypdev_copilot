@@ -17,6 +17,5 @@ describe("RepositoryFactory", () => {
         expect(factory.createPullRequestLifecycleRepository()).toBeDefined();
         expect(factory.createPullRequestReviewRepository()).toBeDefined();
         expect(factory.createPullRequestReviewThreadRepository()).toBeDefined();
-        expect(factory.createRepositoryReleaseRepository()).toBeDefined();
     });
 });
