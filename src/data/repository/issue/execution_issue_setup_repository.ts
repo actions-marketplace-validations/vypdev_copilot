@@ -1,4 +1,4 @@
-import type { ExecutionIssueSetupPort } from '../../model/execution';
+import type { ExecutionIssueSetupPort } from '../../../application/ports/execution_setup_ports';
 import type { IssueContentRepository } from './issue_content_repository';
 import type { IssueLabelRepository } from './issue_label_repository';
 import type { IssueMetadataRepository } from './issue_metadata_repository';

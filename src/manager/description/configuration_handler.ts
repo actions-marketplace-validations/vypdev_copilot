@@ -1,5 +1,5 @@
 import { Config } from "../../data/model/config";
-import { Execution } from "../../data/model/execution";
+import type { Execution } from "../../data/model/execution";
 import { logError } from "../../utils/logger";
 import { IssueContentInterface } from "./base/issue_content_interface";
 

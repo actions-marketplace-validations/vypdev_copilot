@@ -3,12 +3,13 @@ import type { LatestTagQueryPort } from "../../ports/branch_tag_ports";
 import type { AuthenticatedUserPort } from "../../ports/authenticated_user_ports";
 import type { RepositoryTagPort, RepositoryDefaultBranchPort } from "../../ports/repository_release_ports";
 import type { IssueLabelProvisioningPort, IssueProgressLabelProvisioningPort, IssueTypeProvisioningPort } from "../../ports/issue_management_ports";
+import type { SetupWorkspacePort } from "../../ports/setup_workspace_ports";
 import { Result } from "../../../data/model/result";
 import { ParamUseCase } from "../base/param_usecase";
 import { DEFAULT_INITIAL_TAG } from "../../../utils/version_utils";
 import { logDebugInfo, logError, logInfo } from "../../../utils/logger";
 import { getTaskEmoji } from "../../../utils/task_emoji";
-import { copySetupFiles, ensureGitHubDirs, hasValidSetupToken } from "../../../utils/setup_files";
+
 
 export class InitialSetupUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'InitialSetupUseCase';
@@ -21,6 +22,7 @@ export class InitialSetupUseCase implements ParamUseCase<Execution, Result[]> {
         private readonly latestTagQueryPort: LatestTagQueryPort,
         private readonly repositoryDefaultBranchPort: RepositoryDefaultBranchPort,
         private readonly repositoryTagPort: RepositoryTagPort,
+        private readonly setupWorkspacePort: SetupWorkspacePort,
     ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
@@ -33,11 +35,10 @@ export class InitialSetupUseCase implements ParamUseCase<Execution, Result[]> {
         try {
             // 0. Setup files (.github/workflows, .github/ISSUE_TEMPLATE, pull_request_template.md, .env)
             logInfo('📋 Ensuring .github and copying setup files...');
-            ensureGitHubDirs(process.cwd());
-            const filesResult = copySetupFiles(process.cwd());
+            const filesResult = this.setupWorkspacePort.prepare();
             steps.push(`✅ Setup files: ${filesResult.copied} copied, ${filesResult.skipped} already existed`);
 
-            if (!hasValidSetupToken(process.cwd())) {
+            if (!this.setupWorkspacePort.hasValidToken()) {
                 logInfo('  🛑 Setup requires PERSONAL_ACCESS_TOKEN (environment or .env) with a valid token.');
                 errors.push('PERSONAL_ACCESS_TOKEN must be set (environment or .env) with a valid token to run setup.');
                 results.push(

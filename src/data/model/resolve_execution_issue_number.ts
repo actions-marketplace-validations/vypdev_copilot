@@ -1,6 +1,7 @@
 import { INPUT_KEYS } from "../../utils/constants";
 import { extractIssueNumberFromBranch, extractIssueNumberFromPush } from "../../utils/title_utils";
-import type { Execution, ExecutionIssueSetupPort } from "./execution";
+import type { ExecutionIssueResolutionContext } from '../../application/ports/execution_resolution_ports';
+import type { ExecutionIssueSetupPort } from '../../application/ports/execution_setup_ports';
 
 /**
  * Resolves the issue/PR number that drives an execution and records the
@@ -8,12 +9,12 @@ import type { Execution, ExecutionIssueSetupPort } from "./execution";
  * concern does not construct repositories or configure unrelated state.
  */
 export async function resolveExecutionIssueNumber(
-    execution: Execution,
+    execution: ExecutionIssueResolutionContext,
     issueRepository: Pick<ExecutionIssueSetupPort, "isPullRequest" | "isIssue" | "getHeadBranch">,
 ): Promise<number | undefined> {
     if (execution.isSingleAction) {
         if (execution.inputs?.[INPUT_KEYS.SINGLE_ACTION_ISSUE]) {
-            execution.issueNumber = execution.inputs[INPUT_KEYS.SINGLE_ACTION_ISSUE];
+            execution.issueNumber = execution.inputs[INPUT_KEYS.SINGLE_ACTION_ISSUE] as number;
             execution.singleAction.issue = execution.issueNumber;
         } else if (execution.isIssue) {
             execution.singleAction.isIssue = true;

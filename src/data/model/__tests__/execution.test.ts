@@ -245,6 +245,7 @@ const setupIssuePort = {
   updateDescription: jest.fn(),
 };
 const setupOrganizationPort = { getUserFromToken: mockGetUserFromToken };
+const setupConfigurationPort = { get: mockConfigGet };
 
 describe('Execution', () => {
   beforeEach(() => {
@@ -472,13 +473,13 @@ describe('Execution', () => {
     it('sets tokenUser and throws if getUserFromToken returns null', async () => {
       mockGetUserFromToken.mockResolvedValue(null);
       const e = buildExecution(undefined, {});
-      await expect(e.setup(branchRepository, setupIssuePort, setupOrganizationPort)).rejects.toThrow('Failed to get user from token');
+      await expect(e.setup(branchRepository, setupIssuePort, setupOrganizationPort, setupConfigurationPort)).rejects.toThrow('Failed to get user from token');
     });
 
     it('sets issueNumber from issue when isIssue and not single action', async () => {
       const issue = makeIssue({ eventName: 'issues', issue: { number: 99 } } as never);
       const e = buildExecution({ eventName: 'issues', issue: { number: 99 } } as never, { issue });
-      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort);
+      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort, setupConfigurationPort);
       expect(e.issueNumber).toBe(99);
     });
 
@@ -488,7 +489,7 @@ describe('Execution', () => {
         pull_request: { head: { ref: 'feature/42-my-branch' } },
       } as never);
       const e = buildExecution(undefined, { pullRequest });
-      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort);
+      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort, setupConfigurationPort);
       expect(e.issueNumber).toBe(42);
     });
 
@@ -497,7 +498,7 @@ describe('Execution', () => {
         { eventName: 'push', commits: { ref: 'refs/heads/feature/7-bar' } } as never,
         {},
       );
-      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort);
+      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort, setupConfigurationPort);
       expect(e.issueNumber).toBe(7);
     });
 
@@ -505,7 +506,7 @@ describe('Execution', () => {
       mockGetLabels.mockResolvedValue(['feature', 'size-m']);
       const issue = makeIssue({ eventName: 'issues', issue: { number: 1 } } as never);
       const e = buildExecution({ eventName: 'issues', issue: { number: 1 } } as never, { issue });
-      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort);
+      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort, setupConfigurationPort);
       expect(e.labels.currentIssueLabels).toEqual(['feature', 'size-m']);
     });
 
@@ -516,7 +517,7 @@ describe('Execution', () => {
       ]);
       const issue = makeIssue({ eventName: 'issues', issue: { number: 1 } } as never);
       const e = buildExecution({ eventName: 'issues', issue: { number: 1 } } as never, { issue });
-      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort);
+      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort, setupConfigurationPort);
       expect(e.release.active).toBe(true);
     });
 
@@ -527,7 +528,7 @@ describe('Execution', () => {
       ]);
       const issue = makeIssue({ eventName: 'issues', issue: { number: 1 } } as never);
       const e = buildExecution({ eventName: 'issues', issue: { number: 1 } } as never, { issue });
-      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort);
+      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort, setupConfigurationPort);
       expect(e.hotfix.active).toBe(true);
     });
 
@@ -537,7 +538,7 @@ describe('Execution', () => {
         { [INPUT_KEYS.SINGLE_ACTION_ISSUE]: '123' } as never,
         { singleAction },
       );
-      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort);
+      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort, setupConfigurationPort);
       expect(Number(e.issueNumber)).toBe(123);
       expect(Number(e.singleAction.issue)).toBe(123);
     });
@@ -546,7 +547,7 @@ describe('Execution', () => {
       const singleAction = new SingleAction('check_progress', '0', '', '', '');
       const issue = makeIssue({ eventName: 'issues', issue: { number: 88 } } as never);
       const e = buildExecution(undefined, { singleAction, issue });
-      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort);
+      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort, setupConfigurationPort);
       expect(e.issueNumber).toBe(88);
       expect(e.singleAction.issue).toBe(88);
     });
@@ -558,7 +559,7 @@ describe('Execution', () => {
         pull_request: { head: { ref: 'bugfix/33-fix' } },
       } as never);
       const e = buildExecution(undefined, { singleAction, pullRequest });
-      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort);
+      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort, setupConfigurationPort);
       expect(e.issueNumber).toBe(33);
     });
 
@@ -571,7 +572,7 @@ describe('Execution', () => {
         } as never,
         { singleAction },
       );
-      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort);
+      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort, setupConfigurationPort);
       expect(e.issueNumber).toBe(11);
     });
 
@@ -581,7 +582,7 @@ describe('Execution', () => {
       mockIsIssue.mockResolvedValue(false);
       mockGetHeadBranch.mockResolvedValue('feature/55-head');
       const e = buildExecution(undefined, { singleAction });
-      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort);
+      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort, setupConfigurationPort);
       expect(e.issueNumber).toBe(55);
     });
 
@@ -591,7 +592,7 @@ describe('Execution', () => {
       mockIsIssue.mockResolvedValue(false);
       mockGetHeadBranch.mockResolvedValue(undefined);
       const e = buildExecution(undefined, { singleAction });
-      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort);
+      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort, setupConfigurationPort);
       expect(e.issueNumber).toBe(-1);
     });
 
@@ -603,7 +604,7 @@ describe('Execution', () => {
       });
       const issue = makeIssue({ eventName: 'issues', issue: { number: 1 } } as never);
       const e = buildExecution({ eventName: 'issues', issue: { number: 1 } } as never, { issue });
-      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort);
+      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort, setupConfigurationPort);
       expect(e.release.version).toBe('1.2.3');
       expect(e.release.branch).toBe('release/1.2.3');
       expect(e.currentConfiguration.parentBranch).toBe('develop');
@@ -618,7 +619,7 @@ describe('Execution', () => {
       });
       const issue = makeIssue({ eventName: 'issues', issue: { number: 1 } } as never);
       const e = buildExecution({ eventName: 'issues', issue: { number: 1 } } as never, { issue });
-      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort);
+      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort, setupConfigurationPort);
       expect(e.hotfix.baseVersion).toBe('1.0.0');
       expect(e.hotfix.baseBranch).toBe('tags/v1.0.0');
       expect(e.hotfix.version).toBe('1.0.1');
@@ -634,7 +635,7 @@ describe('Execution', () => {
         pull_request: { base: { ref: 'release/2.0.0' }, head: { ref: 'feature/10-x' } },
       } as never);
       const e = buildExecution(undefined, { pullRequest });
-      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort);
+      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort, setupConfigurationPort);
       expect(e.release.active).toBe(true);
       expect(e.hotfix.active).toBe(false);
       expect(e.labels.currentPullRequestLabels).toEqual([]);
@@ -647,7 +648,7 @@ describe('Execution', () => {
         pull_request: { base: { ref: 'hotfix/1.0.1' }, head: { ref: 'feature/10-x' } },
       } as never);
       const e = buildExecution(undefined, { pullRequest });
-      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort);
+      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort, setupConfigurationPort);
       expect(e.hotfix.active).toBe(true);
     });
 
@@ -655,7 +656,7 @@ describe('Execution', () => {
       mockGetLabels.mockResolvedValue(['feature']);
       const issue = makeIssue({ eventName: 'issues', issue: { number: 1 } } as never);
       const e = buildExecution({ eventName: 'issues', issue: { number: 1 } } as never, { issue });
-      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort);
+      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort, setupConfigurationPort);
       expect(e.currentConfiguration.branchType).toBe('feature');
     });
 
@@ -664,7 +665,7 @@ describe('Execution', () => {
       mockIsPullRequest.mockResolvedValue(false);
       mockIsIssue.mockResolvedValue(true);
       const e = buildExecution(undefined, { singleAction });
-      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort);
+      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort, setupConfigurationPort);
       expect(e.issueNumber).toBe(77);
     });
 
@@ -676,7 +677,7 @@ describe('Execution', () => {
       ]);
       const issue = makeIssue({ eventName: 'issues', issue: { number: 1 } } as never);
       const e = buildExecution({ eventName: 'issues', issue: { number: 1 } } as never, { issue });
-      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort);
+      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort, setupConfigurationPort);
       expect(e.currentConfiguration.parentBranch).toBe('develop');
     });
 
@@ -692,7 +693,7 @@ describe('Execution', () => {
       mockGetLatestTag.mockResolvedValue('1.0.0');
       const issue = makeIssue({ eventName: 'issues', issue: { number: 1 } } as never);
       const e = buildExecution({ eventName: 'issues', issue: { number: 1 } } as never, { issue });
-      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort);
+      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort, setupConfigurationPort);
       expect(e.release.version).toBeDefined();
       expect(e.release.branch).toBe('release/1.1.0');
     });
@@ -706,7 +707,7 @@ describe('Execution', () => {
       mockGetLatestTag.mockResolvedValue('1.0.0');
       const issue = makeIssue({ eventName: 'issues', issue: { number: 1 } } as never);
       const e = buildExecution({ eventName: 'issues', issue: { number: 1 } } as never, { issue });
-      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort);
+      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort, setupConfigurationPort);
       expect(e.hotfix.baseVersion).toBe('1.0.0');
       expect(e.hotfix.version).toBeDefined();
       expect(e.hotfix.branch).toBe('hotfix/1.0.1');
@@ -721,7 +722,7 @@ describe('Execution', () => {
       ]);
       const issue = makeIssue({ eventName: 'issues', issue: { number: 1 } } as never);
       const e = buildExecution({ eventName: 'issues', issue: { number: 1 } } as never, { issue });
-      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort);
+      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort, setupConfigurationPort);
       expect(e.release.version).toBeUndefined();
       expect(e.release.branch).toBeUndefined();
     });
@@ -736,7 +737,7 @@ describe('Execution', () => {
       mockGetLatestTag.mockResolvedValue(undefined);
       const issue = makeIssue({ eventName: 'issues', issue: { number: 1 } } as never);
       const e = buildExecution({ eventName: 'issues', issue: { number: 1 } } as never, { issue });
-      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort);
+      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort, setupConfigurationPort);
       expect(e.release.version).toBe('1.1.0');
       expect(e.release.branch).toBe('release/1.1.0');
     });
@@ -751,7 +752,7 @@ describe('Execution', () => {
       mockGetLatestTag.mockResolvedValue(undefined);
       const issue = makeIssue({ eventName: 'issues', issue: { number: 1 } } as never);
       const e = buildExecution({ eventName: 'issues', issue: { number: 1 } } as never, { issue });
-      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort);
+      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort, setupConfigurationPort);
       expect(e.release.version).toBe('2.0.0');
       expect(e.release.branch).toBe('release/2.0.0');
     });
@@ -763,7 +764,7 @@ describe('Execution', () => {
       mockGetLatestTag.mockResolvedValue(undefined);
       const issue = makeIssue({ eventName: 'issues', issue: { number: 1 } } as never);
       const e = buildExecution({ eventName: 'issues', issue: { number: 1 } } as never, { issue });
-      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort);
+      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort, setupConfigurationPort);
       expect(e.hotfix.baseVersion).toBe('1.0.0');
       expect(e.hotfix.version).toBe('1.0.1');
       expect(e.hotfix.branch).toBe('hotfix/1.0.1');
@@ -773,7 +774,7 @@ describe('Execution', () => {
       const issue = makeIssue({ eventName: 'issues', issue: { number: 1 } } as never);
       const e = buildExecution({ eventName: 'issues', issue: { number: 1 } } as never, { singleAction, issue });
       mockGetLabels.mockRejectedValue(new Error('Label error'));
-      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort);
+      await e.setup(branchRepository, setupIssuePort, setupOrganizationPort, setupConfigurationPort);
       expect(e.labels.currentIssueLabels).toEqual([]);
     });
 
@@ -781,7 +782,7 @@ describe('Execution', () => {
       const issue = makeIssue({ eventName: 'issues', issue: { number: 1 } } as never);
       const e = buildExecution({ eventName: 'issues', issue: { number: 1 } } as never, { issue });
       mockGetLabels.mockRejectedValue(new Error('Fatal label error'));
-      await expect(e.setup(branchRepository, setupIssuePort, setupOrganizationPort)).rejects.toThrow('Fatal label error');
+      await expect(e.setup(branchRepository, setupIssuePort, setupOrganizationPort, setupConfigurationPort)).rejects.toThrow('Fatal label error');
     });
   });
 });
