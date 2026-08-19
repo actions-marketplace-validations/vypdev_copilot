@@ -1,5 +1,5 @@
 import { PullRequestReviewThreadRepository } from "../pull_request/pull_request_review_thread_repository";
-import { OctokitGraphqlTransportClientAdapter } from "../../../infrastructure/github/octokit_client";
+import { OctokitGraphqlTransportClientAdapter } from "../../../infrastructure/github/octokit_project_adapters";
 
 jest.mock("../../../utils/logger", () => ({
     logDebugInfo: jest.fn(),

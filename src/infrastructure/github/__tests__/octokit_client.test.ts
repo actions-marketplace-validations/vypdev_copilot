@@ -1,27 +1,11 @@
 import * as github from '@actions/github';
-import {
-    OctokitBranchClientAdapter,
-    OctokitBranchComparisonClientAdapter,
-    OctokitBranchMergeClientAdapter,
-    OctokitGraphqlTransportClientAdapter,
-    OctokitIssueAssignmentClientAdapter,
-    OctokitIssueContentClientAdapter,
-    OctokitIssueLabelProvisioningClientAdapter,
-    OctokitIssueLabelsClientAdapter,
-    OctokitIssueLifecycleClientAdapter,
-    OctokitIssueMetadataClientAdapter,
-    OctokitIssueTitleClientAdapter,
-    OctokitAuthenticatedUserClientAdapter,
-    OctokitActorAuthorizationClientAdapter,
-    OctokitOrganizationMembersClientAdapter,
-    OctokitRepositoryContextClientAdapter,
-    OctokitOwnerTypeClientAdapter,
-    OctokitPullRequestChangesClientAdapter,
-    OctokitPullRequestLifecycleClientAdapter,
-    OctokitPullRequestReviewClientAdapter,
-    OctokitReleaseClientAdapter,
-    OctokitWorkflowClientAdapter,
-} from '../octokit_client';
+import { OctokitBranchClientAdapter, OctokitBranchComparisonClientAdapter, OctokitBranchMergeClientAdapter } from '../octokit_branch_adapters';
+import { OctokitGraphqlTransportClientAdapter } from '../octokit_project_adapters';
+import { OctokitIssueAssignmentClientAdapter, OctokitIssueContentClientAdapter, OctokitIssueLabelProvisioningClientAdapter, OctokitIssueLabelsClientAdapter, OctokitIssueLifecycleClientAdapter, OctokitIssueMetadataClientAdapter, OctokitIssueTitleClientAdapter } from '../octokit_issue_adapters';
+import { OctokitAuthenticatedUserClientAdapter, OctokitActorAuthorizationClientAdapter, OctokitOrganizationMembersClientAdapter, OctokitRepositoryContextClientAdapter, OctokitOwnerTypeClientAdapter } from '../octokit_identity_adapters';
+import { OctokitPullRequestChangesClientAdapter, OctokitPullRequestLifecycleClientAdapter, OctokitPullRequestReviewClientAdapter } from '../octokit_pull_request_adapters';
+import { OctokitReleaseClientAdapter } from '../octokit_release_adapters';
+import { OctokitWorkflowClientAdapter } from '../octokit_workflow_adapters';
 
 jest.mock('@actions/github', () => ({
     getOctokit: jest.fn(),

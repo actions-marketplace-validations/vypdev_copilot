@@ -1,4 +1,5 @@
-import { OctokitGraphqlTransportClientAdapter, OctokitOwnerTypeClientAdapter, OctokitRepositoryContextClientAdapter } from "../../../infrastructure/github/octokit_client";
+import { OctokitGraphqlTransportClientAdapter } from "../../../infrastructure/github/octokit_project_adapters";
+import { OctokitOwnerTypeClientAdapter, OctokitRepositoryContextClientAdapter } from "../../../infrastructure/github/octokit_identity_adapters";
 import { ProjectBoardCommandRepository } from "./project_board_command_repository";
 import { ProjectBoardLinkRepository } from "./project_board_link_repository";
 import { ProjectBoardQueryRepository } from "./project_board_query_repository";

@@ -1,5 +1,5 @@
 import { IssueLabelRepository } from '../issue_label_repository';
-import { OctokitIssueLabelsClientAdapter } from '../../../../infrastructure/github/octokit_client';
+import { OctokitIssueLabelsClientAdapter } from '../../../../infrastructure/github/octokit_issue_adapters';
 
 const mockList = jest.fn();
 const mockSet = jest.fn();

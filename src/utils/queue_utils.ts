@@ -1,6 +1,6 @@
 import { Execution } from "../data/model/execution";
 import { WorkflowRepository } from "../data/repository/workflow_repository";
-import { OctokitWorkflowClientAdapter } from "../infrastructure/github/octokit_client";
+import { OctokitWorkflowClientAdapter } from "../infrastructure/github/octokit_workflow_adapters";
 import { logDebugInfo } from "./logger";
 
 export const waitForPreviousRuns = async (params: Execution): Promise<void> => {

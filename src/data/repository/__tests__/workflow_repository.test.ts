@@ -2,7 +2,7 @@ import * as github from '@actions/github';
 import { WorkflowRepository } from '../workflow_repository';
 import type { Execution } from '../../model/execution';
 import { WORKFLOW_STATUS } from '../../../utils/constants';
-import { OctokitWorkflowClientAdapter } from '../../../infrastructure/github/octokit_client';
+import { OctokitWorkflowClientAdapter } from '../../../infrastructure/github/octokit_workflow_adapters';
 
 jest.mock('@actions/github');
 

@@ -1,4 +1,4 @@
-import { OctokitReleaseClientAdapter } from "../../../infrastructure/github/octokit_client";
+import { OctokitReleaseClientAdapter } from "../../../infrastructure/github/octokit_release_adapters";
 import { RepositoryDefaultBranchRepository } from "./repository_default_branch_repository";
 import { RepositoryReleasePublicationRepository } from "./repository_release_publication_repository";
 import { RepositoryTagRepository } from "./repository_tag_repository";

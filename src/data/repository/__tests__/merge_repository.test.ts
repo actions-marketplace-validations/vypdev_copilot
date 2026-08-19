@@ -5,7 +5,7 @@
  * Used by the deploy flow (release/hotfix → default and develop). See docs/single-actions/deploy-label-and-merge.mdx.
  */
 
-import { OctokitBranchMergeClientAdapter } from '../../../infrastructure/github/octokit_client';
+import { OctokitBranchMergeClientAdapter } from '../../../infrastructure/github/octokit_branch_adapters';
 import { MergeRepository } from '../merge_repository';
 
 jest.mock('../../../utils/logger', () => ({
