@@ -1,5 +1,5 @@
 import { PullRequestLifecycleRepository } from "../pull_request/pull_request_lifecycle_repository";
-import { OctokitPullRequestLifecycleClientAdapter } from "../../../infrastructure/github/octokit_client";
+import { OctokitPullRequestLifecycleClientAdapter } from "../../../infrastructure/github/octokit_pull_request_adapters";
 
 const mockList = jest.fn();
 

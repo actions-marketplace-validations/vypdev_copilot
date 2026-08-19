@@ -1,5 +1,5 @@
 import { IssueContentRepository } from "../issue_content_repository";
-import { OctokitIssueContentClientAdapter } from "../../../../infrastructure/github/octokit_client";
+import { OctokitIssueContentClientAdapter } from "../../../../infrastructure/github/octokit_issue_adapters";
 
 const mockUpdate = jest.fn();
 const mockGet = jest.fn();

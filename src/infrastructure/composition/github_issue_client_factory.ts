@@ -1,4 +1,4 @@
-import { OctokitIssueAssignmentClientAdapter, OctokitIssueContentClientAdapter, OctokitIssueLabelProvisioningClientAdapter, OctokitIssueLabelsClientAdapter, OctokitIssueLifecycleClientAdapter, OctokitIssueMetadataClientAdapter, OctokitIssueTitleClientAdapter } from "../github/octokit_client";
+import { OctokitIssueAssignmentClientAdapter, OctokitIssueContentClientAdapter, OctokitIssueLabelProvisioningClientAdapter, OctokitIssueLabelsClientAdapter, OctokitIssueLifecycleClientAdapter, OctokitIssueMetadataClientAdapter, OctokitIssueTitleClientAdapter } from "../github/octokit_issue_adapters";
 export const createIssueAssignmentClient = () => new OctokitIssueAssignmentClientAdapter();
 export const createIssueContentClient = () => new OctokitIssueContentClientAdapter();
 export const createIssueLabelProvisioningClient = () => new OctokitIssueLabelProvisioningClientAdapter();

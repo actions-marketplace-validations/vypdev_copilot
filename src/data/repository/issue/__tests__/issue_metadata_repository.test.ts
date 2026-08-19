@@ -1,5 +1,6 @@
 import { IssueMetadataRepository } from '../issue_metadata_repository';
-import { OctokitGraphqlTransportClientAdapter, OctokitIssueMetadataClientAdapter } from '../../../../infrastructure/github/octokit_client';
+import { OctokitGraphqlTransportClientAdapter } from '../../../../infrastructure/github/octokit_project_adapters';
+import { OctokitIssueMetadataClientAdapter } from '../../../../infrastructure/github/octokit_issue_adapters';
 
 const mockGet = jest.fn();
 const mockPullGet = jest.fn();

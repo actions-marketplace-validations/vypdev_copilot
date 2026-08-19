@@ -1,6 +1,6 @@
 import * as github from '@actions/github';
 import { IssueTypeAssignmentRepository } from '../issue/issue_type_assignment_repository';
-import { OctokitGraphqlTransportClientAdapter } from '../../../infrastructure/github/octokit_client';
+import { OctokitGraphqlTransportClientAdapter } from '../../../infrastructure/github/octokit_project_adapters';
 import { IssueTypes } from '../../model/issue_types';
 import { Labels } from '../../model/labels';
 

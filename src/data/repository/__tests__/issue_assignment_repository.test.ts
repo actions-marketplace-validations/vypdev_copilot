@@ -1,6 +1,6 @@
 import * as github from '@actions/github';
 import { IssueAssignmentRepository } from '../issue/issue_assignment_repository';
-import { OctokitIssueAssignmentClientAdapter } from '../../../infrastructure/github/octokit_client';
+import { OctokitIssueAssignmentClientAdapter } from '../../../infrastructure/github/octokit_issue_adapters';
 
 jest.mock('@actions/github', () => ({ getOctokit: jest.fn() }));
 jest.mock('../../../utils/logger', () => ({ logDebugInfo: jest.fn(), logError: jest.fn() }));
