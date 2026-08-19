@@ -34,7 +34,7 @@ import { getGithubActionInput } from './github_action_input';
 import { parseIntegerInput } from './input_number_policy';
 import { parseDelimitedValues } from './input_values_policy';
 import { readGithubActionAiInputs } from './github_action_ai_inputs';
-import { buildImageConfiguration } from './image_configuration_builder';
+import { readGithubActionImageInputs } from './github_action_image_inputs';
 import { buildSizeThresholds } from './size_threshold_builder';
 import { readGithubActionThresholdInputs } from './github_action_threshold_inputs';
 import { buildBranches } from './branches_builder';
@@ -119,7 +119,7 @@ export async function runGitHubAction(): Promise<void> {
     /**
      * Images
      */
-    const imageConfiguration = buildImageConfiguration(getGithubActionInput);
+    const imageConfiguration = readGithubActionImageInputs(getGithubActionInput);
     const workflowInputs = readGithubActionWorkflowInputs(getGithubActionInput);
 
     /**
