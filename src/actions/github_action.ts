@@ -3,7 +3,7 @@ import * as github from '@actions/github';
 import { Ai } from '../data/model/ai';
 
 
-import { Execution } from '../data/model/execution';
+
 import { Hotfix } from '../data/model/hotfix';
 
 
@@ -23,10 +23,10 @@ import type { ManagedAgentServer } from '../application/ports/agent_server_ports
 import { OpenCodeServerLifecycleAdapter } from '../data/repository/opencode_server_lifecycle_adapter';
 import { GitCliRepository } from '../data/repository/git_cli_repository';
 import { createIssueContentCompositionRoot } from '../infrastructure/composition/issue_content_composition_root';
-import type { IssueContentRepository } from '../data/repository/issue/issue_content_repository';
+
 import { createIssueNotificationRepository } from '../infrastructure/composition/issue_interaction_composition_root';
 import { createProjectBoardCompositionRoot } from '../infrastructure/composition/project_board_composition_root';
-import { ConfigurationHandler } from '../manager/description/configuration_handler';
+
 import { loadProjectDetails } from './project_details_loader';
 import { mainRun } from './common_action';
 import { isEnabledInput } from './input_boolean_policy';
