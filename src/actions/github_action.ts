@@ -17,6 +17,7 @@ import { SingleAction } from '../data/model/single_action';
 
 
 import { finishGithubAction } from './github_action_completion';
+import { ConfigurationHandler } from '../manager/description/configuration_handler';
 import { INPUT_KEYS } from '../utils/constants';
 import { logDebugInfo, logError, logInfo } from '../utils/logger';
 import type { ManagedAgentServer } from '../application/ports/agent_server_ports';
@@ -208,11 +209,12 @@ export async function runGitHubAction(): Promise<void> {
 
     const results: Result[] = await mainRun(execution, projectBoard.command, new GitCliRepository());
 
+    const issueContentPort = createIssueContentCompositionRoot();
     await finishGithubAction(
         execution,
         results,
         createIssueNotificationRepository(),
-        createIssueContentCompositionRoot(),
+        new ConfigurationHandler(issueContentPort),
     );
     } finally {
         if (managedOpencodeServer) {

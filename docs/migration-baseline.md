@@ -1,4 +1,6 @@
-# Migration Baseline
+# Historical Migration Baseline
+
+> This document records the original reconstruction baseline. It is not the current checkout status. For the current plan and evidence, use [`total-architecture-reconstruction-plan.md`](./total-architecture-reconstruction-plan.md).
 
 ## Snapshot identity
 

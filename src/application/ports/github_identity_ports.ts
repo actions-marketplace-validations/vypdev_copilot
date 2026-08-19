@@ -38,10 +38,16 @@ export interface GithubActorAuthorizationClient {
 
 
 export interface GithubOrganizationMembersClient {
+    paginate: {
+        iterator(
+            method: (parameters: Record<string, unknown>) => Promise<{ data: Array<{ slug: string } | { login: string }> }>,
+            parameters: Record<string, unknown>,
+        ): AsyncIterable<{ data: Array<{ slug: string } | { login: string }> }>;
+    };
     rest: {
         teams: {
-            list(parameters: { org: string }): Promise<{ data: Array<{ slug: string }> }>;
-            listMembersInOrg(parameters: { org: string; team_slug: string }): Promise<{ data: Array<{ login: string }> }>;
+            list(parameters: Record<string, unknown>): Promise<{ data: Array<{ slug: string }> }>;
+            listMembersInOrg(parameters: Record<string, unknown>): Promise<{ data: Array<{ login: string }> }>;
         };
     };
 }

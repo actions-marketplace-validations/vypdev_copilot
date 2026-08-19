@@ -18,6 +18,8 @@ describe('application architecture boundaries', () => {
         const forbiddenPatterns = [
             /from ['"]@actions\/github['"]/, 
             /from ['"][^'"]*\/infrastructure\//,
+            /from ['"][^'"]*\/manager\//,
+            /ConfigurationHandler/,
             /DefaultAgentRepositoryFactory/,
             /new\s+RepositoryFactory\s*\(/,
             /new\s+(IssueRepository|PullRequestRepository|OrganizationRepository|ProjectBoardQueryRepository|BranchRepository|RepositoryTagRepository|RepositoryReleasePublicationRepository|RepositoryDefaultBranchRepository)\s*\(/,

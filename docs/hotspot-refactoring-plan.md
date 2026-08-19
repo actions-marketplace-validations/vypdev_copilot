@@ -1,6 +1,8 @@
-# Hotspot Refactoring Plan
+# Historical Hotspot Refactoring Record
 
-Status: completed
+> This document records completed historical hotspot work. It is not the active implementation plan. Use [`total-architecture-reconstruction-plan.md`](./total-architecture-reconstruction-plan.md) for current priorities.
+
+Status: historical record
 Baseline: `976df3ed7ef4e41f294bef5a25980245921722fa`
 
 ## Objective
