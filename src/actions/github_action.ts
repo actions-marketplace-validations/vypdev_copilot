@@ -17,7 +17,7 @@ import { SingleAction } from '../data/model/single_action';
 
 
 import { finishGithubAction } from './github_action_completion';
-import { BUGBOT_MAX_COMMENTS, BUGBOT_MIN_SEVERITY, INPUT_KEYS } from '../utils/constants';
+import { INPUT_KEYS } from '../utils/constants';
 import { logDebugInfo, logError, logInfo } from '../utils/logger';
 import type { ManagedAgentServer } from '../application/ports/agent_server_ports';
 import { OpenCodeServerLifecycleAdapter } from '../data/repository/opencode_server_lifecycle_adapter';
@@ -31,9 +31,9 @@ import { loadProjectDetails } from './project_details_loader';
 import { mainRun } from './common_action';
 import { isEnabledInput } from './input_boolean_policy';
 import { getGithubActionInput } from './github_action_input';
-import { parseBoundedPositiveIntegerInput, parseIntegerInput } from './input_number_policy';
+import { parseIntegerInput } from './input_number_policy';
 import { parseDelimitedValues } from './input_values_policy';
-import { buildAgentTasksFromInputs } from './agent_input_builder';
+import { readGithubActionAiInputs } from './github_action_ai_inputs';
 import { buildImageConfiguration } from './image_configuration_builder';
 import { buildSizeThresholds } from './size_threshold_builder';
 import { buildBranches } from './branches_builder';
@@ -71,13 +71,10 @@ export async function runGitHubAction(): Promise<void> {
     /**
      * AI (OpenCode)
      */
-    let opencodeServerUrl = getGithubActionInput(INPUT_KEYS.OPENCODE_SERVER_URL) || 'http://127.0.0.1:4096';
-    const readAgentInput = (key: string): string => getGithubActionInput(key);
-    const requestedAgentTasks = buildAgentTasksFromInputs(readAgentInput);
-    const opencodeModel = requestedAgentTasks.findings.model;
-    const opencodeStartServer = isEnabledInput(getGithubActionInput(INPUT_KEYS.OPENCODE_START_SERVER))
-        && requestedAgentTasks.findings.provider === 'opencode'
-        && requestedAgentTasks.findings.transport === 'server';
+    const aiInputs = readGithubActionAiInputs(getGithubActionInput);
+    let opencodeServerUrl = aiInputs.serverUrl;
+    const opencodeModel = aiInputs.requestedAgentTasks.findings.model;
+    const opencodeStartServer = aiInputs.startServer;
 
     const lifecycle: OpenCodeServerLifecycleAdapter = new OpenCodeServerLifecycleAdapter();
     let managedOpencodeServer: ManagedAgentServer | undefined;
@@ -89,28 +86,19 @@ export async function runGitHubAction(): Promise<void> {
     } else {
         logDebugInfo(`Using OpenCode server URL: ${opencodeServerUrl}, model: ${opencodeModel}.`);
     }
-    const agentTasks = buildAgentTasksFromInputs((key) =>
-        key === INPUT_KEYS.OPENCODE_SERVER_URL ? opencodeServerUrl : readAgentInput(key)
-    );
+    const agentTasks = readGithubActionAiInputs((key) =>
+        key === INPUT_KEYS.OPENCODE_SERVER_URL ? opencodeServerUrl : getGithubActionInput(key)
+    ).requestedAgentTasks;
 
 
     try {
-    const aiPullRequestDescription = isEnabledInput(getGithubActionInput(INPUT_KEYS.AI_PULL_REQUEST_DESCRIPTION));
-    const aiMembersOnly = isEnabledInput(getGithubActionInput(INPUT_KEYS.AI_MEMBERS_ONLY));
-    const aiIncludeReasoning = isEnabledInput(getGithubActionInput(INPUT_KEYS.AI_INCLUDE_REASONING));
-    const aiIgnoreFilesInput: string = getGithubActionInput(INPUT_KEYS.AI_IGNORE_FILES);
-    const aiIgnoreFiles: string[] = parseDelimitedValues(aiIgnoreFilesInput);
-    const bugbotSeverity = getGithubActionInput(INPUT_KEYS.BUGBOT_SEVERITY) || BUGBOT_MIN_SEVERITY;
-    const bugbotCommentLimit = parseBoundedPositiveIntegerInput(
-        getGithubActionInput(INPUT_KEYS.BUGBOT_COMMENT_LIMIT),
-        BUGBOT_MAX_COMMENTS,
-        200,
-    );
-    const bugbotFixVerifyCommandsInput = getGithubActionInput(INPUT_KEYS.BUGBOT_FIX_VERIFY_COMMANDS);
-    const bugbotFixVerifyCommands = bugbotFixVerifyCommandsInput
-        .split(',')
-        .map((c) => c.trim())
-        .filter((c) => c.length > 0);
+    const aiPullRequestDescription = aiInputs.pullRequestDescription;
+    const aiMembersOnly = aiInputs.membersOnly;
+    const aiIncludeReasoning = aiInputs.includeReasoning;
+    const aiIgnoreFiles = aiInputs.ignoreFiles;
+    const bugbotSeverity = aiInputs.bugbotSeverity;
+    const bugbotCommentLimit = aiInputs.bugbotCommentLimit;
+    const bugbotFixVerifyCommands = aiInputs.bugbotFixVerifyCommands;
 
     /**
      * Projects Details
