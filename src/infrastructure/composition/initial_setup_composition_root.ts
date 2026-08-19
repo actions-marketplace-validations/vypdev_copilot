@@ -12,6 +12,7 @@ import { RepositoryDefaultBranchRepository } from "../../data/repository/release
 import { RepositoryTagRepository } from "../../data/repository/release/repository_tag_repository";
 import { GitCliRepository } from "../../data/repository/git_cli_repository";
 import { composeInitialSetupUseCase } from "./initial_setup_use_case_composition";
+import { SetupWorkspaceAdapter } from "../setup_workspace_adapter";
 
 export function createInitialSetupCompositionRoot(): InitialSetupUseCase {
     const progressLabels = new IssueProgressLabelRepository(
@@ -36,5 +37,6 @@ export function createInitialSetupCompositionRoot(): InitialSetupUseCase {
         new GitCliRepository(),
         new RepositoryDefaultBranchRepository(createReleaseClient()),
         new RepositoryTagRepository(createReleaseClient()),
+        new SetupWorkspaceAdapter(),
     );
 }

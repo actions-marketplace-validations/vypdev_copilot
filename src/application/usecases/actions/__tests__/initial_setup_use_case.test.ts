@@ -42,6 +42,8 @@ const mockGetLatestTag = jest.fn();
 const mockEnsureLabels = jest.fn();
 const mockEnsureProgressLabels = jest.fn();
 const mockEnsureIssueTypes = jest.fn();
+const mockSetupPrepare = jest.fn();
+const mockSetupHasValidToken = jest.fn();
 
 function baseParam(overrides: Record<string, unknown> = {}): Execution {
   return {
@@ -74,6 +76,8 @@ describe('InitialSetupUseCase', () => {
   let useCase: InitialSetupUseCase;
 
   beforeEach(() => {
+    mockSetupPrepare.mockClear();
+    mockSetupHasValidToken.mockClear();
     useCase = new InitialSetupUseCase(
       { getUserFromToken: mockGetUserFromToken, getTokenUserDetails: jest.fn() },
       { ensureLabels: mockEnsureLabels },
@@ -82,10 +86,10 @@ describe('InitialSetupUseCase', () => {
       { getLatestTag: mockGetLatestTag },
       { getDefaultBranch: mockGetDefaultBranch } as any,
       { createTag: mockCreateTag } as any,
+      { prepare: mockSetupPrepare, hasValidToken: mockSetupHasValidToken },
     );
-    mockEnsureGitHubDirs.mockClear();
-    mockCopySetupFiles.mockReturnValue({ copied: 2, skipped: 0 });
-    mockHasValidSetupToken.mockReturnValue(true);
+    mockSetupPrepare.mockReturnValue({ copied: 2, skipped: 0 });
+    mockSetupHasValidToken.mockReturnValue(true);
     mockGetUserFromToken.mockResolvedValue('test-user');
     mockEnsureLabels.mockResolvedValue({ success: true, created: 0, existing: 5, errors: [] });
     mockEnsureProgressLabels.mockResolvedValue({ created: 0, existing: 21, errors: [] });
@@ -98,16 +102,15 @@ describe('InitialSetupUseCase', () => {
     mockCreateTag.mockResolvedValue('abc123');
   });
 
-  it('calls ensureGitHubDirs, copySetupFiles and hasValidSetupToken with process.cwd()', async () => {
+  it('prepares the setup workspace and validates its token through the port', async () => {
     const param = baseParam();
     await useCase.invoke(param);
-    expect(mockEnsureGitHubDirs).toHaveBeenCalledWith(process.cwd());
-    expect(mockCopySetupFiles).toHaveBeenCalledWith(process.cwd());
-    expect(mockHasValidSetupToken).toHaveBeenCalledWith(process.cwd());
+    expect(mockSetupPrepare).toHaveBeenCalledTimes(1);
+    expect(mockSetupHasValidToken).toHaveBeenCalledTimes(1);
   });
 
   it('returns failure and does not continue when hasValidSetupToken is false', async () => {
-    mockHasValidSetupToken.mockReturnValue(false);
+    mockSetupHasValidToken.mockReturnValue(false);
     try {
       const param = baseParam();
       const results = await useCase.invoke(param);
@@ -119,9 +122,9 @@ describe('InitialSetupUseCase', () => {
       expect(results[0].steps).not.toContainEqual(
         expect.stringMatching(/GitHub access verified/)
       );
-      expect(mockHasValidSetupToken).toHaveBeenCalledWith(process.cwd());
+      expect(mockSetupHasValidToken).toHaveBeenCalledTimes(1);
     } finally {
-      mockHasValidSetupToken.mockReturnValue(true);
+      mockSetupHasValidToken.mockReturnValue(true);
     }
   });
 
@@ -246,7 +249,7 @@ describe('InitialSetupUseCase', () => {
   });
 
   it('returns failure in catch when an unexpected error is thrown', async () => {
-    mockEnsureGitHubDirs.mockImplementation(() => {
+    mockSetupPrepare.mockImplementation(() => {
       throw new Error('unexpected');
     });
     const param = baseParam();
