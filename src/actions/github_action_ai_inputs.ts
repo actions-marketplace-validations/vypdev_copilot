@@ -18,6 +18,15 @@ export interface GithubActionAiInputs {
     readonly bugbotFixVerifyCommands: string[];
 }
 
+export function readGithubActionAgentTasks(
+    getInput: (key: string) => string,
+    serverUrl: string,
+): AgentTaskConfiguration {
+    return buildAgentTasksFromInputs((key) =>
+        key === INPUT_KEYS.OPENCODE_SERVER_URL ? serverUrl : getInput(key),
+    );
+}
+
 export function readGithubActionAiInputs(getInput: (key: string) => string): GithubActionAiInputs {
     const serverUrl = getInput(INPUT_KEYS.OPENCODE_SERVER_URL) || 'http://127.0.0.1:4096';
     const requestedAgentTasks = buildAgentTasksFromInputs(getInput);

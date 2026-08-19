@@ -33,7 +33,7 @@ import { isEnabledInput } from './input_boolean_policy';
 import { getGithubActionInput } from './github_action_input';
 import { parseIntegerInput } from './input_number_policy';
 import { parseDelimitedValues } from './input_values_policy';
-import { readGithubActionAiInputs } from './github_action_ai_inputs';
+import { readGithubActionAgentTasks, readGithubActionAiInputs } from './github_action_ai_inputs';
 import { readGithubActionImageInputs } from './github_action_image_inputs';
 import { readGithubActionLocaleInputs } from './github_action_locale_inputs';
 import { buildSizeThresholds } from './size_threshold_builder';
@@ -93,9 +93,7 @@ export async function runGitHubAction(): Promise<void> {
     } else {
         logDebugInfo(`Using OpenCode server URL: ${opencodeServerUrl}, model: ${opencodeModel}.`);
     }
-    const agentTasks = readGithubActionAiInputs((key) =>
-        key === INPUT_KEYS.OPENCODE_SERVER_URL ? opencodeServerUrl : getGithubActionInput(key)
-    ).requestedAgentTasks;
+    const agentTasks = readGithubActionAgentTasks(getGithubActionInput, opencodeServerUrl);
 
 
     try {
