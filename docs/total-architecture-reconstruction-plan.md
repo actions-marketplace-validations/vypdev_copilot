@@ -335,9 +335,14 @@ Priority order:
 
 Current increment: `PullRequestChangesRepository` now owns one semantic
 `listAllFiles` pagination operation shared by its file capabilities. The
-first-diff-line capability now paginates all changed files instead of reading
+The first-diff-line capability now paginates all changed files instead of reading
 only the first page. A regression test covers multiple pages and diff-line
 resolution.
+
+The `ProjectBoardLinkRepository` now treats a mutation response without a
+created item id as an unsuccessful link instead of reporting a false success.
+Tests cover successful mutation responses, incomplete responses, and the
+idempotent already-linked path.
 
 For each adapter:
 

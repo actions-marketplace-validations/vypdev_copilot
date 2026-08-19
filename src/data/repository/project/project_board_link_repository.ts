@@ -19,7 +19,12 @@ export class ProjectBoardLinkRepository implements ProjectBoardLinkPort {
         }
         const linkMutation = `mutation($projectId: ID!, $contentId: ID!) { addProjectV2ItemById(input: {projectId: $projectId, contentId: $contentId}) { item { id } } }`;
         const linkResult = await this.graphqlClient.getClient(token).graphql<{ addProjectV2ItemById?: { item?: { id: string } } }>(linkMutation, { projectId: project.id, contentId });
-        logDebugInfo(`Linked ${contentId} with id ${linkResult.addProjectV2ItemById?.item?.id ?? ''} to project ${project.id}`);
+        const linkedItemId = linkResult.addProjectV2ItemById?.item?.id;
+        if (!linkedItemId) {
+            logDebugInfo(`Project link mutation returned no item for content ${contentId} and project ${project.id}.`);
+            return false;
+        }
+        logDebugInfo(`Linked ${contentId} with id ${linkedItemId} to project ${project.id}`);
         return true;
     };
 }
