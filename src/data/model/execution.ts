@@ -25,19 +25,7 @@ import { Workflows } from "./workflows";
 import { resolveExecutionIssueNumber } from "./resolve_execution_issue_number";
 import { resolveIssueBranchVersion } from './resolve_issue_branch_version';
 import { restorePreviousBranchState, type PreviousBranchState } from './previous_branch_state_policy';
-
-export interface ExecutionIssueSetupPort {
-    isPullRequest(owner: string, repository: string, issueNumber: number, token: string): Promise<boolean>;
-    isIssue(owner: string, repository: string, issueNumber: number, token: string): Promise<boolean>;
-    getHeadBranch(owner: string, repository: string, issueNumber: number, token: string): Promise<string | undefined>;
-    getLabels(owner: string, repo: string, issueNumber: number, token: string): Promise<string[]>;
-    getDescription(owner: string, repo: string, issueNumber: number, token: string): Promise<string | undefined>;
-    updateDescription(owner: string, repo: string, issueNumber: number, description: string, token: string): Promise<void>;
-}
-
-export interface ExecutionOrganizationSetupPort {
-    getUserFromToken(token: string): Promise<string | undefined>;
-}
+import type { ExecutionIssueSetupPort, ExecutionOrganizationSetupPort } from '../../application/ports/execution_setup_ports';
 
 export class Execution {
     debug: boolean = false;

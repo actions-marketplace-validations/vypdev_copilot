@@ -1,6 +1,7 @@
 import { INPUT_KEYS } from "../../utils/constants";
 import { extractIssueNumberFromBranch, extractIssueNumberFromPush } from "../../utils/title_utils";
-import type { Execution, ExecutionIssueSetupPort } from "./execution";
+import type { Execution } from './execution';
+import type { ExecutionIssueSetupPort } from '../../application/ports/execution_setup_ports';
 
 /**
  * Resolves the issue/PR number that drives an execution and records the
