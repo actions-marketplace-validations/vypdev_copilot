@@ -474,9 +474,10 @@ Exit criteria:
 - every capability has an owner and composition location;
 - a new contributor can follow the dependency direction without tribal knowledge.
 
-Current result: active. The authoritative documents are being synchronized
-against checkpoint `8196da94146a215fc99cb7939d852f85ad2fa4d2`. Historical
-baselines and completed feature plans remain available, but must be explicitly
+Current result: complete. The authoritative documents are synchronized against
+implementation checkpoint `8196da94146a215fc99cb7939d852f85ad2fa4d2`, with
+later documentation-only publication commits explicitly distinguished from that
+production baseline. Historical baselines and completed feature plans remain
 labelled so they cannot be mistaken for current architecture or priorities.
 The audit found the Phase C/F cycle above and concrete composition in
 `main_run_dispatcher.ts`, `local_action.ts`, and `queue_utils.ts`; these are now

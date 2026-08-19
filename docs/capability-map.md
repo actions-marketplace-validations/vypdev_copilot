@@ -129,16 +129,14 @@ on churn or line count.
 
 ## Current priorities
 
-1. finish documentation synchronization and publish a single authoritative
-   current-state description;
-2. remove the verified eight-module `Execution`/version/configuration SCC with
+1. remove the verified eight-module `Execution`/version/configuration SCC with
    caller-audited application orchestration, focused characterization tests,
    and an executable no-cycle regression guard;
-3. complete lifecycle composition review with caller and sharing tests;
-4. audit release/tag adapters and contracts as the next Phase E increment;
-5. revisit issue/PR lifecycle adapters only when a concrete contract gap is
+2. complete lifecycle composition review with caller and sharing tests;
+3. audit release/tag adapters and contracts as the next Phase E increment;
+4. revisit issue/PR lifecycle adapters only when a concrete contract gap is
    demonstrated;
-6. run final graph, coverage, and publication gates.
+5. run final graph, coverage, and publication gates.
 
 ## Explicit non-goals
 
