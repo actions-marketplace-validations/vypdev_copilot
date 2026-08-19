@@ -9,7 +9,7 @@ import { Hotfix } from '../data/model/hotfix';
 
 
 
-import { Locale } from '../data/model/locale';
+
 
 import { Release } from '../data/model/release';
 import { Result } from '../data/model/result';
@@ -35,6 +35,7 @@ import { parseIntegerInput } from './input_number_policy';
 import { parseDelimitedValues } from './input_values_policy';
 import { readGithubActionAiInputs } from './github_action_ai_inputs';
 import { readGithubActionImageInputs } from './github_action_image_inputs';
+import { readGithubActionLocaleInputs } from './github_action_locale_inputs';
 import { buildSizeThresholds } from './size_threshold_builder';
 import { readGithubActionThresholdInputs } from './github_action_threshold_inputs';
 import { buildBranches } from './branches_builder';
@@ -132,11 +133,7 @@ export async function runGitHubAction(): Promise<void> {
 
     const issueTypeInputs = readGithubActionIssueTypeInputs(getGithubActionInput);
 
-    /**
-     * Locale
-     */
-    const issueLocale = getGithubActionInput(INPUT_KEYS.ISSUES_LOCALE) ?? Locale.DEFAULT;
-    const pullRequestLocale = getGithubActionInput(INPUT_KEYS.PULL_REQUESTS_LOCALE) ?? Locale.DEFAULT;
+    const localeInputs = readGithubActionLocaleInputs(getGithubActionInput);
 
     const sizeThresholdInputs = readGithubActionThresholdInputs(getGithubActionInput);
     const branchInputs = readGithubActionBranchInputs(getGithubActionInput);
@@ -199,7 +196,7 @@ export async function runGitHubAction(): Promise<void> {
         ),
         labels: buildLabels(labelInputs),
         issueTypes: buildIssueTypes(issueTypeInputs),
-        locale: buildLocale(issueLocale, pullRequestLocale),
+        locale: buildLocale(localeInputs.issue, localeInputs.pullRequest),
         sizeThresholds: buildSizeThresholds(sizeThresholdInputs),
         branches: buildBranches(branchInputs),
         release: new Release(),
