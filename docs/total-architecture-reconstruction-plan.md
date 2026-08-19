@@ -2,9 +2,13 @@
 
 **Status:** Active execution baseline — approved for consecutive phase execution.
 
-**Latest implementation checkpoint:** `29e58cb46e8cd0e223ff16ea53f9003e2fd268f0`
+**Latest implementation checkpoint:** `8196da94146a215fc99cb7939d852f85ad2fa4d2`
 
-**Completed in the current execution block:** Phases A and B; Phase C audit; first Phase E adapter hardening increment.
+**Completed in the current execution block:** Phases A and B; Phase E hardening
+for pull-request file pagination, project-board linking, organization-member
+pagination, and authenticated-user contracts. Phase G is active to synchronize
+all documentation before further production work. Phase C is reopened by a
+verified import cycle, and Phase F becomes the next production priority.
 
 **Scope:** Clean Architecture reconstruction, boundary hardening, contract coverage, documentation, and RepoWise/Graphify quality improvement for the current `master` checkout.
 
@@ -38,14 +42,14 @@ Current published state:
 
 ```text
 HEAD == origin/master
-SHA: 1117a1242ea8ad3c36f0fb76aef2c6fc580afc2e
+SHA: 8196da94146a215fc99cb7939d852f85ad2fa4d2
 working tree: clean
 ```
 
 Current quality gates:
 
 ```text
-Jest: 210 suites passed, 1348 tests passed, 1 skipped
+Jest: 214 suites passed, 1358 tests passed, 1 skipped
 TypeScript: PASS
 ESLint: PASS
 Build: PASS
@@ -56,24 +60,33 @@ Diff check: PASS
 Current Graphify refresh:
 
 ```text
-3170 nodes
-8191 edges
-206 communities
+3178 nodes
+8241 edges
+220 communities
 ```
 
 Persistent Graphify warning:
 
 ```text
-extensions.json and docs.json produce zero nodes
+docs.json produces zero nodes
 ```
 
 This warning is analysis-tool input behavior, not evidence of a production architecture defect. It must remain visible until the tool or input handling changes.
 
 Current RepoWise observations:
 
-- the previous `Execution` cycle was reduced and the current report no longer proposes a break-cycle plan for it;
+- current graph: 3071 nodes and 6718 edges;
+- average health: 8.11/10; hotspot health: 5.79/10; average
+  maintainability: 9.22/10;
+- current worst performer: `src/data/repository/merge_repository.ts` at
+  3.04/10; its direct responsibilities and tests must be audited before any
+  split, because the score alone is not an architectural verdict;
 - current target findings are mainly churn/co-change signals and duplicated-line suggestions;
-- current high-value candidates include the remaining application boundary audit, `Execution` responsibility review, and selected adapter contracts;
+- RepoWise does not currently emit a break-cycle plan for `Execution`, but
+  direct import analysis proves the eight-module SCC documented in Phase C;
+  tool silence is not evidence of an acyclic graph;
+- the next evidence-backed priority is that SCC, followed by lifecycle
+  composition verification and the postponed release/tag adapter audit;
 - RepoWise dead-code analysis is partial because of its offset-naive/offset-aware datetime issue; zero dead-code counts are not conclusive;
 - `cli.ts` is now a small bootstrap and is not a valid extraction target;
 - `local_action.ts` already delegates to builders and composition; its churn signal is not enough evidence for another split;
@@ -199,7 +212,10 @@ A composition root may share a transport instance when the capability contract r
 
 ## 6. Implementation phases
 
-Implementation is paused until this plan is accepted. Once approved, phases are executed in small published blocks. Each phase may produce multiple commits.
+This plan is approved and in active execution. Phases are executed in small,
+published blocks. Each phase may produce multiple commits, but no second
+production change starts before the active block passes its focused and global
+gates.
 
 ### Phase A — Current-checkout boundary audit
 
@@ -292,12 +308,27 @@ Exit criteria:
 - no universal execution context facade is introduced;
 - cycle analysis remains clean or every remaining cycle is explicitly justified.
 
-Current result: audit complete with no implementation required in this
-increment. Issue-number resolution, branch-version resolution, previous-state
-restoration, and setup ports are already extracted. The remaining RepoWise
-extract-method suggestion in `Execution` is a comment plus state assignments,
-not an independent responsibility, and is therefore intentionally rejected as
-cosmetic.
+Current result: reopened. The size-based RepoWise extract-method suggestion in
+`Execution` remains cosmetic and is still rejected, but direct import analysis
+confirmed one strongly connected component across eight modules. The relevant
+cycles include:
+
+```text
+Execution
+ -> resolveIssueBranchVersion
+ -> resolveReleaseBranchVersion / resolveHotfixBranchVersion
+ -> GetReleaseVersionUseCase / GetReleaseTypeUseCase / GetHotfixVersionUseCase
+ -> Execution
+
+Execution <-> ExecutionConfigurationPort
+```
+
+The defect is not that `Execution` is large. The defect is that a data model
+owns application orchestration, constructs use cases, and imports ports whose
+contracts in turn depend on that model. The next implementation block must
+move resolution/configuration orchestration to an application-owned semantic
+boundary, use acyclic input/result contracts, preserve transition behavior,
+and add a failing architecture test before production changes.
 
 ### Phase D — Configuration and lifecycle composition review
 
@@ -324,18 +355,21 @@ Exit criteria:
 
 **Goal:** improve correctness and RepoWise health through behavior contracts, not generic wrappers.
 
-Priority order:
+Current status:
 
-1. issue lifecycle adapter;
-2. project board link adapter;
-3. authenticated user and organization membership adapters;
-4. release/tag adapters;
-5. pull-request lifecycle/review/changes adapters;
-6. pagination and GitHub error boundaries where missing.
+1. pull-request changes pagination: hardened and covered;
+2. project-board linking: hardened and covered;
+3. organization membership pagination: hardened and covered;
+4. authenticated identity: audited and contract-covered without a production
+   behavior change;
+5. release/tag adapters: next Phase E contract audit, postponed until the
+   Phase C/F SCC is removed and guarded;
+6. issue lifecycle and remaining pull-request lifecycle/review behavior: audit
+   only where source/caller evidence identifies a contract gap.
 
 Current increment: `PullRequestChangesRepository` now owns one semantic
 `listAllFiles` pagination operation shared by its file capabilities. The
-The first-diff-line capability now paginates all changed files instead of reading
+first-diff-line capability now paginates all changed files instead of reading
 only the first page. A regression test covers multiple pages and diff-line
 resolution.
 
@@ -381,6 +415,11 @@ Tasks:
 5. Detect imports from entrypoints/composition into application.
 6. Verify type-only imports do not conceal outer-layer semantic coupling.
 7. Re-run Graphify and inspect cycles, hubs, and cross-layer edges.
+8. Reject productive imports from `data/model` into application use-case
+   implementations and productive model construction of use cases.
+9. Detect provider/adapter construction hidden in `src/actions` and
+   `src/utils`, then either move it to a named composition root or document a
+   narrow lifecycle composition boundary with a test.
 
 Exit criteria:
 
@@ -418,6 +457,14 @@ Exit criteria:
 - no document claims a removed file is an active hotspot;
 - every capability has an owner and composition location;
 - a new contributor can follow the dependency direction without tribal knowledge.
+
+Current result: active. The authoritative documents are being synchronized
+against checkpoint `8196da94146a215fc99cb7939d852f85ad2fa4d2`. Historical
+baselines and completed feature plans remain available, but must be explicitly
+labelled so they cannot be mistaken for current architecture or priorities.
+The audit found the Phase C/F cycle above and concrete composition in
+`main_run_dispatcher.ts`, `local_action.ts`, and `queue_utils.ts`; these are now
+explicit current debts rather than undocumented assumptions.
 
 ### Phase H — Final perfection gates
 
@@ -541,10 +588,19 @@ The reconstruction is complete when:
 
 Until these criteria are met, the project is not declared architecturally complete.
 
-## 10. Current next action after plan approval
+## 10. Current next action
 
 Do not begin with `local_action.ts`, `cli.ts`, generic helper extraction, or historical `ai_repository`/`RepositoryFactory` work.
 
-The first implementation block after approval is:
+After this documentation synchronization block passes its gates and is
+published, the next production block is:
 
-> **Migrate `StoreConfigurationUseCase` behind a semantic configuration port, update its composition roots and tests, then enforce the boundary with an architecture test.**
+> **Eliminate the verified `Execution`/version-resolution/configuration SCC
+> through an application-owned semantic orchestration boundary. Start with a
+> RED architecture test and behavior characterization, audit every caller, use
+> acyclic input/result contracts, introduce no compatibility shim, and preserve
+> all release/hotfix/configuration transitions. Then harden the composition
+> guard so the cycle cannot return.**
+
+The release/tag adapter contract audit remains the next Phase E increment after
+this higher-priority dependency-direction defect is removed and verified.

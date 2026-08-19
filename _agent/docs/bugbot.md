@@ -5,7 +5,7 @@ description: Detailed technical reference for Bugbot (detection, markers, contex
 
 # Bugbot – technical reference
 
-Bugbot has two main modes: **detection** (on push or single action) and **fix/do** (on issue comment or PR review comment). All Bugbot code lives under `src/usecase/steps/commit/bugbot/` and `src/usecase/steps/commit/` (DetectPotentialProblemsUseCase, user_request_use_case).
+Bugbot has two main modes: **detection** (on push or single action) and **fix/do** (on issue comment or PR review comment). All Bugbot code lives under `src/application/usecases/steps/commit/bugbot/` and `src/application/usecases/steps/commit/` (DetectPotentialProblemsUseCase, user_request_use_case).
 
 ---
 
@@ -69,9 +69,8 @@ Bugbot has two main modes: **detection** (on push or single action) and **fix/do
    - `askAgent(OPENCODE_AGENT_PLAN, prompt, BUGBOT_FIX_INTENT_RESPONSE_SCHEMA)` → `{ is_fix_request, target_finding_ids, is_do_request }`.  
    - Payload: `isFixRequest`, `isDoRequest`, `targetFindingIds` (filtered to valid unresolved ids), `context`, `branchOverride`.
 
-2. **Permission:** `ProjectRepository.isActorAllowedToModifyFiles(owner, actor, token)`.  
-   - If owner is Organization: `orgs.checkMembershipForUser` (204 = allowed).  
-   - If owner is User: allowed only if `actor === owner`.
+2. **Permission:** `ActorAuthorizationPort.isActorAllowedToModifyFiles(owner, actor, token)`.
+   - `ActorAuthorizationRepository` checks organization membership for organization-owned repositories and exact owner identity for user-owned repositories.
 
 3. **Branch A – Bugbot autofix** (when `canRunBugbotAutofix(payload)` and `allowedToModifyFiles`):  
    - `BugbotAutofixUseCase.invoke({ execution, targetFindingIds, userComment, context, branchOverride })`  

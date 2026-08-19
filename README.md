@@ -30,11 +30,11 @@ Full documentation: **[docs.page/vypdev/copilot](https://docs.page/vypdev/copilo
 | [Pull requests](https://docs.page/vypdev/copilot/pull-requests) | PR configuration and AI description |
 | [Troubleshooting](https://docs.page/vypdev/copilot/troubleshooting) | Common issues and solutions |
 | [Support](https://docs.page/vypdev/copilot/support) | How to get help |
-| [Architecture and repository capabilities](docs/repository-architecture.md) | Clean Architecture target, capability ports, composition roots |
-| [Total architecture reconstruction plan](docs/total-architecture-reconstruction-plan.md) | Full capability partitioning, facade retirement, composition and boundary plan |
-| [Capability map](docs/capability-map.md) | Current responsibilities, target ports, adapters, consumers and retirement criteria |
+| [Architecture and repository capabilities](docs/repository-architecture.md) | Current Clean Architecture shape, capability ports, adapters, and composition boundaries |
+| [Architecture perfection plan](docs/total-architecture-reconstruction-plan.md) | Active evidence-backed hardening, documentation, graph, and completion plan |
+| [Capability map](docs/capability-map.md) | Current ports, adapters, composition locations, status, and priorities |
 | [Dependency rules](docs/dependency-rules.md) | Enforceable Clean Architecture layer and import invariants |
-| [Migration baseline](docs/migration-baseline.md) | Reproducible Graphify, RepoWise, Git and verification baseline |
+| [Historical migration baseline](docs/migration-baseline.md) | Original Graphify, RepoWise, Git, and verification baseline for comparison only |
 | [Graphify development workflow](docs/graphify-development.md) | Local topology graph and impact analysis complementary to RepoWise |
 
 ---

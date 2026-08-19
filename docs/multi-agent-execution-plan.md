@@ -1,5 +1,11 @@
 # Multi-Agent Execution Plan
 
+> **Status: design proposal, not current runtime architecture or an active
+> implementation phase.** The current production integration remains based on
+> the existing agent capability ports and OpenCode adapters. Revalidate provider
+> licensing, authentication, security boundaries, and current callers before
+> scheduling any Codex/Cursor implementation from this document.
+
 ## Objective
 
 Evolve Copilot from an OpenCode-specific AI integration into a provider-agnostic execution architecture that can safely run Bugbot findings and Bugbot fixer tasks inside GitHub Actions runners.

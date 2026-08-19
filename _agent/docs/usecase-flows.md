@@ -49,7 +49,7 @@ mainRun
 
 1. **CheckIssueCommentLanguageUseCase** (translation)
 2. **DetectBugbotFixIntentUseCase** → payload: `isFixRequest`, `isDoRequest`, `targetFindingIds`, `context`, `branchOverride`
-3. **ProjectRepository.isActorAllowedToModifyFiles(owner, actor, token)** (permission to modify files)
+3. **ActorAuthorizationPort.isActorAllowedToModifyFiles(owner, actor, token)** (permission to modify files)
 4. Branch A – **if runAutofix && allowed**:
    - **BugbotAutofixUseCase** → **runBugbotAutofixCommitAndPush** → if committed: **markFindingsResolved**
 5. Branch B – **if !runAutofix && canRunDoUserRequest && allowed**:
@@ -143,6 +143,6 @@ Invoked when:
 
 ## 8. Flow dependencies
 
-- **Bugbot autofix / Do user request**: require OpenCode, `isActorAllowedToModifyFiles` (org member or repo owner), and on issue_comment optionally branch from PR (`getHeadBranchForIssue`).
+- **Bugbot autofix / Do user request**: require OpenCode, `ActorAuthorizationPort.isActorAllowedToModifyFiles` (org member or repo owner), and on issue_comment optionally branch from PR (`getHeadBranchForIssue`).
 - **Think**: used in IssueComment and PullRequestReviewComment when neither autofix nor do user request runs (by intent or by permission).
 - **CommitUseCase**: NotifyNewCommitOnIssue, CheckChangesIssueSize, CheckProgress, DetectPotentialProblems (bugbot) always run in that order on every push with commits.

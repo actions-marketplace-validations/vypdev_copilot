@@ -128,19 +128,30 @@ The following parameters can be configured in the workflow:
 The workflow can select one provider for both findings and fixer operations. The selected transport is resolved before execution; unsupported combinations fail instead of silently falling back to OpenCode.
 
 - `agent-provider`: `opencode`, `cursor`, or `codex` (default: `opencode`)
-- `agent-transport`: `server`, `sdk`, or `cli` (default: `server`)
+- `agent-transport`: `server` or `cli` (default: `server`)
 - `agent-model`: provider-specific model or executable identifier (defaults to `opencode-model`)
-- `agent-command`: literal executable plus arguments for CLI transport (required for `cli`)
+- `agent-command`: optional literal executable plus arguments for CLI transport;
+  defaults are `opencode`, `cursor-agent`, or `codex` according to the provider
 
 Current execution matrix:
 
-| Provider | `server` | `sdk` | `cli` |
-| --- | --- | --- | --- |
-| OpenCode | supported; managed startup preserves the legacy lifecycle | rejected until an SDK adapter is verified | supported when explicitly configured |
-| Cursor | rejected until a server adapter is verified | rejected until an SDK adapter is verified | supported through the configured CLI |
-| Codex | rejected until a server adapter is verified | rejected until an SDK adapter is verified | supported through the configured CLI |
+| Provider | `server` | `cli` |
+| --- | --- | --- |
+| OpenCode | supported; managed startup preserves the legacy lifecycle | experimental generic command transport; no provider-specific flags are added |
+| Cursor | rejected | experimental generic command transport; provider-specific integration is not wired or end-to-end verified |
+| Codex | rejected | experimental generic command transport; provider-specific integration is not wired or end-to-end verified |
 
-CLI commands are executed without a shell. Shell operators, substitutions, pipes, redirects, and non-literal command tokens are rejected. The prompt is sent through standard input, and stdout is treated as the agent response. Configure credentials through the runner/provider environment; never include tokens in `agent-command`.
+SDK transport is not part of the current public contract. It remains a future
+design option in the explicitly non-active multi-agent proposal.
+
+CLI commands are executed without a shell. Shell operators, substitutions,
+pipes, redirects, and non-literal command tokens are rejected. The generic
+transport sends the prompt through standard input and treats stdout as the agent
+response. A default executable name does not prove that a provider's current
+CLI accepts this protocol. Use CLI transport only after verifying the selected
+non-interactive command in the runner environment, preferably by setting
+`agent-command` explicitly. Configure credentials through the runner/provider
+environment; never include tokens in `agent-command`.
 
 Legacy OpenCode inputs remain supported:
 

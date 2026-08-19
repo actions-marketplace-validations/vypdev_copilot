@@ -2,19 +2,22 @@
 
 ## Purpose
 
-Graphify is a complementary development tool for repository topology and code navigation. It does not participate in the Copilot runtime and is not a replacement for tests, TypeScript checks, RepoWise health, or security gates.
+Graphify is a local topology and navigation aid. It does not participate in the
+Copilot runtime and does not replace tests, TypeScript, RepoWise, security
+gates, or caller inspection.
 
-Use it to answer structural questions before changing code:
+Use it to investigate:
 
-- Which production callers depend on a legacy repository?
-- What is the shortest path between a use case and a provider adapter?
-- Which nodes are architectural hubs?
-- What files are affected by removing or partitioning a facade?
-- Are the current ports and composition roots connected as intended?
+- production callers and affected paths;
+- capability and composition hubs;
+- cross-layer edges and cycles;
+- whether current ports and adapters are connected as intended;
+- impact before retiring a facade or changing a composition root.
 
 ## Installation
 
-Install the official Graphify Labs package in an isolated Python environment. The PyPI package is named `graphifyy`; the executable is `graphify`.
+Install `graphifyy` in an isolated Python environment. Do not add it to
+`package.json`, the pnpm lockfile, or production dependencies.
 
 ```bash
 python3 -m venv /tmp/copilot-graphify-venv
@@ -22,63 +25,97 @@ python3 -m venv /tmp/copilot-graphify-venv
 /tmp/copilot-graphify-venv/bin/graphify hermes install
 ```
 
-Graphify is a development tool only. Do not add it to `package.json`, the pnpm lockfile, the GitHub Action bundle, or production dependencies.
-
-## Generate the local graph
-
-The default development graph is deterministic and AST-only:
+The executable is not assumed to be on `PATH`. Commands in this repository use:
 
 ```bash
-graphify extract . --code-only --no-cluster --out .
+GRAPHIFY=/tmp/copilot-graphify-venv/bin/graphify
 ```
 
-This writes generated files below `graphify-out/`, which is intentionally ignored by Git. `--code-only` avoids sending documentation or source content to an LLM and requires no API key.
+## Current workflow
 
-For a focused query:
+The authoritative refresh command is:
 
 ```bash
-graphify god-nodes --top 20
-graphify explain "src/data/repository/ai_repository.ts"
-graphify affected "src/data/repository/ai_repository.ts" --depth 2
-graphify path "src/cli.ts" "src/actions/local_action.ts"
-graphify query "what production callers depend on RepositoryFactory"
+rm -rf graphify-out
+$GRAPHIFY update .
 ```
 
-After source changes, update the AST graph without an API call:
+This builds the local AST graph in `graphify-out/`. The directory is generated
+and ignored by Git.
+
+Query before reading generated JSON manually:
 
 ```bash
-graphify update .
+$GRAPHIFY query "application boundaries and composition roots" --budget 5000
+$GRAPHIFY query "release tag adapters callers and provider clients" --budget 5000
+$GRAPHIFY query "GitHub Action local action CLI runtime composition" --budget 5000
 ```
 
-## How Graphify is used with RepoWise
+Narrow broad results by naming the concrete symbol or path. Graphify semantic
+queries may include documentation and test nodes; a returned node is evidence
+to inspect, not proof of a production dependency.
 
-Use the tools for different questions:
+## Use with RepoWise
 
 ```text
-Graphify → topology, callers, paths, hubs, impact
-RepoWise  → complexity, duplication, churn, health, risk
-Tests     → behavior and contracts
-Git       → published history and change verification
+Graphify -> topology, callers, paths, hubs, impact
+RepoWise  -> complexity, duplication, churn, health, risk
+Tests     -> behavior and contracts
+Source    -> authoritative current implementation
+Git       -> publication and historical evidence
 ```
 
-A RepoWise hotspot must not be refactored only because a number is high. First use Graphify to identify the real capability boundary and production callers, then define a semantic port, migrate callers, add contract tests, and remove the facade when no production dependency remains.
+A RepoWise hotspot is not a refactoring instruction. Use Graphify and source
+search to identify the real callers and ownership first, define a semantic
+boundary only when one exists, and add contract tests for intentional changes.
+
+## Current checkpoint
+
+At published source checkpoint
+`8196da94146a215fc99cb7939d852f85ad2fa4d2`, refreshed with the command above:
+
+```text
+3178 nodes
+8241 edges
+220 communities
+```
+
+The generated graph is currently marked `directed: false`. It cannot prove the
+absence of directed dependency cycles. Use source imports and executable
+architecture tests for dependency direction; use Graphify for connectivity,
+paths, hubs, and impact.
+
+Current high-degree nodes are headed by logging functions, `Execution`,
+`Result`, `ParamUseCase`, `GithubClientPort`, and semantic ports. Logging is a
+legitimate cross-cutting concern; models and base contracts are monitored for
+responsibility concentration; provider client contracts remain technical and
+outside application behavior. Retired universal facades are no longer current
+god nodes.
+
+Persistent tool warning:
+
+```text
+docs.json produces zero nodes
+```
+
+The warning is Graphify input behavior, not a production architecture defect.
+The graph shows current composition roots and application architecture tests as
+first-class nodes. Broad queries also surface historical documents, so current
+source paths must always be verified before acting.
+
+## Historical baseline
+
+The original reconstruction spike contained 2327 nodes and 6764 edges and
+highlighted `Execution`, `GithubClientPort`, `IssueRepository`,
+`RepositoryFactory`, and the former AI facade. Those metrics remain useful only
+as historical comparison in `migration-baseline.md`; several named facades no
+longer exist in production and must not be treated as current hotspots.
 
 ## Privacy and generated artifacts
 
-- Never index credentials, `.env` files, auth state, databases, logs, or real user data.
-- Review `.gitignore` and `.graphifyignore` before indexing a new repository.
-- Keep `graphify-out/` local or publish it only as a short-lived CI artifact when the repository policy permits it.
-- Do not commit generated graph files unless there is an explicit, reviewed reason to version them.
-
-## Current Copilot spike
-
-The initial AST-only graph for Copilot contained 471 code files, 2,327 nodes, and 6,764 edges. It identified these useful hubs:
-
-- `Execution`: degree 221;
-- `GithubClientPort`: degree 71;
-- `IssueRepository`: degree 49;
-- `RepositoryFactory`: degree 35;
-- `runGitHubAction()`: degree 31;
-- `runLocalAction()`: degree 30.
-
-`AiRepository` had 47 connections and production callers through `agent_repository_factory.ts`, `common_action.ts`, `cli.ts`, and `repository_factory.ts`. This graph evidence will be used before the complete AI capability partition and facade removal.
+- Never index credentials, `.env` files, auth state, databases, logs, or user
+  data.
+- Review `.gitignore` and `.graphifyignore` before indexing a new source.
+- Keep `graphify-out/` local unless an explicit reviewed CI policy says
+  otherwise.
+- Never commit generated graph files as architectural source of truth.
