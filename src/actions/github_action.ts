@@ -9,7 +9,7 @@ import { Hotfix } from '../data/model/hotfix';
 
 
 
-import { Locale } from '../data/model/locale';
+
 
 import { Release } from '../data/model/release';
 import { Result } from '../data/model/result';
@@ -33,14 +33,17 @@ import { isEnabledInput } from './input_boolean_policy';
 import { getGithubActionInput } from './github_action_input';
 import { parseIntegerInput } from './input_number_policy';
 import { parseDelimitedValues } from './input_values_policy';
-import { readGithubActionAiInputs } from './github_action_ai_inputs';
-import { buildImageConfiguration } from './image_configuration_builder';
+import { readGithubActionAgentTasks, readGithubActionAiInputs } from './github_action_ai_inputs';
+import { readGithubActionImageInputs } from './github_action_image_inputs';
+import { readGithubActionLocaleInputs } from './github_action_locale_inputs';
 import { buildSizeThresholds } from './size_threshold_builder';
 import { readGithubActionThresholdInputs } from './github_action_threshold_inputs';
 import { buildBranches } from './branches_builder';
 import { readGithubActionBranchInputs } from './github_action_branch_inputs';
 import { readGithubActionLabelInputs } from './github_action_label_inputs';
 import { readGithubActionWorkflowInputs } from './github_action_workflow_inputs';
+import { readGithubActionIssueTypeInputs } from './github_action_issue_type_inputs';
+import { readGithubActionProjectInputs } from './github_action_project_inputs';
 import { buildExecution } from './execution_builder';
 import { buildEmoji, buildImages, buildIssue, buildIssueTypes, buildLabels, buildLocale, buildProjects, buildPullRequest, buildTokens, buildWorkflows } from './configuration_builders';
 
@@ -90,9 +93,7 @@ export async function runGitHubAction(): Promise<void> {
     } else {
         logDebugInfo(`Using OpenCode server URL: ${opencodeServerUrl}, model: ${opencodeModel}.`);
     }
-    const agentTasks = readGithubActionAiInputs((key) =>
-        key === INPUT_KEYS.OPENCODE_SERVER_URL ? opencodeServerUrl : getGithubActionInput(key)
-    ).requestedAgentTasks;
+    const agentTasks = readGithubActionAgentTasks(getGithubActionInput, opencodeServerUrl);
 
 
     try {
@@ -112,15 +113,12 @@ export async function runGitHubAction(): Promise<void> {
 
     const projects = await loadProjectDetails(projectBoard.query, projectIds, token);
 
-    const projectColumnIssueCreated = getGithubActionInput(INPUT_KEYS.PROJECT_COLUMN_ISSUE_CREATED)
-    const projectColumnPullRequestCreated = getGithubActionInput(INPUT_KEYS.PROJECT_COLUMN_PULL_REQUEST_CREATED)
-    const projectColumnIssueInProgress = getGithubActionInput(INPUT_KEYS.PROJECT_COLUMN_ISSUE_IN_PROGRESS)
-    const projectColumnPullRequestInProgress = getGithubActionInput(INPUT_KEYS.PROJECT_COLUMN_PULL_REQUEST_IN_PROGRESS)
+    const projectInputs = readGithubActionProjectInputs(getGithubActionInput, projects);
 
     /**
      * Images
      */
-    const imageConfiguration = buildImageConfiguration(getGithubActionInput);
+    const imageConfiguration = readGithubActionImageInputs(getGithubActionInput);
     const workflowInputs = readGithubActionWorkflowInputs(getGithubActionInput);
 
     /**
@@ -131,50 +129,9 @@ export async function runGitHubAction(): Promise<void> {
 
     const labelInputs = readGithubActionLabelInputs(getGithubActionInput);
 
-    /**
-     * Issue Types
-     */
-    const issueTypeBug = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_BUG);
-    const issueTypeBugDescription = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_BUG_DESCRIPTION);
-    const issueTypeBugColor = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_BUG_COLOR);
+    const issueTypeInputs = readGithubActionIssueTypeInputs(getGithubActionInput);
 
-    const issueTypeHotfix = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_HOTFIX);
-    const issueTypeHotfixDescription = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_HOTFIX_DESCRIPTION);
-    const issueTypeHotfixColor = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_HOTFIX_COLOR);
-
-    const issueTypeFeature = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_FEATURE);
-    const issueTypeFeatureDescription = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_FEATURE_DESCRIPTION);
-    const issueTypeFeatureColor = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_FEATURE_COLOR);
-
-    const issueTypeDocumentation = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_DOCUMENTATION);
-    const issueTypeDocumentationDescription = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_DOCUMENTATION_DESCRIPTION);
-    const issueTypeDocumentationColor = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_DOCUMENTATION_COLOR);
-
-    const issueTypeMaintenance = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_MAINTENANCE);
-    const issueTypeMaintenanceDescription = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_MAINTENANCE_DESCRIPTION);
-    const issueTypeMaintenanceColor = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_MAINTENANCE_COLOR);
-
-    const issueTypeRelease = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_RELEASE);
-    const issueTypeReleaseDescription = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_RELEASE_DESCRIPTION);
-    const issueTypeReleaseColor = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_RELEASE_COLOR);
-
-    const issueTypeQuestion = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_QUESTION);
-    const issueTypeQuestionDescription = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_QUESTION_DESCRIPTION);
-    const issueTypeQuestionColor = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_QUESTION_COLOR);
-
-    const issueTypeHelp = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_HELP);
-    const issueTypeHelpDescription = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_HELP_DESCRIPTION);
-    const issueTypeHelpColor = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_HELP_COLOR);
-
-    const issueTypeTask = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_TASK);
-    const issueTypeTaskDescription = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_TASK_DESCRIPTION);
-    const issueTypeTaskColor = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_TASK_COLOR);
-
-    /**
-     * Locale
-     */
-    const issueLocale = getGithubActionInput(INPUT_KEYS.ISSUES_LOCALE) ?? Locale.DEFAULT;
-    const pullRequestLocale = getGithubActionInput(INPUT_KEYS.PULL_REQUESTS_LOCALE) ?? Locale.DEFAULT;
+    const localeInputs = readGithubActionLocaleInputs(getGithubActionInput);
 
     const sizeThresholdInputs = readGithubActionThresholdInputs(getGithubActionInput);
     const branchInputs = readGithubActionBranchInputs(getGithubActionInput);
@@ -236,30 +193,14 @@ export async function runGitHubAction(): Promise<void> {
             agentTasks,
         ),
         labels: buildLabels(labelInputs),
-        issueTypes: buildIssueTypes({
-            task: { name: issueTypeTask, description: issueTypeTaskDescription, color: issueTypeTaskColor },
-            bug: { name: issueTypeBug, description: issueTypeBugDescription, color: issueTypeBugColor },
-            feature: { name: issueTypeFeature, description: issueTypeFeatureDescription, color: issueTypeFeatureColor },
-            documentation: { name: issueTypeDocumentation, description: issueTypeDocumentationDescription, color: issueTypeDocumentationColor },
-            maintenance: { name: issueTypeMaintenance, description: issueTypeMaintenanceDescription, color: issueTypeMaintenanceColor },
-            hotfix: { name: issueTypeHotfix, description: issueTypeHotfixDescription, color: issueTypeHotfixColor },
-            release: { name: issueTypeRelease, description: issueTypeReleaseDescription, color: issueTypeReleaseColor },
-            question: { name: issueTypeQuestion, description: issueTypeQuestionDescription, color: issueTypeQuestionColor },
-            help: { name: issueTypeHelp, description: issueTypeHelpDescription, color: issueTypeHelpColor },
-        }),
-        locale: buildLocale(issueLocale, pullRequestLocale),
+        issueTypes: buildIssueTypes(issueTypeInputs),
+        locale: buildLocale(localeInputs.issue, localeInputs.pullRequest),
         sizeThresholds: buildSizeThresholds(sizeThresholdInputs),
         branches: buildBranches(branchInputs),
         release: new Release(),
         hotfix: new Hotfix(),
         workflows: buildWorkflows(workflowInputs.release, workflowInputs.hotfix),
-        projects: buildProjects({
-            projects,
-            issueCreated: projectColumnIssueCreated,
-            pullRequestCreated: projectColumnPullRequestCreated,
-            issueInProgress: projectColumnIssueInProgress,
-            pullRequestInProgress: projectColumnPullRequestInProgress,
-        }),
+        projects: buildProjects(projectInputs),
         inputs: eventInputs,
     });
 
