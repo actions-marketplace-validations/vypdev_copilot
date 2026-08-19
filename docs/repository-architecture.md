@@ -4,19 +4,22 @@
 
 This document defines the target architecture for repository capabilities in Copilot. It is a migration contract, not a request to create files mechanically. Every extraction must represent a stable semantic responsibility, preserve the public behavior, and be validated by focused tests plus the complete quality gates.
 
-## Baseline
+## Current verification snapshot
 
-The baseline was captured before this migration on the current `master` commit.
+The current checkout is `1117a1242ea8ad3c36f0fb76aef2c6fc580afc2e`.
 
-- Test suites: `190 passed`
-- Tests: `1468 passed`, `1 skipped`
+- Test suites: `210 passed`
+- Tests: `1348 passed`, `1 skipped`
 - TypeScript: pass
 - ESLint: pass
 - Build: pass
-- RepoWise average health: `8.79`
-- RepoWise hotspot health: `5.03`
-- Current worst performer: `src/data/repository/ai_repository.ts`, score `3.18`
-- Change risk: `1.3`, low
+- Production audit: pass
+- Graphify: `3170 nodes`, `8191 edges`, `206 communities`
+- Graphify warning: `extensions.json` and `docs.json` produce zero nodes
+
+RepoWise dead-code analysis is currently partial because of its
+offset-naive/offset-aware datetime limitation. Its zero dead-code counts must
+not be interpreted as proof of complete dead-code absence.
 
 Generated build and editor artifacts are not part of the architecture and must remain uncommitted.
 
@@ -161,31 +164,32 @@ use case
 
 Composition factories may assemble concrete adapters in entry points. Use cases must not instantiate concrete transport repositories.
 
-During migration, a legacy facade may delegate to specialized adapters. That facade has now been retired for Projects:
+During migration, a legacy facade may delegate to specialized adapters. The
+current implementation uses explicit capability roots and specialized
+adapters; historical factory/facade references must be verified against the
+current checkout before being treated as active architecture.
 
 ```text
-ProjectRepository (temporary facade)
-  -> ProjectBoardRepository
-  -> Organization adapter
-  -> RepositoryReleaseRepository
+capability-specific composition root
+  -> specialized adapter
+  -> semantic application port
 ```
 
-The facade was not the final application contract and is no longer part of the production source tree.
+The facade was not the final application contract. It must not be recreated as
+a universal replacement for the retired capability roots.
 
 ## Migration order
 
-1. Capture and preserve baseline.
-2. Document this target and its invariants.
-3. Define only the ports required by real callers.
-4. Extract repository metadata/release capability behind a compatibility facade.
-5. Migrate release/tag callers to `RepositoryReleasePort`.
-6. Extract Project Board capability and its content/field boundaries.
-7. Migrate project board callers.
-8. Extract organization, identity, and authorization capabilities.
-9. Partition pull-request changes, review, and lifecycle capabilities.
-10. Audit IssueRepository consumers and remove unnecessary facade dependencies.
-11. Compare GitHub Action and local CLI input composition through explicit input-source ports.
-12. Reindex RepoWise, run all gates, document the result, and remove only obsolete facades.
+1. Capture and preserve the current baseline.
+2. Enforce the documented layer invariants.
+3. Define only ports required by real callers.
+4. Complete the configuration boundary migration.
+5. Harden high-risk adapter contracts.
+6. Audit `Execution` responsibilities without metric-driven splitting.
+7. Verify GitHub Action, local action, and CLI composition independently.
+8. Audit Issue and pull-request facade callers where a real dependency surface remains.
+9. Synchronize architecture documentation with the current checkout.
+10. Reindex RepoWise, run all gates, document warnings, and remove only obsolete abstractions.
 
 ## Acceptance criteria
 
@@ -211,7 +215,9 @@ The current entry-point topology is intentionally split:
 - `src/actions/github_action.ts` owns the GitHub Action lifecycle and GitHub event input mapping.
 - `src/actions/action_input_source.ts` contains only pure input-source policies shared by those entry points.
 - `src/actions/common_action.ts` orchestrates application use cases and depends on `LatestTagQueryPort`, not on the concrete `BranchRepository` facade.
-- `src/infrastructure/composition/repository_factory.ts` is the only production composition root allowed to import the compatibility repository facades.
+- capability-specific files under `src/infrastructure/composition/` are the
+  production composition roots; no universal repository factory is treated as
+  the application boundary.
 
 These boundaries are enforced by executable architecture tests:
 

@@ -1,122 +1,134 @@
-# Capability Map and Retirement Matrix
+# Current Capability Map
 
-This is the initial capability map for the reconstruction. It is intentionally explicit about current locations, intended semantic contracts, current consumers, target adapters, and deletion conditions. It must be updated after every migration slice.
+This document describes the current checkout, not the original reconstruction baseline. It is synchronized with `docs/total-architecture-reconstruction-plan.md` and must be updated whenever a capability boundary changes.
+
+## Architectural shape
+
+```text
+entrypoint
+  -> lifecycle composition root
+    -> application use case/workflow
+      -> semantic port
+        -> specialized adapter
+          -> provider client/detail
+```
+
+Composition roots are capability-specific under `src/infrastructure/composition/` and lifecycle-specific under the action/CLI entrypoints. A universal repository factory is not the application boundary.
 
 ## AI capabilities
 
-| Current element | Real responsibility | Target application contract | Target infrastructure | Current consumers | Retirement condition |
-|---|---|---|---|---|---|
-| `AiRepository.askAgent` | findings invocation, transport selection, prompt, response interpretation, retry, logging | `FindingsAgentPort` | `FindingsAgentAdapter`, OpenCode/CLI adapters | progress, recommendations, think, issue/PR language, Bugbot | all findings callers use application port |
-| `AiRepository.copilotMessage` | fixer invocation, transport selection, response mapping | `FixerAgentPort` | `FixerAgentAdapter` | user request, Bugbot autofix, CLI `do` | all fixer callers use application port |
-| `OpenCodeServerLifecycleAdapter` | server start/stop/health | `AgentServerLifecyclePort` | OpenCode lifecycle adapter | GitHub Action composition | lifecycle type no longer comes from data repository |
-| `agent_ports.ts` | mixed semantic and provider contracts | application ports + infrastructure provider ports | separate contract modules | application use cases and adapters | no application import from `data/repository/agent_ports` |
-| `DefaultAgentRepositoryFactory` | returns two views of one `AiRepository` | no factory API | `agent_composition.ts` | CLI, `common_action`, `RepositoryFactory` | zero production/test imports |
-| `AgentCliClient` | spawn, timeout, kill, output limits, cleanup | internal process port only | `AgentCliProcessAdapter` | AI adapters | process details isolated |
-| `OpenCodeHttpClient` | HTTP, timeout, session/message, response transport | internal OpenCode port | `OpenCodeHttpAdapter` | AI adapters | OpenCode DTOs do not leak into application |
+The historical AI facade reconstruction is complete for the current checkout. AI behavior is represented through separate findings, fixer, authentication, configuration, response, and lifecycle contracts. Do not add a new universal AI repository or recreate `ai_repository.ts`.
+
+| Capability | Application contract | Infrastructure/detail | Main consumers |
+|---|---|---|---|
+| Findings analysis | `FindingsQueryPort` / findings capability contracts | OpenCode server/CLI adapters and response policies | progress, recommendations, think, language checks, Bugbot findings |
+| Fixer execution | fixer capability contracts | OpenCode/CLI execution and fixer response policy | user request, Bugbot autofix, CLI `do` |
+| Agent configuration | agent configuration contracts/policies | runtime configuration builders | action and CLI composition |
+| Agent lifecycle | lifecycle port | OpenCode server lifecycle adapter | runtime composition |
+
+## Configuration capability
+
+| Capability | Application boundary | Adapter | Status |
+|---|---|---|---|
+| Read/write persisted issue configuration | `ExecutionConfigurationPort` and the future configuration store contract | `ConfigurationHandler` | `Execution` migration completed; `StoreConfigurationUseCase` boundary remains the next implementation block |
+
+`ConfigurationHandler` must never be imported as a concrete implementation from an application use case.
 
 ## Issue capabilities
 
-| Current facade/capability | Semantic capability | Target port | Target adapter family | Retirement condition |
-|---|---|---|---|---|
-| `IssueRepository` content methods | content read/write/comments | `IssueContentPort` | issue content adapter | zero facade callers |
-| `IssueRepository` metadata methods | issue/PR metadata and IDs | `IssueMetadataPort` | metadata/GraphQL adapters | zero facade callers |
-| `IssueRepository` lifecycle methods | open/close/state | `IssueLifecyclePort` | lifecycle adapter | zero facade callers |
-| label methods | labels | `IssueLabelPort` | labels adapter | zero facade callers |
-| progress label methods | progress label policy | `IssueProgressLabelPort` | composed label capability | explicit callers only |
-| label provisioning | repository label creation | `IssueLabelProvisioningPort` | provisioning adapter | zero facade callers |
-| assignment methods | assignee queries and changes | `IssueAssignmentPort` | assignment adapter | zero facade callers |
-| issue type methods | type lookup/assignment | `IssueTypePort` | GraphQL type adapter | zero facade callers |
+| Capability | Semantic port | Specialized adapter family | Status |
+|---|---|---|---|
+| Content and comments | `IssueContentPort` / lifecycle content contracts | issue content adapters | active |
+| Metadata and issue/PR identity | metadata contracts | issue metadata adapters | active |
+| Lifecycle | `IssueLifecyclePort` | issue lifecycle adapter | active; contract hardening remains |
+| Labels | issue label contracts | issue label adapter | active |
+| Progress labels | progress label contracts/policies | progress label adapter | active |
+| Assignment | assignment contracts | assignment adapter | active |
+| Issue types | issue type contracts | issue type adapter | active |
+| Configuration persistence | configuration port | `ConfigurationHandler` | boundary migration pending for `StoreConfigurationUseCase` |
+
+Legacy aggregate facades may remain only where a real caller still requires an aggregate capability. New application code must use the narrowest existing semantic contract.
 
 ## Pull request capabilities
 
-| Current element | Target capability | Target port | Adapter |
+| Capability | Semantic port | Specialized adapter family | Status |
 |---|---|---|---|
-| `PullRequestChangesRepository` | changed files and head metadata | `PullRequestChangesPort` | Octokit changes adapter |
-| `PullRequestReviewRepository` | reviews, reviewers, comments | `PullRequestReviewPort` | Octokit review adapter |
-| `PullRequestReviewThreadRepository` | GraphQL thread operations | `PullRequestReviewThreadPort` | GraphQL adapter |
-| `PullRequestLifecycleRepository` | list/update lifecycle | `PullRequestLifecyclePort` | lifecycle adapter |
-| `PullRequestRepository` | legacy aggregate facade | none unless a real aggregate remains | delete after caller migration |
+| Changed files and head metadata | pull request changes contract | changes adapter | active |
+| Reviews, reviewers, comments | `PullRequestReviewPort` | review adapter | active |
+| Review threads | review-thread contract | GraphQL thread adapter | active |
+| Lifecycle, base branch, linked state | `PullRequestLifecyclePort` | lifecycle adapter | active |
 
-## Branch capabilities
+Changes, review, and lifecycle must remain separate unless a caller proves a cohesive aggregate contract.
 
-| Current element | Target capability | Target port | Adapter |
+## Branch and release capabilities
+
+| Capability | Semantic port | Adapter/policy | Status |
 |---|---|---|---|
-| `BranchRepository` queries | branch existence/list/ref | `BranchQueryPort` | branch adapter |
-| `BranchCompareRepository` | commit comparison | `BranchComparisonPort` | comparison adapter |
-| `MergeRepository` | merge/poll/status policy boundary | `BranchMergePort` | merge adapter + status client |
-| workflow operations | dispatch and previous runs | `BranchWorkflowPort` | workflow adapter |
-| tags/version lookup | latest tag | `LatestTagQueryPort` | release/tag adapter |
-| `BranchRepository` facade | mixed branch aggregate | none unless proven cohesive | delete after callers migrate |
+| Latest tag | `LatestTagQueryPort` | release/tag adapter | active |
+| Branch comparison | branch comparison port | comparison adapter | active |
+| Merge and status | branch merge port | merge adapter and status client | active |
+| Workflow runs | workflow port | workflow adapter | active |
+| Branch naming/preparation/lifecycle | branch capability ports | specialized branch adapters/policies | active |
+| Release/tag publication | release/tag ports | release adapters and pure policies | active |
 
-## Organization, project, and release capabilities
+## Project board capabilities
 
-| Current facade | Target ports | Target outcome |
+| Capability | Port | Composition/adapter | Status |
+|---|---|---|---|
+| Query project details | `ProjectBoardQueryPort` | project board composition root | active |
+| Resolve/link content | project content/link contracts | project board adapters | active |
+| Update fields/columns | `ProjectBoardCommandPort` | project board composition root | active |
+
+The query capability is intentionally shared by link and command capabilities where the composition contract requires it. This sharing is covered by a composition test.
+
+## Organization and identity capabilities
+
+| Capability | Port | Adapter | Status |
+|---|---|---|---|
+| Authenticated identity | `AuthenticatedUserPort` | identity adapter | active; contract hardening remains |
+| Organization members | `OrganizationMembersPort` | organization adapter | active |
+| Actor authorization | `ActorAuthorizationPort` | actor authorization adapter | contract covered |
+
+These capabilities may share provider transport but must not be collapsed into one application port.
+
+## Runtime composition roots
+
+| Runtime | Main boundary | Responsibility |
 |---|---|---|
-| `OrganizationRepository` | `AuthenticatedUserPort`, `OrganizationMembersPort`, `ActorAuthorizationPort` | remove facade |
-| `ProjectBoardRepository` | `ProjectBoardQueryPort`, `ProjectBoardCommandPort`, `ProjectContentResolverPort`, `ProjectFieldPort` | retain only focused capabilities |
-| `RepositoryReleaseRepository` | `RepositoryMetadataPort`, `RepositoryTagPort`, `RepositoryReleasePort` | remove mixed release facade |
+| GitHub Action | `github_action.ts`, `common_action.ts`, capability roots | event mapping, setup, lifecycle, routing, publication |
+| Local action | `local_action.ts` and local builders | local input precedence, execution, result rendering |
+| CLI | `cli.ts`, `cli/cli_program.ts`, command modules | registration, parsing, command-specific composition |
+| Capability composition | `src/infrastructure/composition/` | concrete adapter construction and dependency graph assembly |
 
-## Composition capabilities
+`cli.ts` is intentionally a small bootstrap. `local_action.ts` already delegates to dedicated configuration and execution builders. Neither is an automatic extraction target.
 
-| Current element | Current problem | Target |
-|---|---|---|
-| `RepositoryFactory` | adapters, repositories, use cases, AI and repeated construction | capability composers + application container |
-| `common_action.ts` | hidden composition root, routing, error presentation | application runner + thin runtime adapter |
-| `github_action.ts` | input mapping, lifecycle, construction, publication in one module | GitHub input source, mapper, lifecycle, publisher |
-| `local_action.ts` | duplicated input mapping and construction | local input source, mapper, lifecycle |
-| `cli.ts` | parsing, Git, AI construction, execution, exits, output | registration-only bootstrap + command handlers |
-| `Execution` | mutable state, setup, routing, resolution, results | request/state/setup service/policies |
+## Current high-priority boundaries
 
-## Consumers requiring migration
+1. `StoreConfigurationUseCase` must stop importing concrete `ConfigurationHandler`.
+2. Application boundary tests must cover all concrete manager/repository/infrastructure imports.
+3. `Execution` must be audited by responsibility, not by line count.
+4. High-risk issue, project-board, identity, release, and pull-request adapters need contract coverage where gaps remain.
+5. Documentation and graph reports must reflect the current checkout.
 
-### AI findings consumers
+## Explicit non-goals
 
-```text
-src/application/usecases/actions/check_progress_use_case.ts
-src/application/usecases/actions/recommend_steps_use_case.ts
-src/application/usecases/steps/common/think_use_case.ts
-src/application/usecases/steps/issue/answer_issue_help_use_case.ts
-src/application/usecases/steps/issue_comment/check_issue_comment_language_use_case.ts
-src/application/usecases/steps/pull_request_review_comment/check_pull_request_comment_language_use_case.ts
-src/application/usecases/steps/pull_request/update_pull_request_description_use_case.ts
-src/application/usecases/steps/commit/detect_potential_problems_use_case.ts
-src/application/usecases/steps/commit/bugbot/query_bugbot_findings.ts
-src/application/usecases/steps/commit/bugbot/detect_bugbot_fix_intent_use_case.ts
-```
+- Recreating `ai_repository.ts` or a universal AI facade.
+- Recreating `RepositoryFactory` as a universal composition boundary.
+- Splitting `cli.ts` or `local_action.ts` merely because of churn scores.
+- Creating `BaseRepository`, `UniversalRepository`, or generic provider wrappers.
+- Extracting every duplicated block reported by RepoWise.
+- Deleting specialized adapters because their names contain `Repository`.
+- Optimizing NLOC, file count, or duplication without semantic evidence.
 
-### AI fixer consumers
+## Caller migration and retirement protocol
 
-```text
-src/application/usecases/steps/commit/user_request_use_case.ts
-src/application/usecases/steps/commit/bugbot/bugbot_autofix_use_case.ts
-src/cli.ts  # CLI do path must be migrated
-```
+A facade or builder may be retired only after:
 
-### Composition consumers
-
-```text
-src/actions/common_action.ts
-src/cli.ts
-src/infrastructure/composition/repository_factory.ts
-src/actions/github_action.ts
-src/actions/local_action.ts
-```
-
-## Retirement protocol
-
-For each facade:
-
-1. enumerate methods and callers;
-2. classify every method semantically;
-3. define port and request/response contract;
-4. add contract tests;
-5. migrate use cases;
-6. migrate composition roots;
-7. migrate test doubles;
-8. run Graphify impact check;
-9. verify zero production imports;
-10. delete the facade and its tests;
-11. rerun all gates;
-12. document the deletion commit and rationale.
-
-A facade may not be deleted based solely on a search that omits dynamic construction, test imports, or composition wiring.
+1. all production callers are enumerated;
+2. callers are classified by capability and lifecycle;
+3. a semantic port or direct composition boundary exists;
+4. focused behavior and composition tests pass;
+5. a zero-reference search confirms migration;
+6. architecture tests are updated;
+7. full gates and graph refresh pass;
+8. the removal is published and the remote SHA is verified.

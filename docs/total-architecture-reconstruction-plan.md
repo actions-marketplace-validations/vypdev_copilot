@@ -1,368 +1,512 @@
-# Total Architecture Reconstruction Plan
+# Copilot Architecture Perfection Plan
 
-## Intent
+**Status:** Stable planning baseline — implementation paused until this document is approved.
 
-This plan reconstructs Copilot's architecture around semantic capabilities and explicit runtime composition. It is not a superficial RepoWise-score exercise: RepoWise metrics are an explicit optimization signal, but they must improve as a consequence of better cohesion, dependency direction, testability, and deletion of accidental complexity. No metric will justify a fake abstraction or a semantic regression.
+**Scope:** Clean Architecture reconstruction, boundary hardening, contract coverage, documentation, and RepoWise/Graphify quality improvement for the current `master` checkout.
 
-The plan permits large changes, file moves, and deletion of legacy abstractions. It forbids compatibility shims, universal repositories, universal provider clients, and mechanical helper extraction without shared semantics.
+**Repository:** `vypdev/copilot`
 
-## Current evidence
+## 1. Purpose and success definition
 
-The baseline below was refreshed against the published HEAD `4178531005881680741a694f1788253734abb831` before production changes begin. The working tree was clean and `HEAD == origin/master`.
+This document is the authoritative plan for the remaining architecture work. It supersedes earlier phase plans that were written against older checkouts.
 
-The current repository has useful capability ports, specialized GitHub adapters, input-source policies, and architecture tests, but it is still an intermediate migration state.
+The objective is not merely to lower a RepoWise score or reduce file size. The objective is to make this repository an exemplary Clean Architecture implementation whose structure, dependency graph, contracts, tests, and documentation agree with each other.
 
-Graphify AST-only baseline:
+Success means:
 
-- 471 code files;
-- 2,327 nodes;
-- 6,764 edges.
+1. Inner layers depend only on stable semantic contracts and policies.
+2. Concrete providers, SDKs, transports, filesystem, process, and Git details remain outside application behavior.
+3. Every runtime has an explicit composition root.
+4. Every capability has a narrow semantic port and a specialized adapter.
+5. Shared code is justified by shared semantics, failure behavior, and ownership—not by similar syntax.
+6. Architecture rules are executable and fail when a regression is introduced.
+7. RepoWise and Graphify show a healthy, low-risk, low-coupling topology with no unjustified cycles or universal hubs.
+8. All remaining structural findings are either resolved or explicitly documented as legitimate boundaries.
+9. The complete test, type, lint, build, audit, graph, and publication gates pass.
 
-RepoWise refreshed baseline:
+"Perfect" means architecturally justified and evidence-backed. It does **not** mean zero files, zero duplication, zero composition wiring, or zero RepoWise findings. Legitimate composition roots, adapters, models, and lifecycle coordinators must not be deleted to improve a metric.
 
-- 564 analyzed files;
-- average health: 8.46;
-- hotspot health: 5.95;
-- maintainability average: 9.19;
-- maintainability hotspot: 8.53;
-- performance average: 9.99;
-- worst performer: `src/data/repository/ai_repository.ts`;
-- worst performer score: 3.43;
-- current RepoWise graph: 2,672 nodes and 5,436 edges;
-- safe dead-code result: 0 unreachable files and 0 unused exports;
-- index-only refresh: successful.
+## 2. Current evidence
 
-Important Graphify hubs:
+Evidence below is from the current checkout and must be refreshed before each implementation block. Historical reports must not be treated as current facts.
 
-- `Execution`: degree 221;
-- `GithubClientPort`: degree 71;
-- `IssueRepository`: degree 49;
-- `RepositoryFactory`: degree 35.
-
-Important subgraphs:
-
-- `AiRepository`: 47 connections;
-- `RepositoryFactory`: 85 connections;
-- `cli.ts`: 36 connections.
-
-RepoWise is used to identify risk and history hotspots, not to dictate abstractions. In particular, duplicated tests, prompts, and similar HTTP calls must not be abstracted unless their semantics and failure behavior are actually shared.
-
-## Target topology
+Current published state:
 
 ```text
-entrypoint
-  -> runtime composition root
-    -> application use case / workflow
+HEAD == origin/master
+SHA: 1117a1242ea8ad3c36f0fb76aef2c6fc580afc2e
+working tree: clean
+```
+
+Current quality gates:
+
+```text
+Jest: 210 suites passed, 1348 tests passed, 1 skipped
+TypeScript: PASS
+ESLint: PASS
+Build: PASS
+Production audit: PASS
+Diff check: PASS
+```
+
+Current Graphify refresh:
+
+```text
+3170 nodes
+8191 edges
+206 communities
+```
+
+Persistent Graphify warning:
+
+```text
+extensions.json and docs.json produce zero nodes
+```
+
+This warning is analysis-tool input behavior, not evidence of a production architecture defect. It must remain visible until the tool or input handling changes.
+
+Current RepoWise observations:
+
+- the previous `Execution` cycle was reduced and the current report no longer proposes a break-cycle plan for it;
+- current target findings are mainly churn/co-change signals and duplicated-line suggestions;
+- current high-value candidates include the remaining application boundary audit, `Execution` responsibility review, and selected adapter contracts;
+- RepoWise dead-code analysis is partial because of its offset-naive/offset-aware datetime issue; zero dead-code counts are not conclusive;
+- `cli.ts` is now a small bootstrap and is not a valid extraction target;
+- `local_action.ts` already delegates to builders and composition; its churn signal is not enough evidence for another split;
+- issue-comment and pull-request-review-comment use cases are thin lifecycle-specific wrappers around the shared `runCommentAutomation` flow and must not be merged into a universal use case without a semantic reason.
+
+## 3. Reclassified historical objectives
+
+The following objectives from older plans are complete or no longer valid targets in the current checkout:
+
+| Historical objective | Current decision |
+|---|---|
+| Partition `ai_repository.ts` | Historical work completed; `ai_repository.ts` is not present in the current production tree. Do not recreate or search for it as an active task. |
+| Dismantle `RepositoryFactory` | Historical composition migration completed to the extent supported by current callers. Verify current callers, but do not perform another generic factory rewrite. |
+| Split `cli.ts` | Complete. It is a bootstrap delegating to `createCliProgram()`. Keep it small. |
+| Split `local_action.ts` by line count | Rejected. Existing builders and lifecycle boundaries are already explicit. Add contract coverage only if a real wiring gap exists. |
+| Extract every RepoWise helper suggestion | Rejected. Only extract a helper when its semantics, ownership, and failure behavior are shared. |
+| Eliminate all repositories named `Repository` | Rejected. Specialized adapters may legitimately retain that name. |
+| Remove every facade | Rejected. Remove only obsolete compatibility facades with audited callers; retain legitimate capability composition boundaries. |
+
+These decisions prevent stale hotspot reports from driving cosmetic changes.
+
+## 4. Target architecture
+
+The target dependency direction is:
+
+```text
+runtime entrypoint
+  -> lifecycle composition root
+    -> application use case/workflow
       -> semantic application port
-        -> capability adapter
-          -> provider client port
-            -> GitHub / AI / Git / filesystem / process
+        -> specialized capability adapter
+          -> provider client contract
+            -> GitHub / AI / Git / filesystem / process / SDK detail
 ```
 
-Target source organization:
+### 4.1 Domain and model boundary
 
-```text
-src/
-  domain/
-    models/
-    value_objects/
-    policies/
+Domain models and pure policies must not depend on:
 
-  application/
-    ports/
-      ai/
-      github/
-      git/
-      issue/
-      pull_request/
-      branch/
-      project/
-      organization/
-      release/
-    contracts/
-    policies/
-    services/
-    usecases/
-    workflows/
-
-  infrastructure/
-    github/
-      clients/
-      adapters/
-      mappers/
-      errors/
-      pagination/
-    agents/
-      opencode/
-      cli/
-    git/
-    filesystem/
-    process/
-
-  composition/
-    github_action_composition.ts
-    cli_composition.ts
-    local_composition.ts
-    agent_composition.ts
-    github/
-
-  entrypoints/
-    github_action.ts
-    local_action.ts
-    cli/
-      commands/
-      input_mappers/
-      output/
-```
-
-Moves into this topology are semantic migrations, not file renames. The current `data/model` and `data/repository` locations are transitional and must not be treated as the final architectural boundary.
-
-## Non-negotiable dependency rules
-
-1. Domain imports nothing from application, infrastructure, entrypoints, providers, or runtime SDKs.
-2. Application imports domain and application contracts/ports only.
-3. Application never imports `data/repository`, infrastructure, `@actions/*`, Octokit, `fetch`, `child_process`, or provider-specific models.
-4. Semantic application ports contain business capabilities, not HTTP or SDK method shapes.
-5. Provider client ports are infrastructure contracts and never leak into use cases.
-6. Adapters own provider mapping, pagination, authentication transport, and error translation.
-7. Composition roots are the only production locations that construct concrete adapters.
-8. Each runtime has its own composition root: GitHub Action, CLI, and local execution.
-9. A legacy facade is removed when all production callers and tests use its semantic ports.
-10. Shared code is justified by identical semantics, inputs, outputs, and failure behavior—not by similar syntax.
-
-## Phase 0 — baseline and architecture contract
-
-Before structural migration, fix and lock any confirmed behavior defects found by the audit. In particular, `src/data/model/single_action.ts` currently evaluates `isSingleActionWithoutIssue` before assigning `currentSingleAction`; add regression tests for `think_action` and `initial_setup`, correct the initialization order, and verify the complete suite before moving the model.
-
-- Reindex Graphify against the current HEAD with `--code-only`.
-- Capture RepoWise health, hotspots, security, coverage, tests, typecheck, lint, build, and workflow validation.
-- Update architecture documentation so it describes the actual graph, not an earlier migration state.
-- Add executable boundary tests for application-to-data-repository imports and provider leakage.
-- Publish `docs/capability-map.md`, `docs/dependency-rules.md`, and `docs/migration-baseline.md`.
-
-Exit criteria:
-
-- baseline is reproducible;
-- generated graph/index artifacts are ignored;
-- all current behavior gates pass;
-- architecture rules are executable.
-
-## Phase 1 — domain stabilization
-
-Move domain models and value objects out of `data/model` according to semantic ownership. Candidates include `Issue`, `PullRequest`, `Branches`, `Commit`, `Execution`, `Ai`, `Agent`, `Result`, labels, images, projects, and issue types.
-
-Remove all domain reads of:
-
-- `github.context`;
-- `process.env`;
+- application use cases;
+- infrastructure or entrypoints;
 - `@actions/*`;
-- Octokit;
-- OpenCode;
-- filesystem or process APIs.
+- Octokit, GitHub context, OpenCode, or provider DTOs;
+- filesystem, process, environment, or concrete logging.
 
-Transform runtime events into explicit input records in entrypoints before domain construction.
+Runtime events and provider payloads must enter models through explicit input records or semantic construction contracts.
+
+`data/model` is a transitional physical location. A future move to `domain/` is justified only when it clarifies ownership and can be performed without a mass rename or compatibility layer.
+
+### 4.2 Application boundary
+
+Application owns:
+
+- use cases and workflows;
+- semantic ports;
+- application request/response contracts;
+- pure application policies;
+- orchestration of domain behavior.
+
+Application may import only approved domain/model types, application ports, contracts, and policies.
+
+Application must not import:
+
+```text
+data/repository
+manager concrete adapters
+infrastructure
+@actions/*
+@octokit/*
+fetch
+child_process
+filesystem/process APIs
+provider-specific agent DTOs
+concrete repositories
+concrete factories
+composition roots
+```
+
+Type-only imports are allowed only when they do not conceal semantic coupling. A type-only import from an outer implementation must still be reviewed; it is not automatically a valid boundary.
+
+### 4.3 Infrastructure boundary
+
+Infrastructure owns:
+
+- GitHub REST/GraphQL adapters and mappers;
+- pagination and provider error classification;
+- AI/OpenCode/CLI transport adapters;
+- Git and filesystem adapters;
+- process execution;
+- concrete logging and runtime integration.
+
+Infrastructure may implement application ports. It must not move business decisions into transport adapters or import entrypoint lifecycle behavior.
+
+### 4.4 Composition and entrypoints
+
+Composition roots are the only normal production locations that construct concrete adapters and assemble use-case graphs.
+
+The repository preserves separate lifecycles for:
+
+- GitHub Action execution;
+- local action/CLI execution;
+- CLI command registration and parsing.
+
+A composition root may share a transport instance when the capability contract requires it, but must not become a universal registry or facade.
+
+## 5. Non-negotiable design rules
+
+1. Ports express semantic capabilities, never SDK or HTTP method shapes.
+2. Use cases receive required ports through constructors.
+3. Application never constructs a concrete adapter.
+4. Provider details stay in infrastructure.
+5. A port is introduced only for a real caller-facing boundary.
+6. No `UniversalRepository`, `BaseRepository`, universal GitHub client, universal AI client, or generic callback repository.
+7. No `Pick<UniversalPort>` used to disguise a broad dependency.
+8. No compatibility shim, alias, or delegating facade created only to preserve an obsolete import.
+9. Shared code requires identical semantics, inputs, outputs, failure behavior, and ownership.
+10. Behavior is preserved unless an intentional correction has a regression test.
+11. Every production facade removal requires caller inventory, migration, zero-reference search, and boundary-test updates.
+12. RepoWise is a prioritization signal and a validation signal, never the architecture specification.
+13. A metric improvement cannot justify weaker naming, hidden construction, broader ports, or reduced testability.
+14. Generated Graphify, RepoWise, editor, MCP, and build artifacts remain uncommitted unless explicitly required by the repository.
+15. Every coherent implementation block ends with focused tests, global gates, commit, push, SHA verification, and a clean tree.
+
+## 6. Implementation phases
+
+Implementation is paused until this plan is accepted. Once approved, phases are executed in small published blocks. Each phase may produce multiple commits.
+
+### Phase A — Current-checkout boundary audit
+
+**Goal:** Establish the real remaining architectural defects before changing production code.
+
+Tasks:
+
+1. Search production `application` imports for concrete `manager`, repository, infrastructure, provider, process, filesystem, and SDK dependencies.
+2. Search use cases for concrete construction, global state, and runtime APIs.
+3. Classify every finding as:
+   - real boundary violation;
+   - legitimate type-only model dependency;
+   - composition-root responsibility;
+   - specialized adapter;
+   - test-only compatibility reference;
+   - stale/historical evidence.
+4. Strengthen architecture tests so forbidden production imports fail deterministically.
+5. Refresh RepoWise and Graphify only after the checkout is clean.
 
 Exit criteria:
 
-- domain tests run without GitHub or provider modules;
-- domain has no outer-layer imports;
-- all runtime data enters through explicit records.
+- a reviewed inventory of every finding;
+- no unclassified application boundary violation;
+- architecture tests cover the rules that matter;
+- baseline artifacts and warnings recorded.
 
-## Phase 2 — AI capability reconstruction
+### Phase B — Configuration capability boundary
 
-`AiRepository` is a facade, transport dispatcher, configuration validator, prompt builder, response interpreter, retry coordinator, logger, and error policy in one class. It must not remain the central AI abstraction.
+**Priority:** highest confirmed defect.
 
-### Application contracts
-
-Move semantic contracts from `src/data/repository/agent_ports.ts` to application:
-
-```text
-FindingsAgentPort
-FixerAgentPort
-AgentServerLifecyclePort
-```
-
-Replace provider-shaped methods such as `askAgent(Ai, agentId, prompt, options)` and `copilotMessage(Ai, prompt)` with semantic requests and responses that do not expose `Ai`, OpenCode agent IDs, `parts`, or provider schemas.
-
-### Application policies
-
-Move and classify:
+Current defect:
 
 ```text
-agent_configuration_policy
-agent_prompt_policy
-agent_response_policy
-agent_json_policy
-agent_retry_policy
-agent_task_policy
+StoreConfigurationUseCase
+  -> concrete manager/description/ConfigurationHandler
 ```
 
-Keep configuration builders in the presentation/composition boundary. Keep OpenCode `parts` interpretation in the OpenCode adapter; keep stable findings/fixer interpretation in application contracts/policies.
-
-### Infrastructure adapters
-
-Partition:
+Target:
 
 ```text
-OpenCodeHttpAdapter
-OpenCodeInvoker
-OpenCodeServerLifecycleAdapter
-AgentCliProcessAdapter
-CodexCliAdapter
-CursorCliAdapter
+StoreConfigurationUseCase
+  -> semantic configuration port
+    -> ConfigurationHandler adapter
 ```
 
-`child_process` must be known only by the process adapter. HTTP and OpenCode protocol details must stay under `infrastructure/agents/opencode`.
+Tasks:
 
-### Composition
+1. Inspect `StoreConfigurationUseCase` callers and its exact read/write behavior.
+2. Define the smallest semantic port required by the use case. Prefer separate read/write contracts if that reflects real caller capabilities.
+3. Keep configuration model contracts stable and provider-independent.
+4. Migrate `ConfigurationHandler` behind the port at each composition root.
+5. Remove the concrete application import and all equivalent hidden construction.
+6. Add use-case tests with port doubles and adapter contract tests for parsing, malformed content, preservation, and update behavior.
+7. Add an architecture assertion for this boundary.
 
-Replace `DefaultAgentRepositoryFactory` with `agent_composition.ts` returning distinct capabilities:
-
-```ts
-{
-  findings: FindingsAgentPort;
-  fixer: FixerAgentPort;
-  lifecycle: AgentServerLifecyclePort;
-}
-```
-
-The same internal transport can be shared, but findings and fixer must be different capability objects and contracts.
-
-### Migration order
-
-1. Add application contracts and boundary tests.
-2. Migrate all findings callers to application ports.
-3. Migrate all fixer callers to application ports.
-4. Replace use-case mocks of `AiRepository` with port fakes.
-5. Move pure policies.
-6. Build infrastructure adapters and contract tests.
-7. Inject one agent composition into `common_action`, CLI, and GitHub composition.
-8. Remove repeated `new DefaultAgentRepositoryFactory()` calls.
-9. Delete `AiRepository` and `DefaultAgentRepositoryFactory` after zero production/test imports remain.
-
-AI deletion criteria:
+Exit criteria:
 
 ```text
-0 AiRepository production imports
-0 DefaultAgentRepositoryFactory production imports
-0 data/repository/agent_ports imports from application
-0 provider-shaped AI request in application
-0 universal AI client
+0 production application imports of ConfigurationHandler
+0 concrete manager adapter construction in application
+use-case contract tests pass
+adapter behavior tests pass
+composition wiring test passes
 ```
 
-## Phase 3 — provider and GitHub infrastructure
+### Phase C — `Execution` responsibility hardening
 
-Split `octokit_client.ts` into capability adapters and split the generic `GithubClientPort` definitions by provider capability. The infrastructure layer may share transport mechanisms, but application contracts must remain semantic.
+**Goal:** preserve `Execution` as a legitimate state/orchestration model while removing accidental coupling.
 
-Target adapters include issue content/metadata/labels/lifecycle/assignment, pull-request changes/review/lifecycle, branch comparison/merge/workflow, projects, releases, organization, and GraphQL.
+Tasks:
 
-Every adapter receives:
+1. Inventory all `Execution` methods, state mutations, callers, and tests.
+2. Keep state ownership and lifecycle orchestration together when they share one reason to change.
+3. Review release/hotfix version resolution as a candidate semantic boundary.
+4. Review issue-number resolution, label loading, previous-state restoration, and configuration loading independently.
+5. Extract only contracts with independent callers and failure semantics.
+6. Add transition tests for issue, pull request, push, single action, initial setup, release, hotfix, and restoration paths.
+7. Do not split `Execution` by line count or RepoWise extract-method suggestions alone.
 
-- focused mapping tests;
-- provider error tests;
-- pagination tests where applicable;
-- composition tests;
-- no business policy.
+Exit criteria:
 
-## Phase 4 — legacy facade retirement
+- no runtime dependency from the model to manager or provider details;
+- all extracted behavior has a semantic name and direct tests;
+- `Execution` remains understandable as the lifecycle state model;
+- no universal execution context facade is introduced;
+- cycle analysis remains clean or every remaining cycle is explicitly justified.
 
-Migrate callers and delete facades in this order:
+### Phase D — Configuration and lifecycle composition review
 
-1. `IssueRepository` → issue capability ports;
-2. `PullRequestRepository` → changes/review/lifecycle/link ports;
-3. `BranchRepository` → query/comparison/merge/workflow/tag ports;
-4. `OrganizationRepository` → identity/membership/authorization ports;
-5. project board legacy facades → project query/content/field/command ports;
-6. release facade → repository metadata/tag/release ports.
+**Goal:** verify that all runtime composition is explicit and lifecycle-specific.
 
-No facade is retained merely as an alias. A remaining composer must have a documented aggregate responsibility and no new consumers.
+Tasks:
 
-## Phase 5 — composition roots and entrypoints
+1. Audit GitHub Action composition.
+2. Audit local action composition.
+3. Audit CLI command composition.
+4. Confirm `cli.ts` remains a bootstrap only.
+5. Confirm `local_action.ts` remains a lifecycle coordinator, not a dependency factory.
+6. Add contract tests for capability sharing and intentional independent clients.
+7. Ensure entrypoints do not construct provider repositories inline except at documented composition boundaries.
 
-Create independent runtime composition:
+Exit criteria:
+
+- each lifecycle has a named composition root;
+- no application dependency leaks into entrypoint-only concerns;
+- no lifecycle is silently merged with another;
+- composition tests prove the returned capabilities and sharing relationships.
+
+### Phase E — Adapter contract hardening
+
+**Goal:** improve correctness and RepoWise health through behavior contracts, not generic wrappers.
+
+Priority order:
+
+1. issue lifecycle adapter;
+2. project board link adapter;
+3. authenticated user and organization membership adapters;
+4. release/tag adapters;
+5. pull-request lifecycle/review/changes adapters;
+6. pagination and GitHub error boundaries where missing.
+
+For each adapter:
+
+1. identify its semantic port;
+2. document provider mapping;
+3. test success, not-found, malformed, pagination, and unexpected-error behavior;
+4. verify no provider DTO leaks through the application port;
+5. preserve intentional error translation.
+
+Exit criteria:
+
+- each high-risk adapter has a focused contract suite;
+- pagination and error behavior are explicit;
+- no generic repository abstraction is introduced;
+- adapter responsibilities are stable and independently testable.
+
+### Phase F — Application boundary and dependency-graph hardening
+
+Tasks:
+
+1. Make architecture tests executable for every forbidden import category.
+2. Detect concrete construction inside application.
+3. Detect provider-shaped ports in application.
+4. Detect universal capability modules and accidental re-exports.
+5. Detect imports from entrypoints/composition into application.
+6. Verify type-only imports do not conceal outer-layer semantic coupling.
+7. Re-run Graphify and inspect cycles, hubs, and cross-layer edges.
+
+Exit criteria:
+
+- boundary tests fail on representative violations;
+- current production graph has no unjustified application-to-detail edge;
+- all remaining hubs have a documented ownership reason.
+
+### Phase G — Documentation synchronization
+
+Documents that must agree with the implementation:
+
+- `docs/repository-architecture.md`;
+- `docs/dependency-rules.md`;
+- `docs/capability-map.md`;
+- `docs/migration-baseline.md`;
+- this plan;
+- relevant `_agent/docs` architecture material.
+
+Documentation must describe current paths and names. Historical completed work belongs in migration notes, not in current target lists.
+
+Required content:
+
+- layer rules;
+- capability inventory;
+- port-to-adapter mapping;
+- composition roots by lifecycle;
+- intentional shared infrastructure;
+- forbidden abstractions;
+- test and graph commands;
+- known tool limitations;
+- definition of done.
+
+Exit criteria:
+
+- no document claims a removed file is an active hotspot;
+- every capability has an owner and composition location;
+- a new contributor can follow the dependency direction without tribal knowledge.
+
+### Phase H — Final perfection gates
+
+Run only after all implementation phases are complete:
 
 ```text
-GitHub Action:
-  event mapping -> GitHub composition -> application workflow
-
-CLI:
-  argument parsing -> CLI composition -> command handler -> application
-
-Local action:
-  parameter precedence -> local composition -> application workflow
+pnpm exec jest --runInBand
+pnpm exec tsc --noEmit
+pnpm run lint
+pnpm run build
+pnpm audit --prod
+git diff --check
 ```
 
-`cli.ts` becomes a thin entrypoint. Commands move to individual handlers with input mappers and output policies. The CLI must not import repositories, `AiRepository`, provider adapters, or `RepositoryFactory`.
-
-`common_action.ts` may share application orchestration and input policies, but not runtime-specific lifecycle or provider construction.
-
-## Phase 6 — workflow and hub decomposition
-
-Audit `Execution` (Graphify degree 221) as a possible workflow coordinator/domain aggregate collision. Separate only proven responsibilities:
+Also run:
 
 ```text
-ExecutionContext
-ActionWorkflow
-BranchWorkflow
-IssueWorkflow
-PullRequestWorkflow
-AgentWorkflow
+pnpm test:coverage
+~/.local/bin/repowise update .
+~/.local/bin/repowise health . --no-workspace --refactoring-targets --format table
+/tmp/copilot-graphify-venv/bin/graphify update .
 ```
 
-Audit shared hubs such as `Logger`, `Result`, and `ParamUseCase` before splitting. Convert logging to an application `LoggerPort` if application needs it; keep concrete logging in infrastructure.
+Final publication requirements:
 
-## Phase 7 — tests and architecture enforcement
+1. restore/remove generated build, Graphify, RepoWise, editor, and MCP artifacts;
+2. verify no secrets or runtime state were generated;
+3. commit one coherent final block;
+4. push to `origin/master`;
+5. verify `HEAD == origin/master`;
+6. verify a clean working tree;
+7. record current metrics and all warnings honestly.
 
-Add tests for:
+## 7. RepoWise and Graphify quality target
 
-- domain boundaries;
-- application boundaries;
-- entrypoint boundaries;
-- composition roots;
-- facade retirement;
-- provider adapter contracts;
-- AI response/error/retry/cancellation behavior.
+The target is “perfect or nearly perfect” topology, defined by these properties:
 
-Replace concrete `AiRepository` mocks in use-case tests with port fakes. Keep provider-specific tests at the infrastructure boundary.
+- no unjustified dependency cycles;
+- no universal hubs representing multiple unrelated capabilities;
+- low application-to-infrastructure leakage;
+- low facade coupling after caller migration;
+- low churn concentration in modules with multiple unrelated responsibilities;
+- no high-risk adapter without contract tests;
+- duplication only where semantic differences justify it;
+- composition roots recognized as legitimate boundaries rather than extracted away;
+- dead-code conclusions reported only when RepoWise analysis is complete.
 
-## Phase 8 — documentation and tooling
+We will compare:
 
-Maintain:
+- RepoWise average health;
+- hotspot health;
+- worst performer;
+- risk and maintainability;
+- cycle count and edge count;
+- Graphify hubs and cross-layer edges;
+- test coverage and boundary-test count.
 
-```text
-docs/architecture-target.md
-docs/capability-map.md
-docs/composition-roots.md
-docs/ai-architecture.md
-docs/github-adapters.md
-docs/cli-architecture.md
-docs/testing-architecture.md
-docs/graphify-development.md
-docs/repowise-development.md
-```
+We will not use these as goals by themselves:
 
-After every slice:
+- NLOC reduction;
+- number of files;
+- zero duplication;
+- zero repositories;
+- zero composition roots;
+- artificial score improvement from wrappers or aliases.
 
-```text
-Graphify → callers, paths, impact, hubs
-RepoWise  → risk, churn, complexity, duplication
-Tests     → behavior
-Git       → published change
-```
+A RepoWise finding is considered resolved only when one of these is true:
 
-## Phase 9 — final gates
+1. the responsibility was correctly partitioned and callers migrated;
+2. the dependency was removed through a semantic boundary;
+3. the finding was verified as a legitimate composition/adapter boundary and documented;
+4. the metric was proven stale or tool-generated and excluded with evidence.
 
-The migration is complete only when:
+## 8. Per-block execution protocol
 
-- no application use case constructs a concrete adapter;
-- no domain model imports a provider or runtime SDK;
-- no universal AI or GitHub client remains;
-- obsolete facades have zero production callers or a documented aggregate role;
-- each runtime has an explicit composition root;
-- application ports describe semantic capabilities;
-- all critical adapters have focused tests;
-- Graphify confirms the expected topology;
-- RepoWise hotspots are either eliminated or explained by an intentional composition boundary;
-- tests, coverage, typecheck, lint, build, audit, workflows, security, diff check, clean tree, and remote SHA all pass.
+Before editing:
 
-The quality target is architectural coherence and verifiable dependency direction. RepoWise score improvement is an outcome, never the design objective.
+1. refresh current checkout evidence;
+2. inspect complete target files and all production callers;
+3. classify responsibilities and dependencies;
+4. state the intended boundary and why it is semantic;
+5. identify focused tests and architecture tests.
+
+During editing:
+
+1. make one coherent capability change;
+2. use `pnpm` only;
+3. avoid compatibility shims and broad mechanical replacements;
+4. preserve behavior and error contracts;
+5. add tests before or with the migration.
+
+Before publication:
+
+1. run focused tests;
+2. run TypeScript and lint;
+3. run the full suite;
+4. run diff check;
+5. refresh RepoWise/Graphify;
+6. restore generated artifacts;
+7. commit and push;
+8. verify remote SHA and clean tree.
+
+## 9. Definition of done
+
+The reconstruction is complete when:
+
+- all confirmed application boundary violations are removed;
+- all runtime composition is explicit;
+- all relevant capabilities have semantic ports;
+- provider details are isolated in specialized adapters;
+- no unjustified cycles remain;
+- no obsolete facade has active callers;
+- legitimate facades and composition roots are documented;
+- architecture tests enforce the rules;
+- adapter and use-case contracts are covered;
+- documentation matches the current checkout;
+- RepoWise is healthy or every remaining finding has a documented architectural justification;
+- Graphify contains no unexplained cross-layer or cycle defect;
+- coverage, tests, typecheck, lint, build, audit, and diff checks pass;
+- the published SHA and clean tree are verified.
+
+Until these criteria are met, the project is not declared architecturally complete.
+
+## 10. Current next action after plan approval
+
+Do not begin with `local_action.ts`, `cli.ts`, generic helper extraction, or historical `ai_repository`/`RepositoryFactory` work.
+
+The first implementation block after approval is:
+
+> **Migrate `StoreConfigurationUseCase` behind a semantic configuration port, update its composition roots and tests, then enforce the boundary with an architecture test.**
