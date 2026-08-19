@@ -1,5 +1,5 @@
 import { StoreConfigurationUseCase } from '../store_configuration_use_case';
-import type { ConfigurationHandler } from '../../../../../manager/description/configuration_handler';
+import type { ConfigurationStorePort } from '../../../../ports/configuration_store_ports';
 
 jest.mock('../../../../../utils/logger', () => ({
   logInfo: jest.fn(),
@@ -7,17 +7,11 @@ jest.mock('../../../../../utils/logger', () => ({
 }));
 
 const mockUpdate = jest.fn();
-jest.mock('../../../../../manager/description/configuration_handler', () => ({
-  ConfigurationHandler: jest.fn().mockImplementation(() => ({
-    update: mockUpdate,
-  })),
-}));
-
 describe('StoreConfigurationUseCase', () => {
   let useCase: StoreConfigurationUseCase;
 
   beforeEach(() => {
-    useCase = new StoreConfigurationUseCase({ update: mockUpdate } as unknown as ConfigurationHandler);
+    useCase = new StoreConfigurationUseCase({ update: mockUpdate } as unknown as ConfigurationStorePort);
     mockUpdate.mockReset();
   });
 

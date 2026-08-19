@@ -1,5 +1,5 @@
 import { Execution } from "../../../../data/model/execution";
-import { ConfigurationHandler } from "../../../../manager/description/configuration_handler";
+import type { ConfigurationStorePort } from "../../../ports/configuration_store_ports";
 import { logError, logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
 import { ParamUseCase } from "../../base/param_usecase";
@@ -10,12 +10,12 @@ import { ParamUseCase } from "../../base/param_usecase";
  */
 export class StoreConfigurationUseCase implements ParamUseCase<Execution, void> {
     taskId: string = 'StoreConfigurationUseCase';
-    constructor(private readonly handler: ConfigurationHandler) {}
+    constructor(private readonly configurationStorePort: ConfigurationStorePort) {}
 
     async invoke(param: Execution): Promise<void> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`)
         try {
-            await this.handler.update(
+            await this.configurationStorePort.update(
                 param
             )
         } catch (error) {
