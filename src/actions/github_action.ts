@@ -41,6 +41,7 @@ import { buildBranches } from './branches_builder';
 import { readGithubActionBranchInputs } from './github_action_branch_inputs';
 import { readGithubActionLabelInputs } from './github_action_label_inputs';
 import { readGithubActionWorkflowInputs } from './github_action_workflow_inputs';
+import { readGithubActionIssueTypeInputs } from './github_action_issue_type_inputs';
 import { buildExecution } from './execution_builder';
 import { buildEmoji, buildImages, buildIssue, buildIssueTypes, buildLabels, buildLocale, buildProjects, buildPullRequest, buildTokens, buildWorkflows } from './configuration_builders';
 
@@ -131,44 +132,7 @@ export async function runGitHubAction(): Promise<void> {
 
     const labelInputs = readGithubActionLabelInputs(getGithubActionInput);
 
-    /**
-     * Issue Types
-     */
-    const issueTypeBug = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_BUG);
-    const issueTypeBugDescription = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_BUG_DESCRIPTION);
-    const issueTypeBugColor = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_BUG_COLOR);
-
-    const issueTypeHotfix = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_HOTFIX);
-    const issueTypeHotfixDescription = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_HOTFIX_DESCRIPTION);
-    const issueTypeHotfixColor = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_HOTFIX_COLOR);
-
-    const issueTypeFeature = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_FEATURE);
-    const issueTypeFeatureDescription = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_FEATURE_DESCRIPTION);
-    const issueTypeFeatureColor = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_FEATURE_COLOR);
-
-    const issueTypeDocumentation = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_DOCUMENTATION);
-    const issueTypeDocumentationDescription = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_DOCUMENTATION_DESCRIPTION);
-    const issueTypeDocumentationColor = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_DOCUMENTATION_COLOR);
-
-    const issueTypeMaintenance = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_MAINTENANCE);
-    const issueTypeMaintenanceDescription = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_MAINTENANCE_DESCRIPTION);
-    const issueTypeMaintenanceColor = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_MAINTENANCE_COLOR);
-
-    const issueTypeRelease = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_RELEASE);
-    const issueTypeReleaseDescription = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_RELEASE_DESCRIPTION);
-    const issueTypeReleaseColor = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_RELEASE_COLOR);
-
-    const issueTypeQuestion = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_QUESTION);
-    const issueTypeQuestionDescription = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_QUESTION_DESCRIPTION);
-    const issueTypeQuestionColor = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_QUESTION_COLOR);
-
-    const issueTypeHelp = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_HELP);
-    const issueTypeHelpDescription = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_HELP_DESCRIPTION);
-    const issueTypeHelpColor = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_HELP_COLOR);
-
-    const issueTypeTask = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_TASK);
-    const issueTypeTaskDescription = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_TASK_DESCRIPTION);
-    const issueTypeTaskColor = getGithubActionInput(INPUT_KEYS.ISSUE_TYPE_TASK_COLOR);
+    const issueTypeInputs = readGithubActionIssueTypeInputs(getGithubActionInput);
 
     /**
      * Locale
@@ -236,17 +200,7 @@ export async function runGitHubAction(): Promise<void> {
             agentTasks,
         ),
         labels: buildLabels(labelInputs),
-        issueTypes: buildIssueTypes({
-            task: { name: issueTypeTask, description: issueTypeTaskDescription, color: issueTypeTaskColor },
-            bug: { name: issueTypeBug, description: issueTypeBugDescription, color: issueTypeBugColor },
-            feature: { name: issueTypeFeature, description: issueTypeFeatureDescription, color: issueTypeFeatureColor },
-            documentation: { name: issueTypeDocumentation, description: issueTypeDocumentationDescription, color: issueTypeDocumentationColor },
-            maintenance: { name: issueTypeMaintenance, description: issueTypeMaintenanceDescription, color: issueTypeMaintenanceColor },
-            hotfix: { name: issueTypeHotfix, description: issueTypeHotfixDescription, color: issueTypeHotfixColor },
-            release: { name: issueTypeRelease, description: issueTypeReleaseDescription, color: issueTypeReleaseColor },
-            question: { name: issueTypeQuestion, description: issueTypeQuestionDescription, color: issueTypeQuestionColor },
-            help: { name: issueTypeHelp, description: issueTypeHelpDescription, color: issueTypeHelpColor },
-        }),
+        issueTypes: buildIssueTypes(issueTypeInputs),
         locale: buildLocale(issueLocale, pullRequestLocale),
         sizeThresholds: buildSizeThresholds(sizeThresholdInputs),
         branches: buildBranches(branchInputs),
