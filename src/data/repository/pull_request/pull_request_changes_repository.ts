@@ -1,36 +1,38 @@
 import { logError } from "../../../utils/logger";
 import type { GithubClientPort } from "../../../infrastructure/github/ports/github_client_provider_port";
-import type { GithubPullRequestChangesClient } from "../../../application/ports/github_pull_request_ports";
+import type { GithubPullRequestChangesClient, GithubPullRequestFile } from "../../../application/ports/github_pull_request_ports";
 
 export class PullRequestChangesRepository {
     constructor(private readonly githubClient: GithubClientPort<GithubPullRequestChangesClient>) {}
+
+    private async listAllFiles(
+        owner: string,
+        repository: string,
+        pullNumber: number,
+        token: string,
+    ): Promise<GithubPullRequestFile[]> {
+        const octokit = this.githubClient.getClient(token);
+        const allFiles: GithubPullRequestFile[] = [];
+        for await (const response of octokit.paginate.iterator(octokit.rest.pulls.listFiles, {
+            owner,
+            repo: repository,
+            pull_number: pullNumber,
+            per_page: 100,
+        })) {
+            allFiles.push(...(response.data ?? []));
+        }
+        return allFiles;
+    }
+
     getChangedFiles = async (
         owner: string,
         repository: string,
         pullNumber: number,
         token: string
     ): Promise<{filename: string, status: string}[]> => {
-        const octokit = this.githubClient.getClient(token);
-        const all: Array<{ filename: string; status: string }> = [];
         try {
-            for await (const response of octokit.paginate.iterator(
-                octokit.rest.pulls.listFiles,
-                {
-                    owner,
-                    repo: repository,
-                    pull_number: pullNumber,
-                    per_page: 100,
-                }
-            )) {
-                const data = response.data ?? [];
-                all.push(
-                    ...data.map((file: { filename: string; status: string }) => ({
-                        filename: file.filename,
-                        status: file.status,
-                    }))
-                );
-            }
-            return all;
+            return (await this.listAllFiles(owner, repository, pullNumber, token))
+                .map(({ filename, status }) => ({ filename, status }));
         } catch (error) {
             logError(`Error getting changed files from pull request: ${error}.`);
             return [];
@@ -53,14 +55,8 @@ export class PullRequestChangesRepository {
         pullNumber: number,
         token: string
     ): Promise<Array<{ path: string; firstLine: number }>> => {
-        const octokit = this.githubClient.getClient(token);
         try {
-            const { data } = await octokit.rest.pulls.listFiles({
-                owner,
-                repo: repository,
-                pull_number: pullNumber,
-            });
-            return (data || [])
+            return (await this.listAllFiles(owner, repository, pullNumber, token))
                 .filter((f) => f.status !== 'removed' && (f.patch ?? '').length > 0)
                 .map((f) => {
                     const firstLine = PullRequestChangesRepository.firstLineFromPatch(f.patch ?? '');
@@ -84,27 +80,15 @@ export class PullRequestChangesRepository {
         deletions: number,
         patch: string
     }>> => {
-        const octokit = this.githubClient.getClient(token);
-        const allFiles = [];
-
         try {
-            for await (const response of octokit.paginate.iterator(octokit.rest.pulls.listFiles, {
-                owner,
-                repo: repository,
-                pull_number: pullNumber,
-                per_page: 100
-            })) {
-                const filesData = response.data;
-                allFiles.push(...filesData.map((file) => ({
-                    filename: file.filename,
-                    status: file.status,
-                    additions: file.additions,
-                    deletions: file.deletions,
-                    patch: file.patch || ''
-                })));
-            }
-
-            return allFiles;
+            return (await this.listAllFiles(owner, repository, pullNumber, token))
+                .map(({ filename, status, additions, deletions, patch }) => ({
+                    filename,
+                    status,
+                    additions,
+                    deletions,
+                    patch: patch || '',
+                }));
         } catch (error) {
             logError(`Error getting pull request changes: ${error}.`);
             return [];
