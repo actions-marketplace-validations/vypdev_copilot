@@ -36,7 +36,9 @@ import { parseDelimitedValues } from './input_values_policy';
 import { readGithubActionAiInputs } from './github_action_ai_inputs';
 import { buildImageConfiguration } from './image_configuration_builder';
 import { buildSizeThresholds } from './size_threshold_builder';
+import { readGithubActionThresholdInputs } from './github_action_threshold_inputs';
 import { buildBranches } from './branches_builder';
+import { readGithubActionBranchInputs } from './github_action_branch_inputs';
 import { buildExecution } from './execution_builder';
 import { buildEmoji, buildImages, buildIssue, buildIssueTypes, buildLabels, buildLocale, buildProjects, buildPullRequest, buildTokens, buildWorkflows } from './configuration_builders';
 
@@ -203,39 +205,8 @@ export async function runGitHubAction(): Promise<void> {
     const issueLocale = getGithubActionInput(INPUT_KEYS.ISSUES_LOCALE) ?? Locale.DEFAULT;
     const pullRequestLocale = getGithubActionInput(INPUT_KEYS.PULL_REQUESTS_LOCALE) ?? Locale.DEFAULT;
 
-    /**
-     * Size Thresholds
-     */
-    const sizeXxlThresholdLines = parseIntegerInput(getGithubActionInput(INPUT_KEYS.SIZE_XXL_THRESHOLD_LINES), 1000);
-    const sizeXxlThresholdFiles = parseIntegerInput(getGithubActionInput(INPUT_KEYS.SIZE_XXL_THRESHOLD_FILES), 20);
-    const sizeXxlThresholdCommits = parseIntegerInput(getGithubActionInput(INPUT_KEYS.SIZE_XXL_THRESHOLD_COMMITS), 10);
-    const sizeXlThresholdLines = parseIntegerInput(getGithubActionInput(INPUT_KEYS.SIZE_XL_THRESHOLD_LINES), 500);
-    const sizeXlThresholdFiles = parseIntegerInput(getGithubActionInput(INPUT_KEYS.SIZE_XL_THRESHOLD_FILES), 10);
-    const sizeXlThresholdCommits = parseIntegerInput(getGithubActionInput(INPUT_KEYS.SIZE_XL_THRESHOLD_COMMITS), 5);
-    const sizeLThresholdLines = parseIntegerInput(getGithubActionInput(INPUT_KEYS.SIZE_L_THRESHOLD_LINES), 250);
-    const sizeLThresholdFiles = parseIntegerInput(getGithubActionInput(INPUT_KEYS.SIZE_L_THRESHOLD_FILES), 5);
-    const sizeLThresholdCommits = parseIntegerInput(getGithubActionInput(INPUT_KEYS.SIZE_L_THRESHOLD_COMMITS), 3);
-    const sizeMThresholdLines = parseIntegerInput(getGithubActionInput(INPUT_KEYS.SIZE_M_THRESHOLD_LINES), 100);
-    const sizeMThresholdFiles = parseIntegerInput(getGithubActionInput(INPUT_KEYS.SIZE_M_THRESHOLD_FILES), 3);
-    const sizeMThresholdCommits = parseIntegerInput(getGithubActionInput(INPUT_KEYS.SIZE_M_THRESHOLD_COMMITS), 2);
-    const sizeSThresholdLines = parseIntegerInput(getGithubActionInput(INPUT_KEYS.SIZE_S_THRESHOLD_LINES), 50);
-    const sizeSThresholdFiles = parseIntegerInput(getGithubActionInput(INPUT_KEYS.SIZE_S_THRESHOLD_FILES), 2);
-    const sizeSThresholdCommits = parseIntegerInput(getGithubActionInput(INPUT_KEYS.SIZE_S_THRESHOLD_COMMITS), 1);
-    const sizeXsThresholdLines = parseIntegerInput(getGithubActionInput(INPUT_KEYS.SIZE_XS_THRESHOLD_LINES), 25);
-    const sizeXsThresholdFiles = parseIntegerInput(getGithubActionInput(INPUT_KEYS.SIZE_XS_THRESHOLD_FILES), 1);
-    const sizeXsThresholdCommits = parseIntegerInput(getGithubActionInput(INPUT_KEYS.SIZE_XS_THRESHOLD_COMMITS), 1);
-    
-    /**
-     * Branches
-     */
-    const mainBranch = getGithubActionInput(INPUT_KEYS.MAIN_BRANCH);
-    const developmentBranch = getGithubActionInput(INPUT_KEYS.DEVELOPMENT_BRANCH);
-    const featureTree = getGithubActionInput(INPUT_KEYS.FEATURE_TREE);
-    const bugfixTree = getGithubActionInput(INPUT_KEYS.BUGFIX_TREE);
-    const hotfixTree = getGithubActionInput(INPUT_KEYS.HOTFIX_TREE);
-    const releaseTree = getGithubActionInput(INPUT_KEYS.RELEASE_TREE);
-    const docsTree = getGithubActionInput(INPUT_KEYS.DOCS_TREE);
-    const choreTree = getGithubActionInput(INPUT_KEYS.CHORE_TREE);
+    const sizeThresholdInputs = readGithubActionThresholdInputs(getGithubActionInput);
+    const branchInputs = readGithubActionBranchInputs(getGithubActionInput);
 
     /**
      * Prefix builder
@@ -311,25 +282,8 @@ export async function runGitHubAction(): Promise<void> {
             help: { name: issueTypeHelp, description: issueTypeHelpDescription, color: issueTypeHelpColor },
         }),
         locale: buildLocale(issueLocale, pullRequestLocale),
-        sizeThresholds: buildSizeThresholds({
-            xxl: { lines: sizeXxlThresholdLines, files: sizeXxlThresholdFiles, commits: sizeXxlThresholdCommits },
-            xl: { lines: sizeXlThresholdLines, files: sizeXlThresholdFiles, commits: sizeXlThresholdCommits },
-            l: { lines: sizeLThresholdLines, files: sizeLThresholdFiles, commits: sizeLThresholdCommits },
-            m: { lines: sizeMThresholdLines, files: sizeMThresholdFiles, commits: sizeMThresholdCommits },
-            s: { lines: sizeSThresholdLines, files: sizeSThresholdFiles, commits: sizeSThresholdCommits },
-            xs: { lines: sizeXsThresholdLines, files: sizeXsThresholdFiles, commits: sizeXsThresholdCommits },
-        }),
-        branches: buildBranches({
-            main: mainBranch,
-            defaultBranch: mainBranch,
-            development: developmentBranch,
-            featureTree,
-            bugfixTree,
-            hotfixTree,
-            releaseTree,
-            docsTree,
-            choreTree,
-        }),
+        sizeThresholds: buildSizeThresholds(sizeThresholdInputs),
+        branches: buildBranches(branchInputs),
         release: new Release(),
         hotfix: new Hotfix(),
         workflows: buildWorkflows(releaseWorkflow, hotfixWorkflow),
