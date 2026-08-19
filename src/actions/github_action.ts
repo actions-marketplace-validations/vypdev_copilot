@@ -39,6 +39,8 @@ import { buildSizeThresholds } from './size_threshold_builder';
 import { readGithubActionThresholdInputs } from './github_action_threshold_inputs';
 import { buildBranches } from './branches_builder';
 import { readGithubActionBranchInputs } from './github_action_branch_inputs';
+import { readGithubActionLabelInputs } from './github_action_label_inputs';
+import { readGithubActionWorkflowInputs } from './github_action_workflow_inputs';
 import { buildExecution } from './execution_builder';
 import { buildEmoji, buildImages, buildIssue, buildIssueTypes, buildLabels, buildLocale, buildProjects, buildPullRequest, buildTokens, buildWorkflows } from './configuration_builders';
 
@@ -119,11 +121,7 @@ export async function runGitHubAction(): Promise<void> {
      * Images
      */
     const imageConfiguration = buildImageConfiguration(getGithubActionInput);
-    /**
-     * Workflows
-     */
-    const releaseWorkflow = getGithubActionInput(INPUT_KEYS.RELEASE_WORKFLOW);
-    const hotfixWorkflow = getGithubActionInput(INPUT_KEYS.HOTFIX_WORKFLOW);
+    const workflowInputs = readGithubActionWorkflowInputs(getGithubActionInput);
 
     /**
      * Emoji-title
@@ -131,34 +129,7 @@ export async function runGitHubAction(): Promise<void> {
     const titleEmoji = getGithubActionInput(INPUT_KEYS.EMOJI_LABELED_TITLE) === 'true';
     const branchManagementEmoji = getGithubActionInput(INPUT_KEYS.BRANCH_MANAGEMENT_EMOJI);
 
-    /**
-     * Labels
-     */
-    const branchManagementLauncherLabel = getGithubActionInput(INPUT_KEYS.BRANCH_MANAGEMENT_LAUNCHER_LABEL);
-    const bugfixLabel = getGithubActionInput(INPUT_KEYS.BUGFIX_LABEL);
-    const bugLabel = getGithubActionInput(INPUT_KEYS.BUG_LABEL);
-    const hotfixLabel = getGithubActionInput(INPUT_KEYS.HOTFIX_LABEL);
-    const enhancementLabel = getGithubActionInput(INPUT_KEYS.ENHANCEMENT_LABEL);
-    const featureLabel = getGithubActionInput(INPUT_KEYS.FEATURE_LABEL);
-    const releaseLabel = getGithubActionInput(INPUT_KEYS.RELEASE_LABEL);
-    const questionLabel = getGithubActionInput(INPUT_KEYS.QUESTION_LABEL);
-    const helpLabel = getGithubActionInput(INPUT_KEYS.HELP_LABEL);
-    const deployLabel = getGithubActionInput(INPUT_KEYS.DEPLOY_LABEL);
-    const deployedLabel = getGithubActionInput(INPUT_KEYS.DEPLOYED_LABEL);
-    const docsLabel = getGithubActionInput(INPUT_KEYS.DOCS_LABEL);
-    const documentationLabel = getGithubActionInput(INPUT_KEYS.DOCUMENTATION_LABEL);
-    const choreLabel = getGithubActionInput(INPUT_KEYS.CHORE_LABEL);
-    const maintenanceLabel = getGithubActionInput(INPUT_KEYS.MAINTENANCE_LABEL);
-    const priorityHighLabel = getGithubActionInput(INPUT_KEYS.PRIORITY_HIGH_LABEL);
-    const priorityMediumLabel = getGithubActionInput(INPUT_KEYS.PRIORITY_MEDIUM_LABEL);
-    const priorityLowLabel = getGithubActionInput(INPUT_KEYS.PRIORITY_LOW_LABEL);
-    const priorityNoneLabel = getGithubActionInput(INPUT_KEYS.PRIORITY_NONE_LABEL);
-    const sizeXxlLabel = getGithubActionInput(INPUT_KEYS.SIZE_XXL_LABEL);
-    const sizeXlLabel = getGithubActionInput(INPUT_KEYS.SIZE_XL_LABEL);
-    const sizeLLabel = getGithubActionInput(INPUT_KEYS.SIZE_L_LABEL);
-    const sizeMLabel = getGithubActionInput(INPUT_KEYS.SIZE_M_LABEL);
-    const sizeSLabel = getGithubActionInput(INPUT_KEYS.SIZE_S_LABEL);
-    const sizeXsLabel = getGithubActionInput(INPUT_KEYS.SIZE_XS_LABEL);
+    const labelInputs = readGithubActionLabelInputs(getGithubActionInput);
 
     /**
      * Issue Types
@@ -264,12 +235,7 @@ export async function runGitHubAction(): Promise<void> {
             bugbotFixVerifyCommands,
             agentTasks,
         ),
-        labels: buildLabels({
-            branching: { launcher: branchManagementLauncherLabel },
-            workflow: { bug: bugLabel, bugfix: bugfixLabel, hotfix: hotfixLabel, enhancement: enhancementLabel, feature: featureLabel, release: releaseLabel, question: questionLabel, help: helpLabel, deploy: deployLabel, deployed: deployedLabel, docs: docsLabel, documentation: documentationLabel, chore: choreLabel, maintenance: maintenanceLabel },
-            priorities: { high: priorityHighLabel, medium: priorityMediumLabel, low: priorityLowLabel, none: priorityNoneLabel },
-            sizes: { xxl: sizeXxlLabel, xl: sizeXlLabel, l: sizeLLabel, m: sizeMLabel, s: sizeSLabel, xs: sizeXsLabel },
-        }),
+        labels: buildLabels(labelInputs),
         issueTypes: buildIssueTypes({
             task: { name: issueTypeTask, description: issueTypeTaskDescription, color: issueTypeTaskColor },
             bug: { name: issueTypeBug, description: issueTypeBugDescription, color: issueTypeBugColor },
@@ -286,7 +252,7 @@ export async function runGitHubAction(): Promise<void> {
         branches: buildBranches(branchInputs),
         release: new Release(),
         hotfix: new Hotfix(),
-        workflows: buildWorkflows(releaseWorkflow, hotfixWorkflow),
+        workflows: buildWorkflows(workflowInputs.release, workflowInputs.hotfix),
         projects: buildProjects({
             projects,
             issueCreated: projectColumnIssueCreated,
