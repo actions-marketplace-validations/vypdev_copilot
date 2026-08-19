@@ -344,6 +344,11 @@ created item id as an unsuccessful link instead of reporting a false success.
 Tests cover successful mutation responses, incomplete responses, and the
 idempotent already-linked path.
 
+The organization-members client contract is now explicitly paginable. Team
+lists and every team-member list are consumed through bounded pages, while
+`project_members_policy` remains provider-independent. Tests cover pagination,
+deduplication across teams/pages, and selection excluding current members.
+
 For each adapter:
 
 1. identify its semantic port;
