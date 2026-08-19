@@ -349,6 +349,12 @@ lists and every team-member list are consumed through bounded pages, while
 `project_members_policy` remains provider-independent. Tests cover pagination,
 deduplication across teams/pages, and selection excluding current members.
 
+The authenticated-user adapter was audited without finding a broken production
+contract. `getUserFromToken` and `getTokenUserDetails` remain separate semantic
+capabilities over the same GitHub endpoint: execution identity versus commit
+identity details. Contract tests now cover login resolution, trimming, optional
+field fallbacks, noreply email generation, and provider error propagation.
+
 For each adapter:
 
 1. identify its semantic port;
