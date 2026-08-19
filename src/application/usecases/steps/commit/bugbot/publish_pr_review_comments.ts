@@ -1,4 +1,4 @@
-import type { BugbotPullRequestCommentWritePort } from "../../../../../application/ports/bugbot_ports";
+import type { BugbotPullRequestWritePort } from "../../../../../application/ports/bugbot_pull_request_write_ports";
 import type { Execution } from "../../../../../data/model/execution";
 import type { BugbotFinding, BugbotPrContext, ExistingFindingInfo } from "./types";
 import { buildCommentBody } from "./marker";
@@ -7,7 +7,7 @@ import { logInfo } from "../../../../../utils/logger";
 
 type ReviewComment = { path: string; line: number; body: string };
 export interface PullRequestReviewCommentPublisherOptions {
-    repository: BugbotPullRequestCommentWritePort;
+    repository: BugbotPullRequestWritePort;
     execution: Execution;
     openPrNumber: number;
     prContext: BugbotPrContext;

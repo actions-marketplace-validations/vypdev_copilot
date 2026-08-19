@@ -1,6 +1,6 @@
 import { Locale } from '../data/model/locale';
 import { BUGBOT_MAX_COMMENTS, BUGBOT_MIN_SEVERITY, INPUT_KEYS } from '../utils/constants';
-import type { ProjectDetailQueryPort } from '../application/ports/project_board_ports';
+import type { ProjectDetailQueryPort } from '../application/ports/project_detail_ports';
 import { getActionInputsWithDefaults } from '../utils/yml_utils';
 import { isEnabledInput } from './input_boolean_policy';
 import { resolveActionInput } from './action_input_source';

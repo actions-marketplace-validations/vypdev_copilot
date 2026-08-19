@@ -1,8 +1,8 @@
 import { Execution } from "../../../data/model/execution";
-import type { LatestTagQueryPort } from "../../ports/branch_ports";
-import type { AuthenticatedUserPort } from "../../ports/organization_ports";
-import type { RepositoryReleasePort } from "../../ports/repository_release_ports";
-import type { IssueLabelProvisioningPort, IssueProgressLabelProvisioningPort, IssueTypeProvisioningPort } from "../../ports/issue_ports";
+import type { LatestTagQueryPort } from "../../ports/branch_tag_ports";
+import type { AuthenticatedUserPort } from "../../ports/authenticated_user_ports";
+import type { RepositoryTagPort, RepositoryDefaultBranchPort } from "../../ports/repository_release_ports";
+import type { IssueLabelProvisioningPort, IssueProgressLabelProvisioningPort, IssueTypeProvisioningPort } from "../../ports/issue_management_ports";
 import { Result } from "../../../data/model/result";
 import { ParamUseCase } from "../base/param_usecase";
 import { DEFAULT_INITIAL_TAG } from "../../../utils/version_utils";
@@ -19,7 +19,8 @@ export class InitialSetupUseCase implements ParamUseCase<Execution, Result[]> {
         private readonly issueProgressLabelProvisioningPort: IssueProgressLabelProvisioningPort,
         private readonly issueTypeProvisioningPort: IssueTypeProvisioningPort,
         private readonly latestTagQueryPort: LatestTagQueryPort,
-        private readonly repositoryReleasePort: RepositoryReleasePort,
+        private readonly repositoryDefaultBranchPort: RepositoryDefaultBranchPort,
+        private readonly repositoryTagPort: RepositoryTagPort,
     ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
@@ -210,14 +211,14 @@ export class InitialSetupUseCase implements ParamUseCase<Execution, Result[]> {
             }
 
             logInfo(`🏷️  No version tags found. Creating default tag ${DEFAULT_INITIAL_TAG}...`);
-            const defaultBranch = await this.repositoryReleasePort.getDefaultBranch(param.owner, param.repo, param.tokens.token);
+            const defaultBranch = await this.repositoryDefaultBranchPort.getDefaultBranch(param.owner, param.repo, param.tokens.token);
             if (!defaultBranch) {
                 const msg = 'Could not get default branch to create initial version tag.';
                 logError(msg);
                 return { error: msg };
             }
 
-            const sha = await this.repositoryReleasePort.createTag(
+            const sha = await this.repositoryTagPort.createTag(
                 param.owner,
                 param.repo,
                 defaultBranch,

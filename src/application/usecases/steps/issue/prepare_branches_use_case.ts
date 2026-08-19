@@ -1,7 +1,6 @@
-import * as core from "@actions/core";
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import type { BranchPreparationPort } from "../../../ports/branch_ports";
+import type { BranchPreparationPort } from "../../../ports/branch_preparation_ports";
 import { logDebugInfo, logError, logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
 import { ParamUseCase } from "../../base/param_usecase";
@@ -10,7 +9,7 @@ import { MoveIssueToInProgressUseCase } from "./move_issue_to_in_progress";
 import { prepareHotfixBranch } from "./prepare_hotfix_branch";
 import { prepareReleaseBranch } from "./prepare_release_branch";
 import { selectBranchPreparationStrategy } from "./branch_preparation_strategy";
-import type { ProjectBoardCommandPort } from "../../../../application/ports/project_board_ports";
+import type { ProjectBoardCommandPort } from "../../../../application/ports/project_board_command_ports";
 
 export class PrepareBranchesUseCase implements ParamUseCase<Execution, Result[]> {
     taskId = "PrepareBranchesUseCase";
@@ -22,7 +21,6 @@ export class PrepareBranchesUseCase implements ParamUseCase<Execution, Result[]>
         try {
             const issueTitle = param.issue.title ?? "";
             if (!param.labels.isMandatoryBranchedLabel && issueTitle.length === 0) {
-                core.setFailed("Issue title not available.");
                 return [
                     new Result({
                         id: this.taskId,

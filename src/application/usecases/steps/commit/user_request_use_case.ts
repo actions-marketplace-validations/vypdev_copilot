@@ -6,7 +6,7 @@
 
 import { isAgentConfigurationReady } from "../../../../data/model/agent";
 import type { Execution } from "../../../../data/model/execution";
-import type { FixerQueryPort } from "../../../ports/agent_ports";
+import type { FixerQueryPort } from "../../../ports/agent_fixer_ports";
 import { getUserRequestPrompt } from "../../../../prompts";
 import { logDebugInfo, logError, logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";

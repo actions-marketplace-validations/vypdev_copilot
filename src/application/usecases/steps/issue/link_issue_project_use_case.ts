@@ -1,7 +1,8 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import type { IssueIdentityQueryPort } from "../../../../application/ports/issue_ports";
-import type { ProjectBoardCommandPort, ProjectBoardLinkPort } from "../../../../application/ports/project_board_ports";
+import type { IssueIdentityQueryPort } from "../../../../application/ports/issue_identity_ports";
+import type { ProjectBoardCommandPort } from "../../../../application/ports/project_board_command_ports";
+import type { ProjectBoardLinkPort } from "../../../../application/ports/project_board_link_ports";
 import { logDebugInfo, logError, logInfo, logWarn } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
 import { ParamUseCase } from "../../base/param_usecase";
@@ -11,7 +12,8 @@ export class LinkIssueProjectUseCase implements ParamUseCase<Execution, Result[]
     
     constructor(
         private readonly issueRepository: IssueIdentityQueryPort,
-        private readonly projectRepository: ProjectBoardCommandPort & ProjectBoardLinkPort,
+        private readonly projectCommandRepository: ProjectBoardCommandPort,
+        private readonly projectLinkRepository: ProjectBoardLinkPort,
     ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
@@ -34,13 +36,13 @@ export class LinkIssueProjectUseCase implements ParamUseCase<Execution, Result[]
                     param.tokens.token,
                 )
 
-                let actionDone = await this.projectRepository.linkContentId(project, issueId, param.tokens.token)
+                let actionDone = await this.projectLinkRepository.linkContentId(project, issueId, param.tokens.token)
                 if (actionDone) {
                     /**
                      * Wait for 10 seconds to ensure the issue is linked to the project
                      */
                     await new Promise(resolve => setTimeout(resolve, 10000));
-                    actionDone = await this.projectRepository.moveIssueToColumn(
+                    actionDone = await this.projectCommandRepository.moveIssueToColumn(
                         project,
                         param.owner,
                         param.repo,

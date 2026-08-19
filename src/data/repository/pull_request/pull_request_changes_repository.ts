@@ -1,5 +1,6 @@
 import { logError } from "../../../utils/logger";
-import type { GithubClientPort, GithubPullRequestChangesClient } from "../../../application/ports/github_provider_ports";
+import type { GithubClientPort } from "../../../infrastructure/github/ports/github_client_provider_port";
+import type { GithubPullRequestChangesClient } from "../../../application/ports/github_pull_request_ports";
 
 export class PullRequestChangesRepository {
     constructor(private readonly githubClient: GithubClientPort<GithubPullRequestChangesClient>) {}

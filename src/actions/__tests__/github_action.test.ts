@@ -37,8 +37,8 @@ jest.mock('../../application/usecases/steps/common/store_configuration_use_case'
 }));
 
 const mockGetProjectDetail = jest.fn();
-jest.mock('../../data/repository/project/project_board_repository', () => ({
-  ProjectBoardRepository: jest.fn().mockImplementation(() => ({
+jest.mock('../../data/repository/project/project_board_query_repository', () => ({
+  ProjectBoardQueryRepository: jest.fn().mockImplementation(() => ({
     getProjectDetail: mockGetProjectDetail,
   })),
 }));

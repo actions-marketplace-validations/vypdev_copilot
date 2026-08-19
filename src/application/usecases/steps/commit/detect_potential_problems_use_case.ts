@@ -1,11 +1,12 @@
 import { isAgentConfigurationReady } from '../../../../data/model/agent';
 import { Execution } from '../../../../data/model/execution';
 import { Result } from '../../../../data/model/result';
-import type { FindingsQueryPort } from '../../../ports/agent_ports';
+import type { FindingsQueryPort } from '../../../ports/agent_findings_ports';
 import { getTaskEmoji } from '../../../../utils/task_emoji';
 import { logDebugInfo, logError, logInfo } from '../../../../utils/logger';
 import { ParamUseCase } from '../../base/param_usecase';
-import type { BugbotContextPorts, BugbotWritePorts } from '../../../ports/bugbot_ports';
+import type { BugbotContextPorts } from '../../../ports/bugbot_context_ports';
+import type { BugbotWritePorts } from '../../../ports/bugbot_write_ports';
 import { buildBugbotPrompt } from './bugbot/build_bugbot_prompt';
 import { loadBugbotContext } from './bugbot/load_bugbot_context_use_case';
 import { applyDetectedFindings, prepareDetectedFindings } from './bugbot/apply_detected_findings';

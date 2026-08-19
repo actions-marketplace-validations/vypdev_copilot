@@ -7,7 +7,8 @@
 
 
 
-import { RepositoryFactory } from '../infrastructure/composition/repository_factory';
+import { GitCliRepository } from '../data/repository/git_cli_repository';
+import { createProjectBoardCompositionRoot } from '../infrastructure/composition/project_board_composition_root';
 
 import { mainRun } from './common_action';
 import { renderLocalActionResults } from './local_action_output';
@@ -18,13 +19,12 @@ export async function runLocalAction(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Params shape is dynamic (CLI/action inputs)
     additionalParams: any
 ): Promise<void> {
-    const repositoryFactory = new RepositoryFactory();
-    const projectRepository = repositoryFactory.createProjectBoardRepository();
+    const projectBoard = createProjectBoardCompositionRoot();
 
-    const configuration = await buildLocalActionConfiguration(additionalParams, projectRepository);
+    const configuration = await buildLocalActionConfiguration(additionalParams, projectBoard.query);
     const execution = buildLocalActionExecution(configuration, additionalParams);
 
-    const results = await mainRun(execution, projectRepository, repositoryFactory.createGitCliRepository());
+    const results = await mainRun(execution, projectBoard.command, new GitCliRepository());
 
     renderLocalActionResults(results);
 }

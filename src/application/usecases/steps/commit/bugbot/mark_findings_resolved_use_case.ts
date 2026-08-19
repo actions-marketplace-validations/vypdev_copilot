@@ -3,7 +3,7 @@
  */
 
 import type { Execution } from "../../../../../data/model/execution";
-import type { BugbotWritePorts } from "../../../../../application/ports/bugbot_ports";
+import type { BugbotWritePorts } from "../../../../../application/ports/bugbot_write_ports";
 import { logError } from "../../../../../utils/logger";
 import type { BugbotContext } from "./types";
 import { buildMarker, sanitizeFindingIdForMarker } from "./marker";

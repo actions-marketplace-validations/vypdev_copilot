@@ -1,11 +1,12 @@
-import type { GithubClientPort, GithubGraphqlClient } from '../../../application/ports/github_provider_ports';
+import type { GithubClientPort } from '../../../infrastructure/github/ports/github_client_provider_port';
+import type { GithubGraphqlTransportClient } from '../../../infrastructure/github/ports/github_graphql_transport_port';
 import { Result } from '../../model/result';
 import { LinkedBranchResponse } from '../../graph/linked_branch_response';
 import { RepositoryResponse } from '../../graph/repository_response';
 import { logDebugInfo, logError } from '../../../utils/logger';
 
 export class LinkedBranchRepository {
-    constructor(private readonly graphqlClient: GithubClientPort<GithubGraphqlClient>) {}
+    constructor(private readonly graphqlClient: GithubClientPort<GithubGraphqlTransportClient>) {}
 
     createLinkedBranch = async (
         owner: string,

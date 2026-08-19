@@ -7,10 +7,11 @@ import { getTaskEmoji } from '../../../utils/task_emoji';
 import { ParamUseCase } from '../base/param_usecase';
 
 import { OPENCODE_AGENT_PLAN } from '../../../application/policies/agent_task_policy';
-import type { FindingsQueryPort } from '../../ports/agent_ports';
-import type { IssueDescriptionQueryPort, IssueLabelsPort, IssueProgressPort } from '../../../application/ports/issue_ports';
-import type { PullRequestBranchQueryPort } from '../../../application/ports/pull_request_ports';
-import type { BranchListQueryPort } from '../../../application/ports/branch_ports';
+import type { FindingsQueryPort } from '../../ports/agent_findings_ports';
+import type { IssueDescriptionQueryPort } from '../../../application/ports/issue_description_ports';
+import type { IssueLabelsPort, IssueProgressPort } from '../../../application/ports/issue_management_ports';
+import type { PullRequestBranchQueryPort } from '../../../application/ports/pull_request_branch_ports';
+import type { BranchListQueryPort } from '../../../application/ports/branch_lifecycle_ports';
 import { getCheckProgressPrompt } from '../../../prompts';
 import { OPENCODE_PROJECT_CONTEXT_INSTRUCTION } from '../../../utils/opencode_project_context_instruction';
 import { findIssueBranch } from './find_issue_branch';

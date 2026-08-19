@@ -1,7 +1,8 @@
 import { logDebugInfo, logError } from "../../../utils/logger";
 import { Labels } from "../../model/labels";
 import { IssueTypes } from "../../model/issue_types";
-import type { GithubClientPort, GithubGraphqlClient } from "../../../application/ports/github_provider_ports";
+import type { GithubClientPort } from "../../../infrastructure/github/ports/github_client_provider_port";
+import type { GithubGraphqlTransportClient } from "../../../infrastructure/github/ports/github_graphql_transport_port";
 
 type SelectedIssueType = { name: string; description: string; color: string };
 type GetIssueId = (owner: string, repository: string, issueNumber: number, token: string) => Promise<string>;
@@ -9,7 +10,7 @@ type GetIssueId = (owner: string, repository: string, issueNumber: number, token
 export class IssueTypeAssignmentRepository {
     constructor(
         private readonly getIssueId: GetIssueId,
-        private readonly graphqlClient: GithubClientPort<GithubGraphqlClient>,
+        private readonly graphqlClient: GithubClientPort<GithubGraphqlTransportClient>,
     ) {}
 
     setIssueType = async (

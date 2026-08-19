@@ -1,5 +1,5 @@
 import type { Execution } from '../../../../../data/model/execution';
-import type { BugbotWritePorts } from '../../../../../application/ports/bugbot_ports';
+import type { BugbotWritePorts } from '../../../../../application/ports/bugbot_write_ports';
 import type { BugbotContext } from './types';
 import { prepareBugbotFindings, type PreparedBugbotFindings } from './prepare_bugbot_findings';
 import { markFindingsResolved } from './mark_findings_resolved_use_case';

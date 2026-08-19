@@ -1,6 +1,6 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import type { ProjectBoardCommandPort } from "../../../../application/ports/project_board_ports";
+import type { ProjectBoardCommandPort } from "../../../../application/ports/project_board_command_ports";
 import { logError, logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
 import { ParamUseCase } from "../../base/param_usecase";

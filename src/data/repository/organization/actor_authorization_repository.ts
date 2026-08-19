@@ -1,10 +1,11 @@
 import { logDebugInfo } from "../../../utils/logger";
 import { authorizationForFileModification } from "../actor_modification_policy";
-import type { ActorAuthorizationPort } from "../../../application/ports/organization_ports";
-import type { GithubClientPort, GithubOrganizationClient } from "../../../application/ports/github_provider_ports";
+import type { ActorAuthorizationPort } from "../../../application/ports/actor_authorization_ports";
+import type { GithubClientPort } from "../../../infrastructure/github/ports/github_client_provider_port";
+import type { GithubActorAuthorizationClient } from "../../../application/ports/github_identity_ports";
 
 export class ActorAuthorizationRepository implements ActorAuthorizationPort {
-    constructor(private readonly githubClient: GithubClientPort<GithubOrganizationClient>) {}
+    constructor(private readonly githubClient: GithubClientPort<GithubActorAuthorizationClient>) {}
     isActorAllowedToModifyFiles = async (owner: string, actor: string, token: string): Promise<boolean> => {
         try {
             const octokit = this.githubClient.getClient(token);

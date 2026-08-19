@@ -1,4 +1,4 @@
-import type { BranchListQueryPort } from '../../../application/ports/branch_ports';
+import type { BranchListQueryPort } from '../../../application/ports/branch_lifecycle_ports';
 import { Execution } from '../../../data/model/execution';
 import { logInfo } from '../../../utils/logger';
 

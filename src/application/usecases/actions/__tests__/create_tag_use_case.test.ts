@@ -14,7 +14,7 @@ jest.mock('../../../../utils/task_emoji', () => ({
 }));
 
 const mockCreateTag = jest.fn();
-jest.mock('../../../../data/repository/release/repository_release_repository', () => ({
+jest.mock('../../../../data/repository/release/repository_tag_repository', () => ({
   RepositoryReleaseRepository: jest.fn().mockImplementation(() => ({
     createTag: mockCreateTag,
   })),

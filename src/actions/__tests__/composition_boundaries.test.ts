@@ -8,12 +8,13 @@ function source(relativePath: string): string {
 describe('action composition boundaries', () => {
     it('keeps CLI as an input source delegating to the local lifecycle', () => {
         const cli = readFileSync(join(__dirname, '../../cli.ts'), 'utf8');
+        const registry = readFileSync(join(__dirname, '../../cli/command_registry.ts'), 'utf8');
         const commands = readdirSync(join(__dirname, '../../cli/commands'))
             .filter((file) => file.endsWith('.ts'))
             .map((file) => readFileSync(join(__dirname, '../../cli/commands', file), 'utf8'))
             .join('\n');
 
-        expect(cli).toMatch(/register[A-Z][A-Za-z]+Command\(program\)/);
+        expect(registry).toMatch(/register[A-Z][A-Za-z]+Command\(program\)/);
         expect(commands).toMatch(/from ['"]\.\.\/\.\.\/actions\/local_action['"]/);
         expect(commands).toMatch(/await runLocalAction\(/);
         expect(commands).not.toMatch(/from ['"][^'"]*common_action['"]/);

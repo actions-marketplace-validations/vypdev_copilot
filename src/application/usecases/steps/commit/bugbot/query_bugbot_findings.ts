@@ -1,5 +1,5 @@
 import type { Execution } from '../../../../../data/model/execution';
-import type { FindingsQueryPort } from '../../../../ports/agent_ports';
+import type { FindingsQueryPort } from '../../../../ports/agent_findings_ports';
 import { OPENCODE_AGENT_PLAN } from '../../../../../application/policies/agent_task_policy';
 import { BUGBOT_RESPONSE_SCHEMA } from './schema';
 

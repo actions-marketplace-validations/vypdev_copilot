@@ -1,5 +1,6 @@
 import { logDebugInfo, logError } from '../../utils/logger';
-import type { GithubBranchMergeClient, GithubClientPort } from '../../application/ports/github_provider_ports';
+import type { GithubBranchMergeClient } from '../../application/ports/github_branch_ports';
+import type { GithubClientPort } from '../../infrastructure/github/ports/github_client_provider_port';
 import { Result } from '../model/result';
 
 /**

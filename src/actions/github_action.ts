@@ -20,9 +20,13 @@ import { PublishResultUseCase } from '../application/usecases/steps/common/publi
 import { StoreConfigurationUseCase } from '../application/usecases/steps/common/store_configuration_use_case';
 import { BUGBOT_MAX_COMMENTS, BUGBOT_MIN_SEVERITY, INPUT_KEYS } from '../utils/constants';
 import { logDebugInfo, logError, logInfo } from '../utils/logger';
-import type { ManagedAgentServer } from '../application/ports/agent_ports';
+import type { ManagedAgentServer } from '../application/ports/agent_server_ports';
 import { OpenCodeServerLifecycleAdapter } from '../data/repository/opencode_server_lifecycle_adapter';
-import { RepositoryFactory } from '../infrastructure/composition/repository_factory';
+import { GitCliRepository } from '../data/repository/git_cli_repository';
+import { createIssueContentCompositionRoot } from '../infrastructure/composition/issue_content_composition_root';
+import type { IssueContentRepository } from '../data/repository/issue/issue_content_repository';
+import { createIssueNotificationRepository } from '../infrastructure/composition/issue_interaction_composition_root';
+import { createProjectBoardCompositionRoot } from '../infrastructure/composition/project_board_composition_root';
 import { ConfigurationHandler } from '../manager/description/configuration_handler';
 import { loadProjectDetails } from './project_details_loader';
 import { mainRun } from './common_action';
@@ -39,8 +43,7 @@ import { buildEmoji, buildImages, buildIssue, buildIssueTypes, buildLabels, buil
 
 export async function runGitHubAction(): Promise<void> {
     const eventInputs = { ...github.context.payload, eventName: github.context.eventName };
-    const repositoryFactory = new RepositoryFactory();
-    const projectRepository = repositoryFactory.createProjectBoardRepository();
+    const projectBoard = createProjectBoardCompositionRoot();
 
     logInfo('GitHub Action: runGitHubAction started.');
 
@@ -116,7 +119,7 @@ export async function runGitHubAction(): Promise<void> {
     const projectIdsInput: string = getInput(INPUT_KEYS.PROJECT_IDS);
     const projectIds: string[] = parseDelimitedValues(projectIdsInput);
 
-    const projects = await loadProjectDetails(projectRepository, projectIds, token);
+    const projects = await loadProjectDetails(projectBoard.query, projectIds, token);
 
     const projectColumnIssueCreated = getInput(INPUT_KEYS.PROJECT_COLUMN_ISSUE_CREATED)
     const projectColumnPullRequestCreated = getInput(INPUT_KEYS.PROJECT_COLUMN_PULL_REQUEST_CREATED)
@@ -355,13 +358,13 @@ export async function runGitHubAction(): Promise<void> {
 
     logDebugInfo(`Execution built. Event will be resolved in mainRun. Single action: ${execution.singleAction.currentSingleAction ?? 'none'}, AI PR description: ${execution.ai.getAiPullRequestDescription()}, bugbot min severity: ${execution.ai.getBugbotMinSeverity()}.`);
 
-    const results: Result[] = await mainRun(execution, projectRepository, repositoryFactory.createGitCliRepository());
+    const results: Result[] = await mainRun(execution, projectBoard.command, new GitCliRepository());
 
     await finishWithResults(
         execution,
         results,
-        repositoryFactory.createIssueNotificationRepository(),
-        repositoryFactory.createIssueContentRepository(),
+        createIssueNotificationRepository(),
+        createIssueContentCompositionRoot(),
     );
     } finally {
         if (managedOpencodeServer) {
@@ -375,8 +378,8 @@ export async function runGitHubAction(): Promise<void> {
 async function finishWithResults(
     execution: Execution,
     results: Result[],
-    issueNotificationPort: ReturnType<RepositoryFactory['createIssueNotificationRepository']>,
-    issueDescriptionPort: ReturnType<RepositoryFactory['createIssueContentRepository']>,
+    issueNotificationPort: ReturnType<typeof createIssueNotificationRepository>,
+    issueDescriptionPort: IssueContentRepository,
 ): Promise<void> {
     const stepCount = results.reduce((acc, r) => acc + (r.steps?.length ?? 0), 0);
     const errorCount = results.reduce((acc, r) => acc + (r.errors?.length ?? 0), 0);

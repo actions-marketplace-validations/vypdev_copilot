@@ -1,5 +1,7 @@
 import { OctokitReleaseClientAdapter } from "../../../infrastructure/github/octokit_client";
-import { RepositoryReleaseRepository } from "./repository_release_repository";
+import { RepositoryDefaultBranchRepository } from "./repository_default_branch_repository";
+import { RepositoryReleasePublicationRepository } from "./repository_release_publication_repository";
+import { RepositoryTagRepository } from "./repository_tag_repository";
 
 const mockGetRef = jest.fn();
 const mockCreateRef = jest.fn();
@@ -28,8 +30,10 @@ jest.mock("../../../utils/logger", () => ({
     logInfo: jest.fn(),
 }));
 
-describe("RepositoryReleaseRepository", () => {
-    const repository = new RepositoryReleaseRepository(new OctokitReleaseClientAdapter());
+describe("Project release capability repositories", () => {
+    const defaultBranchRepository = new RepositoryDefaultBranchRepository(new OctokitReleaseClientAdapter());
+    const releaseRepository = new RepositoryReleasePublicationRepository(new OctokitReleaseClientAdapter());
+    const tagRepository = new RepositoryTagRepository(new OctokitReleaseClientAdapter());
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -38,14 +42,14 @@ describe("RepositoryReleaseRepository", () => {
     it("returns the default branch through the repository metadata capability", async () => {
         mockGetRepo.mockResolvedValue({ data: { default_branch: "main" } });
 
-        await expect(repository.getDefaultBranch("owner", "repo", "token")).resolves.toBe("main");
+        await expect(defaultBranchRepository.getDefaultBranch("owner", "repo", "token")).resolves.toBe("main");
         expect(mockGetRepo).toHaveBeenCalledWith({ owner: "owner", repo: "repo" });
     });
 
     it("does not create an existing tag", async () => {
         mockGetRef.mockResolvedValue({ data: { object: { sha: "existing-sha" } } });
 
-        await expect(repository.createTag("owner", "repo", "main", "v1.0.0", "token")).resolves.toBe("existing-sha");
+        await expect(tagRepository.createTag("owner", "repo", "main", "v1.0.0", "token")).resolves.toBe("existing-sha");
         expect(mockCreateRef).not.toHaveBeenCalled();
     });
 
@@ -55,7 +59,7 @@ describe("RepositoryReleaseRepository", () => {
             .mockResolvedValueOnce({ data: { object: { sha: "branch-sha" } } });
         mockCreateRef.mockResolvedValue(undefined);
 
-        await expect(repository.createTag("owner", "repo", "main", "v1.0.0", "token")).resolves.toBe("branch-sha");
+        await expect(tagRepository.createTag("owner", "repo", "main", "v1.0.0", "token")).resolves.toBe("branch-sha");
         expect(mockCreateRef).toHaveBeenCalledWith({
             owner: "owner",
             repo: "repo",
@@ -67,7 +71,7 @@ describe("RepositoryReleaseRepository", () => {
     it("maps release creation to the release capability result", async () => {
         mockCreateRelease.mockResolvedValue({ data: { html_url: "https://github.com/owner/repo/releases/tag/v1.0.0" } });
 
-        await expect(repository.createRelease("owner", "repo", "v1.0.0", "Release", "Changes", "token"))
+        await expect(releaseRepository.createRelease("owner", "repo", "v1.0.0", "Release", "Changes", "token"))
             .resolves.toBe("https://github.com/owner/repo/releases/tag/v1.0.0");
         expect(mockCreateRelease).toHaveBeenCalledWith({
             owner: "owner",

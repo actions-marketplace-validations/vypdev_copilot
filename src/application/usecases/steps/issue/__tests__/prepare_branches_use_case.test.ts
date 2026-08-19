@@ -1,4 +1,3 @@
-import * as core from '@actions/core';
 import { PrepareBranchesUseCase } from '../prepare_branches_use_case';
 
 jest.mock('../../../../../utils/logger', () => ({
@@ -6,10 +5,6 @@ jest.mock('../../../../../utils/logger', () => ({
   logDebugInfo: jest.fn(),
   logError: jest.fn(),
   logWarn: jest.fn(),
-}));
-
-jest.mock('@actions/core', () => ({
-  setFailed: jest.fn(),
 }));
 
 const mockFetchRemoteBranches = jest.fn();
@@ -92,7 +87,6 @@ describe('PrepareBranchesUseCase', () => {
       labels: { isMandatoryBranchedLabel: false },
     });
     const results = await useCase.invoke(param);
-    expect(core.setFailed).toHaveBeenCalledWith('Issue title not available.');
     expect(results.some((r) => r.success === false)).toBe(true);
   });
 

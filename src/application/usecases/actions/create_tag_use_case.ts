@@ -1,6 +1,6 @@
 import { Execution } from "../../../data/model/execution";
 import { Result } from "../../../data/model/result";
-import type { RepositoryReleasePort } from "../../ports/repository_release_ports";
+import type { RepositoryTagPort } from "../../ports/repository_release_ports";
 import { INPUT_KEYS } from "../../../utils/constants";
 import { logError, logInfo, logWarn } from "../../../utils/logger";
 import { getTaskEmoji } from "../../../utils/task_emoji";
@@ -10,7 +10,7 @@ import { ParamUseCase } from "../base/param_usecase";
 export class CreateTagUseCase  implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'CreateTagUseCase';
     
-    constructor(private readonly repositoryReleasePort: RepositoryReleasePort) {}
+    constructor(private readonly repositoryReleasePort: RepositoryTagPort) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`);

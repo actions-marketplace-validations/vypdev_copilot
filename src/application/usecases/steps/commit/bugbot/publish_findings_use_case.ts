@@ -4,7 +4,7 @@
  */
 
 import type { Execution } from "../../../../../data/model/execution";
-import type { BugbotWritePorts } from "../../../../../application/ports/bugbot_ports";
+import type { BugbotWritePorts } from "../../../../../application/ports/bugbot_write_ports";
 import { getCommentWatermark } from "../../../../../utils/comment_watermark";
 import type { BugbotContext, BugbotFinding } from "./types";
 import { publishIssueFindingComment } from "./publish_issue_finding_comment";

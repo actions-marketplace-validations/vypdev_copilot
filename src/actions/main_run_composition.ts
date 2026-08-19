@@ -1,3 +1,6 @@
+import { createBranchMergeClient } from '../infrastructure/composition/github_branch_client_factory';
+import { createReleaseClient } from '../infrastructure/composition/github_release_client_factory';
+import { createCheckProgressCompositionRoot } from '../infrastructure/composition/check_progress_composition_root';
 import { DetectPotentialProblemsUseCase } from '../application/usecases/steps/commit/detect_potential_problems_use_case';
 import { DetectBugbotFixIntentUseCase } from '../application/usecases/steps/commit/bugbot/detect_bugbot_fix_intent_use_case';
 import { SingleActionUseCase } from '../application/usecases/single_action_use_case';
@@ -7,55 +10,52 @@ import { CreateReleaseUseCase } from '../application/usecases/actions/create_rel
 import { CreateTagUseCase } from '../application/usecases/actions/create_tag_use_case';
 import { ThinkUseCase } from '../application/usecases/steps/common/think_use_case';
 import { RecommendStepsUseCase } from '../application/usecases/actions/recommend_steps_use_case';
-import { DefaultAgentRepositoryFactory } from '../data/repository/agent_repository_factory';
-import { RepositoryFactory } from '../infrastructure/composition/repository_factory';
-import type { BugbotContextPorts, BugbotWritePorts } from '../application/ports/bugbot_ports';
+import { createFindingsQueryPort } from '../infrastructure/composition/agent_capability_composition_root';
+import { createBugbotCompositionRoot } from '../infrastructure/composition/bugbot_composition_root';
+import { createInitialSetupCompositionRoot } from '../infrastructure/composition/initial_setup_composition_root';
+import { createIssueContentCompositionRoot } from '../infrastructure/composition/issue_content_composition_root';
+import { createIssueClosureRepository, createIssueNotificationRepository } from '../infrastructure/composition/issue_interaction_composition_root';
+import { createIssueLabelRepository } from '../infrastructure/composition/issue_labels_composition_root';
+import { RepositoryTagRepository } from '../data/repository/release/repository_tag_repository';
+import { RepositoryReleasePublicationRepository } from '../data/repository/release/repository_release_publication_repository';
+import { MergeRepository } from '../data/repository/merge_repository';
 
-export function createDetectPotentialProblemsUseCase(factory: RepositoryFactory): DetectPotentialProblemsUseCase {
-    const issueRepository = factory.createBugbotIssueRepository();
-    const pullRequestRepository = factory.createBugbotPullRequestRepository();
-    const contextPorts: BugbotContextPorts = { issue: issueRepository, pullRequest: pullRequestRepository };
-    const writePorts: BugbotWritePorts = { issueComments: issueRepository, pullRequestComments: pullRequestRepository };
+export function createDetectPotentialProblemsUseCase(): DetectPotentialProblemsUseCase {
+    const bugbot = createBugbotCompositionRoot();
     return new DetectPotentialProblemsUseCase(
-        new DefaultAgentRepositoryFactory().createFindings(),
-        contextPorts,
-        writePorts,
+        createFindingsQueryPort(),
+        bugbot.context,
+        bugbot.write,
     );
 }
 
-export function createBugbotContextPorts(factory: RepositoryFactory) {
-    return {
-        issue: factory.createBugbotIssueRepository(),
-        pullRequest: factory.createBugbotPullRequestRepository(),
-    };
-}
-
-export function createDetectBugbotFixIntentUseCase(factory: RepositoryFactory): DetectBugbotFixIntentUseCase {
-    const contextPorts = createBugbotContextPorts(factory);
+export function createDetectBugbotFixIntentUseCase(): DetectBugbotFixIntentUseCase {
+    const contextPorts = createBugbotCompositionRoot().context;
     return new DetectBugbotFixIntentUseCase(
         contextPorts.pullRequest,
-        new DefaultAgentRepositoryFactory().createFindings(),
+        createFindingsQueryPort(),
         contextPorts,
     );
 }
 
-export function createSingleActionUseCase(factory: RepositoryFactory): SingleActionUseCase {
-    const repositoryReleasePort = factory.createRepositoryReleaseRepository();
-    const issueDescriptionQueryPort = factory.createIssueContentRepository();
+export function createSingleActionUseCase(): SingleActionUseCase {
+    const repositoryTagPort = new RepositoryTagRepository(createReleaseClient());
+    const repositoryReleasePort = new RepositoryReleasePublicationRepository(createReleaseClient());
+    const issueDescriptionQueryPort = createIssueContentCompositionRoot();
     return new SingleActionUseCase(
         new DeployedActionUseCase(
-            factory.createIssueLabelRepository(),
-            factory.createIssueClosureRepository(),
-            factory.createMergeRepository(),
+            createIssueLabelRepository(),
+            createIssueClosureRepository(),
+            new MergeRepository(createBranchMergeClient()),
         ),
-        new PublishGithubActionUseCase(repositoryReleasePort),
+        new PublishGithubActionUseCase(repositoryTagPort, repositoryReleasePort),
         new CreateReleaseUseCase(repositoryReleasePort),
-        new CreateTagUseCase(repositoryReleasePort),
-        new ThinkUseCase(issueDescriptionQueryPort, factory.createIssueNotificationRepository(), new DefaultAgentRepositoryFactory().createFindings()),
-        factory.createInitialSetupUseCase(),
-        factory.createCheckProgressUseCase(),
-        createDetectPotentialProblemsUseCase(factory),
-        new RecommendStepsUseCase(issueDescriptionQueryPort, new DefaultAgentRepositoryFactory().createFindings()),
+        new CreateTagUseCase(repositoryTagPort),
+        new ThinkUseCase(issueDescriptionQueryPort, createIssueNotificationRepository(), createFindingsQueryPort()),
+        createInitialSetupCompositionRoot(),
+        createCheckProgressCompositionRoot(),
+        createDetectPotentialProblemsUseCase(),
+        new RecommendStepsUseCase(issueDescriptionQueryPort, createFindingsQueryPort()),
     );
 }
 

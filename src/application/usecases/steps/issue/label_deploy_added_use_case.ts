@@ -1,12 +1,12 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import type { BranchWorkflowPort } from "../../../ports/branch_ports";
+import type { BranchWorkflowPort } from "../../../ports/branch_workflow_ports";
 import { extractChangelogUpToAdditionalContext, injectJsonAsMarkdownBlock } from "../../../../utils/content_utils";
 import { logDebugInfo, logError, logInfo } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
 import { ParamUseCase } from "../../base/param_usecase";
 import { MoveIssueToInProgressUseCase } from "./move_issue_to_in_progress";
-import type { ProjectBoardCommandPort } from "../../../../application/ports/project_board_ports";
+import type { ProjectBoardCommandPort } from "../../../../application/ports/project_board_command_ports";
 
 export class DeployAddedUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'DeployAddedUseCase';

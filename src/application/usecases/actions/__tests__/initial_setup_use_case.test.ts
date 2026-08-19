@@ -23,7 +23,7 @@ jest.mock('../../../../utils/setup_files', () => ({
 
 const mockGetDefaultBranch = jest.fn();
 const mockCreateTag = jest.fn();
-jest.mock('../../../../data/repository/release/repository_release_repository', () => ({
+jest.mock('../../../../data/repository/release/repository_default_branch_repository', () => ({
   RepositoryReleaseRepository: jest.fn().mockImplementation(() => ({
     getDefaultBranch: mockGetDefaultBranch,
     createTag: mockCreateTag,
@@ -80,7 +80,8 @@ describe('InitialSetupUseCase', () => {
       { ensureProgressLabels: mockEnsureProgressLabels },
       { ensureIssueTypes: mockEnsureIssueTypes },
       { getLatestTag: mockGetLatestTag },
-      { getDefaultBranch: mockGetDefaultBranch, createTag: mockCreateTag } as any,
+      { getDefaultBranch: mockGetDefaultBranch } as any,
+      { createTag: mockCreateTag } as any,
     );
     mockEnsureGitHubDirs.mockClear();
     mockCopySetupFiles.mockReturnValue({ copied: 2, skipped: 0 });

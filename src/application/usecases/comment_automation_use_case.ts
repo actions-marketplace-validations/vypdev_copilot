@@ -3,17 +3,18 @@ import { Result } from "../../data/model/result";
 import { logInfo } from "../../utils/logger";
 import { ParamUseCase } from "./base/param_usecase";
 import type { BugbotAutofixParam } from "./steps/commit/bugbot/bugbot_autofix_use_case";
-import { runBugbotAutofixCommitAndPush, runUserRequestCommitAndPush } from "./steps/commit/bugbot/bugbot_autofix_commit";
-import { markFindingsResolved } from "./steps/commit/bugbot/mark_findings_resolved_use_case";
-import { sanitizeFindingIdForMarker } from "./steps/commit/bugbot/marker";
 import {
     getBugbotFixIntentPayload,
     canRunBugbotAutofix,
     canRunDoUserRequest,
 } from "./steps/commit/bugbot/bugbot_fix_intent_payload";
+import { resolveCommentAutomationRoute } from './comment_automation_route_policy';
+import { commitAutofixAndResolveFindings } from './steps/commit/bugbot/commit_autofix_and_resolve_workflow';
+import { commitUserRequestIfSuccessful } from './steps/commit/bugbot/commit_user_request_workflow';
 import type { DoUserRequestParam } from "./steps/commit/user_request_use_case";
-import type { AuthenticatedUserPort, ActorAuthorizationPort } from "../ports/organization_ports";
-import type { BugbotWritePorts } from "../ports/bugbot_ports";
+import type { AuthenticatedUserPort } from "../ports/authenticated_user_ports";
+import type { ActorAuthorizationPort } from "../ports/actor_authorization_ports";
+import type { BugbotWritePorts } from "../ports/bugbot_write_ports";
 import type { GitCommitPort } from "../ports/git_ports";
 
 export interface CommentAutomationOptions {
@@ -58,11 +59,12 @@ export async function runCommentAutomation(
         param.tokens.token
     );
     const canModifyFiles = runAutofix || canRunDoUserRequest(intentPayload);
+    const route = resolveCommentAutomationRoute(intentPayload, allowedToModifyFiles);
     if (!allowedToModifyFiles && canModifyFiles) {
         logInfo("Skipping file-modifying use cases: user is not an org member or repo owner.");
     }
 
-    if (runAutofix && intentPayload && allowedToModifyFiles) {
+    if (route === 'autofix' && intentPayload) {
         const payload = intentPayload;
         logInfo("Running bugbot autofix.");
         const autofixResults = await options.autofixUseCase.invoke({
@@ -74,7 +76,7 @@ export async function runCommentAutomation(
         });
         results.push(...autofixResults);
         await commitAutofixAndResolveFindings(param, payload, autofixResults, authenticatedUserPort, bugbotWritePorts, options.gitCommitPort);
-    } else if (!runAutofix && canRunDoUserRequest(intentPayload) && allowedToModifyFiles) {
+    } else if (route === 'do-user-request') {
         const payload = intentPayload!;
         logInfo("Running do user request.");
         const doResults = await options.doUserRequestUseCase.invoke({
@@ -84,66 +86,15 @@ export async function runCommentAutomation(
         });
         results.push(...doResults);
         await commitUserRequestIfSuccessful(param, payload.branchOverride, doResults, authenticatedUserPort, options.gitCommitPort);
-    } else if (!runAutofix) {
+    } else if (route === 'think') {
         logInfo("Skipping bugbot autofix (no fix request, no targets, or no context).");
     }
 
-    const ranAutofix = runAutofix && allowedToModifyFiles && intentPayload;
-    const ranDoRequest = canRunDoUserRequest(intentPayload) && allowedToModifyFiles;
+    const ranAutofix = route === 'autofix';
+    const ranDoRequest = route === 'do-user-request';
     if (!ranAutofix && !ranDoRequest) {
         logInfo("Running ThinkUseCase (no file-modifying action ran).");
         results.push(...(await options.thinkUseCase.invoke(param)));
     }
     return results;
-}
-
-async function commitAutofixAndResolveFindings(
-    param: Execution,
-    payload: NonNullable<ReturnType<typeof getBugbotFixIntentPayload>>,
-    autofixResults: Result[],
-    authenticatedUserPort: AuthenticatedUserPort,
-    bugbotWritePorts: BugbotWritePorts,
-    gitCommitPort: GitCommitPort,
-): Promise<void> {
-    const lastAutofix = autofixResults.at(-1);
-    if (!lastAutofix?.success) {
-        logInfo("Bugbot autofix did not succeed; skipping commit.");
-        return;
-    }
-
-    logInfo("Bugbot autofix succeeded; running commit and push.");
-    const autofixPayload = lastAutofix.payload as { workspacePaths?: string[] } | undefined;
-    const commitResult = await runBugbotAutofixCommitAndPush(param, {
-        branchOverride: payload.branchOverride,
-        targetFindingIds: payload.targetFindingIds,
-        workspacePaths: autofixPayload?.workspacePaths,
-    }, authenticatedUserPort, gitCommitPort);
-    if (commitResult.committed && payload.context) {
-        const ids = payload.targetFindingIds;
-        await markFindingsResolved({
-            execution: param,
-            context: payload.context,
-            resolvedFindingIds: new Set(ids),
-            normalizedResolvedIds: new Set(ids.map(sanitizeFindingIdForMarker)),
-            ports: bugbotWritePorts,
-        });
-        logInfo(`Marked ${ids.length} finding(s) as resolved.`);
-    } else if (!commitResult.committed) {
-        logInfo("No commit performed (no changes or error).");
-    }
-}
-
-async function commitUserRequestIfSuccessful(
-    param: Execution,
-    branchOverride: string | undefined,
-    results: Result[],
-    authenticatedUserPort: AuthenticatedUserPort,
-    gitCommitPort: GitCommitPort,
-): Promise<void> {
-    if (!results.at(-1)?.success) {
-        logInfo("Do user request did not succeed; skipping commit.");
-        return;
-    }
-    logInfo("Do user request succeeded; running commit and push.");
-    await runUserRequestCommitAndPush(param, { branchOverride }, authenticatedUserPort, gitCommitPort);
 }

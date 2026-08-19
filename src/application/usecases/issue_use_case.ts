@@ -16,10 +16,17 @@ import { RemoveIssueBranchesUseCase } from "./steps/issue/remove_issue_branches_
 import { RemoveNotNeededBranchesUseCase } from "./steps/issue/remove_not_needed_branches_use_case";
 import { UpdateIssueTypeUseCase } from "./steps/issue/update_issue_type_use_case";
 import type { ProjectBoardPriorityPort } from "./steps/issue/priority_size_check_use_case";
-import type { OrganizationMembersPort } from "../ports/organization_ports";
-import type { IssueAssigneePort, IssueClosurePort, IssueDescriptionQueryPort, IssueIdentityQueryPort, IssueNotificationPort, IssueTitlePort, IssueTypeAssignmentPort } from "../ports/issue_ports";
-import type { ProjectBoardCommandPort, ProjectBoardLinkPort } from "../ports/project_board_ports";
-import type { BranchLifecyclePort, BranchNamePort, BranchPreparationPort, BranchWorkflowPort } from "../ports/branch_ports";
+import type { OrganizationMembersPort } from "../ports/organization_members_ports";
+import type { IssueAssigneePort, IssueTypeAssignmentPort } from "../ports/issue_management_ports";
+import type { IssueClosurePort, IssueNotificationPort } from "../ports/issue_lifecycle_ports";
+import type { IssueDescriptionQueryPort } from "../ports/issue_description_ports";
+import type { IssueIdentityQueryPort } from "../ports/issue_identity_ports";
+import type { IssueTitlePort } from "../ports/issue_title_ports";
+import type { ProjectBoardCommandPort } from "../ports/project_board_command_ports";
+import type { ProjectBoardLinkPort } from "../ports/project_board_link_ports";
+import type { BranchLifecyclePort, BranchNamePort } from "../ports/branch_lifecycle_ports";
+import type { BranchPreparationPort } from "../ports/branch_preparation_ports";
+import type { BranchWorkflowPort } from "../ports/branch_workflow_ports";
 
 export class IssueUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'IssueUseCase';
@@ -27,7 +34,8 @@ export class IssueUseCase implements ParamUseCase<Execution, Result[]> {
         private readonly projectBoardPriorityPort: ProjectBoardPriorityPort,
         private readonly organizationMembersPort: OrganizationMembersPort,
         private readonly issueIdentityQueryPort: IssueIdentityQueryPort,
-        private readonly projectBoardPort: ProjectBoardCommandPort & ProjectBoardLinkPort,
+        private readonly projectBoardPort: ProjectBoardCommandPort,
+        private readonly projectBoardLinkPort: ProjectBoardLinkPort,
         private readonly issueTitlePort: IssueTitlePort,
         private readonly issueAssigneePort: IssueAssigneePort,
         private readonly issueClosurePort: IssueClosurePort,
@@ -77,7 +85,7 @@ export class IssueUseCase implements ParamUseCase<Execution, Result[]> {
         /**
          * Link issue to project
          */
-        results.push(...await new LinkIssueProjectUseCase(this.issueIdentityQueryPort, this.projectBoardPort).invoke(param));
+        results.push(...await new LinkIssueProjectUseCase(this.issueIdentityQueryPort, this.projectBoardPort, this.projectBoardLinkPort).invoke(param));
 
         /**
          * Check priority issue size

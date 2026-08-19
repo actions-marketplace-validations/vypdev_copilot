@@ -20,7 +20,7 @@ describe('application architecture boundaries', () => {
             /from ['"][^'"]*\/infrastructure\//,
             /DefaultAgentRepositoryFactory/,
             /new\s+RepositoryFactory\s*\(/,
-            /new\s+(IssueRepository|PullRequestRepository|OrganizationRepository|ProjectBoardRepository|BranchRepository|RepositoryReleaseRepository)\s*\(/,
+            /new\s+(IssueRepository|PullRequestRepository|OrganizationRepository|ProjectBoardQueryRepository|BranchRepository|RepositoryTagRepository|RepositoryReleasePublicationRepository|RepositoryDefaultBranchRepository)\s*\(/,
         ];
         const violations = productionTypeScriptFiles(applicationRoot).flatMap((file) => {
             const source = readFileSync(file, 'utf8');
@@ -32,8 +32,14 @@ describe('application architecture boundaries', () => {
         expect(violations).toEqual([]);
     });
 
+    it('keeps the GraphQL transport out of application production code', () => {
+        const applicationSources = productionTypeScriptFiles(applicationRoot)
+            .map((file) => readFileSync(file, 'utf8'))
+            .join('\n');
+        expect(applicationSources).not.toContain('GithubGraphqlTransportClient');
+    });
     it('keeps Execution independent from repository composition', () => {
         const executionSource = readFileSync(join(__dirname, '../../data/model/execution.ts'), 'utf8');
-        expect(executionSource).not.toMatch(/RepositoryFactory|OrganizationRepository|OctokitOrganizationClientAdapter/);
+        expect(executionSource).not.toMatch(/RepositoryFactory|OrganizationRepository|Octokit(?:AuthenticatedUser|ActorAuthorization|OrganizationMembers)ClientAdapter/);
     });
 });

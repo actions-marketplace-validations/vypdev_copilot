@@ -1,5 +1,5 @@
 import { Execution } from "../../../data/model/execution";
-import type { IssueDescriptionCommandPort, IssueDescriptionQueryPort } from "../../../application/ports/issue_ports";
+import type { IssueDescriptionCommandPort, IssueDescriptionQueryPort } from "../../../application/ports/issue_description_ports";
 import { logError } from "../../../utils/logger";
 import { ContentInterface } from "./content_interface";
 

@@ -1,4 +1,4 @@
-import type { IssueClosurePort } from '../../../application/ports/issue_ports';
+import type { IssueClosurePort } from '../../../application/ports/issue_lifecycle_ports';
 import type { IssueContentRepository } from './issue_content_repository';
 import type { IssueLifecycleRepository } from './issue_lifecycle_repository';
 

@@ -1,10 +1,10 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
 import { OPENCODE_AGENT_PLAN } from "../../../../application/policies/agent_task_policy";
-import type { FindingsQueryPort } from "../../../ports/agent_ports";
-import type { IssueDescriptionQueryPort } from "../../../ports/issue_ports";
-import type { OrganizationMembersPort } from "../../../ports/organization_ports";
-import type { PullRequestDescriptionCommandPort } from "../../../ports/pull_request_ports";
+import type { FindingsQueryPort } from "../../../ports/agent_findings_ports";
+import type { IssueDescriptionQueryPort } from "../../../ports/issue_description_ports";
+import type { OrganizationMembersPort } from "../../../ports/organization_members_ports";
+import type { PullRequestDescriptionCommandPort } from "../../../ports/pull_request_description_ports";
 import { getUpdatePullRequestDescriptionPrompt } from "../../../../prompts";
 import { logDebugInfo, logError, logInfo } from "../../../../utils/logger";
 import { OPENCODE_PROJECT_CONTEXT_INSTRUCTION } from "../../../../utils/opencode_project_context_instruction";

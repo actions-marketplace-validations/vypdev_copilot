@@ -1,8 +1,8 @@
-import type { LatestTagQueryPort } from '../../application/ports/branch_ports';
+import type { LatestTagQueryPort } from '../../application/ports/branch_tag_ports';
 import type { Execution } from './execution';
 import { resolveHotfixBranchVersion } from './resolve_hotfix_branch_version';
 import { resolveReleaseBranchVersion } from './resolve_release_branch_version';
-import type { IssueDescriptionQueryPort } from '../../application/ports/issue_ports';
+import type { IssueDescriptionQueryPort } from '../../application/ports/issue_description_ports';
 
 export async function resolveIssueBranchVersion(
     execution: Execution,

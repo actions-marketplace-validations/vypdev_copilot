@@ -1,6 +1,7 @@
 import { Execution } from "../../../../data/model/execution";
 import { Result } from "../../../../data/model/result";
-import type { ProjectBoardCommandPort, ProjectBoardLinkPort } from "../../../ports/project_board_ports";
+import type { ProjectBoardCommandPort } from "../../../ports/project_board_command_ports";
+import type { ProjectBoardLinkPort } from "../../../ports/project_board_link_ports";
 import { logDebugInfo, logError, logInfo, logWarn } from "../../../../utils/logger";
 import { getTaskEmoji } from "../../../../utils/task_emoji";
 import { ParamUseCase } from "../../base/param_usecase";
@@ -8,7 +9,10 @@ import { ParamUseCase } from "../../base/param_usecase";
 export class LinkPullRequestProjectUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'LinkPullRequestProjectUseCase';
     
-    constructor(private readonly projectBoardPort: ProjectBoardLinkPort & ProjectBoardCommandPort) {}
+    constructor(
+        private readonly projectBoardCommandPort: ProjectBoardCommandPort,
+        private readonly projectBoardLinkPort: ProjectBoardLinkPort,
+    ) {}
 
     async invoke(param: Execution): Promise<Result[]> {
         logInfo(`${getTaskEmoji(this.taskId)} Executing ${this.taskId}.`)
@@ -23,7 +27,7 @@ export class LinkPullRequestProjectUseCase implements ParamUseCase<Execution, Re
         }
         try {
             for (const project of projects) {
-                let actionDone = await this.projectBoardPort.linkContentId(
+                let actionDone = await this.projectBoardLinkPort.linkContentId(
                     project,
                     param.pullRequest.id,
                     param.tokens.token
@@ -34,7 +38,7 @@ export class LinkPullRequestProjectUseCase implements ParamUseCase<Execution, Re
                      * Wait for 10 seconds to ensure the pull request is linked to the project
                      */
                     await new Promise(resolve => setTimeout(resolve, 10000));
-                    actionDone = await this.projectBoardPort.moveIssueToColumn(
+                    actionDone = await this.projectBoardCommandPort.moveIssueToColumn(
                         project,
                         param.owner,
                         param.repo,

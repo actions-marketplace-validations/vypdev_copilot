@@ -1,6 +1,7 @@
 import * as core from '@actions/core';
-import type { IssueTitlePort } from '../../../application/ports/issue_ports';
-import type { GithubClientPort, GithubIssueTitleClient } from '../../../application/ports/github_provider_ports';
+import type { IssueTitlePort } from '../../../application/ports/issue_title_ports';
+import type { GithubClientPort } from '../../../infrastructure/github/ports/github_client_provider_port';
+import type { GithubIssueTitleClient } from '../../../application/ports/github_issue_ports';
 import { Labels } from '../../model/labels';
 import { logDebugInfo } from '../../../utils/logger';
 import { resolveIssueTitleEmoji, resolvePullRequestTitleEmoji } from '../issue_emoji_policy';

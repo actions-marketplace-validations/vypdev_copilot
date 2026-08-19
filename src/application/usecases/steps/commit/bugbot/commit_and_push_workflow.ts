@@ -1,5 +1,5 @@
 import type { GitCommitPort } from '../../../../../application/ports/git_ports';
-import type { AuthenticatedUserPort } from '../../../../../application/ports/organization_ports';
+import type { AuthenticatedUserPort } from '../../../../../application/ports/authenticated_user_ports';
 import type { Execution } from '../../../../../data/model/execution';
 import { logDebugInfo, logError, logInfo } from '../../../../../utils/logger';
 import { checkoutBranch } from './git_branch_checkout';

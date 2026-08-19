@@ -13,8 +13,8 @@ const mockGetId = jest.fn();
 
 const mockLinkContentId = jest.fn();
 const mockMoveIssueToColumn = jest.fn();
-jest.mock('../../../../../data/repository/project/project_board_repository', () => ({
-  ProjectBoardRepository: jest.fn().mockImplementation(() => ({
+jest.mock('../../../../../data/repository/project/project_board_query_repository', () => ({
+  ProjectBoardQueryRepository: jest.fn().mockImplementation(() => ({
     linkContentId: mockLinkContentId,
     moveIssueToColumn: mockMoveIssueToColumn,
   })),
@@ -40,7 +40,8 @@ describe('LinkIssueProjectUseCase', () => {
   beforeEach(() => {
     useCase = new LinkIssueProjectUseCase(
       { getId: mockGetId },
-      { linkContentId: mockLinkContentId, moveIssueToColumn: mockMoveIssueToColumn, setTaskPriority: jest.fn(), setTaskSize: jest.fn() },
+      { moveIssueToColumn: mockMoveIssueToColumn, setTaskPriority: jest.fn(), setTaskSize: jest.fn() },
+      { linkContentId: mockLinkContentId },
     );
     mockGetId.mockResolvedValue('issue-node-1');
     mockLinkContentId.mockResolvedValue(true);

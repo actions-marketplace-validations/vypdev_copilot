@@ -1,9 +1,10 @@
 import * as core from '@actions/core';
 import { Execution } from '../data/model/execution';
 import { Result } from '../data/model/result';
-import { ProjectBoardCommandPort } from '../application/ports/project_board_ports';
-import { RepositoryFactory } from '../infrastructure/composition/repository_factory';
-import type { LatestTagQueryPort } from '../application/ports/branch_ports';
+import { ProjectBoardCommandPort } from '../application/ports/project_board_command_ports';
+import { createAuthenticatedUserCompositionRoot } from '../infrastructure/composition/authenticated_user_composition_root';
+import { createExecutionIssueSetupCompositionRoot } from '../infrastructure/composition/execution_issue_setup_composition_root';
+import type { LatestTagQueryPort } from '../application/ports/branch_tag_ports';
 import { clearAccumulatedLogs, logDebugInfo, logError, logInfo } from '../utils/logger';
 import { TITLE } from '../utils/constants';
 import chalk from 'chalk';
@@ -22,8 +23,7 @@ export async function mainRun(
     logInfo('GitHub Action: starting main run.');
     logDebugInfo(`Event: ${execution.eventName}, actor: ${execution.actor}, repo: ${execution.owner}/${execution.repo}, debug: ${execution.debug}`);
 
-    const factory = new RepositoryFactory();
-    await execution.setup(latestTagQueryPort, factory.createExecutionIssueSetupRepository(), factory.createAuthenticatedUserRepository());
+    await execution.setup(latestTagQueryPort, createExecutionIssueSetupCompositionRoot(), createAuthenticatedUserCompositionRoot());
     clearAccumulatedLogs();
 
     logDebugInfo(`Setup done. Issue number: ${execution.issueNumber}, isSingleAction: ${execution.isSingleAction}, isIssue: ${execution.isIssue}, isPullRequest: ${execution.isPullRequest}, isPush: ${execution.isPush}`);
@@ -41,7 +41,7 @@ export async function mainRun(
     if (execution.runnedByToken) {
         if (execution.isSingleAction && execution.singleAction.validSingleAction) {
             logInfo(`User from token (${execution.tokenUser}) matches actor. Executing single action: ${execution.singleAction.currentSingleAction}.`);
-            results.push(...await dispatchMainRunRoute('single-action', execution, projectBoardCommandPort, factory));
+            results.push(...await dispatchMainRunRoute('single-action', execution, projectBoardCommandPort));
             logInfo(`Single action finished. Results: ${results.length}.`);
             return results;
         }
@@ -52,7 +52,7 @@ export async function mainRun(
     if (execution.issueNumber === -1) {
         if (execution.isSingleAction && execution.singleAction.isSingleActionWithoutIssue) {
             logInfo('No issue number; running single action without issue.');
-            results.push(...await dispatchMainRunRoute('single-action', execution, projectBoardCommandPort, factory));
+            results.push(...await dispatchMainRunRoute('single-action', execution, projectBoardCommandPort));
         } else {
             logInfo('Issue number not found. Skipping.');
         }
@@ -85,7 +85,7 @@ export async function mainRun(
             isPullRequestReviewComment: execution.pullRequest.isPullRequestReviewComment,
             isPush: execution.isPush,
         });
-        results.push(...await dispatchMainRunRoute(route, execution, projectBoardCommandPort, factory));
+        results.push(...await dispatchMainRunRoute(route, execution, projectBoardCommandPort));
 
         const totalSteps = results.reduce((acc, r) => acc + (r.steps?.length ?? 0), 0);
         logInfo(`Main run finished. Results: ${results.length}, total steps: ${totalSteps}.`);
