@@ -1,4 +1,4 @@
-import { ConfigurationHandler } from "../../manager/description/configuration_handler";
+
 import { shouldSkipInitialLabelsFetch } from './initial_labels_policy';
 import { branchesForManagement, typesForIssue } from "../../utils/label_utils";
 import { logDebugInfo, setGlobalLoggerDebug } from "../../utils/logger";
@@ -26,6 +26,7 @@ import { resolveExecutionIssueNumber } from "./resolve_execution_issue_number";
 import { resolveIssueBranchVersion } from './resolve_issue_branch_version';
 import { restorePreviousBranchState, type PreviousBranchState } from './previous_branch_state_policy';
 import type { ExecutionIssueSetupPort, ExecutionOrganizationSetupPort } from '../../application/ports/execution_setup_ports';
+import type { ExecutionConfigurationPort } from '../../application/ports/execution_configuration_ports';
 
 export class Execution {
     debug: boolean = false;
@@ -231,6 +232,7 @@ export class Execution {
         branchRepository: LatestTagQueryPort,
         issueRepository: ExecutionIssueSetupPort,
         organizationRepository: ExecutionOrganizationSetupPort,
+        configurationPort: ExecutionConfigurationPort,
     ) => {
         setGlobalLoggerDebug(this.debug, this.inputs === undefined);
 
@@ -244,7 +246,7 @@ export class Execution {
             return;
         }
 
-        this.previousConfiguration = await new ConfigurationHandler(issueRepository).get(this)
+        this.previousConfiguration = await configurationPort.get(this);
 
         /**
          * Get labels of issue (skip if it's the initial setup and it fails)

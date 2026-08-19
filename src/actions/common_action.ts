@@ -12,6 +12,7 @@ import boxen from 'boxen';
 import { waitForPreviousRuns } from '../utils/queue_utils';
 import { resolveMainRunRoute } from './main_run_route';
 import { dispatchMainRunRoute } from './main_run_dispatcher';
+import { ConfigurationHandler } from '../manager/description/configuration_handler';
 
 export async function mainRun(
     execution: Execution,
@@ -23,7 +24,13 @@ export async function mainRun(
     logInfo('GitHub Action: starting main run.');
     logDebugInfo(`Event: ${execution.eventName}, actor: ${execution.actor}, repo: ${execution.owner}/${execution.repo}, debug: ${execution.debug}`);
 
-    await execution.setup(latestTagQueryPort, createExecutionIssueSetupCompositionRoot(), createAuthenticatedUserCompositionRoot());
+    const issueSetupPort = createExecutionIssueSetupCompositionRoot();
+    await execution.setup(
+        latestTagQueryPort,
+        issueSetupPort,
+        createAuthenticatedUserCompositionRoot(),
+        new ConfigurationHandler(issueSetupPort),
+    );
     clearAccumulatedLogs();
 
     logDebugInfo(`Setup done. Issue number: ${execution.issueNumber}, isSingleAction: ${execution.isSingleAction}, isIssue: ${execution.isIssue}, isPullRequest: ${execution.isPullRequest}, isPush: ${execution.isPush}`);
