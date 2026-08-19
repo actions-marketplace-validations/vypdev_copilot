@@ -1,5 +1,11 @@
 # Plan de acción: cobertura de tests al 100%
 
+> **Historical coverage baseline.** This plan was written before the current
+> application paths, specialized adapters, and test inventory existed. It is
+> retained as historical evidence and must not be used as a current coverage
+> backlog. Generate a fresh `pnpm test:coverage` report before planning any
+> coverage work.
+
 Objetivo: llevar la cobertura desde ~46% a la máxima posible, sin dejar archivos sin testear.
 
 **Criterios:**

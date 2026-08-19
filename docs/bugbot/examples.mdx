@@ -223,7 +223,7 @@ Each **finding** is posted as a comment with a **title**, **severity**, optional
 
 **Title:** Possible null reference in login handler  
 **Severity:** medium  
-**File:** `src/auth/login.ts` (line 42)  
+**Example target file (from the analyzed repository):** `src/auth/login.ts` (line 42)
 **Description:** The variable `user` may be null when passed to `validateSession`. Consider adding a null check before use.
 
 The action uses the marker to later mark this finding as resolved when OpenCode reports it fixed (e.g. after you or the bot change the code).

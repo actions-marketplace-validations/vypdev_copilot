@@ -1,256 +1,241 @@
 # Dependency Rules and Architectural Invariants
 
-This document defines the dependency graph that the reconstruction must enforce. The rules are executable requirements, not style preferences.
+This document defines the target dependency direction, the rules enforced by
+tests today, and the explicitly known transitional boundaries. A target rule
+must not be described as already enforced when the current source still has a
+known exception.
 
 ## Target direction
 
 ```text
 entrypoint
-  -> runtime composition root
+  -> lifecycle/capability composition
     -> application workflow/use case
       -> semantic application port
-        -> capability adapter
-          -> provider client port
+        -> specialized adapter
+          -> provider client contract
             -> provider SDK / HTTP / CLI / Git / filesystem
 ```
 
-The dependency arrow points from the caller to the dependency. Dependencies must point outward toward details only through ports owned by the appropriate inner layer.
+Inner behavior reaches outer details only through contracts owned by the
+appropriate inner boundary.
 
-## Layers
+## Current physical layers
 
-### Domain
+### Pure model and policy subset
 
-Owns:
+Pure models and deterministic policies currently live mainly under
+`src/data/model/` and policy files under `src/data/repository/`. A file belongs
+to this conceptual domain subset only when it imports no application use case,
+provider adapter, entrypoint, SDK, process/filesystem API, or concrete logger.
 
-- business models;
-- value objects;
-- pure policies;
-- domain invariants;
-- domain outcomes.
+Not every file under `src/data/model/` is currently pure domain. `Execution`,
+`SingleAction`, and version/issue-resolution coordinators still use application
+ports, use cases, constants, or logging. This is a documented transitional
+model boundary, not evidence that the complete directory satisfies domain
+purity.
 
-May import:
+Direct import analysis confirms an unjustified SCC: `Execution` calls
+`resolveIssueBranchVersion`; the release/hotfix resolution helpers construct
+three application use cases; those use cases import `Execution` again.
+`Execution` and `ExecutionConfigurationPort` also import each other. These are
+active defects, not approved dependency exceptions.
+
+Pure domain/model policies may import:
 
 - standard TypeScript types;
-- other domain modules.
+- other pure models and policies.
 
-Must not import:
+They must not import:
 
 ```text
-application
+application use cases
 infrastructure
 entrypoints
 @actions/*
 @octokit/*
-fetch
-child_process
-process.env
-process.cwd()
-GitHub context
-OpenCode
-filesystem
-logger implementations
+provider DTOs
+filesystem/process APIs
+concrete logging
 ```
+
+A future physical `domain/` move is justified only after the pure subset is
+proved and callers can move without aliases or compatibility shims.
 
 ### Application
 
-Owns:
+Application owns:
 
-- use cases;
-- workflows;
+- use cases and workflows;
 - semantic capability ports;
 - application request/response contracts;
-- application policies;
-- orchestration of domain behavior.
+- orchestration and application policies.
 
-May import:
-
-```text
-domain
-application/ports
-application/contracts
-application/policies
-```
-
-Must not import:
+Application production code may import application modules and approved
+model/policy types. It must not import:
 
 ```text
-data/repository
+data/repository concrete adapters
+manager concrete adapters
 infrastructure
+entrypoints
 @actions/*
 @octokit/*
-fetch
-child_process
-OpenCode DTOs
-provider-specific agent IDs
-provider-specific response parts
-concrete repositories
-factories
-composition roots
+fetch / child_process / filesystem
+provider-specific agent DTOs
+concrete factories or composition roots
 ```
 
-### Infrastructure
+Type-only imports do not excuse semantic coupling to an outer implementation.
 
-Owns:
+### Specialized adapters and infrastructure
 
-- provider adapters;
-- provider client ports;
-- HTTP/REST/GraphQL mapping;
-- pagination;
-- process execution;
-- filesystem access;
-- Git access;
-- provider error translation;
-- concrete logging.
+Specialized adapters currently live mainly under `src/data/repository/`.
+Provider transports and client factories live under
+`src/infrastructure/github/` and `src/infrastructure/composition/`.
 
-May import:
+These layers own:
 
-```text
-application ports/contracts
- domain contracts where needed
-provider SDKs
-Node runtime APIs
-```
+- provider mapping and DTO translation;
+- REST/GraphQL documents and pagination;
+- provider error classification;
+- Git, process, and filesystem effects;
+- concrete logging integration;
+- implementation of application ports.
 
-Must not import:
-
-- entrypoint lifecycle code;
-- Commander handlers;
-- GitHub Action result publishing;
-- unrelated provider capabilities.
+They must not absorb application decisions merely to share HTTP or SDK syntax.
+GraphQL transport contracts remain under `src/infrastructure/github/ports/` and
+must not leak into application.
 
 ### Composition
 
-Owns:
+Composition owns concrete construction, dependency graph assembly, scopes, and
+lifecycle-specific sharing. Current composition is split across:
 
-- construction of concrete adapters;
-- dependency graph assembly;
-- lifecycle-specific scopes;
-- runtime configuration wiring.
+```text
+src/infrastructure/composition/**
+src/actions/main_run_composition.ts
+src/actions/main_run_dispatcher.ts
+runtime entrypoints for lifecycle-local dependencies
+```
 
-Composition roots may import all required outer components but must not become a new universal facade. Composition is organized by runtime and capability.
+The preferred direction is a named root for every non-trivial capability or
+use-case graph. Phase D must audit the remaining concrete construction in
+action files. Existing runtime-local construction is a known review target, not
+an automatic violation: caller ownership, lifecycle, sharing, and tests decide
+whether it should move.
+
+Composition roots may depend on outer details and application contracts, but
+must not become universal registries or service locators.
 
 ### Entrypoints
 
-Owns:
+Entrypoints own input/event extraction, command registration, request mapping,
+result publication, and runtime failure policy.
 
-- Commander registration;
-- GitHub event/input extraction;
-- local input extraction;
-- request mapping;
-- result rendering/publishing;
-- exit and failure policies.
+The independent lifecycles are:
 
-Entrypoints may depend on composition roots and application contracts. They must not construct provider repositories inline.
+```text
+GitHub Action
+Local action
+CLI
+```
+
+They may share pure input policies, application requests/use cases, and result
+contracts. They must not share GitHub context extraction, `core.setFailed`,
+CLI exit handling, or provider lifecycle ownership.
 
 ## Capability port rules
 
-Application ports must describe semantic capabilities:
+Application ports describe semantic capabilities such as:
 
 ```text
-FindingsAgentPort
-FixerAgentPort
-IssueContentPort
+ConfigurationStorePort
 IssueLifecyclePort
 PullRequestReviewPort
-BranchComparisonPort
 ProjectBoardCommandPort
-RepositoryReleasePort
+OrganizationMembersPort
+RepositoryReleasePublicationPort
 ```
 
-Ports must not expose:
+They must not expose Octokit request parameters, endpoint names, GraphQL query
+strings, OpenCode response parts, provider agent IDs, or raw response
+envelopes. Provider client contracts may use provider-shaped DTOs only outside
+application behavior.
 
-```text
-Octokit request parameters
-REST endpoint names
-GraphQL query strings
-OpenCode parts
-provider agent IDs
-raw HTTP response envelopes
-```
+## Forbidden abstractions
 
-Provider client contracts may expose provider-shaped DTOs, but they stay in infrastructure and are not imported by application.
-
-## Forbidden universal abstractions
-
-Do not introduce replacements such as:
+Do not introduce:
 
 ```text
 UniversalRepository
 BaseRepository
 GithubEverythingClient
 AiEverythingService
-Pick<IssueRepository>
-Pick<PullRequestRepository>
 GenericProviderAdapter
+Pick<AggregateFacade> as a substitute for a semantic port
+compatibility aliases or delegating shims for retired imports
 ```
 
-Shared internal transport is allowed only below separate semantic adapters.
+Shared internal transport is allowed below separate semantic adapters when
+transport semantics and lifecycle are genuinely shared.
 
 ## Construction rules
 
-Production construction is allowed only in:
+Application and pure model/policy code must never construct concrete adapters.
+Constructor dependencies are explicit; application constructors must not have
+default concrete implementations.
 
-```text
-src/composition/**
-src/infrastructure/composition/**
-src/entrypoints/**  # only selecting a runtime root, never assembling provider graphs
-```
+Concrete construction is expected in named composition roots and may currently
+occur at a documented lifecycle boundary. Before moving it, audit:
 
-Forbidden in application/domain:
+1. all callers;
+2. lifecycle ownership;
+3. required instance sharing;
+4. failure/publication behavior;
+5. focused and composition tests.
 
-```text
-new RepositoryFactory()
-new AiRepository()
-new DefaultAgentRepositoryFactory()
-new Octokit*Adapter()
-new AgentCliClient()
-new OpenCodeHttpClient()
-```
+File location alone is not sufficient justification for a refactor.
 
-All constructors requiring a dependency must receive it explicitly. No default concrete dependency parameters are allowed.
+## Enforced rules today
 
-## Runtime separation
+Executable tests currently verify at least:
 
-The following lifecycles remain independent:
+1. application has no production imports of infrastructure or manager adapters;
+2. application does not construct listed concrete repositories/factories;
+3. GraphQL transport contracts do not leak into application;
+4. `Execution` does not construct retired repository/identity composition;
+5. CLI delegates to the local lifecycle rather than `mainRun` directly;
+6. GitHub and local lifecycles remain separate;
+7. shared input policies remain independent from lifecycles/infrastructure;
+8. retired aggregate-facade imports do not escape approved composition areas;
+9. application ports do not import technical GraphQL/provider details.
 
-```text
-GitHub Action lifecycle
-Local Action lifecycle
-CLI lifecycle
-```
+Primary tests:
 
-They may share:
+- `src/application/__tests__/architecture_boundaries.test.ts`;
+- `src/actions/__tests__/composition_boundaries.test.ts`;
+- `src/infrastructure/composition/__tests__/facade_boundaries.test.ts`;
+- boundary suites under `src/application/ports/__tests__/` and
+  `src/infrastructure/**/__tests__/`.
 
-- pure input precedence policies;
-- pure input normalization;
-- semantic application requests;
-- application use cases;
-- pure result contracts.
+## Known review targets
 
-They must not share:
-
-- runtime failure publication;
-- `core.setFailed`;
-- `process.exit`;
-- GitHub context extraction;
-- CLI process handling;
-- provider lifecycle ownership.
-
-## Enforceable tests
-
-The architecture suite must verify:
-
-1. `domain` has no outer imports.
-2. `application` has no `data/repository` imports.
-3. `application` has no infrastructure/provider imports.
-4. `application` does not construct concrete dependencies.
-5. `entrypoints/cli` does not import repositories or provider adapters.
-6. GitHub and local entrypoints retain separate lifecycle implementations.
-7. Obsolete facades have no production callers after retirement.
-8. Composition roots are the only concrete construction points.
-9. Provider ports do not leak into use cases.
-10. Deleted universal clients cannot be reintroduced.
+- eliminate the verified `Execution`/version-resolution/configuration SCC with
+  application-owned orchestration and acyclic request/result contracts;
+- add an architecture test that rejects data models importing or constructing
+  application use cases;
+- formalize or justify route-specific construction in
+  `main_run_dispatcher.ts`;
+- verify the lifecycle-local `GitCliRepository` construction in
+  `local_action.ts`;
+- classify the non-pure files under `src/data/model/` instead of declaring the
+  entire directory a domain layer;
+- strengthen architecture tests where a documented rule is not yet executable;
+- audit release/tag adapter contracts before changing their structure.
 
 ## Acceptance standard
 
-A boundary is complete only when static imports, constructor wiring, tests, Graphify edges, and runtime behavior all agree. A passing regex test alone is insufficient.
+A boundary is complete only when source imports, constructor wiring, focused
+behavior tests, architecture tests, Graphify topology, and runtime behavior all
+agree. A passing regex test or improved RepoWise score alone is insufficient.

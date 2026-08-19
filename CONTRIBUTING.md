@@ -30,14 +30,17 @@ pnpm run build
 
 ## Project Structure
 
-- **`src/actions/`** – GitHub Action and CLI entry points.
+- **`src/actions/`** – GitHub Action/local lifecycles and route-specific runtime composition.
   - `github_action.ts` – GitHub Action entry; reads inputs and runs the main flow.
   - `local_action.ts` – CLI entry; same logic with local/config inputs.
   - `common_action.ts` – Shared flow: single actions vs issue/PR/push pipelines.
-- **`src/usecase/`** – Use cases (issue, pull request, commit, single actions).
+- **`src/application/usecases/`** – Application use cases and workflows.
+- **`src/application/ports/`** – Semantic capability contracts.
+- **`src/infrastructure/composition/`** – Capability and use-case composition roots.
+- **`src/infrastructure/github/`** – GitHub provider clients and transport adapters.
 - **`src/manager/`** – Content handlers for PR descriptions, hotfix changelog, and markdown (e.g. `configuration_handler`, `markdown_content_hotfix_handler`).
-- **`src/data/model/`** – Domain models (Execution, Ai, Issue, etc.).
-- **`src/data/repository/`** – Repositories (GitHub API, OpenCode API).
+- **`src/data/model/`** – Models and model policies; the directory still contains some transitional orchestration and is not uniformly pure domain.
+- **`src/data/repository/`** – Specialized capability adapters and repository policies.
 - **`src/utils/`** – Constants, logger, content utils, etc.
 - **`action.yml`** – Action metadata and input definitions.
 - **`build/`** – Compiled output (bundled JS); do not edit directly.

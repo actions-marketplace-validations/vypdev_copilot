@@ -391,16 +391,16 @@ inputs:
     description: "Fine-grained personal access token for branch and project operations"
     required: true
   agent-provider:
-    description: "Agent provider used by findings and fixer tasks: opencode, cursor, or codex."
+    description: "Agent provider used by findings and fixer tasks: opencode, cursor, or codex. Cursor/Codex use the experimental generic CLI transport and are not verified end-to-end."
     default: "opencode"
   agent-transport:
-    description: "Agent transport: server, sdk, or cli."
+    description: "Agent transport: server or cli. Server is OpenCode-only; CLI is a generic experimental command transport."
     default: "server"
   agent-model:
     description: "Selected agent model or model identifier. Defaults to opencode-model."
     default: ""
   agent-command:
-    description: "Executable command for CLI agents. Required when agent-transport is cli."
+    description: "Optional executable command for CLI agents. Defaults: opencode, cursor-agent, or codex by provider; set explicitly after verifying the provider's non-interactive stdin/stdout protocol."
     default: ""
   findings-provider:
     description: "Optional provider override for findings."
