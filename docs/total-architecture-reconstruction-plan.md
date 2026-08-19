@@ -2,7 +2,10 @@
 
 **Status:** Active execution baseline — approved for consecutive phase execution.
 
-**Latest implementation checkpoint:** `8196da94146a215fc99cb7939d852f85ad2fa4d2`
+**Production implementation checkpoint used by this audit:**
+`8196da94146a215fc99cb7939d852f85ad2fa4d2`. Documentation-only commits may
+follow this checkpoint; use `git rev-parse HEAD` for the repository's current
+revision rather than expecting a document to encode its own commit SHA.
 
 **Completed in the current execution block:** Phases A and B; Phase E hardening
 for pull-request file pagination, project-board linking, organization-member
@@ -36,12 +39,13 @@ Success means:
 
 ## 2. Current evidence
 
-Evidence below is from the current checkout and must be refreshed before each implementation block. Historical reports must not be treated as current facts.
+Evidence below is anchored to the named production implementation checkpoint and
+must be refreshed before each implementation block. Documentation-only commits
+may be newer; historical reports must not be treated as current facts.
 
-Current published state:
+Production implementation baseline used for the evidence below:
 
 ```text
-HEAD == origin/master
 SHA: 8196da94146a215fc99cb7939d852f85ad2fa4d2
 working tree: clean
 ```
@@ -73,7 +77,19 @@ docs.json produces zero nodes
 
 This warning is analysis-tool input behavior, not evidence of a production architecture defect. It must remain visible until the tool or input handling changes.
 
-Current RepoWise observations:
+RepoWise observations captured on 2026-08-19 against implementation checkpoint
+`8196da94146a215fc99cb7939d852f85ad2fa4d2`:
+
+```bash
+~/.local/bin/repowise update . --no-workspace --index-only
+~/.local/bin/repowise health . --no-workspace --format json
+~/.local/bin/repowise health . --no-workspace --refactoring-targets --format table
+~/.local/bin/repowise status . --no-workspace
+```
+
+The RepoWise index is local and intentionally not versioned. These values are
+an evidence snapshot, not timeless repository metadata; refresh and record a
+new checkpoint before using them to prioritize another implementation block.
 
 - current graph: 3071 nodes and 6718 edges;
 - average health: 8.11/10; hotspot health: 5.79/10; average
@@ -458,9 +474,10 @@ Exit criteria:
 - every capability has an owner and composition location;
 - a new contributor can follow the dependency direction without tribal knowledge.
 
-Current result: active. The authoritative documents are being synchronized
-against checkpoint `8196da94146a215fc99cb7939d852f85ad2fa4d2`. Historical
-baselines and completed feature plans remain available, but must be explicitly
+Current result: complete. The authoritative documents are synchronized against
+implementation checkpoint `8196da94146a215fc99cb7939d852f85ad2fa4d2`, with
+later documentation-only publication commits explicitly distinguished from that
+production baseline. Historical baselines and completed feature plans remain
 labelled so they cannot be mistaken for current architecture or priorities.
 The audit found the Phase C/F cycle above and concrete composition in
 `main_run_dispatcher.ts`, `local_action.ts`, and `queue_utils.ts`; these are now

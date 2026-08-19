@@ -1,14 +1,21 @@
 # Multi-Agent Execution Plan
 
-> **Status: design proposal, not current runtime architecture or an active
-> implementation phase.** The current production integration remains based on
-> the existing agent capability ports and OpenCode adapters. Revalidate provider
-> licensing, authentication, security boundaries, and current callers before
-> scheduling any Codex/Cursor implementation from this document.
+> **Status: design proposal for provider-specific SDK/CLI adapters and
+> multi-agent orchestration, not the current runtime architecture or an active
+> implementation phase.** Production already has provider-neutral task ports,
+> the OpenCode server adapter, and an experimental generic CLI command transport
+> selectable for OpenCode, Cursor, or Codex. Cursor/Codex CLI protocols are not
+> verified end-to-end and their provider-specific adapters are not wired into
+> production composition. Revalidate licensing, authentication, protocols,
+> security boundaries, and current callers before scheduling those adapters or
+> any SDK work. Do not use this proposal to reimplement the existing generic CLI
+> boundary.
 
 ## Objective
 
-Evolve Copilot from an OpenCode-specific AI integration into a provider-agnostic execution architecture that can safely run Bugbot findings and Bugbot fixer tasks inside GitHub Actions runners.
+Evolve the current provider-neutral selection and generic CLI boundary into a
+verified provider-specific, multi-agent execution architecture that can safely
+run Bugbot findings and fixer tasks inside GitHub Actions runners.
 
 Initial providers:
 
@@ -316,8 +323,8 @@ Validate every workflow statically:
 6. Separate findings and fixer authorization/capabilities.
 7. Harden verification, workspace, commit, push, cancellation, and cleanup policies.
 8. Add adapter/contract/integration/workflow tests.
-9. Add Codex SDK/CLI adapters behind explicit opt-in.
-10. Add Cursor SDK/CLI adapters behind explicit opt-in.
+9. Add verified provider-specific Codex SDK/CLI adapters behind explicit opt-in.
+10. Add verified provider-specific Cursor SDK/CLI adapters behind explicit opt-in.
 11. Update action inputs and workflows with migration and security documentation.
 12. Run full gates, RepoWise, local isolated integration suite, and any explicitly authorized provider smoke tests.
 
