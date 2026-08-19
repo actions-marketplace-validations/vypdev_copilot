@@ -42,6 +42,7 @@ import { readGithubActionBranchInputs } from './github_action_branch_inputs';
 import { readGithubActionLabelInputs } from './github_action_label_inputs';
 import { readGithubActionWorkflowInputs } from './github_action_workflow_inputs';
 import { readGithubActionIssueTypeInputs } from './github_action_issue_type_inputs';
+import { readGithubActionProjectInputs } from './github_action_project_inputs';
 import { buildExecution } from './execution_builder';
 import { buildEmoji, buildImages, buildIssue, buildIssueTypes, buildLabels, buildLocale, buildProjects, buildPullRequest, buildTokens, buildWorkflows } from './configuration_builders';
 
@@ -113,10 +114,7 @@ export async function runGitHubAction(): Promise<void> {
 
     const projects = await loadProjectDetails(projectBoard.query, projectIds, token);
 
-    const projectColumnIssueCreated = getGithubActionInput(INPUT_KEYS.PROJECT_COLUMN_ISSUE_CREATED)
-    const projectColumnPullRequestCreated = getGithubActionInput(INPUT_KEYS.PROJECT_COLUMN_PULL_REQUEST_CREATED)
-    const projectColumnIssueInProgress = getGithubActionInput(INPUT_KEYS.PROJECT_COLUMN_ISSUE_IN_PROGRESS)
-    const projectColumnPullRequestInProgress = getGithubActionInput(INPUT_KEYS.PROJECT_COLUMN_PULL_REQUEST_IN_PROGRESS)
+    const projectInputs = readGithubActionProjectInputs(getGithubActionInput, projects);
 
     /**
      * Images
@@ -207,13 +205,7 @@ export async function runGitHubAction(): Promise<void> {
         release: new Release(),
         hotfix: new Hotfix(),
         workflows: buildWorkflows(workflowInputs.release, workflowInputs.hotfix),
-        projects: buildProjects({
-            projects,
-            issueCreated: projectColumnIssueCreated,
-            pullRequestCreated: projectColumnPullRequestCreated,
-            issueInProgress: projectColumnIssueInProgress,
-            pullRequestInProgress: projectColumnPullRequestInProgress,
-        }),
+        projects: buildProjects(projectInputs),
         inputs: eventInputs,
     });
 
