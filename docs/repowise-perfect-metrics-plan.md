@@ -1,191 +1,56 @@
-# RepoWise Perfect Metrics and Architecture Closure Implementation Plan
+# RepoWise Near-Perfect Metrics and Clean Architecture Execution Plan
 
-> **For Hermes:** Efra approved execution on 2026-08-20. Use quality-first-repository-development, test-driven-development, iterative-hotspot-refactoring, and requesting-code-review. Execute one evidence-backed block at a time; never optimize a RepoWise number without a current defect, missing contract, or justified semantic boundary.
+> **For Hermes:** Implement this plan one vertical slice at a time using `quality-first-repository-development`, `test-driven-development`, `iterative-hotspot-refactoring`, and `requesting-code-review`. Do not implement production code until Efra approves this documented revision. Every production change starts with an observed RED test and ends with focused/global gates, a reproducible metrics record, review, atomic commit, normal push, remote-SHA equality, and a clean tree.
 
-**Status:** Documentation baseline stabilized. The commit containing this document
-publishes the baseline; implementation proceeds only in the phase order and
-with the gates below.
+**Status:** Planning-only revision, documented on 2026-08-20 against published `master` at `df23de8ed9e309ae23e17656aeb8cacbfe7e2160`. No production or test implementation belongs to this planning block.
 
-**Goal:** Make `vypdev/copilot` an evidence-backed Clean Architecture reference implementation, drive every controllable RepoWise and coverage metric to its defensible maximum, and explicitly classify the historical/tool-derived signals that cannot be changed honestly or immediately.
+**Goal:** Make `vypdev/copilot` a reference-quality Clean Architecture repository, drive every controllable RepoWise and coverage metric to its defensible maximum, eliminate real hotspots and boundary debt, and classify history-derived or tool-derived signals without manipulating source layout or Git history.
 
-**Architecture:** Preserve the dependency direction `entrypoint -> lifecycle composition root -> application workflow/use case -> semantic application port -> specialized adapter -> provider protocol/client`. Improve health first through contract coverage and verified behavior, then reduce complexity only where current callers and tests prove a real responsibility split. Treat RepoWise, Graphify, coverage, source inspection, architecture guards, Git history, and independent review as complementary evidence; none is independently authoritative.
+**Architecture:** Preserve and strengthen `entrypoint -> lifecycle composition root -> application use case/policy -> semantic application port -> specialized outer adapter -> provider protocol/client`. Characterize behavior before changing boundaries. Move policy inward only when it is provider-neutral; keep transport, SDK DTOs, GraphQL documents, pagination mechanics, filesystem, process and timing implementations outside application. Query and command capabilities remain separate when they have different semantics, permissions or callers.
 
-**Tech Stack:** TypeScript 5.9, Jest, ESLint, pnpm, NCC, RepoWise, Graphify, GitHub REST/GraphQL capability adapters.
+**Tech stack:** TypeScript 5.9, Jest, ESLint, pnpm only, NCC, RepoWise 0.42.0, Graphify 0.9.46, GitHub REST/GraphQL adapters.
 
 ---
 
-## 0. Freeze and execution rule
+## 1. Non-negotiable definition of success
 
-This document is a **plan only**. At the time it was written:
+Near-perfect RepoWise metrics are an outcome of correct architecture and verified behavior, not the optimization target of individual edits.
 
-- no production source was modified;
-- no test was modified;
-- no existing tracked documentation was modified;
-- no commit or push was performed;
-- published `HEAD` was `af32863317977e42ec59b712fc1f371b5f231cad`;
-- the working tree was clean.
+### 1.1 Mandatory architecture rules
 
-Efra approved execution on 2026-08-20. The documentation stabilization block
-must be published before production or test implementation begins. After that
-checkpoint, each implementation task below requires its own caller audit, RED
-contract, focused gates, global gates, independent review, atomic commit, normal
-push to `origin/master`, `HEAD == origin/master == remote master`, and a clean
-working tree.
+1. `src/application` must not depend on infrastructure, concrete repositories, SDK/provider mechanics, managers, filesystem, processes, CLI, `@actions/*`, GraphQL documents or REST DTOs.
+2. Application ports express semantic capabilities. They do not expose `rest.*`, `graphql`, pagination iterators, HTTP verbs or universal clients.
+3. The temporary `Github*Client` contracts under `src/application/ports/github_*_ports.ts` are a shrinking allowlist, not target architecture. It cannot grow.
+4. Every lifecycle delegates concrete assembly to a named composition root. Entrypoints coordinate; they do not instantiate adapters inline.
+5. Query and command capabilities remain separated when behavior, permission or callers differ.
+6. Use cases receive all collaborators through constructors or explicit function parameters. No hidden concrete defaults or service locators.
+7. Provider protocol types and SDK-shaped contracts live in infrastructure.
+8. No `RepositoryFactory`, universal repository/client, registry facade, compatibility shim, alias or cosmetic coordinator may be introduced.
+9. A builder or facade is removed only after productive callers are audited, migrated, tested and proven to have zero references.
+10. No production dependency cycle or forbidden inward dependency may remain.
+11. Every adapter touched by the plan must cover pagination, nullable data, malformed responses, no-op behavior and provider failures that it can encounter.
+12. Every application policy/use case touched by the plan must cover success, no-op, failure and boundary transitions deterministically.
 
-## 1. Current verified baseline
+### 1.2 Numeric acceptance targets
 
-### 1.1 Published revision
-
-```text
-Repository: vypdev/copilot
-Branch: master
-Published Phase D implementation SHA: af32863317977e42ec59b712fc1f371b5f231cad
-Phase D: queue/dispatcher increment published; strict local-lifecycle named-root
-exit criterion reopened and tracked after the P0 behavior-contract blocks
-```
-
-### 1.2 Quality gates
-
-```text
-Jest suites: 220 passed / 220 total
-Tests: 1373 passed, 1 skipped
-TypeScript: PASS
-ESLint: PASS
-NCC build: PASS
-Production audit: PASS — no known vulnerabilities
-Git diff check: PASS
-```
-
-Jest summary:
-
-```text
-Statements: 85.52%
-Branches:   80.20%
-Functions:  84.31%
-Lines:      86.64%
-```
-
-RepoWise-ingested LCOV summary:
-
-```text
-Mapped files: 329
-Lines: 86.6%
-Branches: 77.1%
-Unmapped reports: 1 historical/nonexistent path
-Test-to-code map: unavailable for Jest LCOV
-```
-
-The Jest and RepoWise percentages use different aggregation/mapping rules and must never be presented as if they were the same metric.
-
-### 1.3 RepoWise checkpoint
-
-Index synchronized to `af32863317977e42ec59b712fc1f371b5f231cad`:
-
-```text
-Graph: 3,175 nodes / 6,885 edges
-Indexed pages: 410
-Average health: 8.02/10 — Healthy
-Hotspot health: 5.52/10
-Maintainability average: 9.23/10
-Performance average: 9.99/10
-Performance analysis coverage: 100% (613/613 files)
-Performance findings: 17 (4.58/10K covered LOC)
-Dead-code safe findings: 0
-Unreachable files: 0
-Unused exports: 0
-```
-
-Health distribution by code volume:
-
-```text
-Healthy: 63.2% — 575 files
-Warning: 32.3% — 123 files
-Alert: 4.5% — 16 files
-```
-
-### 1.4 Graphify checkpoint
-
-```text
-Nodes: 3,271
-Edges: 8,424
-Communities: 217
-Persistent warning: docs.json produces zero nodes
-Graph direction metadata: directed=false
-```
-
-Graphify cannot prove dependency direction or cycle absence in this checkpoint. Source imports and executable architecture tests remain authoritative for those properties.
-
-### 1.5 Metric caveats
-
-RepoWise health combines controllable static signals with historical signals:
-
-- complexity, nesting, file size, coverage and some duplication are immediately controllable;
-- churn, change entropy, co-change scatter and prior defects are history-derived;
-- recent architecture reconstruction temporarily penalizes small, now-correct files;
-- tracked release bundles create historical co-change signals even when build outputs are correctly excluded from source commits;
-- duplicated test setup and prompt templates can create large marker counts without indicating a production design defect.
-
-The raw `1,417` marker count is **not** a backlog of 1,417 code changes.
-
-The Phase D range risk was `9.5/high` (98.9th percentile), driven mainly by 949 additions, 647 deletions and broad entropy. This is a change-size/review signal, not evidence that the published architecture is defective. Phase D passed independent review and every quality gate.
-
-## 2. Definition of “perfect”
-
-### 2.1 Architectural perfection — mandatory
-
-All of these must hold:
-
-1. No production dependency points from an inner layer to infrastructure, runtime, SDK, filesystem, CLI or provider details.
-2. Every runtime and lifecycle owns an explicit composition root.
-3. Application ports describe semantic capabilities, not `rest.*`, GraphQL documents, pagination iterators, HTTP verbs or SDK DTOs.
-4. Provider protocols live in infrastructure.
-5. Query and command capabilities remain split when they have different callers, permissions, behavior or lifecycle.
-6. Every adapter has focused contract tests for success, empty, pagination, nullable data, provider failure and malformed-provider edge cases that it can encounter.
-7. Every use case has deterministic tests for success, no-op, failure and boundary conditions.
-8. No compatibility shim, universal client, god repository, registry facade or metric-only helper is introduced.
-9. No production cycle exists.
-10. Every remaining RepoWise finding is resolved or classified with current caller/test/source evidence.
-
-### 2.2 Controllable numeric targets — hard gates
-
-A final release candidate must target:
-
-```text
-Jest statements: 100%
-Jest branches:   100%
-Jest functions:  100%
-Jest lines:      100%
-RepoWise-mapped production lines: 100%
-RepoWise-mapped production branches: 100%
-Dead-code safe findings: 0
-Unreachable production files: 0
-Unused production exports: 0
-Actionable performance findings: 0
-Production dependency cycles: 0
-Forbidden application imports: 0
-Dispatcher/construction boundary violations: 0
-Git diff check failures: 0
-Known high production vulnerabilities: 0
-```
-
-Declaration-only files, exhaustive constants and generated release bundles may be classified rather than artificially executed, but only if the metric tool supports an honest documented scope. Do not add meaningless import-only tests to inflate coverage.
-
-### 2.3 RepoWise health targets — acceptance ladder
-
-Because history-derived biomarkers cannot be erased honestly on demand, use two gates:
-
-**Immediate controllable target:**
+Immediate controllable release target:
 
 ```text
 Average health >= 9.0
 Hotspot health >= 8.0
 Worst production file >= 7.5
-Maintainability >= 9.7
-Performance = 10.0 or all remaining findings classified as intentional polling/bounded I/O
+Maintainability average >= 9.7
+Performance = 10.0, or every remaining finding has a legitimate bounded classification
 Production alert volume = 0%
+Behavior-bearing production lines = 100%
+Behavior-bearing production branches = 100%
+Behavior-bearing production functions = 100%
+Safe dead code / unreachable production / unused production exports = 0
+Forbidden application imports = 0
+Production dependency cycles = 0
 ```
 
-**Mature target after the rolling history window stabilizes:**
+Mature target after RepoWise's rolling history window stabilizes:
 
 ```text
 Average health >= 9.5
@@ -194,648 +59,193 @@ Worst production file >= 8.5
 No unclassified critical/high history-derived findings
 ```
 
-A literal `10.0` across history-derived metrics is aspirational, not a valid reason to rewrite Git history, create no-op commits, merge semantically distinct code, delete legitimate lifecycle roots or suppress findings without justification.
+A literal historical `10.0` is aspirational. It is not permission to rewrite Git history, create no-op commits, fragment coherent files, merge semantically distinct capabilities, delete legitimate composition roots or suppress evidence.
 
-### 2.4 Rejection rules
+### 1.3 Rejected metric tactics
 
-Reject any proposed change whose only justification is:
+Reject a change whose only justification is file score, NLOC, marker count, clone syntax, recent churn, co-change after an atomic migration or RepoWise's generic `extract_helper` suggestion. Every accepted change must resolve at least one current behavior gap, semantic boundary defect, ownership ambiguity, provider-contract defect, verified complexity problem or meaningful duplication.
 
-- file score;
-- file line count;
-- duplicated syntax without shared semantics;
-- historical churn on a now-small boundary;
-- co-change caused by an atomic architectural migration;
-- a generated bundle relationship;
-- RepoWise’s generic `extract_helper` name;
-- a desire to reduce the raw marker count.
+`RepoWise near-perfect` does not mean `architecture perfect`, `coverage 100% without judgment`, or `zero historical churn`.
 
-Every accepted change must state the behavior defect, contract gap, ownership ambiguity, semantic duplication or verified complexity it resolves.
+## 2. Reproducible published baseline
 
-## 3. Current production hotspot inventory
-
-| Priority | File                                                                         | Current score | Current evidence                                                                | Initial classification                                            |
-| -------- | ---------------------------------------------------------------------------- | ------------: | ------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| P0       | `src/data/repository/project/project_board_command_repository.ts`            |          1.95 | 188 NLOC, no focused recognized test, GraphQL query/mutation/pagination mixed   | Real contract and responsibility audit required                   |
-| P0       | `src/data/repository/branch/branch_preparation_repository.ts`                |           2.6 | 160 NLOC, no focused recognized test, Git + provider + branch policy delegation | Real coverage gap; split only after behavior characterization     |
-| P0       | `src/data/repository/issue/issue_label_provisioning_repository.ts`           |           2.6 | nesting 4, no focused recognized test                                           | Real contract coverage gap                                        |
-| P0       | `src/data/repository/branch/linked_branch_repository.ts`                     |           2.6 | 120 NLOC, no focused recognized test                                            | Real GraphQL contract coverage gap                                |
-| P0       | `src/data/repository/pull_request/pull_request_review_repository.ts`         |           2.7 | 197 NLOC, no focused recognized test; thread object built internally            | Real capability/contract audit required                           |
-| P0       | `src/data/repository/project/project_board_query_repository.ts`              |           2.8 | CCN 10, no focused recognized test, query + content lookup                      | Real contract coverage gap; possible two-capability adapter split |
-| P0       | `src/data/repository/merge_repository.ts`                                    |           2.8 | CCN 16, nesting 6, 206 NLOC, tests exist                                        | Real workflow complexity; semantic extraction candidate           |
-| P1       | `src/data/repository/pull_request/pull_request_lifecycle_repository.ts`      |           2.9 | partial focused coverage                                                        | Contract completion first                                         |
-| P1       | `src/application/usecases/steps/commit/bugbot/bugbot_autofix_use_case.ts`    |           3.1 | CCN 13, 161 NLOC, tests exist                                                   | Real application-workflow complexity audit                        |
-| P1       | `src/application/usecases/steps/commit/check_changes_issue_size_use_case.ts` |           3.5 | CCN 9, nesting 4                                                                | Complete branch tests before extracting policy                    |
-| P1       | `src/application/usecases/steps/issue/assign_members_to_issue_use_case.ts`   |           3.5 | CCN 17, nesting 4                                                               | Real policy decomposition candidate                               |
-| P1       | `src/data/repository/issue/issue_title_repository.ts`                        |           3.5 | no focused recognized test                                                      | Contract coverage first                                           |
-| P1       | `src/data/repository/issue/issue_type_repository.ts`                         |           3.5 | no focused recognized test                                                      | Contract coverage first                                           |
-| P1       | `src/data/repository/pull_request/pull_request_review_thread_repository.ts`  |           3.6 | CCN 12, nesting 4, focused tests exist                                          | Complete edge cases before refactor                               |
-| P1       | `src/infrastructure/composition/issue_use_case_composition_root.ts`          |           3.8 | composition wiring; no direct recognized test                                   | Wiring identity/binding test, not line-count split                |
-| P1       | `src/data/repository/issue/issue_type_assignment_repository.ts`              |           3.9 | CCN 13, nesting 4, focused tests exist                                          | Policy extraction only if semantics are separable                 |
-| P2       | `src/application/usecases/actions/initial_setup_use_case.ts`                 |           4.0 | 209 NLOC, tests exist                                                           | Transition matrix completion                                      |
-| P2       | `src/application/usecases/steps/issue/prepare_branches_use_case.ts`          |           4.1 | CCN 10, nesting 3                                                               | Branch-transition tests first                                     |
-| P2       | `src/actions/github_action.ts`                                               |           4.2 | 167 NLOC, lifecycle entrypoint, tests exist                                     | Preserve entrypoint; fill missing boundary tests                  |
-| P2       | `src/data/repository/pull_request/pull_request_changes_repository.ts`        |           4.3 | focused pagination tests exist                                                  | Re-measure after coverage completion                              |
-
-Explicit non-targets unless new evidence appears:
-
-- `src/actions/local_action.ts` is **not** a non-target: its inline adapter assembly
-  is the reopened Phase D named-root debt, scheduled after the P0 contract blocks;
-- `src/actions/main_run_dispatcher.ts`: now a pure 32-line dispatcher; current churn/entropy is historical;
-- `src/cli.ts`: a seven-line bootstrap;
-- issue-comment and pull-request-review-comment wrappers: separate lifecycle semantics sharing a workflow;
-- specialized composition roots: construction is their responsibility;
-- build bundles: release artifacts, not source architecture targets.
-
-## 4. Documentation stabilization before implementation
-
-### Task 1: Establish one authoritative current plan
-
-**Objective:** Remove conflicting current/historical instructions before authorizing code changes.
-
-**Files:**
-
-- Modify: `docs/total-architecture-reconstruction-plan.md`
-- Modify: `docs/COVERAGE_ACTION_PLAN.md`
-- Modify: `docs/graphify-development.md`
-- Create: `docs/repowise-perfect-metrics-plan.md`
-
-**Steps:**
-
-1. Mark this plan’s published SHA and measurement timestamp.
-2. Replace stale RepoWise evidence based on `f0c16654` with the `af328633` checkpoint.
-3. Change Phase D status to completed/published.
-4. Preserve release/tag correctness work as a separate correctness priority rather than silently replacing it with metric work.
-5. Replace `COVERAGE_ACTION_PLAN.md` with a current generated coverage inventory; move its historical content to an explicitly historical appendix or delete it after verifying no docs link requires it.
-6. Link the authoritative plan from `docs/repository-architecture.md` and `docs/capability-map.md` without duplicating volatile metrics in multiple files.
-7. Record the Jest/RepoWise aggregation difference.
-8. Record that RepoWise-generated `.repowise/`, `.claude/`, `.vscode/`, coverage and Graphify outputs are local and never committed.
-
-**Verification:**
-
-```bash
-rg 'f0c16654|working tree: verified Phase D|next production priority' \
-  docs/total-architecture-reconstruction-plan.md docs/graphify-development.md
-rg 'src/data/repository/(queue_utils|workflow_repository|ai_repository|branch_repository|project_repository)\.ts' \
-  docs/COVERAGE_ACTION_PLAN.md
-pnpm exec prettier --check docs/COVERAGE_ACTION_PLAN.md docs/repowise-perfect-metrics-plan.md
-git diff --check
-```
-
-Expected: every historical reference is either removed from current sections or explicitly labelled historical; no old path is presented as current work.
-
-**Current result:** complete in the documentation stabilization block. The
-companion plan is included in the tracked documentation set, Phase D and the
-`af328633` RepoWise checkpoint are current, the historical coverage backlog was
-replaced with a fresh LCOV inventory, architecture/capability guides link to
-this plan, the eliminated `Execution` SCC is no longer described as active, and
-generated artifacts remain uncommitted.
-
-**Commit after approval:**
-
-```bash
-git add docs
-git commit -m "docs: stabilize perfect metrics execution plan"
-```
-
-### Task 2: Create reproducible metric protocol
-
-**Objective:** Ensure every future comparison measures the same checkout and scope.
-
-**Files:**
-
-- Modify: `docs/repowise-perfect-metrics-plan.md`
-- Modify: `docs/graphify-development.md`
-- Create: `scripts/collect-architecture-metrics.cjs`
-- Create: `src/tooling/__tests__/collect_architecture_metrics.test.ts`
-- Modify: `package.json`
-
-**Protocol:**
-
-```bash
-test -z "$(git status --porcelain)"
-METRICS_OUTPUT_DIR="$(mktemp -d "/tmp/copilot-architecture-metrics-$(git rev-parse HEAD)-XXXXXX")" \
-  pnpm run metrics:architecture
-test -z "$(git status --porcelain)"
-```
-
-Every run receives a new empty directory, so rerunning the same SHA preserves
-previous metric records instead of mixing or deleting them. When
-`METRICS_OUTPUT_DIR` is omitted, the collector creates an equivalent unique
-temporary directory and prints its path in the final JSON result.
-
-The versioned collector:
-
-- derives the complete inventory directly from `coverage/lcov.info`;
-- passes `--no-workspace` to RepoWise repository commands and `--path .` to
-  coverage commands;
-- writes metadata with the canonical output directory, resolved executable paths,
-  exact argv, tool versions and validated raw reports outside the repository;
-- applies bounded per-command timeouts (10 minutes for coverage and Graphify, 15
-  minutes for RepoWise initialization, 5 minutes for RepoWise analyses and 30
-  seconds for control commands); each command runs in an isolated process group,
-  and timeout, `SIGINT` or `SIGTERM` terminate that group before control returns
-  through the restoration path;
-- rejects an output path that is inside the repository lexically or through a
-  symlink, rejects non-empty destinations, and fails before tool execution when
-  any mutable workspace path contains a symlink that could escape restoration;
-- snapshots and restores `build/`, `coverage/`, `graphify-out/`, local
-  `.repowise/`, editor/agent configuration and setup files byte-for-byte;
-- attempts restoration and Git/HEAD verification on success and failure while
-  preserving the original collection error;
-- publishes `complete.json` only after every report validates, restoration
-  succeeds, HEAD is unchanged and the tracked tree is clean.
-
-Before changing this workflow, verify RepoWise’s supported ignore/config
-mechanism from its installed version. Do not invent `.repowiseignore` semantics
-or silently exclude files.
-
-Acceptance:
-
-- metric record includes SHA, timestamp, commands, tool versions and scopes;
-- pre-existing mutable workspace paths are byte-for-byte identical afterward and
-  paths created only by the run are absent;
-- no credential, auth state, database, report or editor config is committed;
-- direct `repowise health` after coverage ingestion is the health authority, not a partial embedded snapshot from incremental status.
-
-## 5. Coverage-first adapter hardening
-
-No production refactor starts in this phase. Characterize current behavior first.
-
-### Task 3: Project board command contract
-
-**Objective:** Give `ProjectBoardCommandRepository` complete deterministic behavior coverage before deciding whether query and mutation responsibilities should move.
-
-**Files:**
-
-- Create: `src/data/repository/project/__tests__/project_board_command_repository.test.ts`
-- Exercise: `src/data/repository/project/project_board_command_repository.ts`
-- Reference: `src/application/ports/project_board_command_ports.ts`
-- Reference: `src/application/ports/project_board_query_ports.ts`
-
-**Required tests:**
-
-1. Missing content ID throws the historical error and performs no GraphQL mutation.
-2. Missing field throws.
-3. Missing option throws.
-4. Current option already matches and returns `false` without mutation.
-5. Item is found on a later page.
-6. Item is absent after final page and mutation behavior is characterized exactly before correction.
-7. Successful mutation returns `true` only when `projectV2Item` exists.
-8. Nullable mutation response returns `false`.
-9. `setTaskPriority` maps to `Priority`.
-10. `setTaskSize` maps to `Size`.
-11. `moveIssueToColumn` maps to `Status`.
-12. The provider client/token is resolved at the expected lifecycle frequency.
-
-**Focused command:**
-
-```bash
-pnpm exec jest src/data/repository/project/__tests__/project_board_command_repository.test.ts --runInBand
-```
-
-Do not extract query strings or pagination helpers merely for score improvement. First review whether GraphQL field discovery, item lookup and mutation have independently reusable contracts.
-
-### Task 4: Project board query contracts
-
-**Objective:** Cover project identity resolution, content lookup and pagination completely.
-
-**Files:**
-
-- Replace or relocate after caller audit: `src/data/repository/project/project_board_repository.test.ts`
-- Preferred focused tests:
-  - `src/data/repository/project/__tests__/project_board_query_repository.test.ts`
-  - `src/data/repository/project/__tests__/project_board_content_query_repository.test.ts`
-- Exercise: `src/data/repository/project/project_board_query_repository.ts`
-
-**Required matrix:**
-
-- invalid numeric project ID;
-- organization owner;
-- user owner;
-- owner lookup failure;
-- GraphQL project lookup failure;
-- missing project;
-- missing issue/PR content;
-- project node null;
-- first-page content match;
-- later-page content match;
-- `hasNextPage=true` with null cursor;
-- 100-page safety boundary;
-- content absent after all pages;
-- `isContentLinked` first/later/not found;
-- nullable content nodes.
-
-Only after GREEN characterization may the implementer consider separate adapters implementing `ProjectBoardQueryPort` and `ProjectBoardContentQueryPort`. A split is accepted only if callers, failure semantics and composition ownership remain clearer than the current dual-interface adapter.
-
-### Task 5: Branch preparation contract
-
-**Objective:** Cover provider pagination, transition policy and Git delegation without changing behavior.
-
-**Files:**
-
-- Create: `src/data/repository/branch/__tests__/branch_preparation_repository.test.ts`
-- Exercise: `src/data/repository/branch/branch_preparation_repository.ts`
-- Reference: `src/application/ports/branch_preparation_ports.ts`
-
-**Required tests:**
-
-- branch pages aggregate until empty page;
-- remote fetch and commit-tag delegate exactly once;
-- missing hotfix base produces failure result;
-- existing target branch is a no-op success;
-- previous issue branch becomes rename base;
-- hotfix uses hotfix base;
-- parent branch preservation during rename;
-- linked branch call receives exact base/name/issue/token;
-- provider failure maps to historical failure result;
-- remove branch success and provider failure;
-- wrapper delegations preserve arguments.
-
-Before changing production code, inventory every caller of `BranchPreparationPort`, `BranchNameRepository`, `LinkedBranchRepository` and `GitCliRepository`. Construction types in this adapter are a possible composition concern, but no change is authorized until current composition ownership is proven.
-
-### Task 6: Linked branch GraphQL contract
-
-**Objective:** Fully characterize linked-branch query/mutation behavior.
-
-**Files:**
-
-- Create: `src/data/repository/branch/__tests__/linked_branch_repository.test.ts`
-- Exercise: `src/data/repository/branch/linked_branch_repository.ts`
-
-Cover:
-
-- normal head ref;
-- tag-qualified ref;
-- escaped GraphQL ref content;
-- explicit OID overrides queried OID;
-- missing repository ID;
-- missing issue ID;
-- missing branch OID;
-- successful mutation payload and URLs;
-- nullable linked branch response;
-- query failure;
-- mutation failure.
-
-Review whether dynamic interpolation of `refForGraphQL` can become a GraphQL variable without changing behavior. Treat this as correctness/security hardening, not a metric extraction.
-
-### Task 7: Issue provisioning/title/type contracts
-
-**Objective:** Eliminate recognized no-test gaps in issue adapters.
-
-**Files:**
-
-- Create: `src/data/repository/issue/__tests__/issue_label_provisioning_repository.test.ts`
-- Create: `src/data/repository/issue/__tests__/issue_title_repository.test.ts`
-- Create: `src/data/repository/issue/__tests__/issue_type_repository.test.ts`
-- Exercise matching production files.
-
-For every provider method cover success, already-exists/no-op, pagination if present, nullable response, not-found, provider error and exact semantic return.
-
-Do not share a test helper across these repositories unless it models the same provider contract and improves assertions rather than hiding them.
-
-### Task 8: Pull-request review contract
-
-**Objective:** Cover every independent capability currently grouped in `PullRequestReviewRepository`.
-
-**Files:**
-
-- Create: `src/data/repository/pull_request/__tests__/pull_request_review_repository.test.ts`
-- Exercise: `src/data/repository/pull_request/pull_request_review_repository.ts`
-- Existing reference: `src/data/repository/__tests__/pull_request_review_thread_repository.test.ts`
-
-Required tests:
-
-- requested and submitted reviewer deduplication;
-- reviewer lookup failure;
-- empty reviewer request no-op;
-- reviewer request success/failure;
-- all review-comment pages;
-- nullable body/path/line/node ID;
-- single comment body success/not-found/failure;
-- review-thread delegation;
-- empty review comments no-op;
-- partial `Promise.allSettled` success;
-- all review-comment creations fail;
-- update review comment.
-
-After GREEN, audit callers per method. Split only when independent caller sets and semantic ports already justify specialized adapters; do not replace the class with a cosmetic facade.
-
-## 6. Real complexity reduction
-
-### Task 9: Extract merge polling policy using TDD
-
-**Objective:** Remove timing, check-state policy and provider mutation orchestration from one CCN-16 method without creating a universal workflow service.
-
-**Files likely to change:**
-
-- Modify: `src/data/repository/merge_repository.ts`
-- Existing pure policy: `src/data/repository/merge_checks_policy.ts`
-- Create if current callers justify:
-  - `src/application/ports/merge_wait_ports.ts`
-  - `src/application/usecases/merge/wait_for_pull_request_checks_use_case.ts`
-  - `src/infrastructure/time/timer_merge_polling_delay_adapter.ts`
-  - `src/infrastructure/composition/merge_composition_root.ts`
-- Tests:
-  - `src/application/usecases/merge/__tests__/wait_for_pull_request_checks_use_case.test.ts`
-  - `src/infrastructure/time/__tests__/timer_merge_polling_delay_adapter.test.ts`
-  - update `src/data/repository/__tests__/merge_repository.test.ts`
-
-**RED contracts:**
-
-- PR-specific check runs are selected over unrelated runs;
-- pending checks delay and retry;
-- failed checks fail deterministically;
-- no check runs uses bounded registration grace;
-- fallback statuses wait while pending;
-- no checks/statuses allows merge;
-- timeout is exact;
-- delay is injectable and does not call real timers in application tests;
-- PR creation/update/merge payloads remain unchanged;
-- direct merge fallback remains unchanged and separately tested.
-
-**Architecture decision:**
-
-Application may own the semantic wait policy only if its inputs are provider-neutral states. GitHub DTO mapping and REST calls remain in an adapter. If a provider-neutral contract would become wider or less clear than the current specialized adapter, keep the policy in infrastructure and extract pure functions plus an injected delay there.
-
-**Success thresholds:**
+### 2.1 Provenance
 
 ```text
-merge_repository max CCN <= 8
-max nesting <= 3
-all historical behaviors covered
-no real-time sleeps in unit tests
-no new universal merge client/repository
+Repository: vypdev/copilot
+Branch: master
+Published SHA: df23de8ed9e309ae23e17656aeb8cacbfe7e2160
+Measured: 2026-08-20
+Collector: pnpm run metrics:architecture
+RepoWise: 0.42.0
+Graphify: 0.9.46
 ```
 
-### Task 10: Decompose member-assignment policy
+Two independent records for the same SHA completed successfully in distinct external directories. Both published valid `complete.json`, restored protected mutable paths, left the working tree clean and produced identical principal health values.
 
-**Objective:** Reduce CCN 17 in `assign_members_to_issue_use_case.ts` through pure semantic policy extraction.
-
-**Files likely to change:**
-
-- Modify: `src/application/usecases/steps/issue/assign_members_to_issue_use_case.ts`
-- Create: `src/application/policies/issue_member_selection_policy.ts`
-- Create: `src/application/policies/__tests__/issue_member_selection_policy.test.ts`
-- Update: existing assign-members tests.
-
-Characterize and extract only selection decisions: creator eligibility, exclusions, desired count, current members, organization candidates and deterministic result. Provider calls and result messages remain in the use case.
-
-Target: use-case CCN <= 8; policy is pure and table-tested.
-
-### Task 11: Review bugbot autofix orchestration
-
-**Objective:** Separate preparation, provider invocation, safe workspace validation and result mapping only where already represented by semantic collaborators.
-
-**Files:**
-
-- Audit: `src/application/usecases/steps/commit/bugbot/bugbot_autofix_use_case.ts`
-- Audit existing policies/workflows in the same directory before creating anything.
-- Update its existing focused test suite first.
-
-Reject RepoWise suggestions that merge autofix and user-request workflows merely because their syntax is similar. They have different authorization, intent, result and commit semantics.
-
-Target: CCN <= 8, no method > 50 NLOC, all failure modes explicit, no duplicated provider invocation only if a genuine shared agent execution contract already exists.
-
-### Task 12: Complete pull-request thread and lifecycle edges
-
-**Objective:** Remove remaining uncovered branches and evaluate real nesting after tests.
-
-**Files:**
-
-- Update: `src/data/repository/__tests__/pull_request_review_thread_repository.test.ts`
-- Update: `src/data/repository/__tests__/pull_request_lifecycle_repository.test.ts`
-- Modify production only if tests reveal a separable mapper/pagination policy.
-
-Do not refactor a fully characterized adapter if its remaining score is historical churn or deliberate provider branching.
-
-## 7. Composition and entrypoint proof
-
-### Task 13: Direct composition-root wiring tests
-
-**Objective:** Ensure every significant root proves capability binding and sharing identity.
-
-**Files to audit/test:**
-
-- `src/infrastructure/composition/issue_use_case_composition_root.ts`
-- `src/infrastructure/composition/pull_request_use_case_composition_root.ts`
-- `src/infrastructure/composition/project_board_composition_root.ts`
-- `src/infrastructure/composition/release_composition_root.ts`
-- `src/infrastructure/composition/main_run_route_composition_root.ts`
-- matching tests under `src/infrastructure/composition/__tests__/`.
-
-Each test must verify more than “is a function”:
-
-- exact use-case class bound;
-- exact specialized adapter class bound;
-- intended shared identity;
-- intended distinct identity;
-- provider client created once per lifecycle where required;
-- query/command clients are not accidentally unified.
-
-### Task 14: Entrypoint lifecycle coverage
-
-**Objective:** Cover remaining branches without splitting legitimate roots.
-
-**Files:**
-
-- Update: `src/actions/__tests__/github_action.test.ts`
-- Update: `src/actions/__tests__/common_action.test.ts`
-- Update: `src/actions/__tests__/local_action.test.ts`
-- Exercise: `src/actions/github_action.ts`, `common_action.ts`, `local_action.ts`
-
-No split is allowed solely because `github_action.ts` has 167 NLOC or `common_action.ts` has historical churn. Extract only pure input policy or a semantic lifecycle step with independent tests.
-
-## 8. Coverage closure to 100%
-
-### Task 15: Generate current uncovered-line inventory
-
-**Objective:** Replace the historical coverage backlog with exact current evidence.
-
-Commands:
-
-```bash
-METRICS_OUTPUT_DIR="$(mktemp -d "/tmp/copilot-architecture-metrics-$(git rev-parse HEAD)-XXXXXX")" \
-  pnpm run metrics:architecture
-```
-
-Use the generated `coverage-inventory.json`, derived directly from the emitted
-`coverage/lcov.info`. Do not require `coverage-summary.json`; the repository's
-Jest configuration does not emit that reporter.
-
-Create a table containing every production file below 100%, its LCOV
-line/branch/function totals, uncovered line/function identifiers, current focused
-test, missing behavior and decision (`test`, `classify`, or `remove after caller
-proof`). Keep the Jest statement percentage as a global gate; do not fabricate a
-per-file statement field that the emitted LCOV does not contain.
-
-Never write import-only tests for type-only declarations or constants. Prefer testing behavior through its owner.
-
-### Task 16: Close application coverage
-
-Work capability by capability, not percentage-only:
-
-1. application policies;
-2. leaf use cases;
-3. orchestrator transition matrices;
-4. bugbot workflows;
-5. setup/release/hotfix flows;
-6. error and no-op branches.
-
-Every new test must assert an observable contract, interaction or state transition.
-
-### Task 17: Close adapter coverage
-
-Cover all specialized GitHub, Git, process, filesystem, logging and timing adapters. Use fakes/mocks at the provider edge; never use real credentials or mutate a real repository.
-
-### Task 18: Close entrypoint and utility coverage
-
-Cover deterministic input parsing, lifecycle cleanup, failure mapping and bounded polling. For process/server tests use isolated fake executables and fake timers.
-
-### Task 19: Enforce thresholds gradually
-
-Modify Jest thresholds only after current values pass:
+### 2.2 Quality gates
 
 ```text
-90 -> 95 -> 98 -> 100
+Jest suites: 221 passed / 221 total
+Tests: 1395 passed, 1 skipped
+TypeScript: PASS
+ESLint: PASS
+NCC build: PASS
+Production audit: PASS — no known vulnerabilities
+Prettier: PASS
+Git diff check: PASS
+Static secret/security scan: PASS
+HEAD == origin/master == remote master: PASS
+Working tree clean: PASS
 ```
 
-Each threshold increase is its own verified block. Never lower an enforced threshold.
+### 2.3 Coverage
 
-## 9. Duplication and marker triage
-
-### Task 20: Classify all critical/high findings
-
-Export RepoWise JSON and classify each current critical/high finding as:
-
-- `actionable-static`;
-- `missing-contract`;
-- `legitimate-boundary`;
-- `test-fixture-duplication`;
-- `generated-release-history`;
-- `recent-migration-history`;
-- `tool-false-positive`;
-- `requires-observation-window`.
-
-For each classification record SHA, evidence, callers and review date. Do not commit raw RepoWise output; commit only concise durable decisions.
-
-### Task 21: Review semantic duplication
-
-Priority candidates:
-
-- repeated project board GraphQL paging;
-- repeated provider error mapping where semantics match;
-- repeated issue/PR project-link result behavior;
-- repeated prompt template structure;
-- repeated logger formatting.
-
-Extract only if ownership, inputs, outputs and failure behavior are genuinely shared. Do not combine issue and pull-request behaviors merely to reduce clone percentages.
-
-### Task 22: Keep tests readable
-
-High duplicated-test percentages are not automatically defects. Use table-driven tests or fixture builders only when they preserve explicit scenario names and assertions. Reject generic mega-fixtures that make contract failures opaque.
-
-## 10. Performance findings
-
-### Task 23: Audit all 17 performance findings
-
-For each finding, record bound, expected cardinality, required ordering and whether parallelism is safe.
-
-Known caution:
-
-- polling loops such as `waitForHealthy` and workflow/check waiting are intentionally serial because each iteration observes changing external state;
-- converting them to `Promise.all` would be behaviorally wrong even if RepoWise suggests serial-await optimization;
-- N+1 findings are actionable only where iterations are independent and provider rate limits/ordering permit batching.
-
-Target: performance 10.0 or every remaining finding classified with an executable bound/contract test.
-
-## 11. Release/tag correctness track
-
-The previously postponed release/tag adapter audit remains mandatory and independent from metric hotspots.
-
-### Task 24: Audit release and tag capabilities
-
-**Files:**
-
-- `src/application/ports/github_release_ports.ts`
-- `src/application/ports/repository_release_ports.ts`
-- `src/data/repository/release/repository_default_branch_repository.ts`
-- `src/data/repository/release/repository_release_publication_repository.ts`
-- `src/data/repository/release/repository_tag_repository.ts`
-- `src/infrastructure/github/octokit_release_adapters.ts`
-- `src/infrastructure/composition/github_release_client_factory.ts`
-- `src/infrastructure/composition/release_composition_root.ts`
-
-Inventory callers and add contract tests before changing boundaries. Keep default-branch query, tag mutation and release publication separate if their permissions/failure semantics differ.
-
-## 12. Executable architecture guards
-
-### Task 25: Complete dependency rules
-
-Add/strengthen tests that eventually fail for:
-
-- application importing infrastructure, manager concretes, data repositories, `@actions`, filesystem/process or unallowlisted provider protocol paths;
-- dispatchers importing composition or concrete factories;
-- new provider protocols placed in application;
-- composition roots imported by use cases;
-- query/command provider clients reunited into universal clients;
-- production cycles;
-- retired facade names or compatibility shims returning.
-
-Current SDK-shaped `Github*Client` contracts under
-`src/application/ports/github_*_ports.ts` are a transitional allowlist, not proof
-of target compliance. Before enforcing zero provider protocols in application:
-
-1. inventory each current contract and every productive caller;
-2. distinguish semantic application capabilities from provider transport shapes;
-3. move only provider-shaped contracts to capability-specific infrastructure
-   protocol modules;
-4. migrate composition and specialized adapters without compatibility re-exports;
-5. keep focused tests green and shrink the allowlist after each migration;
-6. enforce zero only when the allowlist is empty.
-
-Use explicit path/symbol allowlists for intentional transitional imports rather
-than suffix-only regexes.
-
-### Task 26: Prove zero references before removal
-
-Every deletion requires:
-
-```bash
-rg 'RemovedSymbol|removed_file_stem' src docs action.yml package.json
+```text
+LCOV files: 330
+Lines: 5867 / 6771 = 86.65%
+Jest branches: 2346 / 2925 = 80.21%
+Functions: 935 / 1109 = 84.31%
+RepoWise branch aggregation: 77.15%
 ```
 
-plus caller inventory, focused tests and build. Builders/facades with legitimate callers remain.
+Jest and RepoWise branch percentages use different aggregation/mapping rules and must remain separately labelled.
 
-## 13. Per-block execution protocol
+### 2.4 RepoWise health
 
-For every approved block:
+```text
+Files scored: 718
+Average health: 8.07
+Hotspot health: 5.52
+Worst production file: project_board_command_repository.ts = 1.95
+Maintainability average: 9.22
+Maintainability hotspot: 8.61
+Performance average: 9.99
+Performance hotspot: 9.99
+Safe dead-code findings: 0
+```
 
-1. Verify the hotspot still exists on current `master`.
-2. Record baseline SHA and clean tree.
-3. Inspect direct callers and productive paths.
-4. Inspect focused tests and coverage.
-5. Write RED contract test.
-6. Run focused test and confirm the expected failure.
-7. Implement minimum semantic change.
-8. Run focused test to GREEN.
-9. Refactor with all focused tests GREEN.
-10. Run TypeScript and ESLint.
-11. Run affected architecture guards.
-12. Re-measure focused health; do not claim global improvement from a partial scan.
-13. Run full Jest and coverage.
-14. Run build, audit and `git diff --check`.
-15. Regenerate Graphify using only the authorized command.
-16. Update RepoWise index and ingest coverage.
-17. Request independent architecture and behavioral review.
-18. Apply real findings and repeat gates.
-19. Restore/remove generated artifacts.
-20. Create one atomic commit and normal push.
-21. Fetch and prove local/tracking/remote SHA equality and clean tree.
+Score distribution:
 
-Required commands:
+```text
+Score >= 7: 613 files
+Score 4..<7: 89 files
+Score < 4: 16 files
+```
+
+RepoWise emitted 1,426 raw findings (`54 critical`, `261 high`, `764 medium`, `347 low`). This is not a backlog of 1,426 source edits: one file can have multiple static and historical biomarkers. Every critical/high finding requires resolution or evidence-backed classification.
+
+### 2.5 Graphify
+
+```text
+Nodes: 3367
+Edges: 8537
+Communities: 228
+```
+
+Graphify's current graph is useful for navigation and community evidence. It is not authority for dependency direction or cycle absence; executable directed-import guards and source inspection are authoritative.
+
+## 3. Current hotspot and boundary audit
+
+| Order | Current file                                                                 |             Score | Current defect/gap                                                                                                                       | Planned treatment                                                                                                                       |
+| ----: | ---------------------------------------------------------------------------- | ----------------: | ---------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+|  P0.1 | `src/data/repository/project/project_board_command_repository.ts`            |              1.95 | 20.75% lines, 0% branches; field discovery, item pagination and mutation in one path; missing-item behavior is unsafe to assume          | Characterize command contract, correct behavior defects, then extract only semantic policy/protocol boundaries justified by tests       |
+|  P0.2 | `src/data/repository/project/project_board_query_repository.ts`              |              2.80 | 0% recognized coverage; project identity, content lookup and link scan; implements two query ports; SDK-shaped identity contracts        | Complete query matrix, audit caller sets, preserve query/command split, migrate technical contracts out of application                  |
+|  P0.3 | `src/data/repository/branch/branch_preparation_repository.ts`                |              2.58 | 0% coverage; broad aggregate port; delegates Git, naming and linked-branch adapters; mixes provider paging with branch transition policy | Characterize behavior, partition semantic ports, move provider-neutral decision policy inward, remove aggregate only after zero callers |
+|  P0.4 | `src/data/repository/branch/linked_branch_repository.ts`                     |              2.62 | 0% coverage; raw GraphQL query/mutation and result mapping; interpolated ref                                                             | Complete contract, use variables for provider input when verified, expose a semantic command port                                       |
+|  P0.5 | `src/data/repository/issue/issue_label_provisioning_repository.ts`           |              2.61 | 19.05% lines, 0% branches; only first 100 labels; repeated listing through `ensureLabel` can become N+1                                  | Add contract matrix, paginate once, separate pure case-insensitive selection from provider effects if useful                            |
+|  P0.6 | `src/data/repository/pull_request/pull_request_review_repository.ts`         |              2.70 | 0% recognized coverage; reviewer membership, comment query/mutation and thread delegation grouped; constructs thread adapter internally  | Characterize per capability, audit method callers, inject specialized thread port, split only closed capability graphs                  |
+|  P0.7 | `src/data/repository/merge_repository.ts`                                    |              2.82 | CCN 16, nesting 6, 206+ NLOC; polling policy, PR lifecycle and direct fallback mixed                                                     | Extract provider-neutral bounded wait use case/policy and delay port; keep GitHub DTO mapping in adapter                                |
+|  P1.1 | `src/data/repository/pull_request/pull_request_lifecycle_repository.ts`      |              2.90 | Partial behavior coverage and high duplication signal                                                                                    | Complete edge contracts; refactor only verified semantic duplication                                                                    |
+|  P1.2 | `src/application/usecases/steps/commit/bugbot/bugbot_autofix_use_case.ts`    |              3.15 | CCN 13 and orchestration complexity                                                                                                      | Complete transition matrix, extract semantic policy only where provider-neutral                                                         |
+|  P1.3 | `src/application/usecases/steps/issue/assign_members_to_issue_use_case.ts`   |              3.46 | CCN 17; selection and orchestration mixed                                                                                                | Pure deterministic member-selection policy plus thin use-case orchestration                                                             |
+|  P1.4 | `src/application/usecases/steps/commit/check_changes_issue_size_use_case.ts` |              3.46 | CCN 9, nesting 4                                                                                                                         | Branch tests first, then optional pure decision table                                                                                   |
+|  P1.5 | `src/actions/local_action.ts`                                                | history-sensitive | Constructs `GitCliRepository` inline; reopened Phase D exit criterion                                                                    | Create a named local lifecycle composition root after P0 capability migrations                                                          |
+
+Explicit non-targets unless new current evidence appears:
+
+- `src/actions/main_run_dispatcher.ts`: pure dispatcher; historical churn is not a current defect.
+- `src/cli.ts`: legitimate bootstrap.
+- specialized composition roots: construction is their purpose; test wiring rather than fragmenting them.
+- generated NCC bundles and local RepoWise/Graphify artifacts.
+- builders/facades that retain audited productive callers.
+
+## 4. Target capability topology
+
+### 4.1 Project Board
+
+Keep semantic application contracts separate:
+
+- project detail query;
+- project content/item query;
+- content link command;
+- single-select board command.
+
+The target does **not** combine these into a `ProjectBoardRepository`. The composition root may share an identical content-query adapter instance with link and command capabilities and must prove that identity in its wiring test. Raw GraphQL response types, owner lookup SDK shapes and provider-client resolution remain outside application.
+
+A current class may implement two semantic query ports only if the post-test caller audit proves one cohesive reason to change. Otherwise migrate to two specialized adapters without a compatibility facade.
+
+### 4.2 Branch preparation
+
+Replace the current broad `BranchPreparationPort extends BranchLifecyclePort, BranchNamePort` topology through staged caller migration. Target capabilities are:
+
+- remote branch inventory query;
+- local Git workspace preparation/tag query;
+- pure issue-branch preparation decision policy;
+- linked-branch command;
+- branch deletion/lifecycle command;
+- branch-name policy.
+
+The application owns provider-neutral decisions: target name, base selection, hotfix validation, previous-branch transition and parent-branch preservation. GitHub listing/deletion, GraphQL linked-branch mutation and Git CLI execution remain specialized outer adapters. Do not retain the old aggregate as a forwarding shim.
+
+### 4.3 Issue label provisioning
+
+`IssueLabelProvisioningPort` is already semantic and should remain. The outer adapter owns paginated provider inventory and mutation. A pure policy may compare required and existing labels case-insensitively. One provisioning execution should obtain a complete inventory once and then perform only required mutations, while preserving the existing `422 already exists` race behavior.
+
+### 4.4 Pull-request review
+
+Treat these as candidate independent capabilities, subject to caller proof:
+
+- reviewer membership query/command;
+- review-comment query;
+- review-comment command;
+- review-thread command.
+
+Do not construct `PullRequestReviewThreadRepository` inside another adapter. Inject its semantic port from a composition root. Do not create a universal pull-request review facade after splitting.
+
+### 4.5 Merge
+
+Application may own a bounded `wait for merge readiness` policy only over provider-neutral check/status states. The outer GitHub adapter owns PR creation/update/merge, DTO mapping and direct merge fallback. Timing is injected through a narrow delay port. Polling remains serial because each iteration observes changing external state.
+
+### 4.6 Lifecycle composition
+
+`runLocalAction()` must delegate adapter assembly to a named `local_action_composition_root.ts`. The entrypoint may coordinate configuration, execution and rendering, but must not instantiate `GitCliRepository` or other concrete adapters.
+
+## 5. Execution protocol for every implementation block
+
+1. Fetch `origin/master`; prove local/tracking/remote alignment and a clean tree.
+2. Confirm the target remains a hotspot in a fresh reproducible record.
+3. Audit productive callers, test-only callers, composition roots and current ports.
+4. Record behavior and compatibility constraints.
+5. Write one RED test for one observable contract.
+6. Run only that test and confirm the expected behavioral failure, not a syntax/setup failure.
+7. Implement the smallest GREEN change.
+8. Re-run focused tests.
+9. Refactor only while GREEN; do not expand scope.
+10. Search forbidden imports and old symbols.
+11. Run TypeScript, ESLint and affected architecture guards.
+12. Run all Jest suites, build, audit and diff check.
+13. Obtain independent behavioral and architecture review.
+14. Apply valid findings and repeat gates.
+15. Commit and push one atomic vertical slice.
+16. Prove `HEAD == origin/master == remote master` and tree clean.
+17. At the end of each phase, run the external metrics collector twice only when reproducibility or a collector change requires it; otherwise one complete record is sufficient.
+18. Compare exact machine-readable metrics and update this plan's ledger without committing raw reports.
+
+Required gates:
 
 ```bash
-pnpm exec jest <focused-tests> --runInBand
+pnpm exec jest <focused-test> --runInBand
 pnpm exec tsc --noEmit
 pnpm run lint
 pnpm exec jest --runInBand
@@ -847,132 +257,400 @@ METRICS_OUTPUT_DIR="$(mktemp -d "/tmp/copilot-architecture-metrics-$(git rev-par
 git diff --check
 ```
 
-Publication proof:
+Generated `build/`, `coverage/`, `graphify-out/`, `.repowise/`, editor, agent and MCP artifacts must never enter a source commit. Restore only known generated paths after checking context; never perform indiscriminate cleanup.
+
+## 6. Phase 0 — Metric protocol closure
+
+**Status:** Complete and published at `df23de8ed9e309ae23e17656aeb8cacbfe7e2160`.
+
+Delivered:
+
+- strict LCOV inventory and JSON validation;
+- RepoWise single-repository scope and real LCOV ingestion;
+- Graphify record;
+- unique external output per run;
+- canonical path/symlink guards;
+- fail-closed mutable-path symlink checks;
+- byte-preserving workspace snapshot/restoration;
+- bounded process-group timeouts and `SIGINT`/`SIGTERM` handling;
+- complete marker only after restoration and postchecks;
+- SHA, scope, executables, versions, output path, timeouts and argv provenance.
+
+No collector work is authorized during hotspot phases unless a reproducible defect is demonstrated first.
+
+## 7. Phase 1 — Project Board vertical slice
+
+### Task 1.1: Freeze caller and behavior contracts
+
+**Files to inspect:**
+
+- `src/application/ports/project_board_command_ports.ts`
+- `src/application/ports/project_board_query_ports.ts`
+- `src/application/ports/project_board_link_ports.ts`
+- `src/data/repository/project/project_board_*_repository.ts`
+- `src/infrastructure/composition/project_board_composition_root.ts`
+- all `ProjectBoard*Port` productive callers.
+
+**Deliverable:** A caller matrix in the implementation commit description identifying which lifecycle consumes query, link, content query and command. No production change.
+
+### Task 1.2: Command contract — strict TDD
+
+**Create:** `src/data/repository/project/__tests__/project_board_command_repository.test.ts`
+
+RED→GREEN scenarios, one at a time:
+
+1. missing content ID rejects before field query/mutation;
+2. field missing;
+3. option missing;
+4. current option already selected returns `false` without mutation;
+5. item found on the first page;
+6. item found on a later page;
+7. item absent after the final page must not mutate with a content-node ID;
+8. `hasNextPage=true` with null cursor terminates safely;
+9. nullable/malformed field and item nodes;
+10. successful mutation returns `true` only with a proven `projectV2Item`;
+11. nullable mutation returns `false`;
+12. priority/size/status map to exact semantic field names;
+13. provider error preserves the established error boundary;
+14. client/token resolution frequency is explicit.
+
+**Focused gate:**
 
 ```bash
-git push origin master
-git fetch origin
-head_sha="$(git rev-parse HEAD)"
-tracking_sha="$(git rev-parse origin/master)"
-remote_sha="$(git ls-remote origin refs/heads/master | cut -f1)"
-test "$head_sha" = "$tracking_sha"
-test "$head_sha" = "$remote_sha"
-test -z "$(git status --porcelain)"
+pnpm exec jest src/data/repository/project/__tests__/project_board_command_repository.test.ts --runInBand
 ```
 
-## 14. Phase ordering
+### Task 1.3: Query contract — strict TDD
 
-Execute only after documentation approval:
+**Create:** `src/data/repository/project/__tests__/project_board_query_repository.test.ts`
 
-1. Documentation stabilization and reproducible metric protocol.
-2. Project board command/query contract coverage.
-3. Branch preparation and linked-branch contract coverage.
-4. Issue provisioning/title/type contract coverage.
-5. Pull-request review contract coverage.
-6. Merge polling semantic decomposition.
-7. Member assignment policy decomposition.
-8. Bugbot autofix complexity audit.
-9. Remaining PR lifecycle/thread contracts.
-10. Composition-root and entrypoint proof.
-11. Release/tag correctness track.
-12. Coverage closure 90 -> 95 -> 98 -> 100.
-13. Critical/high finding classification and justified semantic duplication cleanup.
-14. Performance finding audit.
-15. Final architecture guards and complete publication gates.
-16. Historical-signal observation window and mature RepoWise checkpoint.
+**Retire or relocate only after coverage equivalence:** `src/data/repository/project/project_board_repository.test.ts`
 
-## 15. Final acceptance checklist
+Scenarios:
+
+- invalid project number;
+- organization and user owners;
+- owner lookup failure;
+- GraphQL project failure;
+- project absent;
+- issue/PR content absent;
+- null project node;
+- first/later page content match;
+- content absent after all pages;
+- null cursor while `hasNextPage=true`;
+- 100-page safety boundary;
+- nullable content nodes;
+- `isContentLinked` first/later/absent and malformed pagination.
+
+### Task 1.4: Semantic boundary migration
+
+Only after Tasks 1.2–1.3 are GREEN:
+
+1. classify the two query interfaces by caller and reason to change;
+2. keep one implementation only if cohesion is proven;
+3. otherwise create specialized query adapters and migrate the closed caller graph;
+4. move Project Board-specific SDK/provider response contracts out of `src/application`;
+5. keep raw GraphQL documents in the specialized outer adapter;
+6. replace interpolated provider values with GraphQL variables where supported;
+7. preserve command/query separation;
+8. remove old implementation only after zero references;
+9. update `project_board_composition_root.test.ts` to prove intended sharing and distinct client construction.
+
+**Forbidden:** `ProjectBoardRepository`, a universal GraphQL helper, compatibility re-export, or a coordinator whose only purpose is lowering NLOC.
+
+**Phase exit:** touched Project Board behavior-bearing files at 100% lines/branches/functions; no unclassified command/query correctness defect; no application import of new provider mechanics; worst Project Board score remeasured, not predicted.
+
+## 8. Phase 2 — Branch Preparation and Linked Branch vertical slice
+
+### Task 2.1: Characterize current aggregate
+
+**Create:**
+
+- `src/data/repository/branch/__tests__/branch_preparation_repository.test.ts`
+- `src/data/repository/branch/__tests__/linked_branch_repository.test.ts`
+
+Branch preparation scenarios:
+
+- complete pagination until an empty page;
+- remote fetch and tag lookup delegation;
+- missing hotfix base;
+- target branch already exists;
+- previous issue branch selected as rename base;
+- hotfix base selection;
+- parent branch preservation during rename;
+- exact linked-branch request;
+- provider error mapping;
+- deletion success/failure;
+- wrapper argument preservation before wrappers are retired.
+
+Linked branch scenarios:
+
+- normal head ref and tag-qualified ref;
+- ref containing quotes/backslashes;
+- explicit OID override;
+- missing repository ID, issue ID or OID;
+- successful mutation and URL payload;
+- nullable mutation response;
+- query and mutation failures.
+
+### Task 2.2: Introduce provider-neutral decision policy
+
+**Candidate create, after RED proves the desired API:**
+
+- `src/application/policies/branch_preparation_policy.ts`
+- `src/application/policies/__tests__/branch_preparation_policy.test.ts`
+
+The pure policy accepts branch names and semantic issue/hotfix configuration and returns a decision containing target name, base name, rename state and parent-branch update. It must not accept `Execution`, SDK DTOs, tokens, Git clients or repositories.
+
+### Task 2.3: Partition the aggregate port
+
+**Modify:** `src/application/ports/branch_preparation_ports.ts` and productive callers.
+
+1. introduce the smallest semantic ports proven by callers;
+2. migrate one caller/use-case path at a time;
+3. keep Git CLI, GitHub branch inventory and linked GraphQL command as separate adapters;
+4. move orchestration to an application use case only when all inputs/results are provider-neutral;
+5. update `issue_use_case_composition_root.ts` explicitly;
+6. prove wiring with a focused composition-root test;
+7. delete `BranchPreparationRepository` and broad `BranchPreparationPort` only after zero productive/test references;
+8. do not leave delegating methods or aliases.
+
+**Phase exit:** no adapter depends on `GitCliRepository`, `BranchNameRepository` or `LinkedBranchRepository` concrete types; no broad inherited branch aggregate remains; all branch transition and provider edge behavior is covered; scores remeasured honestly.
+
+## 9. Phase 3 — Issue label provisioning
+
+### Task 3.1: Complete the contract
+
+**Create:** `src/data/repository/issue/__tests__/issue_label_provisioning_repository.test.ts`
+
+RED→GREEN scenarios:
+
+- empty/blank name no-op;
+- case-insensitive existing label;
+- labels beyond the first 100 are observed;
+- creation success;
+- `422 already exists` race maps to `existed`;
+- other provider errors propagate from `ensureLabel`;
+- `ensureLabels` aggregates created/existing/errors exactly;
+- one complete inventory per provisioning execution;
+- nullable descriptions preserved;
+- duplicate required labels do not create duplicate mutations.
+
+### Task 3.2: Remove N+1 behavior semantically
+
+Use provider pagination in the outer adapter. If useful, create a pure label comparison policy under `src/application/policies/`; otherwise keep a small private pure function local. Do not introduce a universal pagination service.
+
+**Phase exit:** 100% behavior coverage, complete pagination, no repeated inventory request per required label, `IssueLabelProvisioningPort` remains semantic.
+
+## 10. Phase 4 — Pull-request review capabilities
+
+### Task 4.1: Contract coverage
+
+**Create:** `src/data/repository/pull_request/__tests__/pull_request_review_repository.test.ts`
+
+Cover reviewer deduplication, errors, empty requests, pagination, nullable comment fields, single-comment lookup, review-thread delegation, empty comment creation, partial/all failure in `Promise.allSettled`, and update mutation.
+
+### Task 4.2: Caller-based partition
+
+Audit every method caller. If caller sets and permissions differ, migrate closed capability graphs to reviewer membership, comment query, comment command and thread command ports/adapters. Inject the thread command port from composition; never construct a concrete thread repository internally. Keep one adapter if caller evidence proves one cohesive capability.
+
+**Phase exit:** no hidden adapter construction; all provider edges covered; no universal review facade; touched files at 100% behavior coverage.
+
+## 11. Phase 5 — Merge polling and fallback
+
+### Task 5.1: Freeze existing behavior
+
+Extend `src/data/repository/__tests__/merge_repository.test.ts` for PR creation/update payloads, PR-specific check selection, pending/failed checks, registration grace, status fallback, exact timeout and direct-merge fallback semantics.
+
+### Task 5.2: Extract bounded readiness policy
+
+**Candidate create:**
+
+- `src/application/ports/merge_wait_ports.ts`
+- `src/application/usecases/merge/wait_for_pull_request_checks_use_case.ts`
+- `src/application/usecases/merge/__tests__/wait_for_pull_request_checks_use_case.test.ts`
+- `src/infrastructure/time/timer_merge_polling_delay_adapter.ts`
+- `src/infrastructure/composition/merge_composition_root.ts`
+
+Only provider-neutral check/status states cross into application. No SDK DTO or GitHub client may enter the use case. Delay is injected; unit tests never sleep. GitHub PR lifecycle and direct fallback remain specialized outer behavior.
+
+**Target:** `merge_repository` max CCN <= 8, nesting <= 3, no real-time unit-test delay, exact fallback compatibility.
+
+## 12. Phase 6 — Local lifecycle composition closure
+
+**Create:**
+
+- `src/infrastructure/composition/local_action_composition_root.ts`
+- `src/infrastructure/composition/__tests__/local_action_composition_root.test.ts`
+
+**Modify:** `src/actions/local_action.ts`
+
+The named root returns the already-assembled semantic capabilities needed by configuration and `mainRun`. `runLocalAction()` retains coordination and rendering, but no longer executes `new GitCliRepository()` or constructs other adapters inline.
+
+**Exit:** executable architecture guard proves all lifecycle entrypoints delegate concrete assembly; `cli.ts` remains a legitimate bootstrap.
+
+## 13. Phase 7 — Remaining real complexity hotspots
+
+Execute in this order, one vertical slice per commit:
+
+1. `pull_request_lifecycle_repository.ts`: complete nullable/error/pagination branches; refactor only if a semantic split remains.
+2. `assign_members_to_issue_use_case.ts`: extract a pure deterministic member-selection policy; target CCN <= 8.
+3. `check_changes_issue_size_use_case.ts`: complete decision-table branches; extract only a provider-neutral policy.
+4. `bugbot_autofix_use_case.ts`: characterize workspace safety, provider invocation and result mapping; reject merging with user-request workflows.
+5. `issue_title_repository.ts`, `issue_type_repository.ts`, review-thread adapter and other score-<4 files: contract-first, then remeasure.
+6. composition-root hotspots: add wiring identity tests; never split by line count.
+
+Every slice must document why the remaining responsibility split is semantic rather than metric-driven.
+
+## 14. Phase 8 — Transitional provider-contract migration
+
+For each allowlisted `src/application/ports/github_*_ports.ts` contract:
+
+1. inventory productive adapters, composition roots and tests;
+2. determine whether it represents a semantic application capability or provider protocol;
+3. keep/rename semantic capability ports in application;
+4. move SDK-shaped transport contracts to capability-specific infrastructure protocol modules;
+5. migrate one complete caller graph;
+6. remove old exports without aliases/re-exports;
+7. shrink the explicit architecture-test allowlist;
+8. stop when a capability boundary is not yet proven—never make the allowlist worse merely to claim zero.
+
+Model relocation (for example `ProjectDetail` currently under `src/data/model`) is a separate caller-complete migration, not an incidental path change inside a hotspot block.
+
+**Exit:** provider-protocol allowlist empty, or every temporary survivor has a named owner, callers, blocking reason and next review date; allowlist never grows.
+
+## 15. Phase 9 — Coverage closure
+
+Generate a fresh LCOV inventory after each capability phase. For every behavior-bearing production file below 100%, record uncovered lines/functions, missing behavior and decision (`test`, `remove after caller proof`, or explicit non-executable classification).
+
+Raise enforced thresholds only after the repository already passes them:
+
+```text
+90 -> 95 -> 98 -> 100
+```
+
+Priority order:
+
+1. P0 specialized adapters;
+2. application policies and leaf use cases;
+3. workflow transition matrices;
+4. entrypoint failure/cleanup boundaries;
+5. filesystem/process/timing adapters with isolated fakes;
+6. remaining utilities through their behavior owner.
+
+No import-only tests for types/constants, no assertions of mock setup without behavior, and no giant generic fixtures that hide scenario intent.
+
+## 16. Phase 10 — Findings, duplication and performance closure
+
+### 10.1 Critical/high classification
+
+Classify each current critical/high finding as:
+
+- `actionable-static`;
+- `missing-contract`;
+- `legitimate-boundary`;
+- `test-fixture-duplication`;
+- `generated-release-history`;
+- `recent-migration-history`;
+- `tool-false-positive`;
+- `requires-observation-window`.
+
+Record SHA, source/caller evidence, decision and review date. Commit concise decisions only, never raw RepoWise databases/reports.
+
+### 10.2 Duplication
+
+Extract only genuinely shared ownership, inputs, outputs and failure semantics. Project Board pagination may share a capability-local mechanism if tests prove identical semantics. Do not combine issue and PR workflows, unrelated provider error mappings or prompt templates merely to lower clone percentages.
+
+### 10.3 Performance
+
+Audit all current performance findings. Record iteration bounds, expected cardinality, ordering constraints and whether batching is safe. Serial polling remains serial. N+1 is actionable only when requests are independent and rate/order semantics permit batching.
+
+**Exit:** performance `10.0` or every remaining finding has a bounded executable justification; no actionable N+1 remains.
+
+## 17. Phase checkpoints and stop/go rules
+
+After each phase, update this table from a complete external metrics record:
+
+| Phase    | SHA        |  Avg | Hotspot | Worst | Maintainability | Performance |  Lines |                      Branches | Functions | Files score <4 | Decision                          |
+| -------- | ---------- | ---: | ------: | ----: | --------------: | ----------: | -----: | ----------------------------: | --------: | -------------: | --------------------------------- |
+| Baseline | `df23de8e` | 8.07 |    5.52 |  1.95 |            9.22 |        9.99 | 86.65% | 80.21% Jest / 77.15% RepoWise |    84.31% |             16 | Proceed to Phase 1 after approval |
+
+Continue only when:
+
+- behavior and architecture gates pass;
+- no new forbidden dependency, universal facade or compatibility shim exists;
+- touched-file coverage improved through meaningful behavior tests;
+- the source change has a semantic reason independent of score;
+- review has no unresolved high/medium finding;
+- remote and tree are verified.
+
+Stop and stabilize the plan when:
+
+- a caller graph differs from this audit;
+- a RED test reveals incompatible historical behavior;
+- a proposed port leaks provider mechanics;
+- a split requires a compatibility facade;
+- metrics improve while dependency direction or clarity worsens;
+- RepoWise/Graphify evidence is stale, partial or contaminated;
+- another process mutates the checkout during measurement.
+
+## 18. Final acceptance checklist
 
 ### Architecture
 
-- [ ] No forbidden inward dependency.
-- [ ] No production dependency cycle.
-- [ ] Every runtime has one explicit lifecycle composition root.
+- [ ] No forbidden inward dependency or production cycle.
+- [ ] Every lifecycle has a named composition root.
 - [ ] Every application port is semantic.
-- [ ] Every provider protocol is outside application; until the documented
-      `Github*Client` transitional allowlist is migrated, the allowlist is explicit
-      and cannot grow.
+- [ ] Provider protocol allowlist is empty or every temporary survivor is explicitly governed and shrinking.
 - [ ] Query and command capabilities remain appropriately separated.
-- [ ] No universal factory/client/repository or compatibility shim exists.
-- [ ] Every retained facade/builder has current legitimate callers and tests.
+- [ ] No universal factory/client/repository, alias or compatibility shim.
+- [ ] Every retained builder/facade has current productive callers and tests.
 
-### Behavior and tests
+### Behavior
 
-- [ ] Every specialized adapter has focused contract coverage.
-- [ ] Every workflow has success/no-op/failure/boundary tests.
-- [ ] All polling uses injectable delay or bounded, testable timing at the correct layer.
-- [ ] Pagination and nullable provider responses are tested.
-- [ ] Jest reaches defensible 100% on behavior-bearing production code.
-- [ ] No meaningless coverage-only tests exist.
+- [ ] Every specialized adapter has success/no-op/error/pagination/nullable contract coverage.
+- [ ] Every workflow has deterministic transition tests.
+- [ ] Polling is bounded and timing is injectable at the correct layer.
+- [ ] No meaningless coverage-only test.
+- [ ] Defensible 100% behavior-bearing production coverage.
 
-### RepoWise
+### Metrics
 
-- [ ] Index SHA equals published HEAD.
-- [ ] Coverage is ingested before health.
-- [ ] Average health meets immediate/mature target.
-- [ ] Hotspot health meets immediate/mature target.
-- [ ] Worst production file meets target.
-- [ ] No production alert remains.
-- [ ] Dead-code safe/unreachable/unused export counts are zero.
-- [ ] Every critical/high finding is resolved or classified.
-- [ ] Remaining history-derived findings have an observation date.
-
-### Graphify and boundaries
-
-- [ ] Current graph is regenerated.
-- [ ] High-degree nodes are semantically justified.
-- [ ] No removed universal facade returns.
-- [ ] Directed dependency/cycle claims come from executable guards, not undirected Graphify output.
+- [ ] Average health >= 9.0 immediate and >= 9.5 mature.
+- [ ] Hotspot health >= 8.0 immediate and >= 9.0 mature.
+- [ ] Worst production score >= 7.5 immediate and >= 8.5 mature.
+- [ ] Maintainability >= 9.7.
+- [ ] Performance 10.0 or all survivors classified.
+- [ ] Production alert volume 0%.
+- [ ] Safe dead code, unreachable production and unused production exports are zero.
+- [ ] Every critical/high finding resolved or classified with current evidence.
 
 ### Publication
 
 - [ ] Focused and global gates pass.
-- [ ] Independent architecture review passes.
-- [ ] Independent behavioral/test review passes.
-- [ ] Build artifacts are managed only by the release/hotfix policy.
-- [ ] RepoWise, Graphify, coverage, editor and MCP outputs are absent.
-- [ ] Atomic commit is pushed normally.
+- [ ] Independent behavioral and architecture reviews pass.
+- [ ] Raw RepoWise, Graphify, coverage, editor, MCP and agent artifacts are absent.
+- [ ] Atomic commits pushed normally.
 - [ ] `HEAD == origin/master == remote master`.
-- [ ] Working tree is clean.
+- [ ] Working tree clean.
 
-## 16. Risks and mitigations
+## 19. Risks and mitigations
 
-| Risk                                           | Mitigation                                                                           |
-| ---------------------------------------------- | ------------------------------------------------------------------------------------ |
-| Optimizing metric noise                        | Require caller, behavior, contract or ownership evidence before every change         |
-| Lowering clarity through generic helpers       | Require shared semantics and failure behavior; reject syntax-only extraction         |
-| Chasing historical churn                       | Separate immediate controllable and mature rolling-window targets                    |
-| Inflating coverage with meaningless tests      | Assert observable contracts; classify declarations rather than import-only execution |
-| Breaking GitHub behavior                       | Provider fakes, contract matrices, pagination/nullable/error tests, build gate       |
-| New god composition root                       | Capability-specific roots and direct wiring identity tests                           |
-| Reintroducing technical ports into application | Architecture allowlists and provider-protocol location guards                        |
-| False performance optimization of polling      | Document serial state dependence and bounded retry contracts                         |
-| Generated artifacts leaking into Git           | Mandatory cleanup and final porcelain-byte check                                     |
-| Stale documentation                            | One authoritative plan; volatile measurements stored once with SHA/timestamp         |
+| Risk                                                         | Mitigation                                                                            |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| Metric optimization degrades architecture                    | Semantic defect/contract evidence required before every source change                 |
+| Tests inflate coverage without value                         | One observable behavior per RED; no import-only tests                                 |
+| Broad port replaced by cosmetic facade                       | Migrate closed caller graphs and prove zero references; no forwarding shim            |
+| Inner layer receives SDK mechanics                           | Explicit boundary tests and shrinking allowlist                                       |
+| Project Board query/command reunited                         | Separate ports, clients and composition assertions                                    |
+| Branch refactor leaks `Execution` or Git details into policy | Pure decision input/output and specialized outer adapters                             |
+| Polling parallelized incorrectly                             | Preserve serial state observation and bounded delay contract                          |
+| N+1 remains hidden                                           | Provider call-count tests and complete pagination scenarios                           |
+| Composition roots penalized for wiring                       | Add wiring identity tests; do not fragment legitimate roots                           |
+| History-derived score causes endless churn                   | Separate immediate controllable and mature observation-window targets                 |
+| Generated artifacts leak                                     | Protected collector plus explicit final porcelain check                               |
+| Plan becomes stale                                           | Re-audit current checkout before each phase and update only this authoritative ledger |
 
-## 17. Resolved execution decisions
+## 20. Approval boundary
 
-Efra approved execution on 2026-08-20. The documentation block resolves the
-former open decisions as follows:
-
-1. `docs/total-architecture-reconstruction-plan.md` remains the historical master
-   architecture plan and links to this specialized authoritative companion for
-   all remaining quality work.
-2. `docs/COVERAGE_ACTION_PLAN.md` is fully replaced by the current LCOV-backed
-   inventory; the obsolete backlog is not retained as active guidance.
-3. The 100% target applies to behavior-bearing production TypeScript. Generated
-   bundles, declarations, test files and explicitly classified non-executable
-   type-only surfaces are excluded; every exclusion must be visible in Jest
-   configuration or documented with evidence.
-4. The P0 project-board and branch contract blocks precede the release/tag
-   correctness audit. Release/tag remains mandatory and follows them; it is not
-   displaced by cosmetic metric work.
-5. No RepoWise exclusion is adopted now. A supported exclusion may be considered
-   only after checking the installed version and proving a concrete false
-   positive; unsupported ignore semantics are forbidden.
-6. Mature history-derived acceptance uses RepoWise's 90-day observation window.
-   Immediate controllable gates remain mandatory after every block.
-
-These decisions are final for this execution plan. Production implementation may
-begin only after the documentation commit containing them is published and
-verified remotely.
+This revision is the stable implementation proposal. It changes documentation only. Production and test implementation begins **only after Efra explicitly approves this revision**. The first executable slice is **Phase 1, Task 1.1–1.2: Project Board caller freeze and command contract TDD**.
