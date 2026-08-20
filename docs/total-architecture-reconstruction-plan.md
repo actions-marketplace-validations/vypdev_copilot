@@ -1,6 +1,8 @@
 # Copilot Architecture Perfection Plan
 
-**Status:** Phase D is complete and published. Remaining work is governed by
+**Status:** the Phase D implementation checkpoint is published, but its strict
+named-root exit criterion is reopened for the local lifecycle. Remaining work is
+governed by
 [`repowise-perfect-metrics-plan.md`](repowise-perfect-metrics-plan.md), the
 authoritative execution plan for the current checkpoint.
 
@@ -120,15 +122,15 @@ non-targets unless new source/caller evidence proves a defect.
 
 The following objectives from older plans are complete or no longer valid targets in the current checkout:
 
-| Historical objective | Current decision |
-|---|---|
-| Partition `ai_repository.ts` | Historical work completed; `ai_repository.ts` is not present in the current production tree. Do not recreate or search for it as an active task. |
-| Dismantle `RepositoryFactory` | Historical composition migration completed to the extent supported by current callers. Verify current callers, but do not perform another generic factory rewrite. |
-| Split `cli.ts` | Complete. It is a bootstrap delegating to `createCliProgram()`. Keep it small. |
-| Split `local_action.ts` by line count | Rejected. Existing builders and lifecycle boundaries are already explicit. Add contract coverage only if a real wiring gap exists. |
-| Extract every RepoWise helper suggestion | Rejected. Only extract a helper when its semantics, ownership, and failure behavior are shared. |
-| Eliminate all repositories named `Repository` | Rejected. Specialized adapters may legitimately retain that name. |
-| Remove every facade | Rejected. Remove only obsolete compatibility facades with audited callers; retain legitimate capability composition boundaries. |
+| Historical objective                          | Current decision                                                                                                                                                   |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Partition `ai_repository.ts`                  | Historical work completed; `ai_repository.ts` is not present in the current production tree. Do not recreate or search for it as an active task.                   |
+| Dismantle `RepositoryFactory`                 | Historical composition migration completed to the extent supported by current callers. Verify current callers, but do not perform another generic factory rewrite. |
+| Split `cli.ts`                                | Complete. It is a bootstrap delegating to `createCliProgram()`. Keep it small.                                                                                     |
+| Split `local_action.ts` by line count         | Rejected. Existing builders and lifecycle boundaries are already explicit. Add contract coverage only if a real wiring gap exists.                                 |
+| Extract every RepoWise helper suggestion      | Rejected. Only extract a helper when its semantics, ownership, and failure behavior are shared.                                                                    |
+| Eliminate all repositories named `Repository` | Rejected. Specialized adapters may legitimately retain that name.                                                                                                  |
+| Remove every facade                           | Rejected. Remove only obsolete compatibility facades with audited callers; retain legitimate capability composition boundaries.                                    |
 
 These decisions prevent stale hotspot reports from driving cosmetic changes.
 
@@ -373,16 +375,20 @@ Tasks:
 4. Confirm `cli.ts` remains a bootstrap only.
 5. Confirm `local_action.ts` remains a lifecycle coordinator, not a dependency factory.
 6. Add contract tests for capability sharing and intentional independent clients.
-7. Ensure entrypoints do not construct provider repositories inline except at documented composition boundaries.
+7. Ensure every lifecycle entrypoint delegates concrete provider/repository assembly
+   to a named composition root; entrypoints may coordinate but may not construct
+   adapters inline.
 
 Exit criteria:
 
-- each lifecycle has a named composition root;
+- each lifecycle delegates concrete assembly to an explicit, documented named
+  composition root;
 - no application dependency leaks into entrypoint-only concerns;
 - no lifecycle is silently merged with another;
 - composition tests prove the returned capabilities and sharing relationships.
 
-Current result: complete. `queue_utils.ts` no longer hides provider construction
+Current result: **implementation checkpoint published; strict exit criterion
+reopened.** `queue_utils.ts` no longer hides provider construction
 or recreates an Octokit adapter on every polling attempt. Queue policy now lives
 in `WaitForPreviousWorkflowRunsUseCase` behind explicit previous-run query and
 polling-delay ports; specialized query/dispatch adapters and
@@ -400,9 +406,12 @@ Route selection remains a pure policy used by the lifecycle. Route-specific asse
 `main_run_route_composition_root.ts`, with an executable guard rejecting
 all infrastructure imports, composition factories, and concrete
 adapter/repository/use-case construction in the dispatcher.
-`local_action.ts` and `cli.ts` were caller-audited and remain legitimate,
-separate lifecycle boundaries; the local lifecycle's one-time `GitCliRepository`
-construction is intentional and not a metric-driven extraction target.
+`cli.ts` remains a legitimate bootstrap and delegates to the CLI program. The
+local lifecycle remains separate, but `local_action.ts` still constructs
+`ProjectBoard` capabilities and `GitCliRepository` inline. That is explicit
+current debt: after the higher-priority behavior-contract blocks, move this
+assembly to a named local-action composition root with sharing/ownership tests;
+do not preserve it merely to avoid changing a historical checkpoint.
 
 ### Phase E — Adapter contract hardening
 
@@ -516,10 +525,11 @@ Current result: complete. The authoritative documents are synchronized with the
 Phase C implementation published in the same commit. Historical baselines and
 completed feature plans remain labelled so they cannot be mistaken for current
 architecture or priorities.
-The audit found and the completed Phase C block removed the SCC above. Phase D
-then removed hidden workflow-queue composition and route assembly from
-`main_run_dispatcher.ts`, while preserving `local_action.ts` as a documented
-lifecycle composition boundary after caller, sharing, and behavior analysis.
+The audit found and the completed Phase C block removed the SCC above. The
+published Phase D increment then removed hidden workflow-queue composition and
+route assembly from `main_run_dispatcher.ts`. Its former acceptance of
+`local_action.ts` as the composition boundary is superseded by the strict
+named-root criterion above; local lifecycle assembly remains tracked debt.
 
 ### Phase H — Final perfection gates
 
@@ -537,12 +547,13 @@ git diff --check
 Also run:
 
 ```text
-pnpm test:coverage
-~/.local/bin/repowise update . --index-only --no-agents --progress json
-~/.local/bin/repowise coverage add coverage/lcov.info
-~/.local/bin/repowise health . --refactoring-targets --format table
-/tmp/copilot-graphify-venv/bin/graphify update .
+METRICS_OUTPUT_DIR="$(mktemp -d "/tmp/copilot-architecture-metrics-$(git rev-parse HEAD)-XXXXXX")" \
+  pnpm run metrics:architecture
 ```
+
+The collector fixes RepoWise to single-repository scope, ingests the emitted
+LCOV, refreshes Graphify, records tool versions and reports outside the
+repository, and conservatively restores generated artifacts.
 
 Final publication requirements:
 
@@ -647,8 +658,9 @@ Until these criteria are met, the project is not declared architecturally comple
 ## 10. Current next action
 
 Do not begin with `local_action.ts`, `cli.ts`, generic helper extraction, or
-historical `ai_repository`/`RepositoryFactory` work. Phase D classified those
-boundaries and is complete.
+historical `ai_repository`/`RepositoryFactory` work merely because of churn or
+size. The local named-root gap is real and tracked, but the authoritative plan
+prioritizes the P0 behavior-contract blocks first.
 
 The next blocks are defined by
 [`repowise-perfect-metrics-plan.md`](repowise-perfect-metrics-plan.md):

@@ -39,8 +39,9 @@ working tree.
 ```text
 Repository: vypdev/copilot
 Branch: master
-Published SHA: af32863317977e42ec59b712fc1f371b5f231cad
-Phase D: complete and published
+Published Phase D implementation SHA: af32863317977e42ec59b712fc1f371b5f231cad
+Phase D: queue/dispatcher increment published; strict local-lifecycle named-root
+exit criterion reopened and tracked after the P0 behavior-contract blocks
 ```
 
 ### 1.2 Quality gates
@@ -237,7 +238,8 @@ Every accepted change must state the behavior defect, contract gap, ownership am
 
 Explicit non-targets unless new evidence appears:
 
-- `src/actions/local_action.ts`: a legitimate narrow lifecycle root;
+- `src/actions/local_action.ts` is **not** a non-target: its inline adapter assembly
+  is the reopened Phase D named-root debt, scheduled after the P0 contract blocks;
 - `src/actions/main_run_dispatcher.ts`: now a pure 32-line dispatcher; current churn/entropy is historical;
 - `src/cli.ts`: a seven-line bootstrap;
 - issue-comment and pull-request-review-comment wrappers: separate lifecycle semantics sharing a workflow;
@@ -303,35 +305,55 @@ git commit -m "docs: stabilize perfect metrics execution plan"
 
 - Modify: `docs/repowise-perfect-metrics-plan.md`
 - Modify: `docs/graphify-development.md`
-- Potentially create after validating need: `scripts/collect-architecture-metrics.mjs`
-- Test only if script is created: `scripts/__tests__/collect-architecture-metrics.test.ts` or equivalent existing script-test convention
+- Create: `scripts/collect-architecture-metrics.cjs`
+- Create: `src/tooling/__tests__/collect_architecture_metrics.test.ts`
+- Modify: `package.json`
 
 **Protocol:**
 
 ```bash
-sha="$(git rev-parse HEAD)"
 test -z "$(git status --porcelain)"
-pnpm run test:coverage
-~/.local/bin/repowise update . --index-only --no-agents --progress json
-~/.local/bin/repowise coverage add coverage/lcov.info
-~/.local/bin/repowise health . --format json
-~/.local/bin/repowise health . --refactoring-targets --format json
-~/.local/bin/repowise dead-code . --safe-only --format json
-~/.local/bin/repowise status . --format json
-rm -rf graphify-out
-/tmp/copilot-graphify-venv/bin/graphify update .
-git restore -- build
-git clean -fdx -- build coverage graphify-out .repowise .claude .vscode
+METRICS_OUTPUT_DIR="$(mktemp -d "/tmp/copilot-architecture-metrics-$(git rev-parse HEAD)-XXXXXX")" \
+  pnpm run metrics:architecture
 test -z "$(git status --porcelain)"
-test "$sha" = "$(git rev-parse HEAD)"
 ```
 
-Before scripting this workflow, verify RepoWise’s supported ignore/config mechanism from its installed version. Do not invent `.repowiseignore` semantics or silently exclude files.
+Every run receives a new empty directory, so rerunning the same SHA preserves
+previous metric records instead of mixing or deleting them. When
+`METRICS_OUTPUT_DIR` is omitted, the collector creates an equivalent unique
+temporary directory and prints its path in the final JSON result.
+
+The versioned collector:
+
+- derives the complete inventory directly from `coverage/lcov.info`;
+- passes `--no-workspace` to RepoWise repository commands and `--path .` to
+  coverage commands;
+- writes metadata with the canonical output directory, resolved executable paths,
+  exact argv, tool versions and validated raw reports outside the repository;
+- applies bounded per-command timeouts (10 minutes for coverage and Graphify, 15
+  minutes for RepoWise initialization, 5 minutes for RepoWise analyses and 30
+  seconds for control commands); each command runs in an isolated process group,
+  and timeout, `SIGINT` or `SIGTERM` terminate that group before control returns
+  through the restoration path;
+- rejects an output path that is inside the repository lexically or through a
+  symlink, rejects non-empty destinations, and fails before tool execution when
+  any mutable workspace path contains a symlink that could escape restoration;
+- snapshots and restores `build/`, `coverage/`, `graphify-out/`, local
+  `.repowise/`, editor/agent configuration and setup files byte-for-byte;
+- attempts restoration and Git/HEAD verification on success and failure while
+  preserving the original collection error;
+- publishes `complete.json` only after every report validates, restoration
+  succeeds, HEAD is unchanged and the tracked tree is clean.
+
+Before changing this workflow, verify RepoWise’s supported ignore/config
+mechanism from its installed version. Do not invent `.repowiseignore` semantics
+or silently exclude files.
 
 Acceptance:
 
 - metric record includes SHA, timestamp, commands, tool versions and scopes;
-- generated files are absent afterward;
+- pre-existing mutable workspace paths are byte-for-byte identical afterward and
+  paths created only by the run are absent;
 - no credential, auth state, database, report or editor config is committed;
 - direct `repowise health` after coverage ingestion is the health authority, not a partial embedded snapshot from incremental status.
 
@@ -632,13 +654,19 @@ No split is allowed solely because `github_action.ts` has 167 NLOC or `common_ac
 Commands:
 
 ```bash
-pnpm run test:coverage
-node -e "const s=require('./coverage/coverage-summary.json'); console.log(JSON.stringify(s,null,2))"
-~/.local/bin/repowise coverage add coverage/lcov.info
-~/.local/bin/repowise coverage status
+METRICS_OUTPUT_DIR="$(mktemp -d "/tmp/copilot-architecture-metrics-$(git rev-parse HEAD)-XXXXXX")" \
+  pnpm run metrics:architecture
 ```
 
-Create a table containing every production file below 100%, uncovered statements/branches/functions/lines, current focused test, missing behavior and decision (`test`, `classify`, or `remove after caller proof`).
+Use the generated `coverage-inventory.json`, derived directly from the emitted
+`coverage/lcov.info`. Do not require `coverage-summary.json`; the repository's
+Jest configuration does not emit that reporter.
+
+Create a table containing every production file below 100%, its LCOV
+line/branch/function totals, uncovered line/function identifiers, current focused
+test, missing behavior and decision (`test`, `classify`, or `remove after caller
+proof`). Keep the Jest statement percentage as a global gate; do not fabricate a
+per-file statement field that the emitted LCOV does not contain.
 
 Never write import-only tests for type-only declarations or constants. Prefer testing behavior through its owner.
 
@@ -811,18 +839,11 @@ pnpm exec jest <focused-tests> --runInBand
 pnpm exec tsc --noEmit
 pnpm run lint
 pnpm exec jest --runInBand
-pnpm run test:coverage
 pnpm run build
 pnpm audit --prod --audit-level=high
 git diff --check
-rm -rf graphify-out
-/tmp/copilot-graphify-venv/bin/graphify update .
-~/.local/bin/repowise update . --index-only --no-agents --progress json
-~/.local/bin/repowise coverage add coverage/lcov.info
-~/.local/bin/repowise health . --format json
-~/.local/bin/repowise dead-code . --safe-only --format json
-git restore -- build
-git clean -fdx -- build coverage graphify-out .repowise .claude .vscode
+METRICS_OUTPUT_DIR="$(mktemp -d "/tmp/copilot-architecture-metrics-$(git rev-parse HEAD)-XXXXXX")" \
+  pnpm run metrics:architecture
 git diff --check
 ```
 

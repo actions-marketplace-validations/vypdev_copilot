@@ -221,9 +221,8 @@ pnpm exec jest <focused-suite> --runInBand
 pnpm exec tsc --noEmit
 pnpm run lint
 pnpm exec jest --runInBand
-pnpm run test:coverage
-~/.local/bin/repowise coverage add coverage/lcov.info
-~/.local/bin/repowise coverage status
+METRICS_OUTPUT_DIR="$(mktemp -d "/tmp/copilot-architecture-metrics-$(git rev-parse HEAD)-XXXXXX")" \
+  pnpm run metrics:architecture
 git diff --check
 ```
 

@@ -128,11 +128,12 @@ src/infrastructure/composition/**
 runtime entrypoints for lifecycle-local dependencies
 ```
 
-The preferred direction is a named root for every non-trivial capability or
-use-case graph. Phase D moved route-specific assembly and workflow-queue wiring
-to named roots. Existing one-time runtime-local construction is allowed only at
-a documented lifecycle boundary after caller ownership, lifecycle, sharing, and
-tests prove that moving it would not improve semantics.
+The required direction is a named root for every runtime capability or use-case
+graph. Phase D moved route-specific assembly and workflow-queue wiring to named
+roots. One-time runtime-local construction is not an exception: the remaining
+inline Project Board and `GitCliRepository` assembly in `local_action.ts` is
+tracked debt and must move behind a named local lifecycle composition root after
+the higher-priority P0 contract blocks.
 
 Composition roots may depend on outer details and application contracts, but
 must not become universal registries or service locators.

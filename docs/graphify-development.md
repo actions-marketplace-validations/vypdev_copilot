@@ -33,7 +33,19 @@ GRAPHIFY=/tmp/copilot-graphify-venv/bin/graphify
 
 ## Current workflow
 
-The authoritative refresh command is:
+The authoritative reproducible refresh is the versioned collector:
+
+```bash
+METRICS_OUTPUT_DIR="$(mktemp -d "/tmp/copilot-architecture-metrics-$(git rev-parse HEAD)-XXXXXX")" \
+  pnpm run metrics:architecture
+```
+
+It fixes RepoWise to single-repository scope, derives coverage inventory from
+LCOV, records reports outside the repository, runs Graphify, and snapshots then
+restores every mutable workspace path (`build/`, `coverage/`, `graphify-out/`,
+local RepoWise/editor/agent configuration) byte-for-byte. A run publishes
+`complete.json` only after report validation and post-restoration Git checks. For
+an explicitly destructive, isolated Graphify investigation, use:
 
 ```bash
 rm -rf graphify-out
