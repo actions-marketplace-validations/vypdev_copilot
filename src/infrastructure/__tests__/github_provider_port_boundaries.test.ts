@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 describe('GitHub provider port boundaries', () => {
@@ -28,6 +28,23 @@ describe('GitHub provider port boundaries', () => {
             'github_workflow_provider_ports.ts',
         ))).toBe(true);
         expect(existsSync(join(portsDirectory, 'workflow_run_ports.ts'))).toBe(true);
+    });
+
+    it('keeps Project Board identity provider protocols out of application', () => {
+        const infrastructureIdentityPorts = join(
+            portsDirectory,
+            '..',
+            '..',
+            'infrastructure',
+            'github',
+            'ports',
+            'github_identity_provider_ports.ts',
+        );
+
+        expect(existsSync(infrastructureIdentityPorts)).toBe(true);
+        const applicationIdentityPorts = readFileSync(join(portsDirectory, 'github_identity_ports.ts'), 'utf8');
+        expect(applicationIdentityPorts).not.toContain('GithubRepositoryContextClient');
+        expect(applicationIdentityPorts).not.toContain('GithubOwnerTypeClient');
     });
 
     it('keeps GitHub provider contracts grouped by capability', () => {

@@ -1,120 +1,225 @@
+import type {
+  ProjectBoardContentQueryPort,
+  ProjectBoardQueryPort,
+} from "../../../application/ports/project_board_query_ports";
 import type { GithubClientPort } from "../../../infrastructure/github/ports/github_client_provider_port";
 import type { GithubGraphqlTransportClient } from "../../../infrastructure/github/ports/github_graphql_transport_port";
-import type { GithubOwnerTypeClient, GithubRepositoryContextClient } from "../../../application/ports/github_identity_ports";
+import type {
+  GithubOwnerTypeClient,
+  GithubRepositoryContextClient,
+} from "../../../infrastructure/github/ports/github_identity_provider_ports";
+import { PROJECT_BOARD_ITEM_PAGE_LIMIT } from "../../../infrastructure/github/project_board_provider_limits";
 import { logDebugInfo, logError } from "../../../utils/logger";
-import { ProjectResult } from "../../graph/project_result";
 import { ProjectDetail } from "../../model/project_detail";
-import type { ProjectBoardContentQueryPort, ProjectBoardQueryPort } from "../../../application/ports/project_board_query_ports";
+import {
+  paginateCursor,
+  type CursorPage,
+} from "../github/github_pagination_adapter";
 
-export class ProjectBoardQueryRepository implements ProjectBoardQueryPort, ProjectBoardContentQueryPort {
-    constructor(
-        private readonly repositoryContextClient: GithubClientPort<GithubRepositoryContextClient>,
-        private readonly ownerTypeClient: GithubClientPort<GithubOwnerTypeClient>,
-        private readonly graphqlClient: GithubClientPort<GithubGraphqlTransportClient>,
-    ) {}
+interface ProjectNode {
+  id: string;
+  title: string;
+  url: string;
+}
 
+interface ProjectItemNode {
+  id: string;
+  content?: { id?: string };
+}
 
-    private readonly priorityLabel = "Priority";
-    private readonly sizeLabel = "Size";
-    private readonly statusLabel = "Status";
+interface ProjectItemsResponse {
+  node: {
+    items?: CursorPage<ProjectItemNode>;
+  } | null;
+}
 
-    /**
-     * Retrieves detailed information about a GitHub project
-     * @param projectId - The project number/ID
-     * @param token - GitHub authentication token
-     * @returns Promise<ProjectDetail> - The project details
-     * @throws {Error} If the project is not found or if there are authentication/network issues
-     */
-    getProjectDetail = async (projectId: string, token: string): Promise<ProjectDetail> => {
-        try {
-            const projectNumber = parseInt(projectId, 10);
-            if (isNaN(projectNumber)) {
-                throw new Error(`Invalid project ID: ${projectId}. Must be a valid number.`);
+const CONTENT_QUERY = `
+    query($owner: String!, $repo: String!, $number: Int!) {
+      repository(owner: $owner, name: $repo) {
+        issueOrPullRequest: issueOrPullRequest(number: $number) {
+          ... on Issue { id }
+          ... on PullRequest { id }
+        }
+      }
+    }`;
+
+const PROJECT_ITEMS_QUERY = `
+    query($projectId: ID!, $after: String) {
+      node(id: $projectId) {
+        ... on ProjectV2 {
+          items(first: 100, after: $after) {
+            pageInfo { hasNextPage endCursor }
+            nodes {
+              id
+              content {
+                ... on Issue { id }
+                ... on PullRequest { id }
+              }
             }
-            const repositoryContext = this.repositoryContextClient.getClient(token);
-            const { data: owner } = await this.ownerTypeClient.getClient(token).rest.users.getByUsername({ username: repositoryContext.context.repo.owner }).catch((error: unknown) => {
-                throw new Error(`Failed to get owner information: ${error instanceof Error ? error.message : String(error)}`);
-            });
-            const ownerType = owner.type === 'Organization' ? 'orgs' : 'users';
-            const projectUrl = `https://github.com/${ownerType}/${this.repositoryContextClient.getClient(token).context.repo.owner}/projects/${projectId}`;
-            const ownerQueryField = ownerType === 'orgs' ? 'organization' : 'user';
-            const queryProject = `
+          }
+        }
+      }
+    }`;
+
+const errorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
+
+export class ProjectBoardQueryRepository
+  implements ProjectBoardQueryPort, ProjectBoardContentQueryPort
+{
+  constructor(
+    private readonly repositoryContextClient: GithubClientPort<GithubRepositoryContextClient>,
+    private readonly ownerTypeClient: GithubClientPort<GithubOwnerTypeClient>,
+    private readonly graphqlClient: GithubClientPort<GithubGraphqlTransportClient>,
+  ) {}
+
+  private findProjectItemId = async (
+    client: GithubGraphqlTransportClient,
+    project: ProjectDetail,
+    contentId: string,
+  ): Promise<string | undefined> => {
+    for await (const page of paginateCursor(
+      async (after) => {
+        const result = await client.graphql<ProjectItemsResponse>(
+          PROJECT_ITEMS_QUERY,
+          {
+            projectId: project.id,
+            after,
+          },
+        );
+        if (!result.node) {
+          throw new Error(
+            `Project ${project.id} was not found while reading project items.`,
+          );
+        }
+        return (
+          result.node.items ?? {
+            nodes: [],
+            pageInfo: { hasNextPage: false, endCursor: null },
+          }
+        );
+      },
+      {
+        description: "project board content",
+        maxPages: PROJECT_BOARD_ITEM_PAGE_LIMIT,
+      },
+    )) {
+      const item = page.nodes.find(
+        (candidate) => candidate.content?.id === contentId,
+      );
+      if (item) return item.id;
+    }
+    return undefined;
+  };
+
+  getProjectDetail = async (
+    projectId: string,
+    token: string,
+  ): Promise<ProjectDetail> => {
+    try {
+      if (!/^[1-9]\d*$/.test(projectId)) {
+        throw new Error(
+          `Invalid project ID: ${projectId}. Must be a positive integer.`,
+        );
+      }
+
+      const projectNumber = Number(projectId);
+      const repositoryContext = this.repositoryContextClient.getClient(token);
+      const ownerTypeProvider = this.ownerTypeClient.getClient(token);
+      const graphql = this.graphqlClient.getClient(token);
+      const ownerName = repositoryContext.context.repo.owner;
+      const { data: owner } = await ownerTypeProvider.rest.users
+        .getByUsername({ username: ownerName })
+        .catch((error: unknown) => {
+          throw new Error(
+            `Failed to get owner information: ${errorMessage(error)}`,
+          );
+        });
+      if (owner.type !== "Organization" && owner.type !== "User") {
+        throw new Error(
+          `Unsupported GitHub owner type '${String(owner.type)}' for owner ${ownerName}.`,
+        );
+      }
+      const ownerPath = owner.type === "Organization" ? "orgs" : "users";
+      const ownerQueryField = ownerPath === "orgs" ? "organization" : "user";
+      const projectUrl = `https://github.com/${ownerPath}/${ownerName}/projects/${projectId}`;
+      const projectQuery = `
                 query($ownerName: String!, $projectNumber: Int!) {
                     ${ownerQueryField}(login: $ownerName) {
                         projectV2(number: $projectNumber) { id title url }
                     }
                 }
             `;
-            const projectResult = await this.graphqlClient.getClient(token).graphql<ProjectResult>(queryProject, {
-                ownerName: this.repositoryContextClient.getClient(token).context.repo.owner,
-                projectNumber,
-            }).catch(error => {
-                throw new Error(`Failed to fetch project data: ${error.message}`);
-            });
-            const projectData = projectResult[ownerQueryField]?.projectV2;
-            if (!projectData) throw new Error(`Project not found: ${projectUrl}`);
-            logDebugInfo(`Project ID: ${projectData.id}`);
-            logDebugInfo(`Project Title: ${projectData.title}`);
-            logDebugInfo(`Project URL: ${projectData.url}`);
-            return new ProjectDetail({ id: projectData.id, title: projectData.title, url: projectData.url, type: ownerQueryField, owner: this.repositoryContextClient.getClient(token).context.repo.owner, number: projectNumber });
-        } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-            logError(`Error in getProjectDetail: ${errorMessage}`);
-            throw error;
-        }
-    };
+      const result = await graphql
+        .graphql<
+          Record<string, { projectV2?: ProjectNode | null } | undefined>
+        >(projectQuery, {
+          ownerName,
+          projectNumber,
+        })
+        .catch((error: unknown) => {
+          throw new Error(
+            `Failed to fetch project data: ${errorMessage(error)}`,
+          );
+        });
+      const project = result[ownerQueryField]?.projectV2;
+      if (!project) throw new Error(`Project not found: ${projectUrl}`);
 
-    getContentId = async (project: ProjectDetail, owner: string, repo: string, issueOrPullRequestNumber: number, token: string): Promise<string | undefined> => {
-        const issueOrPrQuery = `query($owner: String!, $repo: String!, $number: Int!) { repository(owner: $owner, name: $repo) { issueOrPullRequest: issueOrPullRequest(number: $number) { ... on Issue { id } ... on PullRequest { id } } } }`;
-        const issueOrPrResult = await this.graphqlClient.getClient(token).graphql<{ repository: { issueOrPullRequest?: { id: string } } }>(issueOrPrQuery, { owner, repo, number: issueOrPullRequestNumber });
-        if (!issueOrPrResult.repository.issueOrPullRequest) {
-            logError(`Issue or PR #${issueOrPullRequestNumber} not found in repository.`);
-            return undefined;
-        }
-        const contentId = issueOrPrResult.repository.issueOrPullRequest.id;
-        let cursor: string | null = null;
-        let projectItemId: string | undefined;
-        let totalItemsChecked = 0;
-        const maxPages = 100;
-        let pageCount = 0;
-        do {
-            if (pageCount >= maxPages) {
-                logError(`Stopped after ${maxPages} pages (${totalItemsChecked} items). Issue or PR #${issueOrPullRequestNumber} not found in project.`);
-                break;
-            }
-            pageCount += 1;
-            const projectQuery = `query($projectId: ID!, $cursor: String) { node(id: $projectId) { ... on ProjectV2 { items(first: 100, after: $cursor) { pageInfo { hasNextPage endCursor } nodes { id content { ... on Issue { id } ... on PullRequest { id } } } } } } }`;
-            type ProjectItemsResponse = { node: { items?: { nodes: Array<{ id: string; content?: { id?: string } }>; pageInfo: { hasNextPage: boolean; endCursor: string | null } } } | null };
-            const projectResult: ProjectItemsResponse = await this.graphqlClient.getClient(token).graphql<ProjectItemsResponse>(projectQuery, { projectId: project.id, cursor });
-            if (projectResult.node === null) {
-                logError(`Project not found for ID "${project.id}". Ensure the project is loaded via getProjectDetail (GraphQL node ID), not the project number.`);
-                throw new Error(`Project not found or invalid project ID. The project ID must be the GraphQL node ID from the API (e.g. PVT_...), not the project number.`);
-            }
-            const items = projectResult.node.items?.nodes ?? [];
-            totalItemsChecked += items.length;
-            const foundItem: { id: string; content?: { id?: string } } | undefined = items.find((item: { id: string; content?: { id?: string } }) => item.content?.id === contentId);
-            if (foundItem) { projectItemId = foundItem.id; break; }
-            const hasNextPage = projectResult.node.items?.pageInfo.hasNextPage === true;
-            const endCursor: string | null = projectResult.node.items?.pageInfo.endCursor ?? null;
-            if (hasNextPage && endCursor) cursor = endCursor;
-            else { if (hasNextPage) logError(`Project items pagination: hasNextPage is true but endCursor is null (page ${pageCount}, ${totalItemsChecked} items so far). Cannot fetch more.`); cursor = null; }
-        } while (cursor);
-        if (projectItemId === undefined) {
-            logError(`Issue or PR #${issueOrPullRequestNumber} not found in project after checking ${totalItemsChecked} items (${pageCount} page(s)). Link it to the project first, or wait for the board to sync.`);
-            throw new Error(`Issue or pull request #${issueOrPullRequestNumber} is not in the project yet (checked ${totalItemsChecked} items). Link it to the project first, or wait for the board to sync.`);
-        }
-        return projectItemId;
-    };
+      logDebugInfo(`Project ID: ${project.id}`);
+      logDebugInfo(`Project Title: ${project.title}`);
+      logDebugInfo(`Project URL: ${project.url}`);
+      return new ProjectDetail({
+        id: project.id,
+        title: project.title,
+        url: project.url,
+        type: ownerQueryField,
+        owner: ownerName,
+        number: projectNumber,
+      });
+    } catch (error: unknown) {
+      logError(`Error in getProjectDetail: ${errorMessage(error)}`);
+      throw error;
+    }
+  };
 
-    isContentLinked = async (project: ProjectDetail, contentId: string, token: string): Promise<boolean> => {
-        const query = `query($projectId: ID!, $after: String) { node(id: $projectId) { ... on ProjectV2 { items(first: 100, after: $after) { nodes { content { ... on PullRequest { id } ... on Issue { id } } } pageInfo { hasNextPage endCursor } } } } }`;
-        const allItems: Array<{ content?: { id?: string } }> = [];
-        let cursor: string | null = null;
-        do {
-            const result: { node: { items: { nodes: Array<{ content?: { id?: string } }>; pageInfo: { hasNextPage: boolean; endCursor: string | null } } } } = await this.graphqlClient.getClient(token).graphql(query, { projectId: project.id, after: cursor });
-            allItems.push(...result.node.items.nodes);
-            cursor = result.node.items.pageInfo.hasNextPage ? result.node.items.pageInfo.endCursor : null;
-        } while (cursor);
-        return allItems.some(item => item.content?.id === contentId);
-    };
+  getProjectItemId = async (
+    project: ProjectDetail,
+    owner: string,
+    repo: string,
+    issueOrPullRequestNumber: number,
+    token: string,
+  ): Promise<string | undefined> => {
+    const client = this.graphqlClient.getClient(token);
+    const contentResult = await client.graphql<{
+      repository: { issueOrPullRequest?: { id: string } | null } | null;
+    }>(CONTENT_QUERY, { owner, repo, number: issueOrPullRequestNumber });
+    const contentId = contentResult.repository?.issueOrPullRequest?.id;
+    if (!contentId) {
+      logError(
+        `Issue or PR #${issueOrPullRequestNumber} not found in repository.`,
+      );
+      return undefined;
+    }
+
+    const projectItemId = await this.findProjectItemId(
+      client,
+      project,
+      contentId,
+    );
+    if (!projectItemId) {
+      const message = `Issue or pull request #${issueOrPullRequestNumber} is not in project ${project.id}.`;
+      logError(message);
+      throw new Error(message);
+    }
+    return projectItemId;
+  };
+
+  isContentLinked = async (
+    project: ProjectDetail,
+    contentId: string,
+    token: string,
+  ): Promise<boolean> => {
+    const client = this.graphqlClient.getClient(token);
+    return Boolean(await this.findProjectItemId(client, project, contentId));
+  };
 }
