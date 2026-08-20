@@ -44,4 +44,9 @@ describe('application architecture boundaries', () => {
         const executionSource = readFileSync(join(__dirname, '../../data/model/execution.ts'), 'utf8');
         expect(executionSource).not.toMatch(/RepositoryFactory|OrganizationRepository|Octokit(?:AuthenticatedUser|ActorAuthorization|OrganizationMembers)ClientAdapter/);
     });
+
+    it('keeps configuration queries independent from the complete Execution model', () => {
+        const portSource = readFileSync(join(__dirname, '../ports/execution_configuration_ports.ts'), 'utf8');
+        expect(portSource).not.toContain("data/model/execution");
+    });
 });

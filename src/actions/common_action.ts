@@ -2,8 +2,6 @@ import * as core from '@actions/core';
 import { Execution } from '../data/model/execution';
 import { Result } from '../data/model/result';
 import { ProjectBoardCommandPort } from '../application/ports/project_board_command_ports';
-import { createAuthenticatedUserCompositionRoot } from '../infrastructure/composition/authenticated_user_composition_root';
-import { createExecutionIssueSetupCompositionRoot } from '../infrastructure/composition/execution_issue_setup_composition_root';
 import type { LatestTagQueryPort } from '../application/ports/branch_tag_ports';
 import { clearAccumulatedLogs, logDebugInfo, logError, logInfo } from '../utils/logger';
 import { TITLE } from '../utils/constants';
@@ -12,7 +10,7 @@ import boxen from 'boxen';
 import { waitForPreviousRuns } from '../utils/queue_utils';
 import { resolveMainRunRoute } from './main_run_route';
 import { dispatchMainRunRoute } from './main_run_dispatcher';
-import { ConfigurationHandler } from '../manager/description/configuration_handler';
+import { createSetupExecutionUseCase } from '../infrastructure/composition/execution_setup_composition_root';
 
 export async function mainRun(
     execution: Execution,
@@ -24,13 +22,7 @@ export async function mainRun(
     logInfo('GitHub Action: starting main run.');
     logDebugInfo(`Event: ${execution.eventName}, actor: ${execution.actor}, repo: ${execution.owner}/${execution.repo}, debug: ${execution.debug}`);
 
-    const issueSetupPort = createExecutionIssueSetupCompositionRoot();
-    await execution.setup(
-        latestTagQueryPort,
-        issueSetupPort,
-        createAuthenticatedUserCompositionRoot(),
-        new ConfigurationHandler(issueSetupPort),
-    );
+    await createSetupExecutionUseCase(latestTagQueryPort).invoke(execution);
     clearAccumulatedLogs();
 
     logDebugInfo(`Setup done. Issue number: ${execution.issueNumber}, isSingleAction: ${execution.isSingleAction}, isIssue: ${execution.isIssue}, isPullRequest: ${execution.isPullRequest}, isPush: ${execution.isPush}`);

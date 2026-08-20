@@ -11,6 +11,7 @@ jest.mock('chalk', () => ({
 jest.mock('boxen', () => jest.fn((text: string) => text));
 
 import { mainRun as productionMainRun } from '../common_action';
+import { createSetupExecutionUseCase } from '../../infrastructure/composition/execution_setup_composition_root';
 import type { ProjectBoardCommandPort } from '../../application/ports/project_board_command_ports';
 import type { LatestTagQueryPort } from '../../application/ports/branch_tag_ports';
 import type { Execution } from '../../data/model/execution';
@@ -37,6 +38,13 @@ const mockIssueInvoke = jest.fn();
 const mockPullRequestReviewCommentInvoke = jest.fn();
 const mockPullRequestInvoke = jest.fn();
 const mockCommitInvoke = jest.fn();
+const mockSetupExecutionInvoke = jest.fn();
+
+jest.mock('../../infrastructure/composition/execution_setup_composition_root', () => ({
+  createSetupExecutionUseCase: jest.fn().mockImplementation(() => ({
+    invoke: mockSetupExecutionInvoke,
+  })),
+}));
 
 jest.mock('../../application/usecases/single_action_use_case', () => ({
   SingleActionUseCase: jest.fn().mockImplementation(() => ({
@@ -96,10 +104,12 @@ function mockExecution(overrides: Record<string, unknown> = {}): Execution {
   return base as unknown as Execution;
 }
 
+const latestTagQueryPort = {} as LatestTagQueryPort;
+
 const runMain = (execution: Execution) => productionMainRun(
   execution,
   {} as ProjectBoardCommandPort,
-  {} as LatestTagQueryPort,
+  latestTagQueryPort,
 );
 
 describe('mainRun', () => {
@@ -112,13 +122,14 @@ describe('mainRun', () => {
     mockPullRequestReviewCommentInvoke.mockResolvedValue([]);
     mockPullRequestInvoke.mockResolvedValue([]);
     mockCommitInvoke.mockResolvedValue([]);
+    mockSetupExecutionInvoke.mockResolvedValue(undefined);
   });
 
-  it('calls execution.setup() and clearAccumulatedLogs()', async () => {
-    const setupMock = jest.fn().mockResolvedValue(undefined);
-    const execution = mockExecution({ setup: setupMock });
+  it('delegates setup to the composed use case and clears accumulated logs', async () => {
+    const execution = mockExecution();
     await runMain(execution);
-    expect(setupMock).toHaveBeenCalledTimes(1);
+    expect(createSetupExecutionUseCase).toHaveBeenCalledWith(latestTagQueryPort);
+    expect(mockSetupExecutionInvoke).toHaveBeenCalledWith(execution);
     expect(logger.clearAccumulatedLogs).toHaveBeenCalledTimes(1);
   });
 

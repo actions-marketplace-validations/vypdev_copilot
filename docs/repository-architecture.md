@@ -8,11 +8,8 @@ mechanically. Historical baselines and completed migrations live in
 [`migration-baseline.md`](./migration-baseline.md) and
 [`hotspot-refactoring-plan.md`](./hotspot-refactoring-plan.md).
 
-Current published checkpoint:
-
-```text
-8196da94146a215fc99cb7939d852f85ad2fa4d2
-```
+Use `git rev-parse HEAD` for the current published checkpoint; this document
+describes the checkout that contains it and does not encode its own commit SHA.
 
 ## Dependency direction
 
@@ -58,12 +55,14 @@ Composition starts in:
 - concrete adapter: `ConfigurationHandler`;
 - construction boundary: GitHub Action completion composition.
 
-The write boundary is complete. The read/setup side is not yet acyclic:
-`Execution` imports `ExecutionConfigurationPort`, while that port imports
-`Execution`. Version resolution also routes from `Execution` through model
-helpers that construct release/hotfix use cases, which import `Execution` back.
-This verified SCC is the next production boundary to remove; it is not a reason
-to split the model by size.
+The read and write boundaries are complete. `SetupExecutionUseCase` owns setup
+orchestration, `ExecutionBranchVersionResolver` owns release/hotfix resolution,
+and `execution_setup_composition_root.ts` assembles their semantic ports and
+child use cases. `ExecutionConfigurationPort` accepts a narrow
+`ExecutionConfigurationQuery`; neither it nor `Execution` imports the other.
+The former eight-module SCC has been removed and is guarded by a productive
+dependency-cycle test. `Execution` remains the lifecycle state model rather
+than being split by size.
 
 `StoreConfigurationUseCase` depends on `ConfigurationStorePort`; application
 architecture tests reject concrete manager imports.
@@ -123,11 +122,10 @@ tags, release publication, default branch, and workflow runs use separate
 ports/adapters. Release construction starts in
 `release_composition_root.ts` and release-specific client factories.
 
-The next Phase E adapter audit targets release/tag mapping, idempotency,
-malformed responses, pagination, and provider errors, but it is postponed until
-the verified Phase C/F SCC is removed and guarded. It must not merge release and
-tag publication because they have different provider operations and failure
-semantics.
+After the Phase D lifecycle composition review, the next Phase E adapter audit
+targets release/tag mapping, idempotency, malformed responses, pagination, and
+provider errors. It must not merge release and tag publication because they
+have different provider operations and failure semantics.
 
 ## Runtime composition
 

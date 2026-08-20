@@ -1,9 +1,9 @@
 # Current Capability Map
 
-This map describes the current `master` checkout at published checkpoint
-`8196da94146a215fc99cb7939d852f85ad2fa4d2`. Historical facades and migration
-steps are documented separately and must not be treated as current production
-architecture.
+This map describes the current `master` checkout. Use `git rev-parse HEAD` for
+the published checkpoint; the document does not encode the SHA of the commit
+that contains itself. Historical facades and migration steps are documented
+separately and must not be treated as current production architecture.
 
 ## Architectural shape
 
@@ -35,16 +35,16 @@ Findings and fixer contracts remain separate. Do not recreate
 
 | Capability | Semantic contract | Adapter/composition | Status |
 |---|---|---|---|
-| Read persisted configuration | `ExecutionConfigurationPort` | `ConfigurationHandler` at runtime composition | active |
+| Read persisted configuration | `ExecutionConfigurationPort` | `ConfigurationHandler` in `execution_setup_composition_root.ts` | complete and boundary-tested |
 | Store persisted configuration | `ConfigurationStorePort` | `ConfigurationHandler` at GitHub Action completion boundary | complete and boundary-tested |
-| Resolve/setup execution issue | execution resolution/setup ports | execution issue setup composition | active |
-| Resolve release/hotfix branch state | current model helpers plus release/hotfix use cases | currently initiated by `Execution` | **transitional cycle; next boundary** |
+| Resolve/setup execution issue | execution resolution/setup ports | `SetupExecutionUseCase` + execution issue setup root | complete and characterized |
+| Resolve release/hotfix branch state | injected release/hotfix use cases | `ExecutionBranchVersionResolver` in execution setup root | complete and acyclic |
 
-The read/setup and version-resolution rows are not yet an acceptable final
-shape. `Execution` participates in a verified SCC with
-`ExecutionConfigurationPort`, resolution helpers, and release/hotfix use cases.
-The next production block must move this orchestration to application-owned
-semantics without a compatibility facade.
+The read/setup and version-resolution rows are now acyclic.
+`SetupExecutionUseCase` and `ExecutionBranchVersionResolver` own orchestration;
+`ExecutionConfigurationPort` accepts a semantic query; and the old model-owned
+resolvers were removed without a compatibility facade. A productive Tarjan
+guard rejects future static or dynamic import cycles.
 
 ### Issues
 
@@ -129,14 +129,11 @@ on churn or line count.
 
 ## Current priorities
 
-1. remove the verified eight-module `Execution`/version/configuration SCC with
-   caller-audited application orchestration, focused characterization tests,
-   and an executable no-cycle regression guard;
-2. complete lifecycle composition review with caller and sharing tests;
-3. audit release/tag adapters and contracts as the next Phase E increment;
-4. revisit issue/PR lifecycle adapters only when a concrete contract gap is
+1. complete lifecycle composition review with caller and sharing tests;
+2. audit release/tag adapters and contracts as the next Phase E increment;
+3. revisit issue/PR lifecycle adapters only when a concrete contract gap is
    demonstrated;
-5. run final graph, coverage, and publication gates.
+4. run final graph, coverage, and publication gates.
 
 ## Explicit non-goals
 
@@ -144,8 +141,8 @@ on churn or line count.
   facades;
 - creating `BaseRepository`, `UniversalRepository`, or provider-wide wrappers;
 - splitting `Execution`, `cli.ts`, or `local_action.ts` from metrics alone; the
-  verified SCC is a dependency-direction defect and must be removed through
-  semantic orchestration rather than arbitrary file slicing;
+  former SCC was removed through semantic orchestration rather than arbitrary
+  file slicing;
 - extracting every RepoWise duplicated block;
 - moving directories through a compatibility layer merely to improve naming;
 - deleting legitimate adapters or composition hubs to lower graph degree.

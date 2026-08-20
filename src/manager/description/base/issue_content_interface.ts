@@ -4,7 +4,7 @@ import { logError } from "../../../utils/logger";
 import { ContentInterface } from "./content_interface";
 
 export abstract class IssueContentInterface extends ContentInterface {
-    constructor(private readonly issueDescriptionPort: IssueDescriptionQueryPort & IssueDescriptionCommandPort) {
+    constructor(protected readonly issueDescriptionPort: IssueDescriptionQueryPort & IssueDescriptionCommandPort) {
         super();
     }
 

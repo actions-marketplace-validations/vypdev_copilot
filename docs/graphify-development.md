@@ -71,14 +71,17 @@ boundary only when one exists, and add contract tests for intentional changes.
 
 ## Current checkpoint
 
-At published source checkpoint
-`8196da94146a215fc99cb7939d852f85ad2fa4d2`, refreshed with the command above:
+At the Phase C working tree based on published SHA
+`c210d305b5b76ec339cb6806a6552be97922c4a4`, refreshed with the command above:
 
 ```text
-3178 nodes
-8241 edges
-220 communities
+3215 nodes
+8297 edges
+215 communities
 ```
+
+The resulting implementation and documentation are published together; use
+`git rev-parse HEAD` for the current revision.
 
 The generated graph is currently marked `directed: false`. It cannot prove the
 absence of directed dependency cycles. Use source imports and executable

@@ -2,16 +2,17 @@
 
 **Status:** Active execution baseline — approved for consecutive phase execution.
 
-**Production implementation checkpoint used by this audit:**
-`8196da94146a215fc99cb7939d852f85ad2fa4d2`. Documentation-only commits may
-follow this checkpoint; use `git rev-parse HEAD` for the repository's current
-revision rather than expecting a document to encode its own commit SHA.
+**Phase C evidence provenance:** the verified working tree was based on
+published SHA `c210d305b5b76ec339cb6806a6552be97922c4a4`. The resulting
+implementation and this document are published together; use
+`git rev-parse HEAD` for the repository's current revision rather than expecting
+a document to encode its own commit SHA.
 
-**Completed in the current execution block:** Phases A and B; Phase E hardening
+**Completed in the current execution block:** Phases A, B, and C; Phase E hardening
 for pull-request file pagination, project-board linking, organization-member
-pagination, and authenticated-user contracts. Phase G is active to synchronize
-all documentation before further production work. Phase C is reopened by a
-verified import cycle, and Phase F becomes the next production priority.
+pagination, and authenticated-user contracts; and Phase G documentation
+synchronization. Phase D lifecycle composition review is the next production
+priority, followed by the postponed Phase E release/tag adapter audit.
 
 **Scope:** Clean Architecture reconstruction, boundary hardening, contract coverage, documentation, and RepoWise/Graphify quality improvement for the current `master` checkout.
 
@@ -39,34 +40,35 @@ Success means:
 
 ## 2. Current evidence
 
-Evidence below is anchored to the named production implementation checkpoint and
-must be refreshed before each implementation block. Documentation-only commits
-may be newer; historical reports must not be treated as current facts.
+Evidence below was refreshed after the Phase C implementation and must be
+refreshed before each subsequent block. Historical reports must not be treated
+as current facts.
 
-Production implementation baseline used for the evidence below:
+Published base and working-tree state used for the evidence below:
 
 ```text
-SHA: 8196da94146a215fc99cb7939d852f85ad2fa4d2
-working tree: clean
+base SHA: c210d305b5b76ec339cb6806a6552be97922c4a4
+working tree: verified Phase C source and documentation diff
 ```
 
 Current quality gates:
 
 ```text
-Jest: 214 suites passed, 1358 tests passed, 1 skipped
+Jest: 216 suites passed, 1366 tests passed, 1 skipped
 TypeScript: PASS
 ESLint: PASS
 Build: PASS
 Production audit: PASS
 Diff check: PASS
+Coverage: 87.89% statements, 80.28% branches, 86.11% functions, 89.08% lines
 ```
 
 Current Graphify refresh:
 
 ```text
-3178 nodes
-8241 edges
-220 communities
+3215 nodes
+8297 edges
+215 communities
 ```
 
 Persistent Graphify warning:
@@ -77,8 +79,8 @@ docs.json produces zero nodes
 
 This warning is analysis-tool input behavior, not evidence of a production architecture defect. It must remain visible until the tool or input handling changes.
 
-RepoWise observations captured on 2026-08-19 against implementation checkpoint
-`8196da94146a215fc99cb7939d852f85ad2fa4d2`:
+RepoWise observations captured on 2026-08-20 against the verified Phase C
+working tree based on `c210d305b5b76ec339cb6806a6552be97922c4a4`:
 
 ```bash
 ~/.local/bin/repowise update . --no-workspace --index-only
@@ -91,18 +93,17 @@ The RepoWise index is local and intentionally not versioned. These values are
 an evidence snapshot, not timeless repository metadata; refresh and record a
 new checkpoint before using them to prioritize another implementation block.
 
-- current graph: 3071 nodes and 6718 edges;
-- average health: 8.11/10; hotspot health: 5.79/10; average
-  maintainability: 9.22/10;
+- average health: 8.14/10; hotspot health: 5.82/10; average
+  maintainability: 9.23/10;
 - current worst performer: `src/data/repository/merge_repository.ts` at
   3.04/10; its direct responsibilities and tests must be audited before any
   split, because the score alone is not an architectural verdict;
 - current target findings are mainly churn/co-change signals and duplicated-line suggestions;
-- RepoWise does not currently emit a break-cycle plan for `Execution`, but
-  direct import analysis proves the eight-module SCC documented in Phase C;
-  tool silence is not evidence of an acyclic graph;
-- the next evidence-backed priority is that SCC, followed by lifecycle
-  composition verification and the postponed release/tag adapter audit;
+- RepoWise did not emit a break-cycle plan for the former `Execution` SCC;
+  direct import analysis and the productive Tarjan guard are the authoritative
+  evidence that it existed and is now removed;
+- the next evidence-backed priority is lifecycle composition verification,
+  followed by the postponed release/tag adapter audit;
 - RepoWise dead-code analysis is partial because of its offset-naive/offset-aware datetime issue; zero dead-code counts are not conclusive;
 - `cli.ts` is now a small bootstrap and is not a valid extraction target;
 - `local_action.ts` already delegates to builders and composition; its churn signal is not enough evidence for another split;
@@ -223,7 +224,9 @@ A composition root may share a transport instance when the capability contract r
 11. Every production facade removal requires caller inventory, migration, zero-reference search, and boundary-test updates.
 12. RepoWise is a prioritization signal and a validation signal, never the architecture specification.
 13. A metric improvement cannot justify weaker naming, hidden construction, broader ports, or reduced testability.
-14. Generated Graphify, RepoWise, editor, MCP, and build artifacts remain uncommitted unless explicitly required by the repository.
+14. Generated Graphify, RepoWise, editor, and MCP artifacts remain uncommitted.
+    Build artifacts are regenerated and versioned only by the reviewed
+    release/hotfix workflows, not by ordinary architecture commits.
 15. Every coherent implementation block ends with focused tests, global gates, commit, push, SHA verification, and a clean tree.
 
 ## 6. Implementation phases
@@ -324,10 +327,8 @@ Exit criteria:
 - no universal execution context facade is introduced;
 - cycle analysis remains clean or every remaining cycle is explicitly justified.
 
-Current result: reopened. The size-based RepoWise extract-method suggestion in
-`Execution` remains cosmetic and is still rejected, but direct import analysis
-confirmed one strongly connected component across eight modules. The relevant
-cycles include:
+Current result: complete. Direct import analysis originally confirmed one
+strongly connected component across eight modules:
 
 ```text
 Execution
@@ -339,12 +340,19 @@ Execution
 Execution <-> ExecutionConfigurationPort
 ```
 
-The defect is not that `Execution` is large. The defect is that a data model
-owns application orchestration, constructs use cases, and imports ports whose
-contracts in turn depend on that model. The next implementation block must
-move resolution/configuration orchestration to an application-owned semantic
-boundary, use acyclic input/result contracts, preserve transition behavior,
-and add a failing architecture test before production changes.
+The defect was removed without splitting `Execution` by size. Setup and
+release/hotfix resolution now belong to `SetupExecutionUseCase` and
+`ExecutionBranchVersionResolver`; `common_action.ts` receives the use case from
+`execution_setup_composition_root.ts`; and `ExecutionConfigurationPort` accepts
+an `ExecutionConfigurationQuery` instead of the aggregate model. The four
+model-owned resolver modules were removed with no compatibility shim.
+
+Characterization tests preserve issue, pull-request, push, single-action,
+initial-setup, release, hotfix, configuration-target, restoration, and early
+return behavior. A Tarjan-based architecture test rejects SCCs across all
+production TypeScript files and covers static imports, re-exports, side-effect
+imports, `require()`, dynamic `import()`, DAGs, self-loops, and two-node cycles.
+The current productive graph contains no directed dependency cycle.
 
 ### Phase D — Configuration and lifecycle composition review
 
@@ -378,8 +386,8 @@ Current status:
 3. organization membership pagination: hardened and covered;
 4. authenticated identity: audited and contract-covered without a production
    behavior change;
-5. release/tag adapters: next Phase E contract audit, postponed until the
-   Phase C/F SCC is removed and guarded;
+5. release/tag adapters: next Phase E contract audit after the Phase D
+   lifecycle composition review;
 6. issue lifecycle and remaining pull-request lifecycle/review behavior: audit
    only where source/caller evidence identifies a contract gap.
 
@@ -474,14 +482,14 @@ Exit criteria:
 - every capability has an owner and composition location;
 - a new contributor can follow the dependency direction without tribal knowledge.
 
-Current result: complete. The authoritative documents are synchronized against
-implementation checkpoint `8196da94146a215fc99cb7939d852f85ad2fa4d2`, with
-later documentation-only publication commits explicitly distinguished from that
-production baseline. Historical baselines and completed feature plans remain
-labelled so they cannot be mistaken for current architecture or priorities.
-The audit found the Phase C/F cycle above and concrete composition in
-`main_run_dispatcher.ts`, `local_action.ts`, and `queue_utils.ts`; these are now
-explicit current debts rather than undocumented assumptions.
+Current result: complete. The authoritative documents are synchronized with the
+Phase C implementation published in the same commit. Historical baselines and
+completed feature plans remain labelled so they cannot be mistaken for current
+architecture or priorities.
+The audit found and the completed Phase C block removed the SCC above. Concrete
+composition in `main_run_dispatcher.ts`, `local_action.ts`, and `queue_utils.ts`
+remains explicit Phase D evidence to classify; it is not assumed defective
+without caller and lifecycle analysis.
 
 ### Phase H — Final perfection gates
 
@@ -609,15 +617,14 @@ Until these criteria are met, the project is not declared architecturally comple
 
 Do not begin with `local_action.ts`, `cli.ts`, generic helper extraction, or historical `ai_repository`/`RepositoryFactory` work.
 
-After this documentation synchronization block passes its gates and is
-published, the next production block is:
+After the completed Phase C SCC-removal block passes its publication gates, the
+next production block is:
 
-> **Eliminate the verified `Execution`/version-resolution/configuration SCC
-> through an application-owned semantic orchestration boundary. Start with a
-> RED architecture test and behavior characterization, audit every caller, use
-> acyclic input/result contracts, introduce no compatibility shim, and preserve
-> all release/hotfix/configuration transitions. Then harden the composition
-> guard so the cycle cannot return.**
+> **Execute Phase D lifecycle composition review against current callers.
+> Classify concrete construction in `main_run_dispatcher.ts`, `local_action.ts`,
+> and `queue_utils.ts`; move only proven provider construction to named
+> lifecycle/capability roots; preserve legitimate coordinators; and add wiring
+> tests for every boundary changed.**
 
 The release/tag adapter contract audit remains the next Phase E increment after
-this higher-priority dependency-direction defect is removed and verified.
+that composition review.

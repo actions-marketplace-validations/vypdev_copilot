@@ -1,5 +1,6 @@
 import { ConfigurationHandler } from '../configuration_handler';
 import type { Execution } from '../../../data/model/execution';
+import type { ExecutionConfigurationQuery } from '../../../application/ports/execution_configuration_ports';
 
 jest.mock('../../../utils/logger', () => ({
   logError: jest.fn(),
@@ -41,6 +42,10 @@ function minimalExecution(overrides: Record<string, unknown> = {}): Execution {
   } as unknown as Execution;
 }
 
+function configurationQuery(): ExecutionConfigurationQuery {
+  return { owner: 'o', repository: 'r', issueNumber: 1, token: 't' };
+}
+
 describe('ConfigurationHandler', () => {
   let handler: ConfigurationHandler;
 
@@ -59,9 +64,8 @@ describe('ConfigurationHandler', () => {
   describe('get', () => {
     it('returns undefined when internalGetter returns undefined', async () => {
       mockGetDescription.mockResolvedValue('no config block here');
-      const execution = minimalExecution();
 
-      const result = await handler.get(execution);
+      const result = await handler.get(configurationQuery());
 
       expect(result).toBeUndefined();
     });
@@ -69,20 +73,19 @@ describe('ConfigurationHandler', () => {
     it('returns Config when description contains valid config JSON', async () => {
       const configJson = JSON.stringify({ branchType: 'feature', parentBranch: 'develop' });
       mockGetDescription.mockResolvedValue(descriptionWithConfig(configJson));
-      const execution = minimalExecution();
 
-      const result = await handler.get(execution);
+      const result = await handler.get(configurationQuery());
 
       expect(result).toBeDefined();
       expect(result?.branchType).toBe('feature');
       expect(result?.parentBranch).toBe('develop');
+      expect(mockGetDescription).toHaveBeenCalledWith('o', 'r', 1, 't');
     });
 
     it('throws when config JSON is invalid', async () => {
       mockGetDescription.mockResolvedValue(descriptionWithConfig('not json'));
-      const execution = minimalExecution();
 
-      await expect(handler.get(execution)).rejects.toThrow();
+      await expect(handler.get(configurationQuery())).rejects.toThrow();
     });
   });
 
@@ -240,15 +243,13 @@ describe('ConfigurationHandler', () => {
   describe('edge cases', () => {
     it('get returns undefined when internalGetter returns empty string', async () => {
       mockGetDescription.mockResolvedValue('');
-      const execution = minimalExecution();
-      const result = await handler.get(execution);
+      const result = await handler.get(configurationQuery());
       expect(result).toBeUndefined();
     });
 
     it('get throws informative error on invalid JSON', async () => {
       mockGetDescription.mockResolvedValue(descriptionWithConfig('{ "broken": '));
-      const execution = minimalExecution();
-      await expect(handler.get(execution)).rejects.toThrow(/Unexpected end of JSON input|SyntaxError/);
+      await expect(handler.get(configurationQuery())).rejects.toThrow(/Unexpected end of JSON input|SyntaxError/);
     });
   });
 });
