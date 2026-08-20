@@ -15,12 +15,22 @@ export interface IssueProgressPort {
     setProgressLabel(owner: string, repository: string, issueNumber: number, progress: number, token: string): Promise<void>;
 }
 
-export interface IssueLabelProvisioningPort {
-    ensureLabels(owner: string, repository: string, labels: Labels, token: string): Promise<{ created: number; existing: number; errors: string[] }>;
+export interface LabelProvisioningSummary {
+    created: number;
+    existing: number;
+    errors: string[];
 }
 
-export interface IssueProgressLabelProvisioningPort {
-    ensureProgressLabels(owner: string, repository: string, token: string): Promise<{ created: number; existing: number; errors: string[] }>;
+export interface InitialLabelProvisioningPort {
+    ensureInitialLabels(
+        owner: string,
+        repository: string,
+        labels: Labels,
+        token: string,
+    ): Promise<{
+        configured: LabelProvisioningSummary;
+        progress: LabelProvisioningSummary;
+    }>;
 }
 
 export interface IssueTypeProvisioningPort {

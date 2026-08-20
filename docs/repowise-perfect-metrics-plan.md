@@ -200,7 +200,7 @@ The application owns provider-neutral decisions: target name, base selection, ho
 
 ### 4.3 Issue label provisioning
 
-`IssueLabelProvisioningPort` is already semantic and should remain. The outer adapter owns paginated provider inventory and mutation. A pure policy may compare required and existing labels case-insensitively. One provisioning execution should obtain a complete inventory once and then perform only required mutations, while preserving the existing `422 already exists` race behavior.
+The application boundary must express the complete Initial Setup outcome rather than provider operations or one mutation at a time. `InitialLabelProvisioningPort` owns one semantic execution with separate configured/progress summaries. The outer adapter owns paginated provider inventory and mutation. A pure policy compares configured, progress and existing labels case-insensitively. One execution obtains a complete inventory once and then performs only required mutations, while preserving the `422 already exists` race behavior.
 
 ### 4.4 Pull-request review
 
@@ -497,11 +497,11 @@ Reproducible metrics record:
 
 The worst production file is now `src/data/repository/issue/issue_label_provisioning_repository.ts` at `2.61`, confirming Phase 3 as the next evidence-based slice.
 
-## 9. Phase 3 — Issue label provisioning
+## 9. Phase 3 — Issue label provisioning (implemented; final measured checkpoint pending)
 
 ### Task 3.1: Complete the contract
 
-**Create:** `src/data/repository/issue/__tests__/issue_label_provisioning_repository.test.ts`
+**Created:** `src/data/repository/issue/__tests__/issue_label_provisioning_repository.test.ts`
 
 RED→GREEN scenarios:
 
@@ -510,17 +510,27 @@ RED→GREEN scenarios:
 - labels beyond the first 100 are observed;
 - creation success;
 - `422 already exists` race maps to `existed`;
-- other provider errors propagate from `ensureLabel`;
-- `ensureLabels` aggregates created/existing/errors exactly;
+- other provider errors are assigned to the configured/progress summary and do not abort unrelated mutations;
+- `ensureInitialLabels` aggregates created/existing/errors exactly for both categories;
 - one complete inventory per provisioning execution;
 - nullable descriptions preserved;
 - duplicate required labels do not create duplicate mutations.
 
 ### Task 3.2: Remove N+1 behavior semantically
 
-Use provider pagination in the outer adapter. If useful, create a pure label comparison policy under `src/application/policies/`; otherwise keep a small private pure function local. Do not introduce a universal pagination service.
+Implemented structure:
 
-**Phase exit:** 100% behavior coverage, complete pagination, no repeated inventory request per required label, `IssueLabelProvisioningPort` remains semantic.
+- `InitialLabelProvisioningPort` is the only application contract for Initial Setup label catalog creation;
+- `initial_label_provisioning_policy.ts` owns configured/progress definitions, blank filtering, global case-insensitive deduplication and missing/existing selection;
+- `github_issue_label_provisioning_protocol.ts` keeps Octokit pagination/mutation protocol in infrastructure;
+- `IssueLabelProvisioningRepository` performs one complete paginated inventory and sequential missing-label mutations;
+- `IssueProgressLabelRepository` retains only its legitimate issue-level progress assignment capability;
+- `ensureLabel`, `ensureLabels`, `ensureProgressLabels`, `RequiredLabel`, the old required-label repository helper and the application-layer provider protocol were removed after zero-caller audits;
+- Initial Setup composition injects one adapter instance and is protected by a composition contract test.
+
+The historical instruction to keep `IssueLabelProvisioningPort` and test direct `ensureLabel` propagation became obsolete once the complete caller graph proved that those method-level boundaries caused the N+1 design. The replacement is narrower at the use-case level and removes, rather than hides, the obsolete API.
+
+**Verified focal exit:** 100% statements, branches, functions and lines across policy, adapter, use case and composition root; complete pagination; one inventory per Initial Setup label execution; provider-neutral selection policy; no obsolete provisioning callers or provider contract in application. Global gates and reproducible RepoWise/Graphify evidence are required before the phase is closed.
 
 ## 10. Phase 4 — Pull-request review capabilities
 
