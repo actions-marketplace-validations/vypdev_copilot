@@ -2,8 +2,8 @@
 
 **Status:** Active execution baseline — approved for consecutive phase execution.
 
-**Phase C evidence provenance:** the verified working tree was based on
-published SHA `c210d305b5b76ec339cb6806a6552be97922c4a4`. The resulting
+**Phase D evidence provenance:** the verified working tree was based on
+published SHA `f0c16654d1393b36ccb9b1a55d84345782b617ab`. The resulting
 implementation and this document are published together; use
 `git rev-parse HEAD` for the repository's current revision rather than expecting
 a document to encode its own commit SHA.
@@ -11,8 +11,8 @@ a document to encode its own commit SHA.
 **Completed in the current execution block:** Phases A, B, and C; Phase E hardening
 for pull-request file pagination, project-board linking, organization-member
 pagination, and authenticated-user contracts; and Phase G documentation
-synchronization. Phase D lifecycle composition review is the next production
-priority, followed by the postponed Phase E release/tag adapter audit.
+synchronization; and Phase D lifecycle composition hardening. The postponed
+Phase E release/tag adapter audit is the next production priority.
 
 **Scope:** Clean Architecture reconstruction, boundary hardening, contract coverage, documentation, and RepoWise/Graphify quality improvement for the current `master` checkout.
 
@@ -47,28 +47,28 @@ as current facts.
 Published base and working-tree state used for the evidence below:
 
 ```text
-base SHA: c210d305b5b76ec339cb6806a6552be97922c4a4
-working tree: verified Phase C source and documentation diff
+base SHA: f0c16654d1393b36ccb9b1a55d84345782b617ab
+working tree: verified Phase D source and documentation diff
 ```
 
 Current quality gates:
 
 ```text
-Jest: 216 suites passed, 1366 tests passed, 1 skipped
+Jest: 220 suites passed, 1373 tests passed, 1 skipped
 TypeScript: PASS
 ESLint: PASS
 Build: PASS
 Production audit: PASS
 Diff check: PASS
-Coverage: 87.89% statements, 80.28% branches, 86.11% functions, 89.08% lines
+Coverage: 85.52% statements, 80.20% branches, 84.31% functions, 86.64% lines
 ```
 
 Current Graphify refresh:
 
 ```text
-3215 nodes
-8297 edges
-215 communities
+3271 nodes
+8424 edges
+217 communities
 ```
 
 Persistent Graphify warning:
@@ -79,8 +79,10 @@ docs.json produces zero nodes
 
 This warning is analysis-tool input behavior, not evidence of a production architecture defect. It must remain visible until the tool or input handling changes.
 
-RepoWise observations captured on 2026-08-20 against the verified Phase C
-working tree based on `c210d305b5b76ec339cb6806a6552be97922c4a4`:
+RepoWise observations captured on 2026-08-20 against published checkpoint
+`f0c16654d1393b36ccb9b1a55d84345782b617ab`. RepoWise indexes commits rather
+than the uncommitted Phase D worktree, so these metrics must be refreshed after
+the Phase D commit before they can describe this block:
 
 ```bash
 ~/.local/bin/repowise update . --no-workspace --index-only
@@ -375,6 +377,28 @@ Exit criteria:
 - no lifecycle is silently merged with another;
 - composition tests prove the returned capabilities and sharing relationships.
 
+Current result: complete. `queue_utils.ts` no longer hides provider construction
+or recreates an Octokit adapter on every polling attempt. Queue policy now lives
+in `WaitForPreviousWorkflowRunsUseCase` behind explicit previous-run query and
+polling-delay ports; specialized query/dispatch adapters and
+`workflow_queue_composition_root.ts` own the details. The query consumes every
+provider page, and polling output is isolated behind a semantic observer port.
+The aggregate `WorkflowRepository` and callerless `WorkflowRun` model were
+retired with zero references in current source and no compatibility shim.
+Tracked runtime bundles intentionally remain release artifacts: the verified
+release/hotfix workflows rebuild and force-add `build/`, while ordinary source
+architecture commits do not publish regenerated bundles.
+
+`main_run_dispatcher.ts` now performs route logging and handler invocation only;
+it receives an already-composed route-handler map and imports no infrastructure.
+Route selection remains a pure policy used by the lifecycle. Route-specific assembly moved from `actions/` into
+`main_run_route_composition_root.ts`, with an executable guard rejecting
+all infrastructure imports, composition factories, and concrete
+adapter/repository/use-case construction in the dispatcher.
+`local_action.ts` and `cli.ts` were caller-audited and remain legitimate,
+separate lifecycle boundaries; the local lifecycle's one-time `GitCliRepository`
+construction is intentional and not a metric-driven extraction target.
+
 ### Phase E — Adapter contract hardening
 
 **Goal:** improve correctness and RepoWise health through behavior contracts, not generic wrappers.
@@ -486,10 +510,10 @@ Current result: complete. The authoritative documents are synchronized with the
 Phase C implementation published in the same commit. Historical baselines and
 completed feature plans remain labelled so they cannot be mistaken for current
 architecture or priorities.
-The audit found and the completed Phase C block removed the SCC above. Concrete
-composition in `main_run_dispatcher.ts`, `local_action.ts`, and `queue_utils.ts`
-remains explicit Phase D evidence to classify; it is not assumed defective
-without caller and lifecycle analysis.
+The audit found and the completed Phase C block removed the SCC above. Phase D
+then removed hidden workflow-queue composition and route assembly from
+`main_run_dispatcher.ts`, while preserving `local_action.ts` as a documented
+lifecycle composition boundary after caller, sharing, and behavior analysis.
 
 ### Phase H — Final perfection gates
 
@@ -615,16 +639,14 @@ Until these criteria are met, the project is not declared architecturally comple
 
 ## 10. Current next action
 
-Do not begin with `local_action.ts`, `cli.ts`, generic helper extraction, or historical `ai_repository`/`RepositoryFactory` work.
+Do not begin with `local_action.ts`, `cli.ts`, generic helper extraction, or
+historical `ai_repository`/`RepositoryFactory` work. Phase D classified those
+boundaries and is complete.
 
-After the completed Phase C SCC-removal block passes its publication gates, the
-next production block is:
+The next production block is:
 
-> **Execute Phase D lifecycle composition review against current callers.
-> Classify concrete construction in `main_run_dispatcher.ts`, `local_action.ts`,
-> and `queue_utils.ts`; move only proven provider construction to named
-> lifecycle/capability roots; preserve legitimate coordinators; and add wiring
-> tests for every boundary changed.**
-
-The release/tag adapter contract audit remains the next Phase E increment after
-that composition review.
+> **Execute the Phase E release/tag adapter contract audit. Verify every current
+> caller and provider mapping first; characterize success, not-found, malformed,
+> idempotent, pagination, and unexpected-error behavior; change production only
+> where a concrete contract defect is demonstrated; and keep tag lookup,
+> publication, release publication, and default-branch capabilities separate.**

@@ -118,8 +118,12 @@ though both use the same GitHub endpoint.
 ### Branch, release, and workflow
 
 Branch comparison, merge, preparation, naming, lifecycle, linked branches,
-tags, release publication, default branch, and workflow runs use separate
-ports/adapters. Release construction starts in
+tags, release publication, default branch, workflow-run queries, polling delay,
+and workflow dispatch use separate ports/adapters. Workflow queue policy belongs
+to `WaitForPreviousWorkflowRunsUseCase`; its composition root creates the query
+and timer adapters once, outside the polling loop. The former aggregate
+`WorkflowRepository` and callerless `WorkflowRun` model no longer exist.
+Release construction starts in
 `release_composition_root.ts` and release-specific client factories.
 
 After the Phase D lifecycle composition review, the next Phase E adapter audit
@@ -134,17 +138,17 @@ The current runtime topology is intentionally split:
 - `src/actions/github_action.ts`: GitHub Action input/event lifecycle;
 - `src/actions/local_action.ts`: local execution lifecycle;
 - `src/cli.ts` and `src/cli/**`: CLI bootstrap, parsing, and commands;
-- `src/infrastructure/composition/**`: capability and use-case roots;
-- `src/actions/main_run_composition.ts` and
-  `src/actions/main_run_dispatcher.ts`: route-specific action composition.
+- `src/infrastructure/composition/**`: capability and use-case roots, including
+  `main_run_route_composition_root.ts` and `workflow_queue_composition_root.ts`;
+- `src/actions/common_action.ts` and `src/actions/main_run_route.ts`: lifecycle route selection and unhandled failure policy;
+- `src/actions/main_run_dispatcher.ts`: route logging and invocation of precomposed handlers only.
 
 `cli.ts` is an 11-line bootstrap and is not an extraction target.
-`local_action.ts` is a small lifecycle coordinator. It currently constructs a
-`GitCliRepository` at the local runtime boundary, while
-`main_run_dispatcher.ts` performs some route-specific concrete wiring. Phase D
-must audit whether these are legitimate lifecycle composition boundaries or
-whether moving selected construction to named roots improves ownership and
-testing. No move is justified by file location alone.
+`local_action.ts` is a small lifecycle coordinator. Its one-time
+`GitCliRepository` construction at the local runtime boundary is intentional;
+caller and sharing analysis found no hidden provider loop or cross-lifecycle
+coupling. An executable composition guard rejects concrete assembly in
+`main_run_dispatcher.ts`. No move is justified by file location alone.
 
 ## Executable architecture rules
 

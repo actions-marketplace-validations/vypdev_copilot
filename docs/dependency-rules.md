@@ -114,16 +114,14 @@ lifecycle-specific sharing. Current composition is split across:
 
 ```text
 src/infrastructure/composition/**
-src/actions/main_run_composition.ts
-src/actions/main_run_dispatcher.ts
 runtime entrypoints for lifecycle-local dependencies
 ```
 
 The preferred direction is a named root for every non-trivial capability or
-use-case graph. Phase D must audit the remaining concrete construction in
-action files. Existing runtime-local construction is a known review target, not
-an automatic violation: caller ownership, lifecycle, sharing, and tests decide
-whether it should move.
+use-case graph. Phase D moved route-specific assembly and workflow-queue wiring
+to named roots. Existing one-time runtime-local construction is allowed only at
+a documented lifecycle boundary after caller ownership, lifecycle, sharing, and
+tests prove that moving it would not improve semantics.
 
 Composition roots may depend on outer details and application contracts, but
 must not become universal registries or service locators.
@@ -209,7 +207,9 @@ Executable tests currently verify at least:
 6. GitHub and local lifecycles remain separate;
 7. shared input policies remain independent from lifecycles/infrastructure;
 8. retired aggregate-facade imports do not escape approved composition areas;
-9. application ports do not import technical GraphQL/provider details.
+9. application ports do not import technical GraphQL/provider details;
+10. `main_run_dispatcher.ts` does not construct concrete use cases, repositories,
+    or adapters and does not import provider details.
 
 Primary tests:
 
@@ -221,14 +221,6 @@ Primary tests:
 
 ## Known review targets
 
-- eliminate the verified `Execution`/version-resolution/configuration SCC with
-  application-owned orchestration and acyclic request/result contracts;
-- add an architecture test that rejects data models importing or constructing
-  application use cases;
-- formalize or justify route-specific construction in
-  `main_run_dispatcher.ts`;
-- verify the lifecycle-local `GitCliRepository` construction in
-  `local_action.ts`;
 - classify the non-pure files under `src/data/model/` instead of declaring the
   entire directory a domain layer;
 - strengthen architecture tests where a documented rule is not yet executable;

@@ -45,6 +45,24 @@ describe('action composition boundaries', () => {
         expect(localAction).toMatch(/local_action_execution/);
     });
 
+    it('keeps the main route dispatcher free of concrete assembly', () => {
+        const dispatcher = source('main_run_dispatcher.ts');
+
+        const importSources = [...dispatcher.matchAll(/from ['"]([^'"]+)['"]/g)]
+            .map((match) => match[1])
+            .sort();
+        expect(importSources).toEqual([
+            '../data/model/execution',
+            '../data/model/result',
+            '../utils/logger',
+            './main_run_route_handlers',
+        ].sort());
+        expect(dispatcher).not.toMatch(/\bnew\s+/);
+        expect(dispatcher).not.toMatch(/\bcreate[A-Z]\w*\s*\(/);
+        expect(dispatcher).not.toMatch(/application\/usecases|data\/repository|infrastructure\//);
+        expect(dispatcher).not.toMatch(/from ['"]\.\/main_run_composition['"]/);
+    });
+
     it('keeps shared input policies independent from lifecycles and infrastructure', () => {
         const inputSource = source('action_input_source.ts');
 

@@ -71,13 +71,13 @@ boundary only when one exists, and add contract tests for intentional changes.
 
 ## Current checkpoint
 
-At the Phase C working tree based on published SHA
-`c210d305b5b76ec339cb6806a6552be97922c4a4`, refreshed with the command above:
+At the Phase D working tree based on published SHA
+`f0c16654d1393b36ccb9b1a55d84345782b617ab`, refreshed with the command above:
 
 ```text
-3215 nodes
-8297 edges
-215 communities
+3271 nodes
+8424 edges
+217 communities
 ```
 
 The resulting implementation and documentation are published together; use

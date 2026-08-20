@@ -19,7 +19,7 @@ Objetivo: llevar la cobertura desde ~46% a la máxima posible, sin dejar archivo
 
 | # | Archivo | Cobertura actual | Acción |
 |---|---------|------------------|--------|
-| 0.1 | `src/utils/queue_utils.ts` | 0% (22 líneas) | Crear `src/utils/__tests__/queue_utils.test.ts` |
+| 0.1 | `src/utils/queue_utils.ts` | Retired in Phase D | Replaced by contract-covered `WaitForPreviousWorkflowRunsUseCase`, semantic ports, and specialized adapters/root |
 | 0.2 | `src/utils/logger.ts` | 0% (100 líneas) | Crear `src/utils/__tests__/logger.test.ts` |
 | 0.3 | `src/utils/opencode_server.ts` | 0% (192 líneas) | Crear `src/utils/__tests__/opencode_server.test.ts` (mock HTTP/axios) |
 | 0.4 | `src/utils/label_utils.ts` | 90% (líneas 42-44) | Añadir casos en `label_utils.test.ts` para ramas faltantes |
@@ -39,7 +39,7 @@ Muchos se cubren indirectamente al testear use cases; los que son solo tipos/con
 | 1.3 | `issue.ts` | 0% (75 líneas) | Tests de construcción/parsing; o cubrir vía use cases que usan Issue |
 | 1.4 | `pull_request.ts` | 0% (116 líneas) | Idem |
 | 1.5 | `single_action.ts` | 0% (121 líneas) | Idem |
-| 1.6 | `workflow_run.ts` | 0% (22-66) | Tests o cubrir vía workflow_repository |
+| 1.6 | `workflow_run.ts` | Retired in Phase D | Callerless model removed with the aggregate workflow repository; active-run query returns a semantic count |
 | 1.7 | `labels.ts` | 0% (245 líneas) | Tests de constantes/helpers; muchas líneas son datos |
 | 1.8 | `issue_types.ts` | 0% (2-102) | Idem |
 | 1.9 | `images.ts` | 0% (78 líneas) | Idem |
@@ -54,7 +54,7 @@ Muchos se cubren indirectamente al testear use cases; los que son solo tipos/con
 
 | # | Archivo | Cobertura | Acción |
 |---|----------|-----------|--------|
-| 2.1 | `workflow_repository.ts` | 0% (43 líneas) | Crear `__tests__/workflow_repository.test.ts` (mock GitHub API) |
+| 2.1 | `workflow_repository.ts` | Retired in Phase D | Replaced by paginated `ActivePreviousWorkflowRunsRepository` and the separate `WorkflowDispatchRepository`, each behind a semantic capability port |
 | 2.2 | `branch_repository.ts` | 14% | Ampliar tests: métodos no cubiertos (líneas 16-25, 30-57, 62-94, 123-249, 253-275, 293, 327-338, 384-385, 406-430, 439-459, 470-471, 488-683, 693-739, 752-811). Considerar dividir en más archivos de test por grupo de métodos |
 | 2.3 | `project_repository.ts` | 15% | Ampliar `project_repository.test.ts`: cubrir 20-79, 90-171, 179-231, 236-260, 272-413, 423, 440, 457, 473-521, 528-554, 558-560, 587-588, 600-607, 611-620, 625-630, 634-655, 666-718, 722-738, 743-772 |
 | 2.4 | `pull_request_repository.ts` | 17% | Crear/ampliar tests para 16-29, 67-68, 76-91, 102-110, 120-128, 141-169, 180-199, 209-239, 252-267, 283-306, 317-327, 342-365, 380-390, 407-506, 522-550, 562-569 |

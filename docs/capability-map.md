@@ -106,7 +106,8 @@ application port.
 | Branch comparison | branch change ports | comparison adapter | active |
 | Merge/status | branch merge ports | merge adapter | active |
 | Preparation/naming/lifecycle | branch capability ports | specialized branch adapters/policies | active |
-| Workflow runs | workflow ports | workflow adapter | active |
+| Wait for previous workflow runs | `PreviousWorkflowRunsQueryPort` + `WorkflowPollingDelayPort` | `WaitForPreviousWorkflowRunsUseCase` + specialized query/timer adapters/root | complete and contract-tested |
+| Dispatch workflow | `BranchWorkflowPort` | `WorkflowDispatchRepository` in issue composition | complete and contract-tested |
 | Local Git commit/push | Git ports | `GitCommitAdapter` / `GitCliRepository` | runtime-specific |
 
 Release and tag behavior remain separate policies unless identical semantics and
@@ -119,21 +120,23 @@ failure contracts are demonstrated.
 | GitHub Action | `src/actions/github_action.ts` | event/input mapping and GitHub lifecycle |
 | Local action | `src/actions/local_action.ts` | local configuration, execution, rendering |
 | CLI | `src/cli.ts`, `src/cli/**` | bootstrap, parsing, command-specific composition |
-| Main routing | `src/actions/main_run_dispatcher.ts` | route selection and some route-specific wiring |
+| Main route selection | `src/actions/common_action.ts`, `src/actions/main_run_route.ts` | lifecycle-owned route resolution and unhandled failure policy |
+| Main route dispatch | `src/actions/main_run_dispatcher.ts` | route logging and invocation of precomposed handlers only |
 | Capability/use-case roots | `src/infrastructure/composition/**` | concrete provider clients and adapter graphs |
 
-The lifecycles remain independent. Phase D must verify the remaining concrete
-wiring in action files before deciding whether any construction belongs in a
-new named root. `cli.ts` and `local_action.ts` are not extraction targets based
-on churn or line count.
+The lifecycles remain independent. Phase D moved route assembly into
+`main_run_route_composition_root.ts` and workflow polling into
+`workflow_queue_composition_root.ts`; an architecture test keeps the dispatcher
+free of concrete assembly. `cli.ts` and `local_action.ts` were audited and remain
+legitimate bootstrap/lifecycle boundaries, not extraction targets based on
+churn or line count.
 
 ## Current priorities
 
-1. complete lifecycle composition review with caller and sharing tests;
-2. audit release/tag adapters and contracts as the next Phase E increment;
-3. revisit issue/PR lifecycle adapters only when a concrete contract gap is
+1. audit release/tag adapters and contracts as the next Phase E increment;
+2. revisit issue/PR lifecycle adapters only when a concrete contract gap is
    demonstrated;
-4. run final graph, coverage, and publication gates.
+3. run final graph, coverage, and publication gates.
 
 ## Explicit non-goals
 

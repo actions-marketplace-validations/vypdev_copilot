@@ -16,12 +16,25 @@ describe('GitHub provider port boundaries', () => {
         expect(existsSync(join(portsDirectory, '..', '..', 'infrastructure', 'github', 'ports', 'github_graphql_transport_port.ts'))).toBe(true);
     });
 
+    it('keeps workflow provider protocol contracts in infrastructure', () => {
+        expect(existsSync(join(portsDirectory, 'github_workflow_ports.ts'))).toBe(false);
+        expect(existsSync(join(
+            portsDirectory,
+            '..',
+            '..',
+            'infrastructure',
+            'github',
+            'ports',
+            'github_workflow_provider_ports.ts',
+        ))).toBe(true);
+        expect(existsSync(join(portsDirectory, 'workflow_run_ports.ts'))).toBe(true);
+    });
+
     it('keeps GitHub provider contracts grouped by capability', () => {
         for (const file of [
             'github_branch_ports.ts',
             'github_release_ports.ts',
             'github_identity_ports.ts',
-            'github_workflow_ports.ts',
             'github_pull_request_ports.ts',
             'github_issue_ports.ts',
         ]) {

@@ -12,10 +12,13 @@ jest.mock('boxen', () => jest.fn((text: string) => text));
 
 import { mainRun as productionMainRun } from '../common_action';
 import { createSetupExecutionUseCase } from '../../infrastructure/composition/execution_setup_composition_root';
+import { createWaitForPreviousWorkflowRunsUseCase } from '../../infrastructure/composition/workflow_queue_composition_root';
+import { createMainRunRouteCompositionRoot } from '../../infrastructure/composition/main_run_route_composition_root';
 import type { ProjectBoardCommandPort } from '../../application/ports/project_board_command_ports';
 import type { LatestTagQueryPort } from '../../application/ports/branch_tag_ports';
 import type { Execution } from '../../data/model/execution';
 import { Result } from '../../data/model/result';
+import { logInfo } from '../../utils/logger';
 
 jest.mock('@actions/core', () => ({
   setFailed: jest.fn(),
@@ -28,10 +31,6 @@ jest.mock('../../utils/logger', () => ({
   clearAccumulatedLogs: jest.fn(),
 }));
 
-jest.mock('../../utils/queue_utils', () => ({
-  waitForPreviousRuns: jest.fn().mockResolvedValue(undefined),
-}));
-
 const mockSingleActionInvoke = jest.fn();
 const mockIssueCommentInvoke = jest.fn();
 const mockIssueInvoke = jest.fn();
@@ -39,10 +38,28 @@ const mockPullRequestReviewCommentInvoke = jest.fn();
 const mockPullRequestInvoke = jest.fn();
 const mockCommitInvoke = jest.fn();
 const mockSetupExecutionInvoke = jest.fn();
+const mockWaitForPreviousWorkflowRunsInvoke = jest.fn();
+
+jest.mock('../../infrastructure/composition/main_run_route_composition_root', () => ({
+  createMainRunRouteCompositionRoot: jest.fn().mockImplementation(() => ({
+    'single-action': mockSingleActionInvoke,
+    'issue-comment': mockIssueCommentInvoke,
+    issue: mockIssueInvoke,
+    'pull-request-review-comment': mockPullRequestReviewCommentInvoke,
+    'pull-request': mockPullRequestInvoke,
+    push: mockCommitInvoke,
+  })),
+}));
 
 jest.mock('../../infrastructure/composition/execution_setup_composition_root', () => ({
   createSetupExecutionUseCase: jest.fn().mockImplementation(() => ({
     invoke: mockSetupExecutionInvoke,
+  })),
+}));
+
+jest.mock('../../infrastructure/composition/workflow_queue_composition_root', () => ({
+  createWaitForPreviousWorkflowRunsUseCase: jest.fn().mockImplementation(() => ({
+    invoke: mockWaitForPreviousWorkflowRunsInvoke,
   })),
 }));
 
@@ -79,7 +96,6 @@ jest.mock('../../application/usecases/commit_use_case', () => ({
 
 const core = require('@actions/core');
 const logger = require('../../utils/logger');
-const { waitForPreviousRuns } = require('../../utils/queue_utils');
 
 function mockExecution(overrides: Record<string, unknown> = {}): Execution {
   const base = {
@@ -94,6 +110,9 @@ function mockExecution(overrides: Record<string, unknown> = {}): Execution {
       enabledSingleAction: false,
     },
     issueNumber: 42,
+    owner: 'org',
+    repo: 'repo',
+    tokens: { token: 'token' },
     isIssue: false,
     issue: { isIssueComment: false, isIssue: false },
     isPullRequest: false,
@@ -105,17 +124,29 @@ function mockExecution(overrides: Record<string, unknown> = {}): Execution {
 }
 
 const latestTagQueryPort = {} as LatestTagQueryPort;
+const projectBoardCommandPort = {} as ProjectBoardCommandPort;
 
 const runMain = (execution: Execution) => productionMainRun(
   execution,
-  {} as ProjectBoardCommandPort,
+  projectBoardCommandPort,
   latestTagQueryPort,
 );
+
+const originalRunId = process.env.GITHUB_RUN_ID;
+const originalWorkflow = process.env.GITHUB_WORKFLOW;
+
+function restoreEnvironmentVariable(name: string, value: string | undefined): void {
+  if (value === undefined) {
+    delete process.env[name];
+  } else {
+    process.env[name] = value;
+  }
+}
 
 describe('mainRun', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (waitForPreviousRuns as jest.Mock).mockResolvedValue(undefined);
+    mockWaitForPreviousWorkflowRunsInvoke.mockResolvedValue(undefined);
     mockSingleActionInvoke.mockResolvedValue([]);
     mockIssueCommentInvoke.mockResolvedValue([]);
     mockIssueInvoke.mockResolvedValue([]);
@@ -125,18 +156,32 @@ describe('mainRun', () => {
     mockSetupExecutionInvoke.mockResolvedValue(undefined);
   });
 
+  afterEach(() => {
+    restoreEnvironmentVariable('GITHUB_RUN_ID', originalRunId);
+    restoreEnvironmentVariable('GITHUB_WORKFLOW', originalWorkflow);
+  });
+
   it('delegates setup to the composed use case and clears accumulated logs', async () => {
     const execution = mockExecution();
     await runMain(execution);
     expect(createSetupExecutionUseCase).toHaveBeenCalledWith(latestTagQueryPort);
     expect(mockSetupExecutionInvoke).toHaveBeenCalledWith(execution);
     expect(logger.clearAccumulatedLogs).toHaveBeenCalledTimes(1);
+    expect(createMainRunRouteCompositionRoot).toHaveBeenCalledWith(projectBoardCommandPort);
   });
 
   it('waits for previous runs when welcome is false', async () => {
+    process.env.GITHUB_RUN_ID = '200';
+    process.env.GITHUB_WORKFLOW = 'CI';
     const execution = mockExecution({ welcome: undefined });
     await runMain(execution);
-    expect(waitForPreviousRuns).toHaveBeenCalledWith(execution);
+    expect(createWaitForPreviousWorkflowRunsUseCase).toHaveBeenCalledWith('token');
+    expect(mockWaitForPreviousWorkflowRunsInvoke).toHaveBeenCalledWith({
+      owner: 'org',
+      repository: 'repo',
+      currentRunId: 200,
+      workflowName: 'CI',
+    });
   });
 
   it('skips wait when welcome is set', async () => {
@@ -145,7 +190,7 @@ describe('mainRun', () => {
       isPush: true,
     });
     await runMain(execution);
-    expect(waitForPreviousRuns).not.toHaveBeenCalled();
+    expect(createWaitForPreviousWorkflowRunsUseCase).not.toHaveBeenCalled();
     expect(mockCommitInvoke).toHaveBeenCalled();
   });
 
@@ -306,6 +351,7 @@ describe('mainRun', () => {
     const results = await runMain(execution);
 
     expect(core.setFailed).toHaveBeenCalledWith('Action not handled.');
+    expect(logInfo).toHaveBeenCalledWith('Main run finished. Results: 0, total steps: 0.');
     expect(results).toEqual([]);
   });
 
@@ -329,9 +375,9 @@ describe('mainRun', () => {
     expect(results).toEqual([]);
   });
 
-  it('exits process when waitForPreviousRuns rejects and welcome is false', async () => {
+  it('exits process when workflow queue polling rejects and welcome is false', async () => {
     const exitSpy = jest.spyOn(process, 'exit').mockImplementation((() => {}) as () => never);
-    (waitForPreviousRuns as jest.Mock).mockRejectedValue(new Error('Queue error'));
+    mockWaitForPreviousWorkflowRunsInvoke.mockRejectedValue(new Error('Queue error'));
     const execution = mockExecution({ welcome: undefined });
 
     await runMain(execution);
