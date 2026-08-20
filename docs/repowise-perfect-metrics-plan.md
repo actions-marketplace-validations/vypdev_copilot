@@ -456,6 +456,47 @@ The pure policy accepts branch names and semantic issue/hotfix configuration and
 
 **Phase exit:** no adapter depends on `GitCliRepository`, `BranchNameRepository` or `LinkedBranchRepository` concrete types; no broad inherited branch aggregate remains; all branch transition and provider edge behavior is covered; scores remeasured honestly.
 
+### Phase 2 checkpoint — completed
+
+**Published code SHA:** `d35b04ac13a0741274a3dcb5dc834023c3fa51f5`
+
+Delivered:
+
+- replaced the broad inherited branch-preparation aggregate with independent remote-sync, commit-tag query, linked-branch command and propagation-delay capabilities;
+- moved managed-branch decisions into a provider-neutral application policy and kept release/hotfix behavior in their explicit strategy paths;
+- narrowed branch inventory consumption to `BranchListQueryPort`, so preparation no longer requires the branch-deletion command;
+- removed `BranchPreparationRepository`, the previous-issue helper and obsolete linked-branch response wrappers after proving zero references;
+- kept Git CLI operations, GitHub branch inventory and linked GraphQL mutation in separate adapters and wired them explicitly in the Issue composition root;
+- moved linked-branch provider DTOs into infrastructure, used GraphQL variables for refs, resolved the provider client once and failed closed for nullable context/mutation responses, missing refs and mismatched branch names;
+- replaced the real-time sleep in unit tests with an injected `BranchPropagationDelayPort` and a production timer adapter;
+- resolved both medium findings from the first independent review through RED→GREEN contracts; final independent review: `APPROVED`.
+
+Verified gates:
+
+- 226 Jest suites passed; 1,474 tests passed and 1 skipped;
+- focused Branch Preparation coverage: 100% lines, branches, functions and statements;
+- TypeScript, ESLint, NCC build, production audit, Prettier scope and `git diff --check`: PASS;
+- architecture/caller guards and zero-reference searches: PASS;
+- metric collector restoration and clean tree: PASS.
+
+Reproducible metrics record:
+
+- output: `/tmp/copilot-architecture-metrics-d35b04ac13a0741274a3dcb5dc834023c3fa51f5-xMAcYj`;
+- marker: `complete.json` with matching SHA;
+- average health: `8.07 → 8.08`;
+- hotspot health: `5.62 → 5.77`;
+- maintainability hotspot: `8.61 → 8.63`;
+- linked-branch adapter: `2.62 → 5.00`;
+- former `branch_preparation_repository.ts` worst score `2.58`: eliminated; replacement application orchestration `4.12 → 4.65` with 100% line/branch coverage;
+- production files below `4.0`: `14 → 11`;
+- global lines: `88.75% → 91.00%`;
+- global Jest branches: `81.82% → 83.63%`;
+- global functions: `86.61% → 87.81%`;
+- Graphify: 3,423 nodes, 8,615 edges and 209 communities;
+- safe dead code: zero.
+
+The worst production file is now `src/data/repository/issue/issue_label_provisioning_repository.ts` at `2.61`, confirming Phase 3 as the next evidence-based slice.
+
 ## 9. Phase 3 — Issue label provisioning
 
 ### Task 3.1: Complete the contract
