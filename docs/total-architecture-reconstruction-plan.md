@@ -1,18 +1,18 @@
 # Copilot Architecture Perfection Plan
 
-**Status:** Active execution baseline — approved for consecutive phase execution.
+**Status:** Phase D is complete and published. Remaining work is governed by
+[`repowise-perfect-metrics-plan.md`](repowise-perfect-metrics-plan.md), the
+authoritative execution plan for the current checkpoint.
 
-**Phase D evidence provenance:** the verified working tree was based on
-published SHA `f0c16654d1393b36ccb9b1a55d84345782b617ab`. The resulting
-implementation and this document are published together; use
-`git rev-parse HEAD` for the repository's current revision rather than expecting
-a document to encode its own commit SHA.
+**Published checkpoint:** `af32863317977e42ec59b712fc1f371b5f231cad`.
+Use `git rev-parse HEAD` and the reproducible protocol in the authoritative plan
+before treating any metric as current evidence.
 
-**Completed in the current execution block:** Phases A, B, and C; Phase E hardening
-for pull-request file pagination, project-board linking, organization-member
-pagination, and authenticated-user contracts; and Phase G documentation
-synchronization; and Phase D lifecycle composition hardening. The postponed
-Phase E release/tag adapter audit is the next production priority.
+**Completed:** Phases A, B, C, D, and G; Phase E hardening for pull-request file
+pagination, project-board linking, organization-member pagination, and
+authenticated-user contracts. The release/tag audit remains a required
+correctness track. The current metric-driven sequence begins with missing P0
+adapter contracts; neither track authorizes cosmetic refactoring.
 
 **Scope:** Clean Architecture reconstruction, boundary hardening, contract coverage, documentation, and RepoWise/Graphify quality improvement for the current `master` checkout.
 
@@ -40,15 +40,16 @@ Success means:
 
 ## 2. Current evidence
 
-Evidence below was refreshed after the Phase C implementation and must be
-refreshed before each subsequent block. Historical reports must not be treated
-as current facts.
+Evidence below was refreshed after Phase D was published. It remains a dated
+checkpoint and must be regenerated before every implementation block.
+Historical reports must not be treated as current facts.
 
-Published base and working-tree state used for the evidence below:
+Published state used for the evidence below:
 
 ```text
-base SHA: f0c16654d1393b36ccb9b1a55d84345782b617ab
-working tree: verified Phase D source and documentation diff
+SHA: af32863317977e42ec59b712fc1f371b5f231cad
+branch: master
+working tree: clean before metric generation and clean after artifact removal
 ```
 
 Current quality gates:
@@ -80,36 +81,40 @@ docs.json produces zero nodes
 This warning is analysis-tool input behavior, not evidence of a production architecture defect. It must remain visible until the tool or input handling changes.
 
 RepoWise observations captured on 2026-08-20 against published checkpoint
-`f0c16654d1393b36ccb9b1a55d84345782b617ab`. RepoWise indexes commits rather
-than the uncommitted Phase D worktree, so these metrics must be refreshed after
-the Phase D commit before they can describe this block:
+`af32863317977e42ec59b712fc1f371b5f231cad`, after synchronizing the index and
+ingesting the current Jest LCOV report:
 
-```bash
-~/.local/bin/repowise update . --no-workspace --index-only
-~/.local/bin/repowise health . --no-workspace --format json
-~/.local/bin/repowise health . --no-workspace --refactoring-targets --format table
-~/.local/bin/repowise status . --no-workspace
+```text
+index: 3,175 nodes / 6,885 edges / 410 pages
+average health: 8.02/10
+hotspot health: 5.52/10
+average maintainability: 9.23/10
+average performance: 9.99/10
+performance coverage: 100% (613/613 analyzable files)
+dead-code safe findings: 0
+unreachable files: 0
+unused exports: 0
+RepoWise-mapped coverage: 86.6% lines / 77.1% branches
 ```
 
-The RepoWise index is local and intentionally not versioned. These values are
-an evidence snapshot, not timeless repository metadata; refresh and record a
-new checkpoint before using them to prioritize another implementation block.
+Jest and RepoWise coverage use different mapping and aggregation rules. Their
+percentages must not be presented as equivalent.
 
-- average health: 8.14/10; hotspot health: 5.82/10; average
-  maintainability: 9.23/10;
-- current worst performer: `src/data/repository/merge_repository.ts` at
-  3.04/10; its direct responsibilities and tests must be audited before any
-  split, because the score alone is not an architectural verdict;
-- current target findings are mainly churn/co-change signals and duplicated-line suggestions;
-- RepoWise did not emit a break-cycle plan for the former `Execution` SCC;
-  direct import analysis and the productive Tarjan guard are the authoritative
-  evidence that it existed and is now removed;
-- the next evidence-backed priority is lifecycle composition verification,
-  followed by the postponed release/tag adapter audit;
-- RepoWise dead-code analysis is partial because of its offset-naive/offset-aware datetime issue; zero dead-code counts are not conclusive;
-- `cli.ts` is now a small bootstrap and is not a valid extraction target;
-- `local_action.ts` already delegates to builders and composition; its churn signal is not enough evidence for another split;
-- issue-comment and pull-request-review-comment use cases are thin lifecycle-specific wrappers around the shared `runCommentAutomation` flow and must not be merged into a universal use case without a semantic reason.
+The current worst performer is
+`src/data/repository/project/project_board_command_repository.ts` at 1.95/10.
+The immediate P0 set is dominated by missing focused adapter contracts in
+project-board, branch, issue-label and pull-request-review capabilities.
+`merge_repository.ts` remains the clearest current complexity target at CCN 16
+and nesting 6, but it already has tests and must be characterized before any
+semantic extraction.
+
+The RepoWise index and raw reports remain local and intentionally unversioned.
+Zero safe dead-code findings are evidence from this successful run, not a
+permanent proof. Churn, entropy and co-change remain history-derived; they must
+age naturally rather than drive wrappers, empty commits or history rewriting.
+`cli.ts`, `local_action.ts`, the pure `main_run_dispatcher.ts`, specialized
+composition roots, and lifecycle-specific comment wrappers remain explicit
+non-targets unless new source/caller evidence proves a defect.
 
 ## 3. Reclassified historical objectives
 
@@ -410,10 +415,11 @@ Current status:
 3. organization membership pagination: hardened and covered;
 4. authenticated identity: audited and contract-covered without a production
    behavior change;
-5. release/tag adapters: next Phase E contract audit after the Phase D
-   lifecycle composition review;
-6. issue lifecycle and remaining pull-request lifecycle/review behavior: audit
-   only where source/caller evidence identifies a contract gap.
+5. release/tag adapters: retained as a required correctness track in the
+   authoritative perfect-metrics plan;
+6. project-board, branch, issue-label, release, and pull-request-review adapters:
+   current coverage evidence identifies focused contract gaps; execute them in
+   the order defined by `repowise-perfect-metrics-plan.md`.
 
 Current increment: `PullRequestChangesRepository` now owns one semantic
 `listAllFiles` pagination operation shared by its file capabilities. The
@@ -532,8 +538,9 @@ Also run:
 
 ```text
 pnpm test:coverage
-~/.local/bin/repowise update .
-~/.local/bin/repowise health . --no-workspace --refactoring-targets --format table
+~/.local/bin/repowise update . --index-only --no-agents --progress json
+~/.local/bin/repowise coverage add coverage/lcov.info
+~/.local/bin/repowise health . --refactoring-targets --format table
 /tmp/copilot-graphify-venv/bin/graphify update .
 ```
 
@@ -643,10 +650,16 @@ Do not begin with `local_action.ts`, `cli.ts`, generic helper extraction, or
 historical `ai_repository`/`RepositoryFactory` work. Phase D classified those
 boundaries and is complete.
 
-The next production block is:
+The next blocks are defined by
+[`repowise-perfect-metrics-plan.md`](repowise-perfect-metrics-plan.md):
 
-> **Execute the Phase E release/tag adapter contract audit. Verify every current
-> caller and provider mapping first; characterize success, not-found, malformed,
-> idempotent, pagination, and unexpected-error behavior; change production only
-> where a concrete contract defect is demonstrated; and keep tag lookup,
-> publication, release publication, and default-branch capabilities separate.**
+1. publish and verify the documentation/protocol baseline;
+2. characterize the P0 project-board command/query adapters with focused
+   contract tests;
+3. characterize branch preparation and linked-branch adapters;
+4. continue the issue, pull-request-review, merge-complexity, release/tag,
+   coverage-closure, and history-stabilization tracks in the documented order.
+
+Production changes remain forbidden until the corresponding RED contract test,
+caller inventory, semantic-boundary decision, and block-specific exit criteria
+are explicit.

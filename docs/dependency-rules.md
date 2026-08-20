@@ -35,11 +35,15 @@ ports, use cases, constants, or logging. This is a documented transitional
 model boundary, not evidence that the complete directory satisfies domain
 purity.
 
-Direct import analysis confirms an unjustified SCC: `Execution` calls
-`resolveIssueBranchVersion`; the release/hotfix resolution helpers construct
-three application use cases; those use cases import `Execution` again.
-`Execution` and `ExecutionConfigurationPort` also import each other. These are
-active defects, not approved dependency exceptions.
+Direct import analysis previously found an unjustified SCC around `Execution`,
+release/hotfix resolution helpers, application use cases, and
+`ExecutionConfigurationPort`. Phase C removed that SCC without splitting the
+model for metric cosmetics. Setup and branch-version resolution now belong to
+`SetupExecutionUseCase` and `ExecutionBranchVersionResolver`, while the
+configuration port accepts a semantic query instead of importing the aggregate
+model. A Tarjan-based production architecture test rejects static, re-export,
+side-effect, `require()` and dynamic-import cycles. The current productive graph
+contains no directed dependency cycle.
 
 Pure domain/model policies may import:
 
@@ -72,7 +76,14 @@ Application owns:
 - orchestration and application policies.
 
 Application production code may import application modules and approved
-model/policy types. It must not import:
+model/policy types. Several legacy `Github*Client` SDK-shaped contracts still
+live in `src/application/ports/github_*_ports.ts`; they are explicit transitional
+exceptions used by specialized adapters, not semantic application ports. They
+must migrate capability by capability to infrastructure-owned provider protocol
+modules, with callers and focused contracts verified and no universal provider
+facade introduced.
+
+Except for that documented, shrinking allowlist, application must not import:
 
 ```text
 data/repository concrete adapters

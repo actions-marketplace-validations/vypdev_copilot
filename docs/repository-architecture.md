@@ -6,7 +6,11 @@ This document describes the architecture of the current `master` checkout. It
 is an implementation map and migration contract, not a request to create files
 mechanically. Historical baselines and completed migrations live in
 [`migration-baseline.md`](./migration-baseline.md) and
-[`hotspot-refactoring-plan.md`](./hotspot-refactoring-plan.md).
+[`hotspot-refactoring-plan.md`](./hotspot-refactoring-plan.md). The remaining
+quality and coverage work is governed by
+[`repowise-perfect-metrics-plan.md`](./repowise-perfect-metrics-plan.md); current
+coverage inventory lives in
+[`COVERAGE_ACTION_PLAN.md`](./COVERAGE_ACTION_PLAN.md).
 
 Use `git rev-parse HEAD` for the current published checkpoint; this document
 describes the checkout that contains it and does not encode its own commit SHA.
@@ -25,8 +29,12 @@ runtime entrypoint
 
 The application layer owns use cases, workflows, semantic ports, and
 application policies. Provider protocols, pagination, GraphQL documents,
-Octokit DTOs, process execution, and concrete adapters stay outside
-application behavior.
+Octokit DTOs, process execution, and concrete adapters belong outside
+application behavior. The current checkout still has a documented transitional
+exception: SDK-shaped `Github*Client` contracts under
+`src/application/ports/github_*_ports.ts`. They form a shrinking allowlist to be
+migrated capability by capability; no new exception or universal provider
+facade is allowed.
 
 `src/data/model/` currently contains domain models and pure model policies.
 `src/data/repository/` contains specialized adapters and some pure repository
@@ -126,10 +134,11 @@ and timer adapters once, outside the polling loop. The former aggregate
 Release construction starts in
 `release_composition_root.ts` and release-specific client factories.
 
-After the Phase D lifecycle composition review, the next Phase E adapter audit
-targets release/tag mapping, idempotency, malformed responses, pagination, and
-provider errors. It must not merge release and tag publication because they
-have different provider operations and failure semantics.
+The release/tag correctness track still covers mapping, idempotency, malformed
+responses, pagination, and provider errors. It must not merge release and tag
+publication because they have different semantic contracts. Current sequencing
+also prioritizes focused P0 project-board and branch contracts, as defined by
+the authoritative perfect-metrics plan.
 
 ## Runtime composition
 
@@ -161,10 +170,17 @@ The main guards are:
 - GitHub client/adapter boundary tests under `src/infrastructure/**/__tests__/`.
 
 Application production code must not import concrete repositories, manager
-adapters, infrastructure, entrypoints, Octokit, or provider-shaped DTOs.
-Test-only concrete adapters do not become production dependencies.
+adapters, infrastructure, entrypoints, Octokit, or provider-shaped DTOs. The
+only current provider-protocol exception is the explicit SDK-shaped
+`Github*Client` allowlist under `src/application/ports/github_*_ports.ts`; new
+entries are forbidden and the authoritative plan requires capability-by-capability
+migration until the allowlist is empty. Test-only concrete adapters do not
+become production dependencies.
 
-## Non-negotiable rules
+## Non-negotiable target rules
+
+The rules below define the completed target. The transitional provider-contract
+allowlist above is not evidence that rule 1 is already fully satisfied.
 
 1. Ports represent semantic capabilities, not SDK method shapes.
 2. Use cases receive required dependencies explicitly.
@@ -182,25 +198,26 @@ Test-only concrete adapters do not become production dependencies.
 
 ## Current evidence and known limitations
 
-At checkpoint `8196da94`, the most recent verified gates reported 214 passing
-suites, 1358 passing tests, one skipped test, and passing TypeScript, ESLint,
-build, production audit, and diff checks.
+At checkpoint `af32863317977e42ec59b712fc1f371b5f231cad`, the verified gates
+reported 220 passing suites, 1373 passing tests, one skipped test, and passing
+TypeScript, ESLint, build, production audit, and diff checks.
 
 Current Graphify refresh:
 
 ```text
-3178 nodes
-8241 edges
-220 communities
+3271 nodes
+8424 edges
+217 communities
 ```
 
 `docs.json` currently produces zero Graphify nodes. The generated graph is
 undirected, so Graphify does not prove the absence of directed dependency
-cycles; import analysis and architecture tests enforce direction. RepoWise
-dead-code analysis is partial because of its offset-naive/offset-aware datetime
-error; zero reported dead code is therefore not conclusive. RepoWise's current
-highest rankings are mainly churn/co-change and duplicated-line suggestions.
-They are not automatic refactoring instructions.
+cycles; import analysis and architecture tests enforce direction. A successful
+RepoWise safe dead-code run at this checkpoint reported zero findings,
+unreachable files, and unused exports. That result is point-in-time evidence,
+not permanent proof. RepoWise's highest rankings remain mainly churn/co-change
+and duplicated-line suggestions; they are not automatic refactoring
+instructions.
 
 ## Migration and retirement protocol
 

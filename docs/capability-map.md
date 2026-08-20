@@ -3,7 +3,9 @@
 This map describes the current `master` checkout. Use `git rev-parse HEAD` for
 the published checkpoint; the document does not encode the SHA of the commit
 that contains itself. Historical facades and migration steps are documented
-separately and must not be treated as current production architecture.
+separately and must not be treated as current production architecture. Current
+quality priorities and metric acceptance criteria are defined in
+[`repowise-perfect-metrics-plan.md`](./repowise-perfect-metrics-plan.md).
 
 ## Architectural shape
 
@@ -100,8 +102,8 @@ application port.
 
 | Capability | Port family | Adapter/composition | Status |
 |---|---|---|---|
-| Latest tag/tag operations | branch tag and GitHub release ports | tag adapter/repository | active; audit postponed until SCC removal |
-| Release publication | `RepositoryReleasePublicationPort` | release publication repository/root | active; audit postponed until SCC removal |
+| Latest tag/tag operations | branch tag and GitHub release ports | tag adapter/repository | active; correctness audit required, SCC prerequisite complete |
+| Release publication | `RepositoryReleasePublicationPort` | release publication repository/root | active; correctness audit required, SCC prerequisite complete |
 | Default branch | release/repository metadata contracts | default branch adapter | active |
 | Branch comparison | branch change ports | comparison adapter | active |
 | Merge/status | branch merge ports | merge adapter | active |
@@ -133,10 +135,13 @@ churn or line count.
 
 ## Current priorities
 
-1. audit release/tag adapters and contracts as the next Phase E increment;
-2. revisit issue/PR lifecycle adapters only when a concrete contract gap is
-   demonstrated;
-3. run final graph, coverage, and publication gates.
+1. publish the documentation and reproducible metric baseline;
+2. characterize P0 project-board command/query contracts;
+3. characterize branch preparation and linked-branch contracts;
+4. continue issue, pull-request-review and release/tag correctness tracks in the
+   order defined by the authoritative plan;
+5. keep architecture guards and documentation synchronized;
+6. re-run RepoWise and Graphify after each coherent block.
 
 ## Explicit non-goals
 

@@ -71,8 +71,8 @@ boundary only when one exists, and add contract tests for intentional changes.
 
 ## Current checkpoint
 
-At the Phase D working tree based on published SHA
-`f0c16654d1393b36ccb9b1a55d84345782b617ab`, refreshed with the command above:
+At published Phase D checkpoint
+`af32863317977e42ec59b712fc1f371b5f231cad`, refreshed with the command above:
 
 ```text
 3271 nodes
