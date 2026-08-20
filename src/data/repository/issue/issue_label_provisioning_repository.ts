@@ -104,13 +104,21 @@ export class IssueLabelProvisioningRepository implements InitialLabelProvisionin
             });
             return { kind: 'created' };
         } catch (error: unknown) {
-            if (isAlreadyExistingLabelError(error)) return { kind: 'existing' };
-            const message = error instanceof Error ? error.message : String(error);
-            const summaryError = `Error creating label "${definition.name}": ${message}`;
-            logError(summaryError);
-            return { kind: 'failed', error: summaryError };
+            return mapLabelMutationError(definition.name, error);
         }
     };
+}
+
+function mapLabelMutationError(name: string, error: unknown): LabelMutationOutcome {
+    if (isAlreadyExistingLabelError(error)) return { kind: 'existing' };
+    const summaryError = `Error creating label "${name}": ${providerErrorMessage(error)}`;
+    logError(summaryError);
+    return { kind: 'failed', error: summaryError };
+}
+
+function providerErrorMessage(error: unknown): string {
+    if (error instanceof Error) return error.message;
+    return String(error);
 }
 
 function isAlreadyExistingLabelError(error: unknown): boolean {
