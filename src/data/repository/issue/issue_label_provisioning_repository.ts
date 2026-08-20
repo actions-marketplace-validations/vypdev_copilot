@@ -18,6 +18,17 @@ interface RepositoryLabel {
     description: string | null;
 }
 
+interface LabelProvisioningContext {
+    client: GithubIssueLabelProvisioningClient;
+    owner: string;
+    repository: string;
+}
+
+type LabelMutationOutcome =
+    | { kind: 'created' }
+    | { kind: 'existing' }
+    | { kind: 'failed'; error: string };
+
 export class IssueLabelProvisioningRepository implements InitialLabelProvisioningPort {
     constructor(private readonly githubClient: GithubClientPort<GithubIssueLabelProvisioningClient>) {}
 
@@ -37,9 +48,11 @@ export class IssueLabelProvisioningRepository implements InitialLabelProvisionin
             inventory.map(label => label.name),
         );
 
+        const context: LabelProvisioningContext = { client, owner, repository };
+
         return {
-            configured: await this.provisionMissingLabels(client, owner, repository, plan.configured),
-            progress: await this.provisionMissingLabels(client, owner, repository, plan.progress),
+            configured: await this.provisionMissingLabels(context, plan.configured),
+            progress: await this.provisionMissingLabels(context, plan.progress),
         };
     };
 
@@ -63,47 +76,39 @@ export class IssueLabelProvisioningRepository implements InitialLabelProvisionin
     };
 
     private provisionMissingLabels = async (
-        client: GithubIssueLabelProvisioningClient,
-        owner: string,
-        repository: string,
+        context: LabelProvisioningContext,
         plan: LabelProvisioningGroupPlan,
     ): Promise<LabelProvisioningSummary> => {
-        const summary: LabelProvisioningSummary = {
-            created: 0,
-            existing: plan.existing,
-            errors: [],
-        };
+        const outcomes: LabelMutationOutcome[] = [];
         for (const definition of plan.missing) {
-            await this.provisionLabel(client, owner, repository, definition, summary);
+            outcomes.push(await this.provisionLabel(context, definition));
         }
-        return summary;
+        return {
+            created: outcomes.filter(outcome => outcome.kind === 'created').length,
+            existing: plan.existing + outcomes.filter(outcome => outcome.kind === 'existing').length,
+            errors: outcomes.flatMap(outcome => outcome.kind === 'failed' ? [outcome.error] : []),
+        };
     };
 
     private provisionLabel = async (
-        client: GithubIssueLabelProvisioningClient,
-        owner: string,
-        repository: string,
+        context: LabelProvisioningContext,
         definition: InitialLabelDefinition,
-        summary: LabelProvisioningSummary,
-    ): Promise<void> => {
+    ): Promise<LabelMutationOutcome> => {
         try {
-            await client.rest.issues.createLabel({
-                owner,
-                repo: repository,
+            await context.client.rest.issues.createLabel({
+                owner: context.owner,
+                repo: context.repository,
                 name: definition.name,
                 color: definition.color,
                 description: definition.description,
             });
-            summary.created++;
+            return { kind: 'created' };
         } catch (error: unknown) {
-            if (isAlreadyExistingLabelError(error)) {
-                summary.existing++;
-                return;
-            }
+            if (isAlreadyExistingLabelError(error)) return { kind: 'existing' };
             const message = error instanceof Error ? error.message : String(error);
             const summaryError = `Error creating label "${definition.name}": ${message}`;
             logError(summaryError);
-            summary.errors.push(summaryError);
+            return { kind: 'failed', error: summaryError };
         }
     };
 }
