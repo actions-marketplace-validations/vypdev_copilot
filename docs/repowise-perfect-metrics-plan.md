@@ -2,7 +2,7 @@
 
 > **For Hermes:** Implement this plan one vertical slice at a time using `quality-first-repository-development`, `test-driven-development`, `iterative-hotspot-refactoring`, and `requesting-code-review`. Do not implement production code until Efra approves this documented revision. Every production change starts with an observed RED test and ends with focused/global gates, a reproducible metrics record, review, atomic commit, normal push, remote-SHA equality, and a clean tree.
 
-**Status:** Planning-only revision, documented on 2026-08-20 against published `master` at `df23de8ed9e309ae23e17656aeb8cacbfe7e2160`. No production or test implementation belongs to this planning block.
+**Status:** Approved and in execution. Phase 1 completed on 2026-08-20 at code SHA `63c0d91c252c142e123722816a872cd52b1f9942`; Phase 2 is next. The original reproducible baseline remains `df23de8ed9e309ae23e17656aeb8cacbfe7e2160`.
 
 **Goal:** Make `vypdev/copilot` a reference-quality Clean Architecture repository, drive every controllable RepoWise and coverage metric to its defensible maximum, eliminate real hotspots and boundary debt, and classify history-derived or tool-derived signals without manipulating source layout or Git history.
 
@@ -359,6 +359,45 @@ Only after Tasks 1.2–1.3 are GREEN:
 **Forbidden:** `ProjectBoardRepository`, a universal GraphQL helper, compatibility re-export, or a coordinator whose only purpose is lowering NLOC.
 
 **Phase exit:** touched Project Board behavior-bearing files at 100% lines/branches/functions; no unclassified command/query correctness defect; no application import of new provider mechanics; worst Project Board score remeasured, not predicted.
+
+### Phase 1 checkpoint — completed
+
+**Published code SHA:** `63c0d91c252c142e123722816a872cd52b1f9942`
+
+Delivered:
+
+- audited every productive Project Board caller and preserved separate query, link and command contracts;
+- replaced the ambiguous `getContentId` contract with `getProjectItemId` across its closed caller graph, without an alias;
+- moved Project Board owner/context SDK-shaped protocols from application to infrastructure;
+- implemented bounded cursor pagination for fields and items, including the full provider capacity of 500 pages × 100 items;
+- made missing items, malformed cursors, nullable provider nodes, unsupported owner types and non-single-select field collisions fail closed;
+- resolved each token-bound provider client once per operation;
+- replaced the legacy mixed test with command/query contract suites containing 45 behavioral tests;
+- resolved the independent review finding for projects containing more than 10,000 items; final independent review: `APPROVED`.
+
+Verified gates:
+
+- 223 Jest suites passed; 1,441 tests passed and 1 skipped;
+- focused Project Board coverage: 100% lines, branches, functions and statements;
+- TypeScript, ESLint, NCC build, production audit, Prettier scope and `git diff --check`: PASS;
+- remote equality and clean tree: PASS.
+
+Reproducible metrics record:
+
+- output: `/tmp/copilot-architecture-metrics-63c0d91c252c142e123722816a872cd52b1f9942-gc56zU`;
+- marker: `complete.json` with matching SHA;
+- average health: `8.07 → 8.07`;
+- hotspot health: `5.52 → 5.62`;
+- Project Board command: `1.95 → 5.10`;
+- Project Board query: `2.80 → 5.62`;
+- production files below `4.0`: `16 → 14`;
+- global lines: `86.65% → 88.75%`;
+- global Jest branches: `80.21% → 81.82%`;
+- global functions: `84.31% → 86.61%`;
+- Graphify: 3,394 nodes, 8,595 edges and 222 communities;
+- safe dead code: zero.
+
+The worst production file is now `src/data/repository/branch/branch_preparation_repository.ts` at `2.58`, confirming Phase 2 rather than further cosmetic Project Board splitting.
 
 ## 8. Phase 2 — Branch Preparation and Linked Branch vertical slice
 
