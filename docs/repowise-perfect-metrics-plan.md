@@ -2,7 +2,7 @@
 
 > **For Hermes:** Implement this plan one vertical slice at a time using `quality-first-repository-development`, `test-driven-development`, `iterative-hotspot-refactoring`, and `requesting-code-review`. Do not implement production code until Efra approves this documented revision. Every production change starts with an observed RED test and ends with focused/global gates, a reproducible metrics record, review, atomic commit, normal push, remote-SHA equality, and a clean tree.
 
-**Status:** Approved and in execution. Phase 1 completed on 2026-08-20 at code SHA `63c0d91c252c142e123722816a872cd52b1f9942`; Phase 2 is next. The original reproducible baseline remains `df23de8ed9e309ae23e17656aeb8cacbfe7e2160`.
+**Status:** Approved and in execution. Phases 1–3 are complete. Phase 3 was measured on 2026-08-21 at code SHA `4841d2563582eb0c297e6170579e8f6de4585073`; Phase 4 is next. The original reproducible baseline remains `df23de8ed9e309ae23e17656aeb8cacbfe7e2160`.
 
 **Goal:** Make `vypdev/copilot` a reference-quality Clean Architecture repository, drive every controllable RepoWise and coverage metric to its defensible maximum, eliminate real hotspots and boundary debt, and classify history-derived or tool-derived signals without manipulating source layout or Git history.
 
@@ -497,7 +497,7 @@ Reproducible metrics record:
 
 The worst production file is now `src/data/repository/issue/issue_label_provisioning_repository.ts` at `2.61`, confirming Phase 3 as the next evidence-based slice.
 
-## 9. Phase 3 — Issue label provisioning (implemented; final measured checkpoint pending)
+## 9. Phase 3 — Issue label provisioning (completed)
 
 ### Task 3.1: Complete the contract
 
@@ -530,7 +530,65 @@ Implemented structure:
 
 The historical instruction to keep `IssueLabelProvisioningPort` and test direct `ensureLabel` propagation became obsolete once the complete caller graph proved that those method-level boundaries caused the N+1 design. The replacement is narrower at the use-case level and removes, rather than hides, the obsolete API.
 
-**Verified focal exit:** 100% statements, branches, functions and lines across policy, adapter, use case and composition root; complete pagination; one inventory per Initial Setup label execution; provider-neutral selection policy; no obsolete provisioning callers or provider contract in application. Global gates and reproducible RepoWise/Graphify evidence are required before the phase is closed.
+**Verified focal exit:** 100% statements, branches, functions and lines across policy, adapter, use case and composition root; complete pagination; one inventory per Initial Setup label execution; provider-neutral selection policy; no obsolete provisioning callers or provider contract in application.
+
+### Phase 3 checkpoint — completed
+
+**Measured code SHA:** `4841d2563582eb0c297e6170579e8f6de4585073`
+
+**Measured Git tree:** `90c1825d19ab11de5d2efa180e92886a72dc1801`
+
+Delivered:
+
+- replaced the method-level label APIs with the single semantic `InitialLabelProvisioningPort` used by Initial Setup;
+- moved configured/progress selection, blank filtering and global case-insensitive deduplication into a provider-neutral application policy;
+- resolved the provider client once, consumed one complete paginated inventory and mutated only missing labels in deterministic configured-then-progress order;
+- kept summaries separate, preserved nullable descriptions, mapped real GitHub `422` `already_exists` races to existing and aggregated other errors without aborting later labels;
+- retained issue-level progress assignment as an independent legitimate capability;
+- removed obsolete ports, provider protocols and required-label helpers after productive/test caller searches reached zero;
+- proved exact client-to-adapter-to-use-case identity in the named composition root.
+
+Review and TDD evidence:
+
+- the first independent read-only review returned `CHANGES_REQUESTED` with two medium findings and two low test gaps;
+- realistic GitHub `422` parsing and Initial Setup global-failure behavior were reproduced by three RED failures before the corrections;
+- focused GREEN: 4 suites, 23 tests and 100% statements/branches/functions/lines for the four affected production files;
+- focused architecture/cycle GREEN: 5 suites and 19 tests;
+- the final independent read-only review of the clean measured commit returned `APPROVED` with no findings.
+
+Verified gates:
+
+- 228 Jest suites passed; 1,477 tests passed and 1 skipped;
+- TypeScript, ESLint, NCC build, production audit and `git diff --check`: PASS;
+- production audit: no known vulnerabilities;
+- zero-reference and application/provider-boundary searches: PASS;
+- metric collector restoration and clean measured tree: PASS.
+
+Reproducible metrics record:
+
+- output: `/tmp/copilot-architecture-metrics-4841d2563582eb0c297e6170579e8f6de4585073-nBsX2J`;
+- marker: `complete.json` with the matching measured SHA;
+- average health: `8.08 → 8.10`;
+- hotspot health: `5.77 → 5.81`;
+- maintainability hotspot: `8.63 → 8.65`;
+- label-provisioning adapter: `2.61 → 6.50`, with max CCN `3`, max nesting `2` and 100% line/branch coverage;
+- production files below `4.0`: `11 → 10`;
+- global lines: `91.00% → 91.56%` (`6,144 / 6,710`);
+- global Jest branches: `83.63% → 84.46%` (`2,479 / 2,935`);
+- global functions: `87.81% → 88.53%` (`980 / 1,107`);
+- RepoWise branch aggregation: `82.31%`;
+- safe dead code: zero.
+
+Graphify evidence:
+
+- collector pass: 3,438 nodes, 8,634 edges and 247 communities;
+- clean graph-only verification after collector restoration: 3,435 nodes, 8,632 edges and 228 communities;
+- multigraph diagnostic: zero missing/dangling endpoints, self loops, exact duplicate edges or same-endpoint collapses;
+- BFS resolved `InitialLabelProvisioningPort`, `IssueLabelProvisioningRepository`, `InitialSetupUseCase` and `createInitialSetupCompositionRoot()`; the undirected topology showed the expected two-hop composition-file import path.
+
+The small Graphify count difference is retained rather than hidden: the collector invokes Graphify after coverage and RepoWise inside its protected snapshot, while the graph-only verification ran after those mutable paths were removed. RepoWise/coverage values come from the complete immutable collector record; source-graph integrity comes from the clean graph-only verification.
+
+The worst production file is now `src/data/repository/pull_request/pull_request_review_repository.ts` at `2.70`, confirming Phase 4 as the next evidence-based slice. No further label-provisioning split is justified by current callers, behavior or architecture.
 
 ## 10. Phase 4 — Pull-request review capabilities
 
@@ -661,9 +719,12 @@ Audit all current performance findings. Record iteration bounds, expected cardin
 
 After each phase, update this table from a complete external metrics record:
 
-| Phase    | SHA        |  Avg | Hotspot | Worst | Maintainability | Performance |  Lines |                      Branches | Functions | Files score <4 | Decision                          |
-| -------- | ---------- | ---: | ------: | ----: | --------------: | ----------: | -----: | ----------------------------: | --------: | -------------: | --------------------------------- |
-| Baseline | `df23de8e` | 8.07 |    5.52 |  1.95 |            9.22 |        9.99 | 86.65% | 80.21% Jest / 77.15% RepoWise |    84.31% |             16 | Proceed to Phase 1 after approval |
+| Phase    | SHA        |  Avg | Hotspot | Worst | Maintainability | Performance |  Lines |                      Branches | Functions | Files score <4 | Decision           |
+| -------- | ---------- | ---: | ------: | ----: | --------------: | ----------: | -----: | ----------------------------: | --------: | -------------: | ------------------ |
+| Baseline | `df23de8e` | 8.07 |    5.52 |  1.95 |            9.22 |        9.99 | 86.65% | 80.21% Jest / 77.15% RepoWise |    84.31% |             16 | Proceed to Phase 1 |
+| Phase 1  | `63c0d91c` | 8.07 |    5.62 |  2.58 |               — |        9.99 | 88.75% |                   81.82% Jest |    86.61% |             14 | Completed          |
+| Phase 2  | `d35b04ac` | 8.08 |    5.77 |  2.61 |               — |        9.99 | 91.00% |                   83.63% Jest |    87.81% |             11 | Completed          |
+| Phase 3  | `4841d256` | 8.10 |    5.81 |  2.70 |            9.21 |        9.99 | 91.56% | 84.46% Jest / 82.31% RepoWise |    88.53% |             10 | Proceed to Phase 4 |
 
 Continue only when:
 
