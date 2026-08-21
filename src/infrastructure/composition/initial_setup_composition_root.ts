@@ -1,11 +1,10 @@
 import { createAuthenticatedUserClient } from './github_identity_client_factory';
-import { createIssueLabelProvisioningClient, createIssueLabelsClient } from './github_issue_client_factory';
+import { createIssueLabelProvisioningClient } from './github_issue_client_factory';
 import { createGraphqlTransportClient } from './github_project_client_factory';
 import { createReleaseClient } from './github_release_client_factory';
 import { InitialSetupUseCase } from "../../application/usecases/actions/initial_setup_use_case";
 import { IssueLabelProvisioningRepository } from "../../data/repository/issue/issue_label_provisioning_repository";
-import { IssueLabelRepository } from "../../data/repository/issue/issue_label_repository";
-import { IssueProgressLabelRepository } from "../../data/repository/issue/issue_progress_label_repository";
+
 import { IssueTypeRepository } from "../../data/repository/issue/issue_type_repository";
 import { AuthenticatedUserRepository } from "../../data/repository/organization/authenticated_user_repository";
 import { RepositoryDefaultBranchRepository } from "../../data/repository/release/repository_default_branch_repository";
@@ -15,9 +14,6 @@ import { composeInitialSetupUseCase } from "./initial_setup_use_case_composition
 import { SetupWorkspaceAdapter } from "../setup_workspace_adapter";
 
 export function createInitialSetupCompositionRoot(): InitialSetupUseCase {
-    const progressLabels = new IssueProgressLabelRepository(
-        new IssueLabelRepository(createIssueLabelsClient()),
-    );
     const labelProvisioning = new IssueLabelProvisioningRepository(
         createIssueLabelProvisioningClient(),
     );
@@ -25,14 +21,6 @@ export function createInitialSetupCompositionRoot(): InitialSetupUseCase {
     return composeInitialSetupUseCase(
         new AuthenticatedUserRepository(createAuthenticatedUserClient()),
         labelProvisioning,
-        {
-            ensureProgressLabels: (owner, repository, token) => progressLabels.ensureProgressLabels(
-                owner,
-                repository,
-                token,
-                labelProvisioning.ensureLabel,
-            ),
-        },
         new IssueTypeRepository(createGraphqlTransportClient()),
         new GitCliRepository(),
         new RepositoryDefaultBranchRepository(createReleaseClient()),

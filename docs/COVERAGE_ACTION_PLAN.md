@@ -3,29 +3,32 @@
 **Status:** Active companion to
 [`repowise-perfect-metrics-plan.md`](repowise-perfect-metrics-plan.md).
 
-**Checkpoint:** `af32863317977e42ec59b712fc1f371b5f231cad`
+**Checkpoint:** `4841d2563582eb0c297e6170579e8f6de4585073`
 
-**Measured:** 2026-08-20 with `pnpm run test:coverage` on a clean published
-checkout. This document replaces the historical ~46%/88-item backlog, whose
-paths and percentages no longer described the current architecture.
+**Measured:** 2026-08-21 by the immutable architecture-metrics collector on a
+clean code checkpoint. This document replaces earlier inventories whenever
+their paths or percentages no longer describe the current architecture.
 
 ## 1. Current baseline
 
 ```text
-Jest suites: 220 passed / 220 total
-Tests: 1373 passed, 1 skipped
-Statements: 85.52% (6163/7206)
-Branches: 80.20% (2346/2925)
-Functions: 84.31% (935/1109)
-Lines: 86.64% (5867/6771)
+Jest suites: 228 passed / 228 total
+Tests: 1477 passed, 1 skipped
+Lines: 91.56% (6144/6710)
+Branches: 84.46% (2479/2935)
+Functions: 88.53% (980/1107)
 ```
+
+The immutable collector persists LCOV line, branch and function aggregates. It
+does not persist Jest's separate statement aggregate, so this checkpoint does
+not reconstruct or substitute a statement percentage.
 
 RepoWise ingests the same LCOV through a different mapper:
 
 ```text
-Mapped files: 329
-Lines: 86.6%
-Branches: 77.1%
+Mapped files: 330
+Lines: 91.56%
+Branches: 82.31%
 ```
 
 The two summaries are related evidence, not interchangeable percentages.
@@ -49,50 +52,48 @@ The two summaries are related evidence, not interchangeable percentages.
 
 ## 3. Current zero-line-coverage inventory
 
-The LCOV parser excludes files named `*.test.*` and paths under `__tests__/`.
-Eighteen productive files currently report 0% line coverage:
+The current LCOV inventory contains 14 zero-line paths: 13 productive files and
+one misplaced test file. Jest discovers tests only under `__tests__`, while
+`collectCoverageFrom` includes root-level `*.test.ts` files; therefore the
+misplaced release test is visible as uncovered source until it is classified
+and migrated.
 
-| Capability    | File                                                                       | Initial action                                                     |
-| ------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| Branch        | `src/data/repository/branch/branch_preparation_repository.ts`              | Focused provider/policy/delegation contract suite                  |
-| Branch        | `src/data/repository/branch/linked_branch_repository.ts`                   | GraphQL query/mutation contract suite                              |
-| Branch        | `src/data/repository/branch_name_repository.ts`                            | Pure formatting behavior suite or cover through branch preparation |
-| Issue         | `src/data/repository/issue/bugbot_issue_repository.ts`                     | Composition/delegation contract                                    |
-| Issue         | `src/data/repository/issue/execution_issue_setup_repository.ts`            | Execution setup delegation contract                                |
-| Issue         | `src/data/repository/issue/issue_title_repository.ts`                      | Title provider/error contract suite                                |
-| Project board | `src/data/repository/project/project_board_query_repository.ts`            | Identity/query/content/pagination contract suite                   |
-| Pull request  | `src/data/repository/pull_request/bugbot_pull_request_repository.ts`       | Composition/delegation contract                                    |
-| Pull request  | `src/data/repository/pull_request/pull_request_review_repository.ts`       | Review capability contract suite                                   |
-| Composition   | `src/infrastructure/composition/agent_capability_composition_root.ts`      | Capability and instance-sharing wiring test                        |
-| Composition   | `src/infrastructure/composition/bugbot_composition_root.ts`                | Route/capability wiring test                                       |
-| Composition   | `src/infrastructure/composition/execution_issue_setup_composition_root.ts` | Exact adapter binding test                                         |
-| Composition   | `src/infrastructure/composition/issue_use_case_composition.ts`             | Constructor contract test or cover through root                    |
-| Composition   | `src/infrastructure/composition/issue_use_case_composition_root.ts`        | Exact use-case graph and sharing test                              |
-| Composition   | `src/infrastructure/composition/organization_members_composition_root.ts`  | Exact adapter binding test                                         |
-| Composition   | `src/infrastructure/composition/pull_request_use_case_composition.ts`      | Constructor contract test or cover through root                    |
-| Composition   | `src/infrastructure/composition/pull_request_use_case_composition_root.ts` | Exact use-case graph and sharing test                              |
-| Composition   | `src/infrastructure/composition/release_composition_root.ts`               | Release capability binding test                                    |
+| Capability   | File                                                                       | Initial action                                |
+| ------------ | -------------------------------------------------------------------------- | --------------------------------------------- |
+| Branch       | `src/data/repository/branch_name_repository.ts`                            | Pure branch-name behavior contract            |
+| Issue        | `src/data/repository/issue/bugbot_issue_repository.ts`                     | Composition/delegation contract               |
+| Issue        | `src/data/repository/issue/execution_issue_setup_repository.ts`            | Execution-setup delegation contract           |
+| Pull request | `src/data/repository/pull_request/bugbot_pull_request_repository.ts`       | Composition/delegation contract               |
+| Pull request | `src/data/repository/pull_request/pull_request_review_repository.ts`       | Phase 4 review capability contract            |
+| Test layout  | `src/data/repository/release/repository_release_repository.test.ts`        | Migrate useful scenarios under `__tests__`    |
+| Composition  | `src/infrastructure/composition/agent_capability_composition_root.ts`      | Capability and identity wiring test           |
+| Composition  | `src/infrastructure/composition/bugbot_composition_root.ts`                | Route/capability wiring test                  |
+| Composition  | `src/infrastructure/composition/execution_issue_setup_composition_root.ts` | Exact adapter binding test                    |
+| Composition  | `src/infrastructure/composition/issue_use_case_composition.ts`             | Constructor contract or coverage through root |
+| Composition  | `src/infrastructure/composition/organization_members_composition_root.ts`  | Exact adapter binding test                    |
+| Composition  | `src/infrastructure/composition/pull_request_use_case_composition.ts`      | Constructor contract or coverage through root |
+| Composition  | `src/infrastructure/composition/pull_request_use_case_composition_root.ts` | Exact use-case graph and sharing test         |
+| Composition  | `src/infrastructure/composition/release_composition_root.ts`               | Release capability binding test               |
 
 Some adapters above are exercised indirectly by higher-level tests but are not
-recognized as covered in the current Jest execution graph. Add direct contract
-coverage rather than assuming indirect behavior.
+recognized as covered in the current Jest execution graph. Add direct behavior
+contracts rather than assuming indirect coverage.
 
 ## 4. Lowest-covered non-zero production files
 
 | Priority | File                                                                       |  Lines | Branches | Functions | Required track                                       |
 | -------- | -------------------------------------------------------------------------- | -----: | -------: | --------: | ---------------------------------------------------- |
 | P0       | `src/data/repository/issue/issue_type_repository.ts`                       | 18.92% |       0% |    16.67% | Issue type provider contract                         |
-| P0       | `src/data/repository/issue/issue_label_provisioning_repository.ts`         | 19.05% |       0% |    14.29% | Label provisioning contract                          |
 | P0       | `src/data/repository/release/repository_tag_repository.ts`                 | 19.51% |       0% |       20% | Release/tag correctness track                        |
-| P0       | `src/data/repository/project/project_board_command_repository.ts`          | 20.75% |       0% |    11.11% | Project board command contract                       |
 | P0       | `src/data/repository/branch_lifecycle_repository.ts`                       | 20.83% |       0% |       25% | Branch lifecycle contract                            |
 | P0       | `src/data/repository/release/repository_release_publication_repository.ts` | 27.59% |       0% |       25% | Release publication contract                         |
 | P0       | `src/data/repository/pull_request/pull_request_lifecycle_repository.ts`    | 28.30% |   11.11% |    37.50% | PR lifecycle contract                                |
+| P0       | `src/data/repository/issue/issue_title_repository.ts`                      | 28.95% |       0% |       20% | Issue title provider/error contract                  |
 | P1       | `src/infrastructure/setup_workspace_adapter.ts`                            | 33.33% |     100% |        0% | Filesystem adapter contract                          |
 | P1       | `src/data/repository/release/repository_default_branch_repository.ts`      | 36.36% |     100% |       50% | Default branch contract                              |
 | P1       | `src/data/repository/pull_request/pull_request_changes_repository.ts`      | 59.46% |      50% |    72.73% | Complete existing pagination/error matrix            |
-| P1       | `src/data/repository/ai/fixer_agent_adapter.ts`                            |    75% |      50% |       75% | Fixer response/failure contract                      |
 | P1       | `src/data/repository/agent_configuration_policy.ts`                        |    75% |   83.33% |      100% | Complete configuration edge cases                    |
+| P1       | `src/data/repository/ai/fixer_agent_adapter.ts`                            |    75% |      50% |       75% | Fixer response/failure contract                      |
 | P1       | `src/data/repository/issue_emoji_policy.ts`                                | 76.47% |   54.63% |      100% | Complete label/emoji decision branches               |
 | P1       | `src/prompts/index.ts`                                                     | 77.27% |     100% |    57.69% | Cover behavior-bearing prompt exports                |
 | P1       | `src/data/repository/organization/organization_members_repository.ts`      | 78.95% |      50% |      100% | Complete pagination/error branches                   |
@@ -101,20 +102,29 @@ coverage rather than assuming indirect behavior.
 | P1       | `src/data/repository/github/github_pagination_adapter.ts`                  | 83.33% |     100% |      100% | Complete pagination terminal branch                  |
 | P1       | `src/application/usecases/steps/commit/bugbot/bugbot_autofix_use_case.ts`  | 83.82% |      75% |      100% | Complete workflow transitions before complexity work |
 | P1       | `src/cli/commands/think.ts`                                                | 84.85% |   66.67% |      100% | Complete CLI failure/input branch                    |
+| P1       | `src/application/usecases/single_action_use_case.ts`                       | 85.71% |      65% |      100% | Complete action dispatch/failure transitions         |
 
 Exact percentages must be regenerated before each block; this table is a
 checkpoint, not a permanent queue.
 
+Recently closed with behavior-bearing contracts:
+
+- Phase 1 Project Board command/query: 100% lines, branches and functions;
+- Phase 2 Branch Preparation replacements and Linked Branch: focused 100%;
+- Phase 3 Issue Label Provisioning policy/adapter/use case/root: focused 100%.
+
 ## 5. Known test-layout defect to classify
 
-`src/data/repository/project/project_board_repository.test.ts` appears in the
-production coverage tree at 0%. It is not under `__tests__/` and did not run as a
-focused suite in the measured test inventory. Before moving or deleting it:
+The former misplaced Project Board test was migrated/replaced in Phase 1 and no
+longer appears in the production coverage inventory. The current defect is
+`src/data/repository/release/repository_release_repository.test.ts`: it is not
+under `__tests__`, is not discovered by the configured `testMatch`, and appears
+as a 0%-covered production path. Before moving or deleting it:
 
 1. inspect its imports and assertions;
 2. confirm whether Jest discovers it;
-3. compare it with current project-board tests;
-4. migrate useful scenarios into the focused query/command suites;
+3. compare it with current release-repository tests;
+4. migrate useful scenarios into the focused release capability suites;
 5. prove zero remaining references;
 6. remove the misplaced file only after the new suites pass.
 
@@ -129,7 +139,7 @@ Do not count a misplaced test file as productive implementation coverage.
 - keep generated coverage local;
 - verify the tracked tree is clean after cleanup.
 
-### Phase C1 — Project board contracts
+### Phase C1 — Project board contracts (completed)
 
 Create focused suites for:
 
@@ -141,7 +151,7 @@ Create focused suites for:
 Required scenarios are specified in Sections 5 Tasks 3–4 of the authoritative
 plan.
 
-### Phase C2 — Branch contracts
+### Phase C2 — Branch contracts (completed)
 
 Cover:
 
@@ -150,10 +160,11 @@ Cover:
 - linked-branch GraphQL behavior;
 - branch lifecycle delegation and errors.
 
-### Phase C3 — Issue contracts
+### Phase C3 — Issue contracts (in progress)
 
-Cover label provisioning, title, type, Bugbot issue access, execution issue
-setup, and remaining branch/error paths in existing issue adapters.
+Label provisioning is complete with focused 100% behavior coverage. Continue
+with title, type, Bugbot issue access, execution issue setup, and remaining
+branch/error paths in existing issue adapters.
 
 ### Phase C4 — Pull-request contracts
 

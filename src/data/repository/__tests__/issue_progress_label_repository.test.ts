@@ -24,15 +24,4 @@ describe('progress labels', () => {
 
         expect(setLabels).toHaveBeenCalledWith('owner', 'repo', 7, ['bug', 'priority:high', '75%'], 'token');
     });
-
-    it('ensures every progress label and aggregates failures', async () => {
-        const repository = new IssueProgressLabelRepository({} as never);
-        const ensureLabel = jest.fn()
-            .mockResolvedValueOnce({ created: true, existed: false })
-            .mockResolvedValue({ created: false, existed: true });
-
-        await expect(repository.ensureProgressLabels('owner', 'repo', 'token', ensureLabel))
-            .resolves.toEqual({ created: 1, existing: 20, errors: [] });
-        expect(ensureLabel).toHaveBeenCalledTimes(21);
-    });
 });

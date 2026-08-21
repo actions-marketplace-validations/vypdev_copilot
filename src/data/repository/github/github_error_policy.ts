@@ -1,6 +1,7 @@
 export interface GithubErrorShape {
     status?: number;
     message?: string;
+    response?: unknown;
 }
 
 export const getGithubErrorStatus = (error: unknown): number | undefined => {
@@ -13,5 +14,22 @@ export const isGithubNotFound = (error: unknown): boolean => getGithubErrorStatu
 
 export const isGithubAlreadyExists = (error: unknown): boolean => {
     const shape = typeof error === "object" && error !== null ? (error as GithubErrorShape) : undefined;
-    return shape?.status === 422 && shape.message?.toLowerCase().includes("already exists") === true;
+    if (getGithubErrorStatus(error) !== 422) return false;
+
+    const responseData = typeof shape?.response === "object" && shape.response !== null && "data" in shape.response
+        ? shape.response.data
+        : undefined;
+    const validationErrors = typeof responseData === "object" && responseData !== null && "errors" in responseData
+        ? responseData.errors
+        : undefined;
+    const hasAlreadyExistsCode = Array.isArray(validationErrors) && validationErrors.some(validationError => (
+        typeof validationError === "object"
+        && validationError !== null
+        && "code" in validationError
+        && validationError.code === "already_exists"
+    ));
+    const message = typeof shape?.message === "string" ? shape.message.toLowerCase() : "";
+    return hasAlreadyExistsCode
+        || message.includes("already exists")
+        || message.includes("already_exists");
 };

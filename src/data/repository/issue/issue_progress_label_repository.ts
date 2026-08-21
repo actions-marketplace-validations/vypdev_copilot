@@ -1,58 +1,9 @@
-import { logDebugInfo, logError } from '../../../utils/logger';
+import { logDebugInfo } from '../../../utils/logger';
 import { IssueLabelRepository } from './issue_label_repository';
-import {
-    PROGRESS_LABEL_PATTERN,
-    PROGRESS_LABEL_PERCENTS,
-    progressPercentToColor,
-} from '../../../application/policies/progress_labels';
-
-export interface EnsureLabelResult {
-    created: boolean;
-    existed: boolean;
-}
-
-export type EnsureLabel = (
-    owner: string,
-    repository: string,
-    name: string,
-    color: string,
-    description: string,
-    token: string,
-) => Promise<EnsureLabelResult>;
+import { PROGRESS_LABEL_PATTERN } from '../../../application/policies/progress_labels';
 
 export class IssueProgressLabelRepository {
     constructor(private readonly issueLabelRepository: IssueLabelRepository) {}
-
-    ensureProgressLabels = async (
-        owner: string,
-        repository: string,
-        token: string,
-        ensureLabel: EnsureLabel,
-    ): Promise<{ created: number; existing: number; errors: string[] }> => {
-        const errors: string[] = [];
-        let created = 0;
-        let existing = 0;
-        for (const percent of PROGRESS_LABEL_PERCENTS) {
-            const name = `${percent}%`;
-            try {
-                const result = await ensureLabel(
-                    owner,
-                    repository,
-                    name,
-                    progressPercentToColor(percent),
-                    `Progress: ${percent}%`,
-                    token,
-                );
-                if (result.created) created++;
-                else if (result.existed) existing++;
-            } catch (error: unknown) {
-                const message = error instanceof Error ? error.message : String(error);
-                logError(`Error ensuring progress label "${name}": ${message}`);
-                errors.push(`Error creating label "${name}": ${message}`);
-            }
-        }
-        return { created, existing, errors };
-    };
 
     setProgressLabel = async (
         owner: string,

@@ -2,7 +2,7 @@ import { Execution } from "../../../data/model/execution";
 import type { LatestTagQueryPort } from "../../ports/branch_tag_ports";
 import type { AuthenticatedUserPort } from "../../ports/authenticated_user_ports";
 import type { RepositoryTagPort, RepositoryDefaultBranchPort } from "../../ports/repository_release_ports";
-import type { IssueLabelProvisioningPort, IssueProgressLabelProvisioningPort, IssueTypeProvisioningPort } from "../../ports/issue_management_ports";
+import type { InitialLabelProvisioningPort, IssueTypeProvisioningPort, LabelProvisioningSummary } from "../../ports/issue_management_ports";
 import type { SetupWorkspacePort } from "../../ports/setup_workspace_ports";
 import { Result } from "../../../data/model/result";
 import { ParamUseCase } from "../base/param_usecase";
@@ -10,14 +10,23 @@ import { DEFAULT_INITIAL_TAG } from "../../../utils/version_utils";
 import { logDebugInfo, logError, logInfo } from "../../../utils/logger";
 import { getTaskEmoji } from "../../../utils/task_emoji";
 
+type InitialLabelProvisioningOutcome =
+    | {
+        completed: true;
+        configured: LabelProvisioningSummary;
+        progress: LabelProvisioningSummary;
+    }
+    | {
+        completed: false;
+        error: string;
+    };
 
 export class InitialSetupUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'InitialSetupUseCase';
 
     constructor(
         private readonly authenticatedUserPort: AuthenticatedUserPort,
-        private readonly issueLabelProvisioningPort: IssueLabelProvisioningPort,
-        private readonly issueProgressLabelProvisioningPort: IssueProgressLabelProvisioningPort,
+        private readonly initialLabelProvisioningPort: InitialLabelProvisioningPort,
         private readonly issueTypeProvisioningPort: IssueTypeProvisioningPort,
         private readonly latestTagQueryPort: LatestTagQueryPort,
         private readonly repositoryDefaultBranchPort: RepositoryDefaultBranchPort,
@@ -71,24 +80,28 @@ export class InitialSetupUseCase implements ParamUseCase<Execution, Result[]> {
             }
             steps.push(`✅ GitHub access verified: ${githubAccessResult.user}`);
 
-            // 2. Create all required labels
-            logInfo('🏷️  Checking labels...');
-            const labelsResult = await this.ensureLabels(param);
-            if (!labelsResult.success) {
-                errors.push(...labelsResult.errors);
-                logError(`Error checking labels: ${labelsResult.errors}`);
+            // 2. Provision the complete initial label catalog in one semantic execution
+            logInfo('🏷️  Checking configured and progress labels...');
+            const initialLabelsResult = await this.ensureInitialLabels(param);
+            if (!initialLabelsResult.completed) {
+                errors.push(initialLabelsResult.error);
             } else {
-                steps.push(`✅ Labels checked: ${labelsResult.created} created, ${labelsResult.existing} already existed`);
-            }
+                const labelsResult = initialLabelsResult.configured;
+                if (labelsResult.errors.length > 0) {
+                    errors.push(...labelsResult.errors);
+                    logError(`Error checking labels: ${labelsResult.errors}`);
+                } else {
+                    steps.push(`✅ Labels checked: ${labelsResult.created} created, ${labelsResult.existing} already existed`);
+                }
 
-            // 2b. Create progress labels (0%, 5%, ..., 100%) with red→yellow→green colors
-            logInfo('📊 Checking progress labels...');
-            const progressLabelsResult = await this.ensureProgressLabels(param);
-            if (progressLabelsResult.errors.length > 0) {
-                errors.push(...progressLabelsResult.errors);
-                logError(`Error checking progress labels: ${progressLabelsResult.errors}`);
-            } else {
-                steps.push(`✅ Progress labels checked: ${progressLabelsResult.created} created, ${progressLabelsResult.existing} already existed`);
+                // Report progress labels (0%, 5%, ..., 100%) separately in the user-facing result
+                const progressLabelsResult = initialLabelsResult.progress;
+                if (progressLabelsResult.errors.length > 0) {
+                    errors.push(...progressLabelsResult.errors);
+                    logError(`Error checking progress labels: ${progressLabelsResult.errors}`);
+                } else {
+                    steps.push(`✅ Progress labels checked: ${progressLabelsResult.created} created, ${progressLabelsResult.existing} already existed`);
+                }
             }
 
             // 3. Create all issue types if they do not exist
@@ -147,36 +160,19 @@ export class InitialSetupUseCase implements ParamUseCase<Execution, Result[]> {
         }
     }
 
-    private async ensureLabels(param: Execution): Promise<{ success: boolean; created: number; existing: number; errors: string[] }> {
+    private async ensureInitialLabels(param: Execution): Promise<InitialLabelProvisioningOutcome> {
         try {
-            const result = await this.issueLabelProvisioningPort.ensureLabels(
+            const summary = await this.initialLabelProvisioningPort.ensureInitialLabels(
                 param.owner,
                 param.repo,
                 param.labels,
                 param.tokens.token
             );
-            return {
-                success: result.errors.length === 0,
-                created: result.created,
-                existing: result.existing,
-                errors: result.errors,
-            };
+            return { completed: true, ...summary };
         } catch (error) {
-            logError(`Error ensuring labels: ${error}`);
-            return { success: false, created: 0, existing: 0, errors: [`Error ensuring labels: ${error}`] };
-        }
-    }
-
-    private async ensureProgressLabels(param: Execution): Promise<{ created: number; existing: number; errors: string[] }> {
-        try {
-            return await this.issueProgressLabelProvisioningPort.ensureProgressLabels(
-                param.owner,
-                param.repo,
-                param.tokens.token
-            );
-        } catch (error) {
-            logError(`Error ensuring progress labels: ${error}`);
-            return { created: 0, existing: 0, errors: [`Error ensuring progress labels: ${error}`] };
+            const message = `Error ensuring initial labels: ${error}`;
+            logError(message);
+            return { completed: false, error: message };
         }
     }
 

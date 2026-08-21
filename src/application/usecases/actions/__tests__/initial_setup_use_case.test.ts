@@ -39,8 +39,7 @@ jest.mock('../../../../data/repository/organization/authenticated_user_repositor
 
 const mockGetLatestTag = jest.fn();
 
-const mockEnsureLabels = jest.fn();
-const mockEnsureProgressLabels = jest.fn();
+const mockEnsureInitialLabels = jest.fn();
 const mockEnsureIssueTypes = jest.fn();
 const mockSetupPrepare = jest.fn();
 const mockSetupHasValidToken = jest.fn();
@@ -80,8 +79,7 @@ describe('InitialSetupUseCase', () => {
     mockSetupHasValidToken.mockClear();
     useCase = new InitialSetupUseCase(
       { getUserFromToken: mockGetUserFromToken, getTokenUserDetails: jest.fn() },
-      { ensureLabels: mockEnsureLabels },
-      { ensureProgressLabels: mockEnsureProgressLabels },
+      { ensureInitialLabels: mockEnsureInitialLabels },
       { ensureIssueTypes: mockEnsureIssueTypes },
       { getLatestTag: mockGetLatestTag },
       { getDefaultBranch: mockGetDefaultBranch } as any,
@@ -91,8 +89,12 @@ describe('InitialSetupUseCase', () => {
     mockSetupPrepare.mockReturnValue({ copied: 2, skipped: 0 });
     mockSetupHasValidToken.mockReturnValue(true);
     mockGetUserFromToken.mockResolvedValue('test-user');
-    mockEnsureLabels.mockResolvedValue({ success: true, created: 0, existing: 5, errors: [] });
-    mockEnsureProgressLabels.mockResolvedValue({ created: 0, existing: 21, errors: [] });
+    mockEnsureInitialLabels.mockReset();
+    mockEnsureInitialLabels.mockResolvedValue({
+      configured: { created: 0, existing: 5, errors: [] },
+      progress: { created: 0, existing: 21, errors: [] },
+    });
+    mockEnsureIssueTypes.mockReset();
     mockEnsureIssueTypes.mockResolvedValue({ success: true, created: 0, existing: 3, errors: [] });
     mockGetLatestTag.mockReset();
     mockGetLatestTag.mockResolvedValue('1.0.0');
@@ -138,6 +140,13 @@ describe('InitialSetupUseCase', () => {
     expect(results[0].steps?.some((s) => s.includes('GitHub access verified'))).toBe(true);
     expect(results[0].steps?.some((s) => s.includes('Labels checked'))).toBe(true);
     expect(results[0].steps?.some((s) => s.includes('Progress labels'))).toBe(true);
+    expect(mockEnsureInitialLabels).toHaveBeenCalledTimes(1);
+    expect(mockEnsureInitialLabels).toHaveBeenCalledWith(
+      'owner',
+      'repo',
+      param.labels,
+      'token',
+    );
     expect(results[0].steps?.some((s) => s.includes('Issue types'))).toBe(true);
   });
 
@@ -199,8 +208,11 @@ describe('InitialSetupUseCase', () => {
     expect(results[0].errors?.length).toBeGreaterThan(0);
   });
 
-  it('continues and reports errors when ensureLabels fails', async () => {
-    mockEnsureLabels.mockResolvedValue({ success: false, created: 0, existing: 0, errors: ['Label error'] });
+  it('continues and reports configured-label provisioning errors', async () => {
+    mockEnsureInitialLabels.mockResolvedValue({
+      configured: { created: 0, existing: 0, errors: ['Label error'] },
+      progress: { created: 0, existing: 21, errors: [] },
+    });
     const param = baseParam();
     const results = await useCase.invoke(param);
     expect(results).toHaveLength(1);
@@ -208,8 +220,11 @@ describe('InitialSetupUseCase', () => {
     expect(results[0].errors).toContain('Label error');
   });
 
-  it('continues and reports errors when ensureProgressLabels has errors', async () => {
-    mockEnsureProgressLabels.mockResolvedValue({ created: 0, existing: 0, errors: ['Progress error'] });
+  it('continues and reports progress-label provisioning errors', async () => {
+    mockEnsureInitialLabels.mockResolvedValue({
+      configured: { created: 0, existing: 5, errors: [] },
+      progress: { created: 0, existing: 0, errors: ['Progress error'] },
+    });
     const param = baseParam();
     const results = await useCase.invoke(param);
     expect(results).toHaveLength(1);
@@ -226,20 +241,17 @@ describe('InitialSetupUseCase', () => {
     expect(results[0].errors).toContain('Issue type error');
   });
 
-  it('returns failure with errors when ensureLabels throws', async () => {
-    mockEnsureLabels.mockRejectedValue(new Error('ensureLabels failed'));
+  it('returns failure when initial label provisioning throws', async () => {
+    mockEnsureInitialLabels.mockRejectedValue(new Error('initial labels failed'));
     const param = baseParam();
     const results = await useCase.invoke(param);
     expect(results[0].success).toBe(false);
     expect(results[0].errors?.some((e) => String(e).includes('labels'))).toBe(true);
+    expect(results[0].steps?.some((step) => step.includes('Labels checked'))).toBe(false);
+    expect(results[0].steps?.some((step) => step.includes('Progress labels checked'))).toBe(false);
+    expect(mockEnsureIssueTypes).toHaveBeenCalledTimes(1);
   });
 
-  it('returns failure when ensureProgressLabels throws', async () => {
-    mockEnsureProgressLabels.mockRejectedValue(new Error('progress labels failed'));
-    const param = baseParam();
-    const results = await useCase.invoke(param);
-    expect(results[0].success).toBe(false);
-  });
 
   it('returns failure when ensureIssueTypes throws', async () => {
     mockEnsureIssueTypes.mockRejectedValue(new Error('issue types failed'));
