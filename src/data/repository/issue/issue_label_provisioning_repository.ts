@@ -11,6 +11,7 @@ import type { GithubClientPort } from "../../../infrastructure/github/ports/gith
 import type { GithubIssueLabelProvisioningClient } from "../../../infrastructure/github/ports/github_issue_label_provisioning_protocol";
 import { logError } from "../../../utils/logger";
 import { Labels } from "../../model/labels";
+import { isGithubAlreadyExists } from "../github/github_error_policy";
 
 interface RepositoryLabel {
     name: string;
@@ -110,7 +111,7 @@ export class IssueLabelProvisioningRepository implements InitialLabelProvisionin
 }
 
 function mapLabelMutationError(name: string, error: unknown): LabelMutationOutcome {
-    if (isAlreadyExistingLabelError(error)) return { kind: 'existing' };
+    if (isGithubAlreadyExists(error)) return { kind: 'existing' };
     const summaryError = `Error creating label "${name}": ${providerErrorMessage(error)}`;
     logError(summaryError);
     return { kind: 'failed', error: summaryError };
@@ -119,9 +120,4 @@ function mapLabelMutationError(name: string, error: unknown): LabelMutationOutco
 function providerErrorMessage(error: unknown): string {
     if (error instanceof Error) return error.message;
     return String(error);
-}
-
-function isAlreadyExistingLabelError(error: unknown): boolean {
-    const providerError = error as { status?: number; message?: string };
-    return providerError.status === 422 && providerError.message?.includes('already exists') === true;
 }

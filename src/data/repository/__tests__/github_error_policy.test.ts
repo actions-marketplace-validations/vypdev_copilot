@@ -14,6 +14,20 @@ describe("github error policy", () => {
 
     it("recognizes already-existing validation conflicts", () => {
         expect(isGithubAlreadyExists({ status: 422, message: "Label already exists" })).toBe(true);
+        expect(isGithubAlreadyExists({
+            status: 422,
+            message: "Validation Failed",
+            response: {
+                data: {
+                    errors: [{ resource: "Label", code: "already_exists", field: "name" }],
+                },
+            },
+        })).toBe(true);
+        expect(isGithubAlreadyExists({
+            status: 422,
+            message: 'Validation Failed: {"resource":"Label","code":"already_exists","field":"name"}',
+        })).toBe(true);
+        expect(isGithubAlreadyExists({ status: 422 })).toBe(false);
         expect(isGithubAlreadyExists({ status: 422, message: "invalid color" })).toBe(false);
         expect(isGithubAlreadyExists({ status: 409, message: "already exists" })).toBe(false);
     });

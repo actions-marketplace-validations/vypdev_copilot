@@ -10,6 +10,16 @@ import { DEFAULT_INITIAL_TAG } from "../../../utils/version_utils";
 import { logDebugInfo, logError, logInfo } from "../../../utils/logger";
 import { getTaskEmoji } from "../../../utils/task_emoji";
 
+type InitialLabelProvisioningOutcome =
+    | {
+        completed: true;
+        configured: LabelProvisioningSummary;
+        progress: LabelProvisioningSummary;
+    }
+    | {
+        completed: false;
+        error: string;
+    };
 
 export class InitialSetupUseCase implements ParamUseCase<Execution, Result[]> {
     taskId: string = 'InitialSetupUseCase';
@@ -73,21 +83,25 @@ export class InitialSetupUseCase implements ParamUseCase<Execution, Result[]> {
             // 2. Provision the complete initial label catalog in one semantic execution
             logInfo('🏷️  Checking configured and progress labels...');
             const initialLabelsResult = await this.ensureInitialLabels(param);
-            const labelsResult = initialLabelsResult.configured;
-            if (labelsResult.errors.length > 0) {
-                errors.push(...labelsResult.errors);
-                logError(`Error checking labels: ${labelsResult.errors}`);
+            if (!initialLabelsResult.completed) {
+                errors.push(initialLabelsResult.error);
             } else {
-                steps.push(`✅ Labels checked: ${labelsResult.created} created, ${labelsResult.existing} already existed`);
-            }
+                const labelsResult = initialLabelsResult.configured;
+                if (labelsResult.errors.length > 0) {
+                    errors.push(...labelsResult.errors);
+                    logError(`Error checking labels: ${labelsResult.errors}`);
+                } else {
+                    steps.push(`✅ Labels checked: ${labelsResult.created} created, ${labelsResult.existing} already existed`);
+                }
 
-            // Report progress labels (0%, 5%, ..., 100%) separately in the user-facing result
-            const progressLabelsResult = initialLabelsResult.progress;
-            if (progressLabelsResult.errors.length > 0) {
-                errors.push(...progressLabelsResult.errors);
-                logError(`Error checking progress labels: ${progressLabelsResult.errors}`);
-            } else {
-                steps.push(`✅ Progress labels checked: ${progressLabelsResult.created} created, ${progressLabelsResult.existing} already existed`);
+                // Report progress labels (0%, 5%, ..., 100%) separately in the user-facing result
+                const progressLabelsResult = initialLabelsResult.progress;
+                if (progressLabelsResult.errors.length > 0) {
+                    errors.push(...progressLabelsResult.errors);
+                    logError(`Error checking progress labels: ${progressLabelsResult.errors}`);
+                } else {
+                    steps.push(`✅ Progress labels checked: ${progressLabelsResult.created} created, ${progressLabelsResult.existing} already existed`);
+                }
             }
 
             // 3. Create all issue types if they do not exist
@@ -146,24 +160,19 @@ export class InitialSetupUseCase implements ParamUseCase<Execution, Result[]> {
         }
     }
 
-    private async ensureInitialLabels(param: Execution): Promise<{
-        configured: LabelProvisioningSummary;
-        progress: LabelProvisioningSummary;
-    }> {
+    private async ensureInitialLabels(param: Execution): Promise<InitialLabelProvisioningOutcome> {
         try {
-            return await this.initialLabelProvisioningPort.ensureInitialLabels(
+            const summary = await this.initialLabelProvisioningPort.ensureInitialLabels(
                 param.owner,
                 param.repo,
                 param.labels,
                 param.tokens.token
             );
+            return { completed: true, ...summary };
         } catch (error) {
             const message = `Error ensuring initial labels: ${error}`;
             logError(message);
-            return {
-                configured: { created: 0, existing: 0, errors: [message] },
-                progress: { created: 0, existing: 0, errors: [] },
-            };
+            return { completed: false, error: message };
         }
     }
 

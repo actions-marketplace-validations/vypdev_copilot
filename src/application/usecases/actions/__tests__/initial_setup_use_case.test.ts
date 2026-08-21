@@ -94,6 +94,7 @@ describe('InitialSetupUseCase', () => {
       configured: { created: 0, existing: 5, errors: [] },
       progress: { created: 0, existing: 21, errors: [] },
     });
+    mockEnsureIssueTypes.mockReset();
     mockEnsureIssueTypes.mockResolvedValue({ success: true, created: 0, existing: 3, errors: [] });
     mockGetLatestTag.mockReset();
     mockGetLatestTag.mockResolvedValue('1.0.0');
@@ -246,6 +247,9 @@ describe('InitialSetupUseCase', () => {
     const results = await useCase.invoke(param);
     expect(results[0].success).toBe(false);
     expect(results[0].errors?.some((e) => String(e).includes('labels'))).toBe(true);
+    expect(results[0].steps?.some((step) => step.includes('Labels checked'))).toBe(false);
+    expect(results[0].steps?.some((step) => step.includes('Progress labels checked'))).toBe(false);
+    expect(mockEnsureIssueTypes).toHaveBeenCalledTimes(1);
   });
 
 

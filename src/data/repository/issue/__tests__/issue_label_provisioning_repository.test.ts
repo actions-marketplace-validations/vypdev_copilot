@@ -64,8 +64,13 @@ describe('IssueLabelProvisioningRepository', () => {
 
   it('maps an already-existing provider race to existing and continues provisioning', async () => {
     const listLabelsForRepo = jest.fn();
-    const raceError = Object.assign(new Error('Validation Failed: already exists'), {
+    const raceError = Object.assign(new Error('Validation Failed'), {
       status: 422,
+      response: {
+        data: {
+          errors: [{ resource: 'Label', code: 'already_exists', field: 'name' }],
+        },
+      },
     });
     const createLabel = jest.fn(({ name }: { name: string }) =>
       name === 'feature'
@@ -94,6 +99,47 @@ describe('IssueLabelProvisioningRepository', () => {
       progress: { created: 21, existing: 0, errors: [] },
     });
     expect(createLabel).toHaveBeenCalledTimes(22);
+  });
+
+  it('serializes provider mutations', async () => {
+    const listLabelsForRepo = jest.fn();
+    let releaseFirstMutation!: () => void;
+    let reportFirstMutation!: () => void;
+    const firstMutationReleased = new Promise<void>((resolve) => {
+      releaseFirstMutation = resolve;
+    });
+    const firstMutationStarted = new Promise<void>((resolve) => {
+      reportFirstMutation = resolve;
+    });
+    const createLabel = jest.fn(async () => {
+      if (createLabel.mock.calls.length === 1) {
+        reportFirstMutation();
+        await firstMutationReleased;
+      }
+      return { data: { id: 1 } };
+    });
+    const iterator = jest.fn(async function* () {
+      yield { data: [] };
+    });
+    const repository = new IssueLabelProvisioningRepository({
+      getClient: jest.fn(() => ({
+        paginate: { iterator },
+        rest: { issues: { listLabelsForRepo, createLabel } },
+      })),
+    } as never);
+
+    const provisioning = repository.ensureInitialLabels(
+      'owner',
+      'repo',
+      createLabels({ bug: 'bug', feature: 'feature' }),
+      'token',
+    );
+
+    await firstMutationStarted;
+    expect(createLabel).toHaveBeenCalledTimes(1);
+    releaseFirstMutation();
+    await provisioning;
+    expect(createLabel).toHaveBeenCalledTimes(23);
   });
 
   it('aggregates provider errors by category and continues with remaining labels', async () => {
