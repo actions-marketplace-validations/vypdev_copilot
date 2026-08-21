@@ -33,7 +33,19 @@ GRAPHIFY=/tmp/copilot-graphify-venv/bin/graphify
 
 ## Current workflow
 
-The authoritative refresh command is:
+The authoritative reproducible refresh is the versioned collector:
+
+```bash
+METRICS_OUTPUT_DIR="$(mktemp -d "/tmp/copilot-architecture-metrics-$(git rev-parse HEAD)-XXXXXX")" \
+  pnpm run metrics:architecture
+```
+
+It fixes RepoWise to single-repository scope, derives coverage inventory from
+LCOV, records reports outside the repository, runs Graphify, and snapshots then
+restores every mutable workspace path (`build/`, `coverage/`, `graphify-out/`,
+local RepoWise/editor/agent configuration) byte-for-byte. A run publishes
+`complete.json` only after report validation and post-restoration Git checks. For
+an explicitly destructive, isolated Graphify investigation, use:
 
 ```bash
 rm -rf graphify-out
@@ -71,14 +83,17 @@ boundary only when one exists, and add contract tests for intentional changes.
 
 ## Current checkpoint
 
-At published source checkpoint
-`8196da94146a215fc99cb7939d852f85ad2fa4d2`, refreshed with the command above:
+At published Phase D checkpoint
+`af32863317977e42ec59b712fc1f371b5f231cad`, refreshed with the command above:
 
 ```text
-3178 nodes
-8241 edges
-220 communities
+3271 nodes
+8424 edges
+217 communities
 ```
+
+The resulting implementation and documentation are published together; use
+`git rev-parse HEAD` for the current revision.
 
 The generated graph is currently marked `directed: false`. It cannot prove the
 absence of directed dependency cycles. Use source imports and executable

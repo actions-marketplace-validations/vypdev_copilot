@@ -1,20 +1,15 @@
-import { INPUT_KEYS } from "../../utils/constants";
-import { extractIssueNumberFromBranch, extractIssueNumberFromPush } from "../../utils/title_utils";
-import type { ExecutionIssueResolutionContext } from '../../application/ports/execution_resolution_ports';
-import type { ExecutionIssueSetupPort } from '../../application/ports/execution_setup_ports';
+import { INPUT_KEYS } from '../../../utils/constants';
+import { extractIssueNumberFromBranch, extractIssueNumberFromPush } from '../../../utils/title_utils';
+import type { ExecutionIssueResolutionContext } from '../../ports/execution_resolution_ports';
+import type { ExecutionIssueSetupPort } from '../../ports/execution_setup_ports';
 
-/**
- * Resolves the issue/PR number that drives an execution and records the
- * single-action event classification. Repository access is injected so this
- * concern does not construct repositories or configure unrelated state.
- */
 export async function resolveExecutionIssueNumber(
     execution: ExecutionIssueResolutionContext,
-    issueRepository: Pick<ExecutionIssueSetupPort, "isPullRequest" | "isIssue" | "getHeadBranch">,
+    issueRepository: Pick<ExecutionIssueSetupPort, 'isPullRequest' | 'isIssue' | 'getHeadBranch'>,
 ): Promise<number | undefined> {
     if (execution.isSingleAction) {
         if (execution.inputs?.[INPUT_KEYS.SINGLE_ACTION_ISSUE]) {
-            execution.issueNumber = execution.inputs[INPUT_KEYS.SINGLE_ACTION_ISSUE] as number;
+            execution.issueNumber = Number(execution.inputs[INPUT_KEYS.SINGLE_ACTION_ISSUE]);
             execution.singleAction.issue = execution.issueNumber;
         } else if (execution.isIssue) {
             execution.singleAction.isIssue = true;
@@ -41,7 +36,6 @@ export async function resolveExecutionIssueNumber(
                 execution.singleAction.issue,
                 execution.tokens.token,
             );
-
             if (execution.singleAction.isIssue) {
                 execution.issueNumber = execution.singleAction.issue;
             } else if (execution.singleAction.isPullRequest) {
@@ -51,9 +45,7 @@ export async function resolveExecutionIssueNumber(
                     execution.singleAction.issue,
                     execution.tokens.token,
                 );
-                if (head === undefined) {
-                    return undefined;
-                }
+                if (head === undefined) return undefined;
                 execution.issueNumber = extractIssueNumberFromBranch(head);
             }
         }
@@ -64,6 +56,5 @@ export async function resolveExecutionIssueNumber(
     } else if (execution.isPush) {
         execution.issueNumber = extractIssueNumberFromPush(execution.commit.branch);
     }
-
     return execution.issueNumber;
 }

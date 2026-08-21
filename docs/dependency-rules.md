@@ -35,11 +35,15 @@ ports, use cases, constants, or logging. This is a documented transitional
 model boundary, not evidence that the complete directory satisfies domain
 purity.
 
-Direct import analysis confirms an unjustified SCC: `Execution` calls
-`resolveIssueBranchVersion`; the release/hotfix resolution helpers construct
-three application use cases; those use cases import `Execution` again.
-`Execution` and `ExecutionConfigurationPort` also import each other. These are
-active defects, not approved dependency exceptions.
+Direct import analysis previously found an unjustified SCC around `Execution`,
+release/hotfix resolution helpers, application use cases, and
+`ExecutionConfigurationPort`. Phase C removed that SCC without splitting the
+model for metric cosmetics. Setup and branch-version resolution now belong to
+`SetupExecutionUseCase` and `ExecutionBranchVersionResolver`, while the
+configuration port accepts a semantic query instead of importing the aggregate
+model. A Tarjan-based production architecture test rejects static, re-export,
+side-effect, `require()` and dynamic-import cycles. The current productive graph
+contains no directed dependency cycle.
 
 Pure domain/model policies may import:
 
@@ -72,7 +76,14 @@ Application owns:
 - orchestration and application policies.
 
 Application production code may import application modules and approved
-model/policy types. It must not import:
+model/policy types. Several legacy `Github*Client` SDK-shaped contracts still
+live in `src/application/ports/github_*_ports.ts`; they are explicit transitional
+exceptions used by specialized adapters, not semantic application ports. They
+must migrate capability by capability to infrastructure-owned provider protocol
+modules, with callers and focused contracts verified and no universal provider
+facade introduced.
+
+Except for that documented, shrinking allowlist, application must not import:
 
 ```text
 data/repository concrete adapters
@@ -114,16 +125,15 @@ lifecycle-specific sharing. Current composition is split across:
 
 ```text
 src/infrastructure/composition/**
-src/actions/main_run_composition.ts
-src/actions/main_run_dispatcher.ts
 runtime entrypoints for lifecycle-local dependencies
 ```
 
-The preferred direction is a named root for every non-trivial capability or
-use-case graph. Phase D must audit the remaining concrete construction in
-action files. Existing runtime-local construction is a known review target, not
-an automatic violation: caller ownership, lifecycle, sharing, and tests decide
-whether it should move.
+The required direction is a named root for every runtime capability or use-case
+graph. Phase D moved route-specific assembly and workflow-queue wiring to named
+roots. One-time runtime-local construction is not an exception: the remaining
+inline Project Board and `GitCliRepository` assembly in `local_action.ts` is
+tracked debt and must move behind a named local lifecycle composition root after
+the higher-priority P0 contract blocks.
 
 Composition roots may depend on outer details and application contracts, but
 must not become universal registries or service locators.
@@ -209,7 +219,9 @@ Executable tests currently verify at least:
 6. GitHub and local lifecycles remain separate;
 7. shared input policies remain independent from lifecycles/infrastructure;
 8. retired aggregate-facade imports do not escape approved composition areas;
-9. application ports do not import technical GraphQL/provider details.
+9. application ports do not import technical GraphQL/provider details;
+10. `main_run_dispatcher.ts` does not construct concrete use cases, repositories,
+    or adapters and does not import provider details.
 
 Primary tests:
 
@@ -221,14 +233,6 @@ Primary tests:
 
 ## Known review targets
 
-- eliminate the verified `Execution`/version-resolution/configuration SCC with
-  application-owned orchestration and acyclic request/result contracts;
-- add an architecture test that rejects data models importing or constructing
-  application use cases;
-- formalize or justify route-specific construction in
-  `main_run_dispatcher.ts`;
-- verify the lifecycle-local `GitCliRepository` construction in
-  `local_action.ts`;
 - classify the non-pure files under `src/data/model/` instead of declaring the
   entire directory a domain layer;
 - strengthen architecture tests where a documented rule is not yet executable;

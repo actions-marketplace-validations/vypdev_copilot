@@ -6,13 +6,14 @@ This document describes the architecture of the current `master` checkout. It
 is an implementation map and migration contract, not a request to create files
 mechanically. Historical baselines and completed migrations live in
 [`migration-baseline.md`](./migration-baseline.md) and
-[`hotspot-refactoring-plan.md`](./hotspot-refactoring-plan.md).
+[`hotspot-refactoring-plan.md`](./hotspot-refactoring-plan.md). The remaining
+quality and coverage work is governed by
+[`repowise-perfect-metrics-plan.md`](./repowise-perfect-metrics-plan.md); current
+coverage inventory lives in
+[`COVERAGE_ACTION_PLAN.md`](./COVERAGE_ACTION_PLAN.md).
 
-Current published checkpoint:
-
-```text
-8196da94146a215fc99cb7939d852f85ad2fa4d2
-```
+Use `git rev-parse HEAD` for the current published checkpoint; this document
+describes the checkout that contains it and does not encode its own commit SHA.
 
 ## Dependency direction
 
@@ -28,8 +29,12 @@ runtime entrypoint
 
 The application layer owns use cases, workflows, semantic ports, and
 application policies. Provider protocols, pagination, GraphQL documents,
-Octokit DTOs, process execution, and concrete adapters stay outside
-application behavior.
+Octokit DTOs, process execution, and concrete adapters belong outside
+application behavior. The current checkout still has a documented transitional
+exception: SDK-shaped `Github*Client` contracts under
+`src/application/ports/github_*_ports.ts`. They form a shrinking allowlist to be
+migrated capability by capability; no new exception or universal provider
+facade is allowed.
 
 `src/data/model/` currently contains domain models and pure model policies.
 `src/data/repository/` contains specialized adapters and some pure repository
@@ -58,12 +63,14 @@ Composition starts in:
 - concrete adapter: `ConfigurationHandler`;
 - construction boundary: GitHub Action completion composition.
 
-The write boundary is complete. The read/setup side is not yet acyclic:
-`Execution` imports `ExecutionConfigurationPort`, while that port imports
-`Execution`. Version resolution also routes from `Execution` through model
-helpers that construct release/hotfix use cases, which import `Execution` back.
-This verified SCC is the next production boundary to remove; it is not a reason
-to split the model by size.
+The read and write boundaries are complete. `SetupExecutionUseCase` owns setup
+orchestration, `ExecutionBranchVersionResolver` owns release/hotfix resolution,
+and `execution_setup_composition_root.ts` assembles their semantic ports and
+child use cases. `ExecutionConfigurationPort` accepts a narrow
+`ExecutionConfigurationQuery`; neither it nor `Execution` imports the other.
+The former eight-module SCC has been removed and is guarded by a productive
+dependency-cycle test. `Execution` remains the lifecycle state model rather
+than being split by size.
 
 `StoreConfigurationUseCase` depends on `ConfigurationStorePort`; application
 architecture tests reject concrete manager imports.
@@ -119,15 +126,19 @@ though both use the same GitHub endpoint.
 ### Branch, release, and workflow
 
 Branch comparison, merge, preparation, naming, lifecycle, linked branches,
-tags, release publication, default branch, and workflow runs use separate
-ports/adapters. Release construction starts in
+tags, release publication, default branch, workflow-run queries, polling delay,
+and workflow dispatch use separate ports/adapters. Workflow queue policy belongs
+to `WaitForPreviousWorkflowRunsUseCase`; its composition root creates the query
+and timer adapters once, outside the polling loop. The former aggregate
+`WorkflowRepository` and callerless `WorkflowRun` model no longer exist.
+Release construction starts in
 `release_composition_root.ts` and release-specific client factories.
 
-The next Phase E adapter audit targets release/tag mapping, idempotency,
-malformed responses, pagination, and provider errors, but it is postponed until
-the verified Phase C/F SCC is removed and guarded. It must not merge release and
-tag publication because they have different provider operations and failure
-semantics.
+The release/tag correctness track still covers mapping, idempotency, malformed
+responses, pagination, and provider errors. It must not merge release and tag
+publication because they have different semantic contracts. Current sequencing
+also prioritizes focused P0 project-board and branch contracts, as defined by
+the authoritative perfect-metrics plan.
 
 ## Runtime composition
 
@@ -136,17 +147,17 @@ The current runtime topology is intentionally split:
 - `src/actions/github_action.ts`: GitHub Action input/event lifecycle;
 - `src/actions/local_action.ts`: local execution lifecycle;
 - `src/cli.ts` and `src/cli/**`: CLI bootstrap, parsing, and commands;
-- `src/infrastructure/composition/**`: capability and use-case roots;
-- `src/actions/main_run_composition.ts` and
-  `src/actions/main_run_dispatcher.ts`: route-specific action composition.
+- `src/infrastructure/composition/**`: capability and use-case roots, including
+  `main_run_route_composition_root.ts` and `workflow_queue_composition_root.ts`;
+- `src/actions/common_action.ts` and `src/actions/main_run_route.ts`: lifecycle route selection and unhandled failure policy;
+- `src/actions/main_run_dispatcher.ts`: route logging and invocation of precomposed handlers only.
 
 `cli.ts` is an 11-line bootstrap and is not an extraction target.
-`local_action.ts` is a small lifecycle coordinator. It currently constructs a
-`GitCliRepository` at the local runtime boundary, while
-`main_run_dispatcher.ts` performs some route-specific concrete wiring. Phase D
-must audit whether these are legitimate lifecycle composition boundaries or
-whether moving selected construction to named roots improves ownership and
-testing. No move is justified by file location alone.
+`local_action.ts` is a small lifecycle coordinator. Its one-time
+`GitCliRepository` construction at the local runtime boundary is intentional;
+caller and sharing analysis found no hidden provider loop or cross-lifecycle
+coupling. An executable composition guard rejects concrete assembly in
+`main_run_dispatcher.ts`. No move is justified by file location alone.
 
 ## Executable architecture rules
 
@@ -159,10 +170,17 @@ The main guards are:
 - GitHub client/adapter boundary tests under `src/infrastructure/**/__tests__/`.
 
 Application production code must not import concrete repositories, manager
-adapters, infrastructure, entrypoints, Octokit, or provider-shaped DTOs.
-Test-only concrete adapters do not become production dependencies.
+adapters, infrastructure, entrypoints, Octokit, or provider-shaped DTOs. The
+only current provider-protocol exception is the explicit SDK-shaped
+`Github*Client` allowlist under `src/application/ports/github_*_ports.ts`; new
+entries are forbidden and the authoritative plan requires capability-by-capability
+migration until the allowlist is empty. Test-only concrete adapters do not
+become production dependencies.
 
-## Non-negotiable rules
+## Non-negotiable target rules
+
+The rules below define the completed target. The transitional provider-contract
+allowlist above is not evidence that rule 1 is already fully satisfied.
 
 1. Ports represent semantic capabilities, not SDK method shapes.
 2. Use cases receive required dependencies explicitly.
@@ -180,25 +198,26 @@ Test-only concrete adapters do not become production dependencies.
 
 ## Current evidence and known limitations
 
-At checkpoint `8196da94`, the most recent verified gates reported 214 passing
-suites, 1358 passing tests, one skipped test, and passing TypeScript, ESLint,
-build, production audit, and diff checks.
+At checkpoint `af32863317977e42ec59b712fc1f371b5f231cad`, the verified gates
+reported 220 passing suites, 1373 passing tests, one skipped test, and passing
+TypeScript, ESLint, build, production audit, and diff checks.
 
 Current Graphify refresh:
 
 ```text
-3178 nodes
-8241 edges
-220 communities
+3271 nodes
+8424 edges
+217 communities
 ```
 
 `docs.json` currently produces zero Graphify nodes. The generated graph is
 undirected, so Graphify does not prove the absence of directed dependency
-cycles; import analysis and architecture tests enforce direction. RepoWise
-dead-code analysis is partial because of its offset-naive/offset-aware datetime
-error; zero reported dead code is therefore not conclusive. RepoWise's current
-highest rankings are mainly churn/co-change and duplicated-line suggestions.
-They are not automatic refactoring instructions.
+cycles; import analysis and architecture tests enforce direction. A successful
+RepoWise safe dead-code run at this checkpoint reported zero findings,
+unreachable files, and unused exports. That result is point-in-time evidence,
+not permanent proof. RepoWise's highest rankings remain mainly churn/co-change
+and duplicated-line suggestions; they are not automatic refactoring
+instructions.
 
 ## Migration and retirement protocol
 

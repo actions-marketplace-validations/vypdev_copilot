@@ -1,17 +1,20 @@
 # Copilot Architecture Perfection Plan
 
-**Status:** Active execution baseline — approved for consecutive phase execution.
+**Status:** the Phase D implementation checkpoint is published, but its strict
+named-root exit criterion is reopened for the local lifecycle. Remaining work is
+governed by
+[`repowise-perfect-metrics-plan.md`](repowise-perfect-metrics-plan.md), the
+authoritative execution plan for the current checkpoint.
 
-**Production implementation checkpoint used by this audit:**
-`8196da94146a215fc99cb7939d852f85ad2fa4d2`. Documentation-only commits may
-follow this checkpoint; use `git rev-parse HEAD` for the repository's current
-revision rather than expecting a document to encode its own commit SHA.
+**Published checkpoint:** `af32863317977e42ec59b712fc1f371b5f231cad`.
+Use `git rev-parse HEAD` and the reproducible protocol in the authoritative plan
+before treating any metric as current evidence.
 
-**Completed in the current execution block:** Phases A and B; Phase E hardening
-for pull-request file pagination, project-board linking, organization-member
-pagination, and authenticated-user contracts. Phase G is active to synchronize
-all documentation before further production work. Phase C is reopened by a
-verified import cycle, and Phase F becomes the next production priority.
+**Completed:** Phases A, B, C, D, and G; Phase E hardening for pull-request file
+pagination, project-board linking, organization-member pagination, and
+authenticated-user contracts. The release/tag audit remains a required
+correctness track. The current metric-driven sequence begins with missing P0
+adapter contracts; neither track authorizes cosmetic refactoring.
 
 **Scope:** Clean Architecture reconstruction, boundary hardening, contract coverage, documentation, and RepoWise/Graphify quality improvement for the current `master` checkout.
 
@@ -39,34 +42,36 @@ Success means:
 
 ## 2. Current evidence
 
-Evidence below is anchored to the named production implementation checkpoint and
-must be refreshed before each implementation block. Documentation-only commits
-may be newer; historical reports must not be treated as current facts.
+Evidence below was refreshed after Phase D was published. It remains a dated
+checkpoint and must be regenerated before every implementation block.
+Historical reports must not be treated as current facts.
 
-Production implementation baseline used for the evidence below:
+Published state used for the evidence below:
 
 ```text
-SHA: 8196da94146a215fc99cb7939d852f85ad2fa4d2
-working tree: clean
+SHA: af32863317977e42ec59b712fc1f371b5f231cad
+branch: master
+working tree: clean before metric generation and clean after artifact removal
 ```
 
 Current quality gates:
 
 ```text
-Jest: 214 suites passed, 1358 tests passed, 1 skipped
+Jest: 220 suites passed, 1373 tests passed, 1 skipped
 TypeScript: PASS
 ESLint: PASS
 Build: PASS
 Production audit: PASS
 Diff check: PASS
+Coverage: 85.52% statements, 80.20% branches, 84.31% functions, 86.64% lines
 ```
 
 Current Graphify refresh:
 
 ```text
-3178 nodes
-8241 edges
-220 communities
+3271 nodes
+8424 edges
+217 communities
 ```
 
 Persistent Graphify warning:
@@ -77,50 +82,55 @@ docs.json produces zero nodes
 
 This warning is analysis-tool input behavior, not evidence of a production architecture defect. It must remain visible until the tool or input handling changes.
 
-RepoWise observations captured on 2026-08-19 against implementation checkpoint
-`8196da94146a215fc99cb7939d852f85ad2fa4d2`:
+RepoWise observations captured on 2026-08-20 against published checkpoint
+`af32863317977e42ec59b712fc1f371b5f231cad`, after synchronizing the index and
+ingesting the current Jest LCOV report:
 
-```bash
-~/.local/bin/repowise update . --no-workspace --index-only
-~/.local/bin/repowise health . --no-workspace --format json
-~/.local/bin/repowise health . --no-workspace --refactoring-targets --format table
-~/.local/bin/repowise status . --no-workspace
+```text
+index: 3,175 nodes / 6,885 edges / 410 pages
+average health: 8.02/10
+hotspot health: 5.52/10
+average maintainability: 9.23/10
+average performance: 9.99/10
+performance coverage: 100% (613/613 analyzable files)
+dead-code safe findings: 0
+unreachable files: 0
+unused exports: 0
+RepoWise-mapped coverage: 86.6% lines / 77.1% branches
 ```
 
-The RepoWise index is local and intentionally not versioned. These values are
-an evidence snapshot, not timeless repository metadata; refresh and record a
-new checkpoint before using them to prioritize another implementation block.
+Jest and RepoWise coverage use different mapping and aggregation rules. Their
+percentages must not be presented as equivalent.
 
-- current graph: 3071 nodes and 6718 edges;
-- average health: 8.11/10; hotspot health: 5.79/10; average
-  maintainability: 9.22/10;
-- current worst performer: `src/data/repository/merge_repository.ts` at
-  3.04/10; its direct responsibilities and tests must be audited before any
-  split, because the score alone is not an architectural verdict;
-- current target findings are mainly churn/co-change signals and duplicated-line suggestions;
-- RepoWise does not currently emit a break-cycle plan for `Execution`, but
-  direct import analysis proves the eight-module SCC documented in Phase C;
-  tool silence is not evidence of an acyclic graph;
-- the next evidence-backed priority is that SCC, followed by lifecycle
-  composition verification and the postponed release/tag adapter audit;
-- RepoWise dead-code analysis is partial because of its offset-naive/offset-aware datetime issue; zero dead-code counts are not conclusive;
-- `cli.ts` is now a small bootstrap and is not a valid extraction target;
-- `local_action.ts` already delegates to builders and composition; its churn signal is not enough evidence for another split;
-- issue-comment and pull-request-review-comment use cases are thin lifecycle-specific wrappers around the shared `runCommentAutomation` flow and must not be merged into a universal use case without a semantic reason.
+The current worst performer is
+`src/data/repository/project/project_board_command_repository.ts` at 1.95/10.
+The immediate P0 set is dominated by missing focused adapter contracts in
+project-board, branch, issue-label and pull-request-review capabilities.
+`merge_repository.ts` remains the clearest current complexity target at CCN 16
+and nesting 6, but it already has tests and must be characterized before any
+semantic extraction.
+
+The RepoWise index and raw reports remain local and intentionally unversioned.
+Zero safe dead-code findings are evidence from this successful run, not a
+permanent proof. Churn, entropy and co-change remain history-derived; they must
+age naturally rather than drive wrappers, empty commits or history rewriting.
+`cli.ts`, `local_action.ts`, the pure `main_run_dispatcher.ts`, specialized
+composition roots, and lifecycle-specific comment wrappers remain explicit
+non-targets unless new source/caller evidence proves a defect.
 
 ## 3. Reclassified historical objectives
 
 The following objectives from older plans are complete or no longer valid targets in the current checkout:
 
-| Historical objective | Current decision |
-|---|---|
-| Partition `ai_repository.ts` | Historical work completed; `ai_repository.ts` is not present in the current production tree. Do not recreate or search for it as an active task. |
-| Dismantle `RepositoryFactory` | Historical composition migration completed to the extent supported by current callers. Verify current callers, but do not perform another generic factory rewrite. |
-| Split `cli.ts` | Complete. It is a bootstrap delegating to `createCliProgram()`. Keep it small. |
-| Split `local_action.ts` by line count | Rejected. Existing builders and lifecycle boundaries are already explicit. Add contract coverage only if a real wiring gap exists. |
-| Extract every RepoWise helper suggestion | Rejected. Only extract a helper when its semantics, ownership, and failure behavior are shared. |
-| Eliminate all repositories named `Repository` | Rejected. Specialized adapters may legitimately retain that name. |
-| Remove every facade | Rejected. Remove only obsolete compatibility facades with audited callers; retain legitimate capability composition boundaries. |
+| Historical objective                          | Current decision                                                                                                                                                   |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Partition `ai_repository.ts`                  | Historical work completed; `ai_repository.ts` is not present in the current production tree. Do not recreate or search for it as an active task.                   |
+| Dismantle `RepositoryFactory`                 | Historical composition migration completed to the extent supported by current callers. Verify current callers, but do not perform another generic factory rewrite. |
+| Split `cli.ts`                                | Complete. It is a bootstrap delegating to `createCliProgram()`. Keep it small.                                                                                     |
+| Split `local_action.ts` by line count         | Rejected. Existing builders and lifecycle boundaries are already explicit. Add contract coverage only if a real wiring gap exists.                                 |
+| Extract every RepoWise helper suggestion      | Rejected. Only extract a helper when its semantics, ownership, and failure behavior are shared.                                                                    |
+| Eliminate all repositories named `Repository` | Rejected. Specialized adapters may legitimately retain that name.                                                                                                  |
+| Remove every facade                           | Rejected. Remove only obsolete compatibility facades with audited callers; retain legitimate capability composition boundaries.                                    |
 
 These decisions prevent stale hotspot reports from driving cosmetic changes.
 
@@ -223,7 +233,9 @@ A composition root may share a transport instance when the capability contract r
 11. Every production facade removal requires caller inventory, migration, zero-reference search, and boundary-test updates.
 12. RepoWise is a prioritization signal and a validation signal, never the architecture specification.
 13. A metric improvement cannot justify weaker naming, hidden construction, broader ports, or reduced testability.
-14. Generated Graphify, RepoWise, editor, MCP, and build artifacts remain uncommitted unless explicitly required by the repository.
+14. Generated Graphify, RepoWise, editor, and MCP artifacts remain uncommitted.
+    Build artifacts are regenerated and versioned only by the reviewed
+    release/hotfix workflows, not by ordinary architecture commits.
 15. Every coherent implementation block ends with focused tests, global gates, commit, push, SHA verification, and a clean tree.
 
 ## 6. Implementation phases
@@ -324,10 +336,8 @@ Exit criteria:
 - no universal execution context facade is introduced;
 - cycle analysis remains clean or every remaining cycle is explicitly justified.
 
-Current result: reopened. The size-based RepoWise extract-method suggestion in
-`Execution` remains cosmetic and is still rejected, but direct import analysis
-confirmed one strongly connected component across eight modules. The relevant
-cycles include:
+Current result: complete. Direct import analysis originally confirmed one
+strongly connected component across eight modules:
 
 ```text
 Execution
@@ -339,12 +349,19 @@ Execution
 Execution <-> ExecutionConfigurationPort
 ```
 
-The defect is not that `Execution` is large. The defect is that a data model
-owns application orchestration, constructs use cases, and imports ports whose
-contracts in turn depend on that model. The next implementation block must
-move resolution/configuration orchestration to an application-owned semantic
-boundary, use acyclic input/result contracts, preserve transition behavior,
-and add a failing architecture test before production changes.
+The defect was removed without splitting `Execution` by size. Setup and
+release/hotfix resolution now belong to `SetupExecutionUseCase` and
+`ExecutionBranchVersionResolver`; `common_action.ts` receives the use case from
+`execution_setup_composition_root.ts`; and `ExecutionConfigurationPort` accepts
+an `ExecutionConfigurationQuery` instead of the aggregate model. The four
+model-owned resolver modules were removed with no compatibility shim.
+
+Characterization tests preserve issue, pull-request, push, single-action,
+initial-setup, release, hotfix, configuration-target, restoration, and early
+return behavior. A Tarjan-based architecture test rejects SCCs across all
+production TypeScript files and covers static imports, re-exports, side-effect
+imports, `require()`, dynamic `import()`, DAGs, self-loops, and two-node cycles.
+The current productive graph contains no directed dependency cycle.
 
 ### Phase D — Configuration and lifecycle composition review
 
@@ -358,14 +375,43 @@ Tasks:
 4. Confirm `cli.ts` remains a bootstrap only.
 5. Confirm `local_action.ts` remains a lifecycle coordinator, not a dependency factory.
 6. Add contract tests for capability sharing and intentional independent clients.
-7. Ensure entrypoints do not construct provider repositories inline except at documented composition boundaries.
+7. Ensure every lifecycle entrypoint delegates concrete provider/repository assembly
+   to a named composition root; entrypoints may coordinate but may not construct
+   adapters inline.
 
 Exit criteria:
 
-- each lifecycle has a named composition root;
+- each lifecycle delegates concrete assembly to an explicit, documented named
+  composition root;
 - no application dependency leaks into entrypoint-only concerns;
 - no lifecycle is silently merged with another;
 - composition tests prove the returned capabilities and sharing relationships.
+
+Current result: **implementation checkpoint published; strict exit criterion
+reopened.** `queue_utils.ts` no longer hides provider construction
+or recreates an Octokit adapter on every polling attempt. Queue policy now lives
+in `WaitForPreviousWorkflowRunsUseCase` behind explicit previous-run query and
+polling-delay ports; specialized query/dispatch adapters and
+`workflow_queue_composition_root.ts` own the details. The query consumes every
+provider page, and polling output is isolated behind a semantic observer port.
+The aggregate `WorkflowRepository` and callerless `WorkflowRun` model were
+retired with zero references in current source and no compatibility shim.
+Tracked runtime bundles intentionally remain release artifacts: the verified
+release/hotfix workflows rebuild and force-add `build/`, while ordinary source
+architecture commits do not publish regenerated bundles.
+
+`main_run_dispatcher.ts` now performs route logging and handler invocation only;
+it receives an already-composed route-handler map and imports no infrastructure.
+Route selection remains a pure policy used by the lifecycle. Route-specific assembly moved from `actions/` into
+`main_run_route_composition_root.ts`, with an executable guard rejecting
+all infrastructure imports, composition factories, and concrete
+adapter/repository/use-case construction in the dispatcher.
+`cli.ts` remains a legitimate bootstrap and delegates to the CLI program. The
+local lifecycle remains separate, but `local_action.ts` still constructs
+`ProjectBoard` capabilities and `GitCliRepository` inline. That is explicit
+current debt: after the higher-priority behavior-contract blocks, move this
+assembly to a named local-action composition root with sharing/ownership tests;
+do not preserve it merely to avoid changing a historical checkpoint.
 
 ### Phase E — Adapter contract hardening
 
@@ -378,10 +424,11 @@ Current status:
 3. organization membership pagination: hardened and covered;
 4. authenticated identity: audited and contract-covered without a production
    behavior change;
-5. release/tag adapters: next Phase E contract audit, postponed until the
-   Phase C/F SCC is removed and guarded;
-6. issue lifecycle and remaining pull-request lifecycle/review behavior: audit
-   only where source/caller evidence identifies a contract gap.
+5. release/tag adapters: retained as a required correctness track in the
+   authoritative perfect-metrics plan;
+6. project-board, branch, issue-label, release, and pull-request-review adapters:
+   current coverage evidence identifies focused contract gaps; execute them in
+   the order defined by `repowise-perfect-metrics-plan.md`.
 
 Current increment: `PullRequestChangesRepository` now owns one semantic
 `listAllFiles` pagination operation shared by its file capabilities. The
@@ -474,14 +521,15 @@ Exit criteria:
 - every capability has an owner and composition location;
 - a new contributor can follow the dependency direction without tribal knowledge.
 
-Current result: complete. The authoritative documents are synchronized against
-implementation checkpoint `8196da94146a215fc99cb7939d852f85ad2fa4d2`, with
-later documentation-only publication commits explicitly distinguished from that
-production baseline. Historical baselines and completed feature plans remain
-labelled so they cannot be mistaken for current architecture or priorities.
-The audit found the Phase C/F cycle above and concrete composition in
-`main_run_dispatcher.ts`, `local_action.ts`, and `queue_utils.ts`; these are now
-explicit current debts rather than undocumented assumptions.
+Current result: complete. The authoritative documents are synchronized with the
+Phase C implementation published in the same commit. Historical baselines and
+completed feature plans remain labelled so they cannot be mistaken for current
+architecture or priorities.
+The audit found and the completed Phase C block removed the SCC above. The
+published Phase D increment then removed hidden workflow-queue composition and
+route assembly from `main_run_dispatcher.ts`. Its former acceptance of
+`local_action.ts` as the composition boundary is superseded by the strict
+named-root criterion above; local lifecycle assembly remains tracked debt.
 
 ### Phase H — Final perfection gates
 
@@ -499,11 +547,13 @@ git diff --check
 Also run:
 
 ```text
-pnpm test:coverage
-~/.local/bin/repowise update .
-~/.local/bin/repowise health . --no-workspace --refactoring-targets --format table
-/tmp/copilot-graphify-venv/bin/graphify update .
+METRICS_OUTPUT_DIR="$(mktemp -d "/tmp/copilot-architecture-metrics-$(git rev-parse HEAD)-XXXXXX")" \
+  pnpm run metrics:architecture
 ```
+
+The collector fixes RepoWise to single-repository scope, ingests the emitted
+LCOV, refreshes Graphify, records tool versions and reports outside the
+repository, and conservatively restores generated artifacts.
 
 Final publication requirements:
 
@@ -607,17 +657,21 @@ Until these criteria are met, the project is not declared architecturally comple
 
 ## 10. Current next action
 
-Do not begin with `local_action.ts`, `cli.ts`, generic helper extraction, or historical `ai_repository`/`RepositoryFactory` work.
+Do not begin with `local_action.ts`, `cli.ts`, generic helper extraction, or
+historical `ai_repository`/`RepositoryFactory` work merely because of churn or
+size. The local named-root gap is real and tracked, but the authoritative plan
+prioritizes the P0 behavior-contract blocks first.
 
-After this documentation synchronization block passes its gates and is
-published, the next production block is:
+The next blocks are defined by
+[`repowise-perfect-metrics-plan.md`](repowise-perfect-metrics-plan.md):
 
-> **Eliminate the verified `Execution`/version-resolution/configuration SCC
-> through an application-owned semantic orchestration boundary. Start with a
-> RED architecture test and behavior characterization, audit every caller, use
-> acyclic input/result contracts, introduce no compatibility shim, and preserve
-> all release/hotfix/configuration transitions. Then harden the composition
-> guard so the cycle cannot return.**
+1. publish and verify the documentation/protocol baseline;
+2. characterize the P0 project-board command/query adapters with focused
+   contract tests;
+3. characterize branch preparation and linked-branch adapters;
+4. continue the issue, pull-request-review, merge-complexity, release/tag,
+   coverage-closure, and history-stabilization tracks in the documented order.
 
-The release/tag adapter contract audit remains the next Phase E increment after
-this higher-priority dependency-direction defect is removed and verified.
+Production changes remain forbidden until the corresponding RED contract test,
+caller inventory, semantic-boundary decision, and block-specific exit criteria
+are explicit.

@@ -1,8 +1,5 @@
 
-import { shouldSkipInitialLabelsFetch } from './initial_labels_policy';
 import { branchesForManagement, typesForIssue } from "../../utils/label_utils";
-import { logDebugInfo, setGlobalLoggerDebug } from "../../utils/logger";
-import type { LatestTagQueryPort } from '../../application/ports/branch_tag_ports';
 import { Ai } from "./ai";
 import { Branches } from "./branches";
 import { Commit } from "./commit";
@@ -22,11 +19,7 @@ import { SizeThresholds } from "./size_thresholds";
 import { Tokens } from "./tokens";
 import { Welcome } from "./welcome";
 import { Workflows } from "./workflows";
-import { resolveExecutionIssueNumber } from "./resolve_execution_issue_number";
-import { resolveIssueBranchVersion } from './resolve_issue_branch_version';
-import { restorePreviousBranchState, type PreviousBranchState } from './previous_branch_state_policy';
-import type { ExecutionIssueSetupPort, ExecutionOrganizationSetupPort } from '../../application/ports/execution_setup_ports';
-import type { ExecutionConfigurationPort } from '../../application/ports/execution_configuration_ports';
+
 
 export class Execution {
     debug: boolean = false;
@@ -214,101 +207,4 @@ export class Execution {
         this.welcome = welcome;
     }
 
-    private restorePreviousBranchState(state: PreviousBranchState): void {
-        this.release.version = state.releaseVersion;
-        this.release.branch = state.releaseBranch;
-        this.hotfix.baseVersion = state.hotfixBaseVersion;
-        this.hotfix.baseBranch = state.hotfixBaseBranch;
-        this.hotfix.version = state.hotfixVersion;
-        this.hotfix.branch = state.hotfixBranch;
-        this.currentConfiguration.parentBranch = state.parentBranch;
-        this.currentConfiguration.workingBranch = state.workingBranch;
-        this.currentConfiguration.releaseBranch = state.releaseBranch;
-        this.currentConfiguration.hotfixOriginBranch = state.hotfixBaseBranch;
-        this.currentConfiguration.hotfixBranch = state.hotfixBranch;
-    }
-
-    setup = async (
-        branchRepository: LatestTagQueryPort,
-        issueRepository: ExecutionIssueSetupPort,
-        organizationRepository: ExecutionOrganizationSetupPort,
-        configurationPort: ExecutionConfigurationPort,
-    ) => {
-        setGlobalLoggerDebug(this.debug, this.inputs === undefined);
-
-        this.tokenUser = await organizationRepository.getUserFromToken(this.tokens.token);
-        if (!this.tokenUser) {
-            throw new Error('Failed to get user from token');
-        }
-
-        const resolvedIssueNumber = await resolveExecutionIssueNumber(this, issueRepository);
-        if (resolvedIssueNumber === undefined) {
-            return;
-        }
-
-        this.previousConfiguration = await configurationPort.get(this);
-
-        /**
-         * Get labels of issue (skip if it's the initial setup and it fails)
-         */
-        try {
-            this.labels.currentIssueLabels = await issueRepository.getLabels(
-                this.owner,
-                this.repo,
-                this.issueNumber,
-                this.tokens.token
-            );
-        } catch (error) {
-            const isInitialSetup = shouldSkipInitialLabelsFetch(
-                this.isSingleAction,
-                this.singleAction.currentSingleAction,
-            );
-            if (isInitialSetup) {
-                logDebugInfo('Skipping initial labels fetch for setup action.');
-                this.labels.currentIssueLabels = [];
-            } else {
-                throw error;
-            }
-        }
-
-        /**
-         * Contains release label
-         */
-        this.release.active = this.labels.isRelease;
-        this.hotfix.active = this.labels.isHotfix;
-
-        const previousState = restorePreviousBranchState(
-            this.previousConfiguration,
-            this.release.active ? 'release' : this.hotfix.active ? 'hotfix' : 'default',
-            this.branches.releaseTree,
-            this.branches.hotfixTree,
-        );
-        this.restorePreviousBranchState(previousState);
-
-        if (this.isSingleAction) {
-            /**
-             * Nothing to do here (for now)
-             */
-        } else if (this.isIssue) {
-            const canContinue = await resolveIssueBranchVersion(this, branchRepository, issueRepository);
-            if (!canContinue) return;
-        } else if (this.isPullRequest) {
-            this.labels.currentPullRequestLabels = await issueRepository.getLabels(
-                this.owner,
-                this.repo,
-                this.pullRequest.number,
-                this.tokens.token
-            );
-            this.release.active = this.pullRequest.base.indexOf(`${this.branches.releaseTree}/`) > -1
-            this.hotfix.active = this.pullRequest.base.indexOf(`${this.branches.hotfixTree}/`) > -1
-
-            if (!this.currentConfiguration.parentBranch) {
-                this.currentConfiguration.parentBranch = this.pullRequest.base;
-            }
-        }
-
-        this.currentConfiguration.branchType = this.issueType
-
-        // logDebugInfo(`Current configuration: ${JSON.stringify(this.currentConfiguration, null, 2)}`);
-    }
 }

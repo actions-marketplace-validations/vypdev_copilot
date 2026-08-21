@@ -5,7 +5,7 @@ import { OctokitIssueAssignmentClientAdapter, OctokitIssueContentClientAdapter, 
 import { OctokitAuthenticatedUserClientAdapter, OctokitActorAuthorizationClientAdapter, OctokitOrganizationMembersClientAdapter, OctokitRepositoryContextClientAdapter, OctokitOwnerTypeClientAdapter } from '../octokit_identity_adapters';
 import { OctokitPullRequestChangesClientAdapter, OctokitPullRequestLifecycleClientAdapter, OctokitPullRequestReviewClientAdapter } from '../octokit_pull_request_adapters';
 import { OctokitReleaseClientAdapter } from '../octokit_release_adapters';
-import { OctokitWorkflowClientAdapter } from '../octokit_workflow_adapters';
+import { OctokitWorkflowDispatchClientAdapter, OctokitWorkflowRunsClientAdapter } from '../octokit_workflow_adapters';
 
 jest.mock('@actions/github', () => ({
     getOctokit: jest.fn(),
@@ -35,7 +35,8 @@ describe('Octokit client adapters contract', () => {
         ['pull request lifecycle', OctokitPullRequestLifecycleClientAdapter],
         ['pull request review', OctokitPullRequestReviewClientAdapter],
         ['release', OctokitReleaseClientAdapter],
-        ['workflow', OctokitWorkflowClientAdapter],
+        ['workflow runs', OctokitWorkflowRunsClientAdapter],
+        ['workflow dispatch', OctokitWorkflowDispatchClientAdapter],
     ];
 
     beforeEach(() => jest.clearAllMocks());

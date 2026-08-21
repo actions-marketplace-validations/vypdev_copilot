@@ -5,7 +5,7 @@ description: Schematic overview of all use case flows (common_action → use cas
 
 # Use case flows (schematic)
 
-Entry point: `mainRun(execution)` in `src/actions/common_action.ts`. After `execution.setup()` and optionally `waitForPreviousRuns`, the dispatch is:
+Entry point: `mainRun(execution)` in `src/actions/common_action.ts`. After the composed `SetupExecutionUseCase` and, when applicable, `WaitForPreviousWorkflowRunsUseCase`, `resolveMainRunRoute` selects a route and the pure dispatcher invokes a handler from `main_run_route_composition_root.ts`:
 
 ```
 mainRun
