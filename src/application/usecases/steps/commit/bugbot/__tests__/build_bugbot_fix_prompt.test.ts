@@ -22,7 +22,7 @@ function mockExecution(overrides: Partial<Execution> = {}): Execution {
 function mockContext(overrides: Partial<BugbotContext> = {}): BugbotContext {
     return {
         existingByFindingId: {
-            "find-1": { issueCommentId: 1, resolved: false },
+            "find-1": { issue: { commentId: 1, resolved: false } },
         },
         issueComments: [
             { id: 1, body: "## Null dereference\n\n**Location:** `src/foo.ts:10`\n\nDescription here." },
@@ -77,7 +77,7 @@ describe("buildBugbotFixPrompt", () => {
     it("truncates finding body when it exceeds 12000 characters and appends truncation indicator", () => {
         const longBody = "x".repeat(15000);
         const context = mockContext({
-            issueComments: [{ id: 1, body: longBody }],
+            unresolvedFindingsWithBody: [{ id: "find-1", fullBody: longBody }],
         });
         const prompt = buildBugbotFixPrompt(
             mockExecution(),
@@ -95,8 +95,12 @@ describe("buildBugbotFixPrompt", () => {
 
     it("escapes backticks in finding id so prompt block is not broken", () => {
         const context = mockContext({
-            existingByFindingId: { "id-with`backtick": { issueCommentId: 1, resolved: false } },
-            issueComments: [{ id: 1, body: "## Finding\nBody." }],
+            existingByFindingId: {
+                "id-with`backtick": { issue: { commentId: 1, resolved: false } },
+            },
+            unresolvedFindingsWithBody: [
+                { id: "id-with`backtick", fullBody: "## Finding\nBody." },
+            ],
         });
         const prompt = buildBugbotFixPrompt(
             mockExecution(),
@@ -143,9 +147,9 @@ describe("buildBugbotFixPrompt", () => {
         expect(prompt).not.toContain("find-missing");
     });
 
-    it("skips finding when issue comment body is missing or empty", () => {
+    it("skips finding when the bounded prompt body is missing or empty", () => {
         const context = mockContext({
-            issueComments: [{ id: 1, body: "   " }],
+            unresolvedFindingsWithBody: [{ id: "find-1", fullBody: "   " }],
         });
         const prompt = buildBugbotFixPrompt(mockExecution(), context, ["find-1"], "fix", []);
         expect(prompt).not.toContain("find-1");

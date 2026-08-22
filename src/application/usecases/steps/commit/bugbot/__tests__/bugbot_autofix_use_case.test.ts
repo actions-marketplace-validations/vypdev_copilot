@@ -47,8 +47,7 @@ function contextWithFindings(ids: string[]) {
     const issueComments: BugbotContext["issueComments"] = [];
     ids.forEach((id, i) => {
         existingByFindingId[id] = {
-            issueCommentId: 100 + i,
-            resolved: false,
+            issue: { commentId: 100 + i, resolved: false },
         };
         issueComments.push({
             id: 100 + i,
@@ -178,8 +177,8 @@ describe("BugbotAutofixUseCase", () => {
 
     it("returns empty results when all target findings are already resolved", async () => {
         const ctx = contextWithFindings(["f1", "f2"]);
-        ctx.existingByFindingId["f1"] = { ...ctx.existingByFindingId["f1"]!, resolved: true };
-        ctx.existingByFindingId["f2"] = { ...ctx.existingByFindingId["f2"]!, resolved: true };
+        ctx.existingByFindingId["f1"]!.issue!.resolved = true;
+        ctx.existingByFindingId["f2"]!.issue!.resolved = true;
 
         const results = await useCase.invoke({
             execution: baseExecution(),

@@ -65,16 +65,25 @@ No current production `IssueRepository` aggregate facade exists.
 
 ### Pull requests
 
-| Capability family                       | Semantic boundary                     | Adapter/composition            | Status                           |
-| --------------------------------------- | ------------------------------------- | ------------------------------ | -------------------------------- |
-| Changed files/head metadata             | GitHub pull-request changes contracts | `PullRequestChangesRepository` | paginated and regression-covered |
-| Reviews/reviewers/comments              | `PullRequestReviewPort`               | review adapter                 | active                           |
-| Review threads                          | review-thread contract                | GraphQL thread adapter         | active                           |
-| Lifecycle/base branch/linked state      | pull-request lifecycle contracts      | lifecycle adapter              | active                           |
-| Issue linking/description/branch lookup | dedicated PR ports                    | specialized adapters           | active                           |
-| Bugbot PR access                        | Bugbot PR ports                       | Bugbot PR adapter/root         | active                           |
+| Capability family                       | Semantic boundary                     | Adapter/composition                         | Status                                           |
+| --------------------------------------- | ------------------------------------- | ------------------------------------------- | ------------------------------------------------ |
+| Changed files/head metadata             | GitHub pull-request changes contracts | `PullRequestChangesRepository`              | paginated and regression-covered                 |
+| Reviewer membership/requests            | `PullRequestReviewerPort`             | `PullRequestReviewerRepository`             | paginated completed reviews and contract-covered |
+| Review-comment query                    | `PullRequestReviewCommentQueryPort`   | `PullRequestReviewCommentQueryRepository`   | paginated and nullable contract-covered          |
+| Review-comment command                  | `PullRequestReviewCommentCommandPort` | `PullRequestReviewCommentCommandRepository` | create/update subports; bounded publication      |
+| Review-thread resolution                | `PullRequestReviewThreadCommandPort`  | GraphQL thread adapter                      | nullable, cursor-safe, 64-bit and idempotent     |
+| Lifecycle/base branch/linked state      | pull-request lifecycle contracts      | lifecycle adapter                           | active                                           |
+| Issue linking/description/branch lookup | dedicated PR ports                    | specialized adapters                        | active                                           |
+| Bugbot PR access                        | Bugbot PR ports                       | Bugbot PR adapter/root                      | publication and resolution capabilities narrowed |
 
-No current production `PullRequestRepository` aggregate facade exists.
+No current production `PullRequestRepository`, `PullRequestReviewRepository`,
+or universal pull-request review port exists. Reviewer, comment query, comment
+command, and thread resolution are composed independently.
+Bugbot finding resolution receives only issue-comment update, review-comment
+list/update, and thread-resolution capabilities through
+`BugbotFindingResolutionPorts`; review-comment and issue-comment creation remain
+available only to the broader finding-publication pipeline. Route composition
+exposes a separate `resolution` view backed by the same specialized adapters.
 
 ### Project boards
 
@@ -136,11 +145,12 @@ blocks and is not justified by churn or line-count metrics.
 
 ## Current priorities
 
-1. publish the documentation and reproducible metric baseline;
-2. characterize P0 project-board command/query contracts;
-3. characterize branch preparation and linked-branch contracts;
-4. continue issue, pull-request-review and release/tag correctness tracks in the
-   order defined by the authoritative plan;
+1. close Phase 4 with immutable RepoWise/Graphify evidence, publication and
+   exact-SHA remote verification;
+2. continue the remaining issue title/type and setup contract track;
+3. continue pull-request lifecycle/changes coverage without reopening the
+   completed review-capability partition;
+4. continue release/tag correctness in the authoritative order;
 5. keep architecture guards and documentation synchronized;
 6. re-run RepoWise and Graphify after each coherent block.
 

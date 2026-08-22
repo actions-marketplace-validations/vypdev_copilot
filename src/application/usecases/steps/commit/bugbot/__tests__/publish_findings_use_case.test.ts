@@ -18,9 +18,6 @@ const mockUpdatePullRequestReviewComment = jest.fn();
 
 
 
-const mockListPullRequestReviewComments = jest.fn();
-const mockResolvePullRequestReviewThread = jest.fn();
-
 function publishFindings(param: Omit<PublishFindingsParam, "ports">) {
     return publishFindingsImpl({
         ...param,
@@ -29,8 +26,6 @@ function publishFindings(param: Omit<PublishFindingsParam, "ports">) {
             pullRequestComments: {
                 createReviewWithComments: mockCreateReviewWithComments,
                 updatePullRequestReviewComment: mockUpdatePullRequestReviewComment,
-                listPullRequestReviewComments: mockListPullRequestReviewComments,
-                resolvePullRequestReviewThread: mockResolvePullRequestReviewThread,
             },
         },
     });
@@ -88,7 +83,9 @@ describe("publishFindings", () => {
         await publishFindings({
             execution: baseExecution,
             context: baseContext({
-                existingByFindingId: { f1: { issueCommentId: 100, resolved: false } },
+                existingByFindingId: {
+                    f1: { issue: { commentId: 100, resolved: false } },
+                },
             }),
             findings: [finding()],
         });
@@ -174,7 +171,15 @@ describe("publishFindings", () => {
             execution: baseExecution,
             context: baseContext({
                 openPrNumbers: [50],
-                existingByFindingId: { f1: { prCommentId: 300, prNumber: 50, resolved: false } },
+                existingByFindingId: {
+                    f1: {
+                        pullRequest: {
+                            commentIdentity: "PRRC_300",
+                            pullRequestNumber: 50,
+                            resolved: false,
+                        },
+                    },
+                },
                 prContext: {
                     prHeadSha: "sha1",
                     prFiles: [{ filename: "src/foo.ts", status: "modified" }],
@@ -187,7 +192,7 @@ describe("publishFindings", () => {
         expect(mockUpdatePullRequestReviewComment).toHaveBeenCalledWith(
             "o",
             "r",
-            300,
+            "PRRC_300",
             expect.any(String),
             "t"
         );
@@ -253,7 +258,9 @@ describe("publishFindings", () => {
         await publishFindings({
             execution: baseExecution,
             context: baseContext({
-                existingByFindingId: { f1: { issueCommentId: 100, resolved: false } },
+                existingByFindingId: {
+                    f1: { issue: { commentId: 100, resolved: false } },
+                },
             }),
             findings: [finding()],
             commitSha: "def456",
@@ -301,7 +308,15 @@ describe("publishFindings", () => {
             execution: baseExecution,
             context: baseContext({
                 openPrNumbers: [50],
-                existingByFindingId: { f1: { prCommentId: 300, prNumber: 99, resolved: false } },
+                existingByFindingId: {
+                    f1: {
+                        pullRequest: {
+                            commentIdentity: "PRRC_300",
+                            pullRequestNumber: 99,
+                            resolved: false,
+                        },
+                    },
+                },
                 prContext: {
                     prHeadSha: "sha1",
                     prFiles: [{ filename: "src/foo.ts", status: "modified" }],

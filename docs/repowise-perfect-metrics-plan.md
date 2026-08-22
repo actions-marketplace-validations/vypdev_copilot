@@ -2,7 +2,7 @@
 
 > **For Hermes:** Implement this plan one vertical slice at a time using `quality-first-repository-development`, `test-driven-development`, `iterative-hotspot-refactoring`, and `requesting-code-review`. Do not implement production code until Efra approves this documented revision. Every production change starts with an observed RED test and ends with focused/global gates, a reproducible metrics record, review, atomic commit, normal push, remote-SHA equality, and a clean tree.
 
-**Status:** Approved and in execution. Phases 1–3 are complete. Phase 3 was measured on 2026-08-21 at code SHA `4841d2563582eb0c297e6170579e8f6de4585073`; Phase 4 is next. The original reproducible baseline remains `df23de8ed9e309ae23e17656aeb8cacbfe7e2160`.
+**Status:** Approved and in execution. Phases 1–3 are complete. Phase 3 was measured on 2026-08-21 at code SHA `4841d2563582eb0c297e6170579e8f6de4585073`. Phase 4 is implemented and remediated locally; a new immutable review, metrics record, publication, exact-SHA CI verification, and clean-tree proof are still required before Phase 5. The original reproducible baseline remains `df23de8ed9e309ae23e17656aeb8cacbfe7e2160`.
 
 **Goal:** Make `vypdev/copilot` a reference-quality Clean Architecture repository, drive every controllable RepoWise and coverage metric to its defensible maximum, eliminate real hotspots and boundary debt, and classify history-derived or tool-derived signals without manipulating source layout or Git history.
 
@@ -588,21 +588,80 @@ Graphify evidence:
 
 The small Graphify count difference is retained rather than hidden: the collector invokes Graphify after coverage and RepoWise inside its protected snapshot, while the graph-only verification ran after those mutable paths were removed. RepoWise/coverage values come from the complete immutable collector record; source-graph integrity comes from the clean graph-only verification.
 
-The worst production file is now `src/data/repository/pull_request/pull_request_review_repository.ts` at `2.70`, confirming Phase 4 as the next evidence-based slice. No further label-provisioning split is justified by current callers, behavior or architecture.
+At the immutable Phase 3 SHA, the worst production file was `src/data/repository/pull_request/pull_request_review_repository.ts` at `2.70`, which selected Phase 4 as the next evidence-based slice. That path is historical baseline evidence and no longer exists after the Phase 4 capability migration. No further label-provisioning split is justified by current callers, behavior or architecture.
 
 ## 10. Phase 4 — Pull-request review capabilities
 
-### Task 4.1: Contract coverage
+### Task 4.1: Contract coverage — implementation complete
 
-**Create:** `src/data/repository/pull_request/__tests__/pull_request_review_repository.test.ts`
+The retired aggregate test was replaced by capability-specific behavioral
+contracts:
 
-Cover reviewer deduplication, errors, empty requests, pagination, nullable comment fields, single-comment lookup, review-thread delegation, empty comment creation, partial/all failure in `Promise.allSettled`, and update mutation.
+- `src/data/repository/pull_request/__tests__/pull_request_reviewer_repository.test.ts`;
+- `src/data/repository/pull_request/__tests__/pull_request_review_comment_query_repository.test.ts`;
+- `src/data/repository/pull_request/__tests__/pull_request_review_comment_command_repository.test.ts`;
+- `src/data/repository/__tests__/pull_request_review_thread_repository.test.ts`;
+- composition and boundary tests for the resulting caller graph.
 
-### Task 4.2: Caller-based partition
+These contracts cover completed-review pagination, case-insensitive reviewer
+deduplication, provider-confirmed requests, no-op inputs, provider errors,
+paginated/nullable comment queries, independent bounded comment publication,
+partial and total publication failure, synchronous throws, update mutation,
+nullable GraphQL connections, multi-page review threads/comments, repeated
+cursor rejection, idempotent already-resolved threads, mutation failure, and
+64-bit REST comment identity through GraphQL `fullDatabaseId`. The reviewer,
+query, and command adapters are at 100% statements, branches, functions, and
+lines. The thread adapter is at 98.63% statements, 96.15% branches, and 100%
+functions/lines; no meaningless test was added for its remaining defensive
+branches.
 
-Audit every method caller. If caller sets and permissions differ, migrate closed capability graphs to reviewer membership, comment query, comment command and thread command ports/adapters. Inject the thread command port from composition; never construct a concrete thread repository internally. Keep one adapter if caller evidence proves one cohesive capability.
+### Task 4.2: Caller-based partition — implementation complete
 
-**Phase exit:** no hidden adapter construction; all provider edges covered; no universal review facade; touched files at 100% behavior coverage.
+The caller audit produced four semantic capabilities: reviewer membership,
+review-comment query, review-comment command, and review-thread resolution.
+Each has a dedicated application port, provider protocol/adapter where needed,
+repository, tests, and explicit composition binding. The GraphQL Relay identity
+no longer crosses application; thread resolution uses the provider-neutral
+numeric comment ID. No compatibility alias or forwarding shim remains.
+
+Inline comments are created independently through `createReviewComment` in
+sequential batches of at most ten concurrent requests. Every attempted comment
+is accounted for; partial/total failures become one sanitized semantic error and
+the application reports failure without exposing provider exceptions or tokens.
+Reviewer deficits and partial confirmations likewise preserve successful steps
+while returning an explicit failure result for the unfulfilled policy.
+
+Bugbot finding resolution is restricted end-to-end—from route composition
+through comment automation and the post-autofix workflow—to issue-comment update,
+review-comment list/update, and thread-resolution capabilities; comment creation
+remains available only to finding publication. Missing issue comments or
+issue/PR markers are semantic failures rather than silent no-ops. Pull-request
+resolution resolves the thread before writing `resolved:true`, treats an
+already-resolved thread as idempotent success, and retries thread repair even
+when an older marker is already true. A later publication failure cannot erase
+resolution errors already collected. Reviewer assignment with target count zero
+returns before resolving any remote capability.
+
+The official requested-reviewers endpoint is not paginated; completed reviews
+and review comments use Octokit pagination. Generated `build/` artifacts were
+compiled and inspected successfully, then restored because release/hotfix
+workflows own their force-add and commit lifecycle.
+
+Current remediated pre-freeze gates: production audit and build pass; 239 suites
+pass with 1,552 tests passed and one intentional skip; global coverage is 93.58%
+lines (6,462/6,905), 86.01% branches (2,607/3,031), 91.21% functions
+(1,038/1,138), and 92.53% statements (6,773/7,319); lint, TypeScript,
+formatting, and diff checks pass. The earlier dirty-worktree Graphify refresh
+(3,551 nodes, 8,882 edges, 239 communities) predates the review remediation and
+is explicitly obsolete. Immutable-SHA RepoWise/Graphify evidence and remote CI
+remain pending until a newly fingerprinted candidate is independently approved
+and its source commit exists.
+
+**Candidate exit condition:** no hidden adapter construction, no universal review
+facade, all changed provider behavior covered by focused contracts, global gates
+green, and no knowingly silent or non-retryable resolution path. Final phase exit
+still requires the new fingerprint review, immutable metrics, publication, exact
+remote CI, and clean-tree proof.
 
 ## 11. Phase 5 — Merge polling and fallback
 
@@ -804,4 +863,6 @@ Stop and stabilize the plan when:
 
 ## 20. Approval boundary
 
-This revision is the stable implementation proposal. It changes documentation only. Production and test implementation begins **only after Efra explicitly approves this revision**. The first executable slice is **Phase 1, Task 1.1–1.2: Project Board caller freeze and command contract TDD**.
+This plan is now an implementation ledger. Phases 1–3 are published and Phase 4
+is implemented locally; its immutable-SHA metrics, documentation checkpoint,
+push, and exact remote CI verification remain required before Phase 5 starts.

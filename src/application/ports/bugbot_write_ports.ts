@@ -1,7 +1,6 @@
-import type { BugbotIssueCommentWritePort } from './bugbot_issue_write_ports';
-import type { BugbotPullRequestWritePort } from './bugbot_pull_request_write_ports';
+import type { BugbotFindingPublicationPorts } from "./bugbot_finding_publication_ports";
+import type { BugbotFindingResolutionPorts } from "./bugbot_finding_resolution_ports";
 
-export interface BugbotWritePorts {
-    issueComments: BugbotIssueCommentWritePort;
-    pullRequestComments: BugbotPullRequestWritePort;
-}
+/** Route-level aggregate for the workflow that both publishes and resolves. */
+export type BugbotWritePorts = BugbotFindingPublicationPorts &
+  BugbotFindingResolutionPorts;

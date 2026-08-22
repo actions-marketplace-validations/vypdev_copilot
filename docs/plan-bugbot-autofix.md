@@ -11,11 +11,11 @@ This document describes the **bugbot autofix** feature and the related **do user
 
 ## 1. Requirements summary
 
-| Origin | Scenario | Expected behaviour |
-|--------|----------|--------------------|
-| **Issue** | General comment (e.g. "fix it", "arregla las vulnerabilidades") | OpenCode interprets whether the user is asking to fix one or several open findings and which ones. |
-| **PR** | Reply in the **same thread** as a vulnerability comment | OpenCode can use the parent comment as context and fix that specific finding (or the user may say "fix all"). |
-| **PR** | New comment mentioning the bot (e.g. "fix X", "fix all") | OpenCode interprets which finding(s) to fix. |
+| Origin    | Scenario                                                        | Expected behaviour                                                                                            |
+| --------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| **Issue** | General comment (e.g. "fix it", "arregla las vulnerabilidades") | OpenCode interprets whether the user is asking to fix one or several open findings and which ones.            |
+| **PR**    | Reply in the **same thread** as a vulnerability comment         | OpenCode can use the parent comment as context and fix that specific finding (or the user may say "fix all"). |
+| **PR**    | New comment mentioning the bot (e.g. "fix X", "fix all")        | OpenCode interprets which finding(s) to fix.                                                                  |
 
 Constraints:
 
@@ -32,7 +32,7 @@ Constraints:
 - We send OpenCode (plan agent):
   - The **user's comment** (and, for PR, optional **parent comment body** when the user replied in a thread).
   - The list of **unresolved findings** (id, title, description, file, line, suggestion) from `loadBugbotContext`.
-- We ask OpenCode: *"Is this comment requesting to fix one or more of these findings? Is it requesting some other change in the repo (e.g. add a test, refactor)?"*
+- We ask OpenCode: _"Is this comment requesting to fix one or more of these findings? Is it requesting some other change in the repo (e.g. add a test, refactor)?"_
 - OpenCode responds with a structured payload: `{ is_fix_request: boolean, target_finding_ids: string[], is_do_request: boolean }`.
 - If `is_fix_request` is true and `target_finding_ids` is non-empty, we run the **bugbot autofix** flow (build agent with those findings + user comment; then verify, commit, push). If `is_do_request` is true and we did not run autofix, we run the **do user request** flow (build agent with the user comment; then verify, commit, push). Otherwise we run **Think** so the user gets an AI reply (e.g. to a question).
 - **Permission:** Before running any file-modifying action (autofix or do user request), we check `ProjectRepository.isActorAllowedToModifyFiles(owner, actor, token)`: when the repo owner is an **Organization**, the comment author (`actor`) must be a **member** of that org; when the repo owner is a **User**, the actor must be the **owner**. If not allowed, we skip the file-modifying action and run Think instead.
@@ -96,42 +96,45 @@ Use this section to track progress. Tick when done.
 
 ## 5. Test coverage
 
-| Area | Test file | Notes |
-|------|-----------|--------|
-| Detection pipeline | `src/application/usecases/steps/commit/__tests__/detect_potential_problems_use_case.test.ts` | Full flow: OpenCode response, publish to issue/PR, resolve, limit, severity, path validation, marker. |
-| Issue comment flow | `src/application/usecases/__tests__/issue_comment_use_case.test.ts` | Language → intent → autofix or Think; payload helpers; commit/skip. |
-| PR comment flow | `src/application/usecases/__tests__/pull_request_review_comment_use_case.test.ts` | Same scenarios as issue (intent, autofix, Think when not fix request). |
-| Intent prompt | `src/application/usecases/steps/commit/bugbot/__tests__/build_bugbot_fix_intent_prompt.test.ts` | Prompt content, parent comment block. |
-| Fix prompt | `src/application/usecases/steps/commit/bugbot/__tests__/build_bugbot_fix_prompt.test.ts` | Repo context, findings block, verify commands. |
-| Path validation | `src/application/usecases/steps/commit/bugbot/__tests__/path_validation.test.ts` | isSafeFindingFilePath, isAllowedPathForPr, resolveFindingPathForPr. |
-| Severity, limit, dedupe, file ignore | `severity.test.ts`, `limit_comments.test.ts`, `deduplicate_findings.test.ts`, `file_ignore.test.ts` | Filtering and publishing limits. |
-| Marker | `src/application/usecases/steps/commit/bugbot/__tests__/marker.test.ts` | sanitizeFindingIdForMarker, buildMarker, parseMarker, markerRegexForFinding, replaceMarkerInBody, extractTitleFromBody, buildCommentBody. |
-| Load context | `src/application/usecases/steps/commit/bugbot/__tests__/load_bugbot_context_use_case.test.ts` | Empty context, issue comment parsing, previousFindingsBlock/unresolvedFindingsWithBody, branchOverride, prContext, PR review markers merge. |
-| Publish findings | `src/application/usecases/steps/commit/bugbot/__tests__/publish_findings_use_case.test.ts` | Issue comment add/update, PR review comment when file in prFiles, pathToFirstDiffLine, update existing PR comment, overflow comment. |
-| Detect fix intent | `src/application/usecases/steps/commit/bugbot/__tests__/detect_bugbot_fix_intent_use_case.test.ts` | Skips (no OpenCode, no issue, empty body, no branch), branchOverride, unresolved findings filter, askAgent + payload, parent comment for PR. |
-| Autofix use case | `src/application/usecases/steps/commit/bugbot/__tests__/bugbot_autofix_use_case.test.ts` | No targets/OpenCode skip, provided vs loaded context, valid unresolved ids filter, copilotMessage no text / success with payload. |
-| Commit/push | `src/application/usecases/steps/commit/bugbot/__tests__/bugbot_autofix_commit.test.ts` | No branch, branchOverride fetch/checkout, verify command failure, no changes, add/commit/push success, commit/push error; **runUserRequestCommitAndPush**: same flow with generic commit message. |
-| Mark resolved | `src/application/usecases/steps/commit/bugbot/__tests__/mark_findings_resolved_use_case.test.ts` | Skip when resolved or not in set, update issue comment, update PR comment + resolve thread, missing comment, normalizedResolvedIds, replaceMarkerInBody no match, updateComment error. |
-| Do user request | `src/application/usecases/steps/commit/__tests__/user_request_use_case.test.ts` | Skip when no OpenCode or empty comment; success when copilotMessage returns text; failure when no response. |
-| Permission | `src/data/repository/organization/__tests__/actor_authorization_repository.test.ts` | `ActorAuthorizationRepository`: organization member, user owner, and provider errors. |
+| Area                                 | Test file                                                                                            | Notes                                                                                                                                                                                             |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Detection pipeline                   | `src/application/usecases/steps/commit/__tests__/detect_potential_problems_use_case.test.ts`         | Full flow: OpenCode response, publish to issue/PR, resolve, limit, severity, path validation, marker, and sanitized provider failures.                                                            |
+| Issue comment flow                   | `src/application/usecases/__tests__/issue_comment_use_case.test.ts`                                  | Language → intent → autofix or Think; payload helpers; commit/skip.                                                                                                                               |
+| PR comment flow                      | `src/application/usecases/__tests__/pull_request_review_comment_use_case.test.ts`                    | Same scenarios as issue (intent, autofix, Think when not fix request).                                                                                                                            |
+| Intent prompt                        | `src/application/usecases/steps/commit/bugbot/__tests__/build_bugbot_fix_intent_prompt.test.ts`      | Prompt content, parent comment block.                                                                                                                                                             |
+| Fix prompt                           | `src/application/usecases/steps/commit/bugbot/__tests__/build_bugbot_fix_prompt.test.ts`             | Repo context, findings block, verify commands.                                                                                                                                                    |
+| Path validation                      | `src/application/usecases/steps/commit/bugbot/__tests__/path_validation.test.ts`                     | isSafeFindingFilePath, isAllowedPathForPr, resolveFindingPathForPr.                                                                                                                               |
+| Severity, limit, dedupe, file ignore | `severity.test.ts`, `limit_comments.test.ts`, `deduplicate_findings.test.ts`, `file_ignore.test.ts`  | Filtering and publishing limits.                                                                                                                                                                  |
+| Marker                               | `src/application/usecases/steps/commit/bugbot/__tests__/marker.test.ts`                              | sanitizeFindingIdForMarker, buildMarker, parseMarker, markerRegexForFinding, replaceMarkerInBody, extractTitleFromBody, buildCommentBody.                                                         |
+| Load context                         | `src/application/usecases/steps/commit/bugbot/__tests__/load_bugbot_context_use_case.test.ts`        | Empty context, issue comment parsing, previousFindingsBlock/unresolvedFindingsWithBody, branchOverride, prContext, PR review markers merge.                                                       |
+| Publish findings                     | `src/application/usecases/steps/commit/bugbot/__tests__/publish_findings_use_case.test.ts`           | Issue comment add/update, PR review comment when file in prFiles, pathToFirstDiffLine, update existing PR comment, overflow comment.                                                              |
+| Detect fix intent                    | `src/application/usecases/steps/commit/bugbot/__tests__/detect_bugbot_fix_intent_use_case.test.ts`   | Skips (no OpenCode, no issue, empty body, no branch), branchOverride, unresolved findings filter, askAgent + payload, parent comment for PR.                                                      |
+| Autofix use case                     | `src/application/usecases/steps/commit/bugbot/__tests__/bugbot_autofix_use_case.test.ts`             | No targets/OpenCode skip, provided vs loaded context, valid unresolved ids filter, copilotMessage no text / success with payload.                                                                 |
+| Commit/push                          | `src/application/usecases/steps/commit/bugbot/__tests__/bugbot_autofix_commit.test.ts`               | No branch, branchOverride fetch/checkout, verify command failure, no changes, add/commit/push success, commit/push error; **runUserRequestCommitAndPush**: same flow with generic commit message. |
+| Mark resolved                        | `src/application/usecases/steps/commit/bugbot/__tests__/mark_findings_resolved_use_case.test.ts`     | Skip paths, issue and PR updates, thread-before-marker ordering, retry from a true marker, missing comment/marker failures, semantic error aggregation, and no raw provider data.                 |
+| Apply detected findings              | `src/application/usecases/steps/commit/bugbot/__tests__/apply_detected_findings.test.ts`             | Publication is attempted before resolution; publication failures are sanitized and do not resolve findings. |
+| Post-autofix resolution              | `src/application/usecases/steps/commit/bugbot/__tests__/commit_autofix_and_resolve_workflow.test.ts` | A successful commit with failed finding resolution returns errors and never logs unconditional resolution success; the caller receives only the narrow resolution capability.                     |
+| Comment automation result            | `src/application/usecases/__tests__/comment_automation_use_case.test.ts`                             | Resolution errors append a failed `Result` while preserving successful intent/autofix results.                                                                                                    |
+| Do user request                      | `src/application/usecases/steps/commit/bugbot/__tests__/bugbot_autofix_commit.test.ts`               | `runUserRequestCommitAndPush`: generic commit flow, branch override, verify commands, no changes, commit/push errors. |
+| Permission                           | `src/data/repository/organization/__tests__/actor_authorization_repository.test.ts`                  | `ActorAuthorizationRepository`: organization member, user owner, and provider errors.                                                                                                             |
 
 ---
 
 ## 6. Key files (reference)
 
-| Area | Path |
-|------|------|
-| Intent schema + prompt | `src/application/usecases/steps/commit/bugbot/` (schema, `build_bugbot_fix_intent_prompt.ts`) |
-| Intent use case | `src/application/usecases/steps/commit/bugbot/detect_bugbot_fix_intent_use_case.ts` |
-| Fix prompt | `src/application/usecases/steps/commit/bugbot/build_bugbot_fix_prompt.ts` |
-| Autofix use case | `src/application/usecases/steps/commit/bugbot/bugbot_autofix_use_case.ts` |
-| Do user request | `src/application/usecases/steps/commit/user_request_use_case.ts` |
-| Commit/push | `src/application/usecases/steps/commit/bugbot/bugbot_autofix_commit.ts` (`runBugbotAutofixCommitAndPush`, `runUserRequestCommitAndPush`) |
-| Permission | `src/application/ports/actor_authorization_ports.ts` and `src/data/repository/organization/actor_authorization_repository.ts` |
-| PR parent comment | `src/data/model/pull_request.ts` (`commentInReplyToId`) and `PullRequestReviewRepository.getPullRequestReviewCommentBody` |
-| Branch for issue | `PullRequestLifecycleRepository.getHeadBranchForIssue` through `BugbotPullRequestReadPort` |
-| Config | `action.yml`, `constants.ts`, `github_action.ts`, `src/data/model/ai.ts` |
-| Integration | `issue_comment_use_case.ts`, `pull_request_review_comment_use_case.ts` |
+| Area                   | Path                                                                                                                                     |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Intent schema + prompt | `src/application/usecases/steps/commit/bugbot/` (schema, `build_bugbot_fix_intent_prompt.ts`)                                            |
+| Intent use case        | `src/application/usecases/steps/commit/bugbot/detect_bugbot_fix_intent_use_case.ts`                                                      |
+| Fix prompt             | `src/application/usecases/steps/commit/bugbot/build_bugbot_fix_prompt.ts`                                                                |
+| Autofix use case       | `src/application/usecases/steps/commit/bugbot/bugbot_autofix_use_case.ts`                                                                |
+| Do user request        | `src/application/usecases/steps/commit/user_request_use_case.ts`                                                                         |
+| Commit/push            | `src/application/usecases/steps/commit/bugbot/bugbot_autofix_commit.ts` (`runBugbotAutofixCommitAndPush`, `runUserRequestCommitAndPush`) |
+| Permission             | `src/application/ports/actor_authorization_ports.ts` and `src/data/repository/organization/actor_authorization_repository.ts`            |
+| PR parent comment      | `src/data/model/pull_request.ts` (`commentInReplyToId`) and `PullRequestReviewCommentQueryRepository.getPullRequestReviewCommentBody`    |
+| Branch for issue       | `PullRequestLifecycleRepository.getHeadBranchForIssue` through `BugbotPullRequestReadPort`                                               |
+| Config                 | `action.yml`, `constants.ts`, `github_action.ts`, `src/data/model/ai.ts`                                                                 |
+| Integration            | `issue_comment_use_case.ts`, `pull_request_review_comment_use_case.ts`                                                                   |
 
 ---
 

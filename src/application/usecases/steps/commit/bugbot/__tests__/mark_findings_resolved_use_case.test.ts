@@ -1,17 +1,18 @@
-/**
- * Unit tests for markFindingsResolved: skip when already resolved or not in resolved set,
- * update issue comment, update PR comment and resolve thread, handle missing comment errors.
- */
-
-import { markFindingsResolved as markFindingsResolvedImpl, type MarkFindingsResolvedParam } from "../mark_findings_resolved_use_case";
-
-import type { BugbotContext, ExistingByFindingId } from "../types";
+import {
+  markFindingsResolved as markFindingsResolvedImpl,
+  type MarkFindingsResolvedParam,
+} from "../mark_findings_resolved_use_case";
+import type {
+  BugbotContext,
+  ExistingByFindingId,
+} from "../types";
 import type { Execution } from "../../../../../../data/model/execution";
+import { getCommentWatermark } from "../../../../../../utils/comment_watermark";
 
 jest.mock("../../../../../../utils/logger", () => ({
-    logInfo: jest.fn(),
-    logDebugInfo: jest.fn(),
-    logError: jest.fn(),
+  logInfo: jest.fn(),
+  logDebugInfo: jest.fn(),
+  logError: jest.fn(),
 }));
 
 const mockUpdateComment = jest.fn();
@@ -19,347 +20,311 @@ const mockListPrReviewComments = jest.fn();
 const mockUpdatePrReviewComment = jest.fn();
 const mockResolveThread = jest.fn();
 
-
 function markFindingsResolved(param: Omit<MarkFindingsResolvedParam, "ports">) {
-    return markFindingsResolvedImpl({
-        ...param,
-        ports: {
-            issueComments: { updateComment: mockUpdateComment, addComment: jest.fn() },
-            pullRequestComments: {
-                listPullRequestReviewComments: mockListPrReviewComments,
-                updatePullRequestReviewComment: mockUpdatePrReviewComment,
-                resolvePullRequestReviewThread: mockResolveThread,
-                createReviewWithComments: jest.fn(),
-            },
-        },
-    });
+  return markFindingsResolvedImpl({
+    ...param,
+    ports: {
+      issueComments: { updateComment: mockUpdateComment },
+      pullRequestComments: {
+        listPullRequestReviewComments: mockListPrReviewComments,
+        updatePullRequestReviewComment: mockUpdatePrReviewComment,
+        resolvePullRequestReviewThread: mockResolveThread,
+      },
+    },
+  });
 }
 
-function baseExecution(overrides: Partial<Execution> = {}): Execution {
-    return {
-        owner: "o",
-        repo: "r",
-        issueNumber: 1,
-        tokens: { token: "t" },
-        ...overrides,
-    } as unknown as Execution;
+function baseExecution(): Execution {
+  return {
+    owner: "o",
+    repo: "r",
+    issueNumber: 1,
+    tokens: { token: "t" },
+  } as unknown as Execution;
 }
 
 function baseContext(overrides: Partial<BugbotContext> = {}): BugbotContext {
-    return {
-        existingByFindingId: {},
-        issueComments: [],
-        openPrNumbers: [],
-        previousFindingsBlock: "",
-        prContext: null,
-        unresolvedFindingsWithBody: [],
-        ...overrides,
-    };
+  return {
+    existingByFindingId: {},
+    issueComments: [],
+    openPrNumbers: [],
+    previousFindingsBlock: "",
+    prContext: null,
+    unresolvedFindingsWithBody: [],
+    ...overrides,
+  };
+}
+
+function issueFinding(commentId: number, resolved: boolean): ExistingByFindingId {
+  return { f1: { issue: { commentId, resolved } } };
+}
+
+function pullRequestFinding(
+  commentIdentity: string,
+  resolved: boolean,
+  pullRequestNumber = 5,
+): ExistingByFindingId {
+  return {
+    f1: {
+      pullRequest: { commentIdentity, pullRequestNumber, resolved },
+    },
+  };
+}
+
+const unresolvedBody =
+  '## Finding\n\n<!-- copilot-bugbot finding_id:"f1" resolved:false -->';
+const resolvedBody =
+  '## Finding\n\n<!-- copilot-bugbot finding_id:"f1" resolved:true -->';
+
+function prComment(identity: string, body = unresolvedBody) {
+  return { id: 201, identity, body };
 }
 
 describe("markFindingsResolved", () => {
-    beforeEach(() => {
-        mockUpdateComment.mockReset();
-        mockListPrReviewComments.mockReset();
-        mockUpdatePrReviewComment.mockReset();
-        mockResolveThread.mockReset();
+  beforeEach(() => {
+    const { logError } = require("../../../../../../utils/logger");
+    logError.mockReset();
+    mockUpdateComment.mockReset().mockResolvedValue(undefined);
+    mockListPrReviewComments.mockReset().mockResolvedValue([]);
+    mockUpdatePrReviewComment.mockReset().mockResolvedValue(undefined);
+    mockResolveThread.mockReset().mockResolvedValue(undefined);
+  });
+
+  it("does not mutate an issue destination that is already resolved", async () => {
+    const errors = await markFindingsResolved({
+      execution: baseExecution(),
+      context: baseContext({
+        existingByFindingId: issueFinding(100, true),
+        issueComments: [{ id: 100, body: resolvedBody }],
+      }),
+      resolvedFindingIds: new Set(["f1"]),
     });
 
-    it("skips finding when existing.resolved is true", async () => {
-        const existing: ExistingByFindingId = {
-            f1: {
-                issueCommentId: 100,
-                resolved: true,
-            },
-        };
-        const context = baseContext({
-            existingByFindingId: existing,
-            issueComments: [{ id: 100, body: "text" }],
-        });
+    expect(errors).toEqual([]);
+    expect(mockUpdateComment).not.toHaveBeenCalled();
+  });
 
-        await markFindingsResolved({
-            execution: baseExecution(),
-            context,
-            resolvedFindingIds: new Set(["f1"]),
-            normalizedResolvedIds: new Set(),
-        });
+  it("repairs a marked PR thread even when the agent does not return its id", async () => {
+    const identity = "PRRC_repair";
+    mockListPrReviewComments.mockResolvedValue([
+      prComment(identity, resolvedBody),
+    ]);
 
-        expect(mockUpdateComment).not.toHaveBeenCalled();
+    const errors = await markFindingsResolved({
+      execution: baseExecution(),
+      context: baseContext({
+        existingByFindingId: pullRequestFinding(identity, true),
+      }),
+      resolvedFindingIds: new Set(),
     });
 
-    it("skips finding when not in resolvedFindingIds or normalizedResolvedIds", async () => {
-        const existing: ExistingByFindingId = {
-            f1: { issueCommentId: 100, resolved: false },
-        };
-        const context = baseContext({
-            existingByFindingId: existing,
-            issueComments: [{ id: 100, body: "text" }],
-        });
+    expect(errors).toEqual([]);
+    expect(mockResolveThread).toHaveBeenCalledWith("o", "r", 5, identity, "t");
+    expect(mockUpdatePrReviewComment).not.toHaveBeenCalled();
+  });
 
-        await markFindingsResolved({
-            execution: baseExecution(),
-            context,
-            resolvedFindingIds: new Set(),
-            normalizedResolvedIds: new Set(),
-        });
-
-        expect(mockUpdateComment).not.toHaveBeenCalled();
+  it("does not mutate a pending destination absent from the canonical resolved set", async () => {
+    await markFindingsResolved({
+      execution: baseExecution(),
+      context: baseContext({
+        existingByFindingId: issueFinding(100, false),
+        issueComments: [{ id: 100, body: unresolvedBody }],
+      }),
+      resolvedFindingIds: new Set(),
     });
 
-    it("updates issue comment when finding is resolved and comment exists", async () => {
-        const bodyWithMarker =
-            '## Finding\n\n<!-- copilot-bugbot finding_id:"f1" resolved:false -->';
-        const existing: ExistingByFindingId = {
-            f1: { issueCommentId: 100, resolved: false },
-        };
-        const context = baseContext({
-            existingByFindingId: existing,
-            issueComments: [{ id: 100, body: bodyWithMarker }],
-        });
+    expect(mockUpdateComment).not.toHaveBeenCalled();
+  });
 
-        await markFindingsResolved({
-            execution: baseExecution(),
-            context,
-            resolvedFindingIds: new Set(["f1"]),
-            normalizedResolvedIds: new Set(),
-        });
+  it("updates from the full issue body and removes its old trailing watermark", async () => {
+    const fullBody = `${unresolvedBody}\n\n${"x".repeat(15000)}\n\n${getCommentWatermark()}`;
 
-        expect(mockUpdateComment).toHaveBeenCalledTimes(1);
-        expect(mockUpdateComment).toHaveBeenCalledWith(
-            "o",
-            "r",
-            1,
-            100,
-            expect.stringContaining("Resolved"),
-            "t"
-        );
-        expect(mockUpdateComment).toHaveBeenCalledWith(
-            "o",
-            "r",
-            1,
-            100,
-            expect.stringMatching(/resolved:true/),
-            "t"
-        );
+    const errors = await markFindingsResolved({
+      execution: baseExecution(),
+      context: baseContext({
+        existingByFindingId: issueFinding(100, false),
+        issueComments: [{ id: 100, body: fullBody }],
+      }),
+      resolvedFindingIds: new Set(["f1"]),
     });
 
-    it("does not call updateComment when issue comment is not found", async () => {
-        const existing: ExistingByFindingId = {
-            f1: { issueCommentId: 999, resolved: false },
-        };
-        const context = baseContext({
-            existingByFindingId: existing,
-            issueComments: [{ id: 100, body: "other" }],
-        });
+    expect(errors).toEqual([]);
+    const updatedBody = mockUpdateComment.mock.calls[0][4] as string;
+    expect(updatedBody).toContain("x".repeat(15000));
+    expect(updatedBody).toMatch(/resolved:true/);
+    expect(updatedBody).not.toContain("Made with ❤️ by");
+  });
 
-        await markFindingsResolved({
-            execution: baseExecution(),
-            context,
-            resolvedFindingIds: new Set(["f1"]),
-            normalizedResolvedIds: new Set(),
-        });
+  it("retries only the pending issue destination after PR resolution succeeded", async () => {
+    const identity = "PRRC_partial";
+    mockListPrReviewComments.mockResolvedValue([
+      prComment(identity, resolvedBody),
+    ]);
+    const existing: ExistingByFindingId = {
+      f1: {
+        issue: { commentId: 100, resolved: false },
+        pullRequest: {
+          commentIdentity: identity,
+          pullRequestNumber: 5,
+          resolved: true,
+        },
+      },
+    };
 
-        expect(mockUpdateComment).not.toHaveBeenCalled();
+    const errors = await markFindingsResolved({
+      execution: baseExecution(),
+      context: baseContext({
+        existingByFindingId: existing,
+        issueComments: [{ id: 100, body: unresolvedBody }],
+      }),
+      resolvedFindingIds: new Set(["f1"]),
     });
 
-    it("uses normalizedResolvedIds when findingId is not in resolvedFindingIds", async () => {
-        const bodyWithMarker =
-            '## Finding\n\n<!-- copilot-bugbot finding_id:"f-1" resolved:false -->';
-        const existing: ExistingByFindingId = {
-            "f-1": { issueCommentId: 100, resolved: false },
-        };
-        const context = baseContext({
-            existingByFindingId: existing,
-            issueComments: [{ id: 100, body: bodyWithMarker }],
-        });
-        // sanitizeFindingIdForMarker("f-1") is "f-1", so normalizedResolvedIds must contain "f-1"
-        await markFindingsResolved({
-            execution: baseExecution(),
-            context,
-            resolvedFindingIds: new Set(),
-            normalizedResolvedIds: new Set(["f-1"]),
-        });
+    expect(errors).toEqual([]);
+    expect(mockResolveThread).toHaveBeenCalledTimes(1);
+    expect(mockUpdatePrReviewComment).not.toHaveBeenCalled();
+    expect(mockUpdateComment).toHaveBeenCalledTimes(1);
+  });
 
-        expect(mockUpdateComment).toHaveBeenCalledTimes(1);
+  it("resolves a PR by opaque identity before updating its marker and then resolves issue", async () => {
+    const identity = "PRRC_9223372036854775807";
+    mockListPrReviewComments.mockResolvedValue([prComment(identity)]);
+    const existing: ExistingByFindingId = {
+      f1: {
+        issue: { commentId: 100, resolved: false },
+        pullRequest: {
+          commentIdentity: identity,
+          pullRequestNumber: 6,
+          resolved: false,
+        },
+      },
+    };
+
+    const errors = await markFindingsResolved({
+      execution: baseExecution(),
+      context: baseContext({
+        existingByFindingId: existing,
+        issueComments: [{ id: 100, body: unresolvedBody }],
+      }),
+      resolvedFindingIds: new Set(["f1"]),
     });
 
-    it("updates PR review comment and resolves thread when prCommentId is set", async () => {
-        const bodyWithMarker =
-            '## Finding\n\n<!-- copilot-bugbot finding_id:"f1" resolved:false -->';
-        const existing: ExistingByFindingId = {
-            f1: {
-                issueCommentId: 100,
-                prCommentId: 201,
-                prNumber: 5,
-                resolved: false,
-            },
-        };
-        const context = baseContext({
-            existingByFindingId: existing,
-            issueComments: [{ id: 100, body: bodyWithMarker }],
-        });
-        mockListPrReviewComments.mockResolvedValue([
-            { id: 201, body: bodyWithMarker, node_id: "NODE_201" },
-        ]);
+    expect(errors).toEqual([]);
+    expect(mockResolveThread).toHaveBeenCalledWith("o", "r", 6, identity, "t");
+    expect(mockUpdatePrReviewComment).toHaveBeenCalledWith(
+      "o",
+      "r",
+      identity,
+      expect.stringMatching(/resolved:true/),
+      "t",
+    );
+    expect(mockResolveThread.mock.invocationCallOrder[0]).toBeLessThan(
+      mockUpdatePrReviewComment.mock.invocationCallOrder[0],
+    );
+    expect(mockUpdateComment).toHaveBeenCalledTimes(1);
+  });
 
-        await markFindingsResolved({
-            execution: baseExecution(),
-            context,
-            resolvedFindingIds: new Set(["f1"]),
-            normalizedResolvedIds: new Set(),
-        });
-
-        expect(mockUpdateComment).toHaveBeenCalledTimes(1);
-        expect(mockListPrReviewComments).toHaveBeenCalledWith("o", "r", 5, "t");
-        expect(mockUpdatePrReviewComment).toHaveBeenCalledWith(
-            "o",
-            "r",
-            201,
-            expect.stringMatching(/resolved:true/),
-            "t"
-        );
-        expect(mockResolveThread).toHaveBeenCalledWith(
-            "o",
-            "r",
-            5,
-            "NODE_201",
-            "t"
-        );
+  it("returns a semantic issue error when its full comment is unavailable", async () => {
+    const errors = await markFindingsResolved({
+      execution: baseExecution(),
+      context: baseContext({
+        existingByFindingId: issueFinding(999, false),
+      }),
+      resolvedFindingIds: new Set(["f1"]),
     });
 
-    it("does not resolve thread when pr comment has no node_id", async () => {
-        const bodyWithMarker =
-            '## Finding\n\n<!-- copilot-bugbot finding_id:"f1" resolved:false -->';
-        const existing: ExistingByFindingId = {
-            f1: {
-                prCommentId: 202,
-                prNumber: 6,
-                resolved: false,
-            },
-        };
-        const context = baseContext({
-            existingByFindingId: existing,
-            issueComments: [],
-        });
-        mockListPrReviewComments.mockResolvedValue([
-            { id: 202, body: bodyWithMarker },
-        ]);
+    expect(errors.map((error) => error.message)).toEqual([
+      "Unable to mark an issue finding as resolved.",
+    ]);
+  });
 
-        await markFindingsResolved({
-            execution: baseExecution(),
-            context,
-            resolvedFindingIds: new Set(["f1"]),
-            normalizedResolvedIds: new Set(),
-        });
+  it("returns a semantic PR error when its identity is absent from the fresh list", async () => {
+    mockListPrReviewComments.mockResolvedValue([
+      prComment("PRRC_other"),
+    ]);
 
-        expect(mockUpdatePrReviewComment).toHaveBeenCalledTimes(1);
-        expect(mockResolveThread).not.toHaveBeenCalled();
+    const errors = await markFindingsResolved({
+      execution: baseExecution(),
+      context: baseContext({
+        existingByFindingId: pullRequestFinding("PRRC_missing", false),
+      }),
+      resolvedFindingIds: new Set(["f1"]),
     });
 
-    it("logs error when PR review comment is not found for finding", async () => {
-        const { logError } = require("../../../../../../utils/logger");
-        const existing: ExistingByFindingId = {
-            f1: {
-                issueCommentId: 100,
-                prCommentId: 999,
-                prNumber: 5,
-                resolved: false,
-            },
-        };
-        const context = baseContext({
-            existingByFindingId: existing,
-            issueComments: [],
-        });
-        mockListPrReviewComments.mockResolvedValue([
-            { id: 201, body: "other", node_id: "NODE_201" },
-        ]);
+    expect(errors.map((error) => error.message)).toEqual([
+      "Unable to mark a pull request finding as resolved.",
+    ]);
+    expect(mockResolveThread).not.toHaveBeenCalled();
+  });
 
-        await markFindingsResolved({
-            execution: baseExecution(),
-            context,
-            resolvedFindingIds: new Set(["f1"]),
-            normalizedResolvedIds: new Set(),
-        });
+  it("does not resolve a thread when the matching PR marker is absent", async () => {
+    const identity = "PRRC_plain";
+    mockListPrReviewComments.mockResolvedValue([
+      prComment(identity, "plain text without marker"),
+    ]);
 
-        expect(logError).toHaveBeenCalledWith(
-            expect.stringContaining("No se encontró el comentario de la PR")
-        );
-        expect(mockUpdatePrReviewComment).not.toHaveBeenCalled();
+    const errors = await markFindingsResolved({
+      execution: baseExecution(),
+      context: baseContext({
+        existingByFindingId: pullRequestFinding(identity, false),
+      }),
+      resolvedFindingIds: new Set(["f1"]),
     });
 
-    it("logs error when updatePullRequestReviewComment throws", async () => {
-        const { logError } = require("../../../../../../utils/logger");
-        const bodyWithMarker =
-            '## Finding\n\n<!-- copilot-bugbot finding_id:"f1" resolved:false -->';
-        const existing: ExistingByFindingId = {
-            f1: {
-                issueCommentId: 100,
-                prCommentId: 201,
-                prNumber: 5,
-                resolved: false,
-            },
-        };
-        const context = baseContext({
-            existingByFindingId: existing,
-            issueComments: [{ id: 100, body: bodyWithMarker }],
-        });
-        mockListPrReviewComments.mockResolvedValue([
-            { id: 201, body: bodyWithMarker, node_id: "NODE_201" },
-        ]);
-        mockUpdatePrReviewComment.mockRejectedValueOnce(new Error("PR API error"));
+    expect(errors).toHaveLength(1);
+    expect(mockResolveThread).not.toHaveBeenCalled();
+    expect(mockUpdatePrReviewComment).not.toHaveBeenCalled();
+  });
 
-        await markFindingsResolved({
-            execution: baseExecution(),
-            context,
-            resolvedFindingIds: new Set(["f1"]),
-            normalizedResolvedIds: new Set(),
-        });
-
-        expect(logError).toHaveBeenCalledWith(
-            expect.stringContaining("Error al actualizar comentario de revisión")
-        );
+  it("treats an already-resolved issue marker as idempotent even if context was stale", async () => {
+    const errors = await markFindingsResolved({
+      execution: baseExecution(),
+      context: baseContext({
+        existingByFindingId: issueFinding(100, false),
+        issueComments: [{ id: 100, body: resolvedBody }],
+      }),
+      resolvedFindingIds: new Set(["f1"]),
     });
 
-    it("does not call update when replaceMarkerInBody finds no marker (body without marker)", async () => {
-        const existing: ExistingByFindingId = {
-            f1: { issueCommentId: 100, resolved: false },
-        };
-        const context = baseContext({
-            existingByFindingId: existing,
-            issueComments: [{ id: 100, body: "plain text without marker" }],
-        });
+    expect(errors).toEqual([]);
+    expect(mockUpdateComment).not.toHaveBeenCalled();
+  });
 
-        await markFindingsResolved({
-            execution: baseExecution(),
-            context,
-            resolvedFindingIds: new Set(["f1"]),
-            normalizedResolvedIds: new Set(),
-        });
+  it("accumulates independent sanitized PR and issue provider errors", async () => {
+    const { logError } = require("../../../../../../utils/logger");
+    const identity = "PRRC_failure";
+    mockListPrReviewComments.mockResolvedValue([prComment(identity)]);
+    mockUpdatePrReviewComment.mockRejectedValue(
+      new Error("PR API error secret-token"),
+    );
+    mockUpdateComment.mockRejectedValue(
+      new Error("issue API error secret-token"),
+    );
+    const existing: ExistingByFindingId = {
+      f1: {
+        issue: { commentId: 100, resolved: false },
+        pullRequest: {
+          commentIdentity: identity,
+          pullRequestNumber: 5,
+          resolved: false,
+        },
+      },
+    };
 
-        expect(mockUpdateComment).not.toHaveBeenCalled();
+    const errors = await markFindingsResolved({
+      execution: baseExecution(),
+      context: baseContext({
+        existingByFindingId: existing,
+        issueComments: [{ id: 100, body: unresolvedBody }],
+      }),
+      resolvedFindingIds: new Set(["f1"]),
     });
 
-    it("catches and logs error when issue updateComment throws", async () => {
-        const bodyWithMarker =
-            '## Finding\n\n<!-- copilot-bugbot finding_id:"f1" resolved:false -->';
-        const existing: ExistingByFindingId = {
-            f1: { issueCommentId: 100, resolved: false },
-        };
-        const context = baseContext({
-            existingByFindingId: existing,
-            issueComments: [{ id: 100, body: bodyWithMarker }],
-        });
-        mockUpdateComment.mockRejectedValueOnce(new Error("API error"));
-
-        await expect(
-            markFindingsResolved({
-                execution: baseExecution(),
-                context,
-                resolvedFindingIds: new Set(["f1"]),
-                normalizedResolvedIds: new Set(),
-            })
-        ).resolves.toBeUndefined();
-
-        expect(mockUpdateComment).toHaveBeenCalled();
-    });
+    expect(errors.map((error) => error.message)).toEqual([
+      "Unable to mark a pull request finding as resolved.",
+      "Unable to mark an issue finding as resolved.",
+    ]);
+    expect(JSON.stringify(errors)).not.toContain("secret-token");
+    expect(JSON.stringify(logError.mock.calls)).not.toContain("secret-token");
+  });
 });
