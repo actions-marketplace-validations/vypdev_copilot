@@ -1,7 +1,7 @@
 import { deduplicateFindings } from './deduplicate_findings';
 import { fileMatchesIgnorePatterns } from './file_ignore';
 import { applyCommentLimit } from './limit_comments';
-import { sanitizeFindingIdForMarker } from './marker';
+import { normalizeFindingIdForMarker } from './marker';
 import { isSafeFindingFilePath } from './path_validation';
 import { meetsMinSeverity, normalizeMinSeverity } from './severity';
 import type { BugbotFinding } from './types';
@@ -13,7 +13,6 @@ export type BugbotResponse = {
 
 export type PreparedBugbotFindings = ReturnType<typeof applyCommentLimit> & {
     resolvedFindingIds: Set<string>;
-    normalizedResolvedIds: Set<string>;
 };
 
 export function prepareBugbotFindings(
@@ -24,12 +23,20 @@ export function prepareBugbotFindings(
 ): PreparedBugbotFindings | undefined {
     if (response == null || typeof response !== 'object') return undefined;
     const payload = response as BugbotResponse;
-    const findings = Array.isArray(payload.findings) ? payload.findings : [];
+    const findings = (Array.isArray(payload.findings) ? payload.findings : []).flatMap((finding) => {
+        const normalizedId =
+            typeof finding?.id === 'string' ? normalizeFindingIdForMarker(finding.id) : null;
+        return normalizedId == null ? [] : [{ ...finding, id: normalizedId }];
+    });
     const resolvedFindingIdsRaw = Array.isArray(payload.resolved_finding_ids)
         ? payload.resolved_finding_ids
         : [];
-    const resolvedFindingIds = new Set(resolvedFindingIdsRaw);
-    const normalizedResolvedIds = new Set(resolvedFindingIdsRaw.map(sanitizeFindingIdForMarker));
+    const normalizedResolvedIdValues = resolvedFindingIdsRaw.flatMap((findingId) => {
+        if (typeof findingId !== 'string') return [];
+        const normalizedId = normalizeFindingIdForMarker(findingId);
+        return normalizedId == null ? [] : [normalizedId];
+    });
+    const resolvedFindingIds = new Set(normalizedResolvedIdValues);
     const minSeverity = normalizeMinSeverity(minSeverityValue);
     const filteredFindings = deduplicateFindings(findings
         .filter((finding) => finding.file == null || String(finding.file).trim() === '' || isSafeFindingFilePath(finding.file))
@@ -38,6 +45,5 @@ export function prepareBugbotFindings(
     return {
         ...applyCommentLimit(filteredFindings, maxComments),
         resolvedFindingIds,
-        normalizedResolvedIds,
     };
 }

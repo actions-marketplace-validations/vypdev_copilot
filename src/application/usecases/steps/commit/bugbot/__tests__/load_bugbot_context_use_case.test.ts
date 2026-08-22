@@ -97,8 +97,12 @@ describe("loadBugbotContext", () => {
 
         const ctx = await loadBugbotContext(baseParam());
 
-        expect(ctx.existingByFindingId["id-a"]).toEqual({ issueCommentId: 100, resolved: false });
-        expect(ctx.existingByFindingId["id-b"]).toEqual({ issueCommentId: 101, resolved: true });
+        expect(ctx.existingByFindingId["id-a"]).toEqual({
+            issue: { commentId: 100, resolved: false },
+        });
+        expect(ctx.existingByFindingId["id-b"]).toEqual({
+            issue: { commentId: 101, resolved: true },
+        });
     });
 
     it("updates existingByFindingId when same findingId appears in a later comment", async () => {
@@ -115,7 +119,9 @@ describe("loadBugbotContext", () => {
 
         const ctx = await loadBugbotContext(baseParam());
 
-        expect(ctx.existingByFindingId["id-a"]).toEqual({ issueCommentId: 101, resolved: true });
+        expect(ctx.existingByFindingId["id-a"]).toEqual({
+            issue: { commentId: 101, resolved: true },
+        });
     });
 
     it("includes only unresolved findings in previousFindingsBlock and unresolvedFindingsWithBody", async () => {
@@ -186,6 +192,7 @@ describe("loadBugbotContext", () => {
         mockListPullRequestReviewComments.mockResolvedValue([
             {
                 id: 200,
+                identity: "PRRC_pr_f1",
                 body: "## PR finding\n\n<!-- copilot-bugbot finding_id:\"pr-f1\" resolved:false -->",
             },
         ]);
@@ -193,9 +200,11 @@ describe("loadBugbotContext", () => {
         const ctx = await loadBugbotContext(baseParam());
 
         expect(ctx.existingByFindingId["pr-f1"]).toEqual({
-            prCommentId: 200,
-            prNumber: 50,
-            resolved: false,
+            pullRequest: {
+                commentIdentity: "PRRC_pr_f1",
+                pullRequestNumber: 50,
+                resolved: false,
+            },
         });
     });
 
@@ -215,5 +224,35 @@ describe("loadBugbotContext", () => {
         expect(ctx.unresolvedFindingsWithBody[0].id).toBe("long-1");
         expect(ctx.unresolvedFindingsWithBody[0].fullBody).toContain("[... truncated for length ...]");
         expect(ctx.unresolvedFindingsWithBody[0].fullBody.length).toBeLessThanOrEqual(12000);
+    });
+
+    it("keeps full mutation bodies and independent destination state after a partial resolution", async () => {
+        const longBody =
+            "## Finding\n\n" + "x".repeat(15000) + "\n\n<!-- copilot-bugbot finding_id:\"partial-1\" resolved:false -->";
+        mockListIssueComments.mockResolvedValue([{ id: 100, body: longBody }]);
+        mockGetOpenPullRequestNumbersByHeadBranch.mockResolvedValue([50]);
+        mockListPullRequestReviewComments.mockResolvedValue([
+            {
+                id: 200,
+                identity: "PRRC_partial_1",
+                body: "## Finding\n\n<!-- copilot-bugbot finding_id:\"partial-1\" resolved:true -->",
+            },
+        ]);
+
+        const ctx = await loadBugbotContext(baseParam());
+
+        expect(ctx.issueComments[0].body).toBe(longBody);
+        expect(ctx.existingByFindingId["partial-1"]).toEqual({
+            issue: { commentId: 100, resolved: false },
+            pullRequest: {
+                commentIdentity: "PRRC_partial_1",
+                pullRequestNumber: 50,
+                resolved: true,
+            },
+        });
+        expect(ctx.previousFindingsBlock).toContain("partial-1");
+        expect(ctx.unresolvedFindingsWithBody[0].fullBody).toContain(
+            "[... truncated for length ...]",
+        );
     });
 });

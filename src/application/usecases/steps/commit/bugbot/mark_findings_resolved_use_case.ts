@@ -1,75 +1,112 @@
-/**
- * Marks findings reported as fixed by updating their issue comments and PR review threads.
- */
-
+import type { BugbotFindingResolutionPorts } from "../../../../../application/ports/bugbot_finding_resolution_ports";
+import { PullRequestReviewOperationError } from "../../../../../application/ports/pull_request_review_errors";
 import type { Execution } from "../../../../../data/model/execution";
-import type { BugbotWritePorts } from "../../../../../application/ports/bugbot_write_ports";
 import { logError } from "../../../../../utils/logger";
-import type { BugbotContext } from "./types";
-import { buildMarker, sanitizeFindingIdForMarker } from "./marker";
+import type {
+  BugbotContext,
+  ExistingPullRequestFindingInfo,
+} from "./types";
 import { resolveIssueFinding } from "./resolve_issue_finding";
 import { resolvePullRequestFinding } from "./resolve_pull_request_finding";
 
 export interface MarkFindingsResolvedParam {
-    execution: Execution;
-    context: BugbotContext;
-    resolvedFindingIds: Set<string>;
-    normalizedResolvedIds: Set<string>;
-    ports: BugbotWritePorts;
+  execution: Execution;
+  context: BugbotContext;
+  resolvedFindingIds: Set<string>;
+  ports: BugbotFindingResolutionPorts;
 }
 
-export async function markFindingsResolved(param: MarkFindingsResolvedParam): Promise<void> {
-    const { execution, context, resolvedFindingIds, normalizedResolvedIds, ports } = param;
-    const { existingByFindingId, issueComments } = context;
-    const owner = execution.owner;
-    const repo = execution.repo;
-    const token = execution.tokens.token;
+function resolutionError(destination: "issue" | "pull request"): Error {
+  return destination === "pull request"
+    ? new PullRequestReviewOperationError("mark-resolved")
+    : new Error("Unable to mark an issue finding as resolved.");
+}
 
+async function tryResolvePullRequestFinding(
+  ports: BugbotFindingResolutionPorts,
+  execution: Execution,
+  findingId: string,
+  destination: ExistingPullRequestFindingInfo,
+  errors: Error[],
+): Promise<void> {
+  try {
+    await resolvePullRequestFinding(ports.pullRequestComments, {
+      findingId,
+      commentIdentity: destination.commentIdentity,
+      pullRequestNumber: destination.pullRequestNumber,
+      owner: execution.owner,
+      repo: execution.repo,
+      token: execution.tokens.token,
+    });
+  } catch {
+    const error = resolutionError("pull request");
+    logError(error);
+    errors.push(error);
+  }
+}
 
-    for (const [findingId, existing] of Object.entries(existingByFindingId)) {
-        if (
-            existing.resolved ||
-            (!resolvedFindingIds.has(findingId) &&
-                !normalizedResolvedIds.has(sanitizeFindingIdForMarker(findingId)))
-        ) {
-            continue;
-        }
+export async function markFindingsResolved(
+  param: MarkFindingsResolvedParam,
+): Promise<Error[]> {
+  const { execution, context, resolvedFindingIds, ports } = param;
+  const errors: Error[] = [];
 
-        const marker = buildMarker(findingId, true);
-        if (existing.issueCommentId != null) {
-            const comment = issueComments.find((candidate) => candidate.id === existing.issueCommentId);
-            if (comment == null) {
-                logError(
-                    `[Bugbot] No se encontró el comentario de la issue para marcar como resuelto. findingId="${findingId}", issueCommentId=${existing.issueCommentId}, issueNumber=${execution.issueNumber}, owner=${owner}, repo=${repo}.`
-                );
-            } else {
-                await resolveIssueFinding(ports.issueComments, {
-                    findingId,
-                    commentId: existing.issueCommentId,
-                    owner,
-                    repo,
-                    issueNumber: execution.issueNumber,
-                    token,
-                    body: comment.body,
-                }, marker);
-            }
-        }
+  for (const [findingId, existing] of Object.entries(
+    context.existingByFindingId,
+  )) {
+    const pullRequestDestination = existing.pullRequest;
 
-        if (existing.prCommentId != null && existing.prNumber != null) {
-            try {
-                await resolvePullRequestFinding(ports.pullRequestComments, {
-                    findingId,
-                    commentId: existing.prCommentId,
-                    prNumber: existing.prNumber,
-                    owner,
-                    repo,
-                    token,
-                });
-            } catch (err) {
-                logError(
-                    `[Bugbot] Error al cargar el comentario de revisión de la PR (marcar como resuelto). findingId="${findingId}", prCommentId=${existing.prCommentId}, prNumber=${existing.prNumber}: ${err}`
-                );
-            }
-        }
+    // Marker-true comments can predate thread-first ordering. Repair their thread
+    // independently of the agent response; the provider operation is idempotent.
+    if (pullRequestDestination?.resolved) {
+      await tryResolvePullRequestFinding(
+        ports,
+        execution,
+        findingId,
+        pullRequestDestination,
+        errors,
+      );
     }
+
+    if (!resolvedFindingIds.has(findingId)) continue;
+
+    if (pullRequestDestination != null && !pullRequestDestination.resolved) {
+      await tryResolvePullRequestFinding(
+        ports,
+        execution,
+        findingId,
+        pullRequestDestination,
+        errors,
+      );
+    }
+
+    const issueDestination = existing.issue;
+    if (issueDestination == null || issueDestination.resolved) continue;
+    const issueComment = context.issueComments.find(
+      (comment) => comment.id === issueDestination.commentId,
+    );
+    if (issueComment?.body == null) {
+      const error = resolutionError("issue");
+      logError(error);
+      errors.push(error);
+      continue;
+    }
+
+    try {
+      await resolveIssueFinding(ports.issueComments, {
+        findingId,
+        comment: { id: issueComment.id, body: issueComment.body },
+        owner: execution.owner,
+        repo: execution.repo,
+        issueNumber: execution.issueNumber,
+        token: execution.tokens.token,
+      });
+    } catch {
+      const error = resolutionError("issue");
+      logError(error);
+      errors.push(error);
+    }
+  }
+
+  return errors;
 }

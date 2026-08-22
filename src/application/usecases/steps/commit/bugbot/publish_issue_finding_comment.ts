@@ -14,12 +14,12 @@ export async function publishIssueFindingComment(
     const body = buildCommentBody(finding, false);
     const options = commitSha ? { commitSha } : undefined;
 
-    if (existing?.issueCommentId != null) {
+    if (existing?.issue != null) {
         await repository.updateComment(
             execution.owner,
             execution.repo,
             execution.issueNumber,
-            existing.issueCommentId,
+            existing.issue.commentId,
             body,
             execution.tokens.token,
             options

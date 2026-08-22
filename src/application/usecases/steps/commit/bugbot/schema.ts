@@ -3,6 +3,8 @@
  * structured JSON we can parse.
  */
 
+import { MAX_FINDING_ID_LENGTH } from './marker';
+
 /** Detection (on push): OpenCode computes diff itself and returns findings + resolved_finding_ids. */
 export const BUGBOT_RESPONSE_SCHEMA = {
     type: 'object',
@@ -12,7 +14,12 @@ export const BUGBOT_RESPONSE_SCHEMA = {
             items: {
                 type: 'object',
                 properties: {
-                    id: { type: 'string', description: 'Stable unique id for this finding (e.g. file:line:summary)' },
+                    id: {
+                        type: 'string',
+                        minLength: 1,
+                        maxLength: MAX_FINDING_ID_LENGTH,
+                        description: 'Stable unique id for this finding (e.g. file:line:summary)',
+                    },
                     title: { type: 'string', description: 'Short title of the problem' },
                     description: { type: 'string', description: 'Clear explanation of the issue' },
                     file: { type: 'string', description: 'Repository-relative path when applicable' },
@@ -26,7 +33,11 @@ export const BUGBOT_RESPONSE_SCHEMA = {
         },
         resolved_finding_ids: {
             type: 'array',
-            items: { type: 'string' },
+            items: {
+                type: 'string',
+                minLength: 1,
+                maxLength: MAX_FINDING_ID_LENGTH,
+            },
             description:
                 'Ids of previously reported issues (from the list we sent) that are now fixed in the current code. Only include ids we asked you to check.',
         },

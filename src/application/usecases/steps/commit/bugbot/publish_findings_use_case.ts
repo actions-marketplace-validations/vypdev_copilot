@@ -4,7 +4,7 @@
  */
 
 import type { Execution } from "../../../../../data/model/execution";
-import type { BugbotWritePorts } from "../../../../../application/ports/bugbot_write_ports";
+import type { BugbotFindingPublicationPorts } from "../../../../../application/ports/bugbot_finding_publication_ports";
 import { getCommentWatermark } from "../../../../../utils/comment_watermark";
 import type { BugbotContext, BugbotFinding } from "./types";
 import { publishIssueFindingComment } from "./publish_issue_finding_comment";
@@ -20,7 +20,7 @@ export interface PublishFindingsParam {
     /** When findings were limited by max comments, add one summary comment with this overflow info. */
     overflowCount?: number;
     overflowTitles?: string[];
-    ports: BugbotWritePorts;
+    ports: BugbotFindingPublicationPorts;
 }
 
 export async function publishFindings(param: PublishFindingsParam): Promise<void> {

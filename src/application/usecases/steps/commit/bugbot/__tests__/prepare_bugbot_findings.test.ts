@@ -24,11 +24,23 @@ describe('prepareBugbotFindings', () => {
 
         expect(result?.toPublish).toHaveLength(1);
         expect(result?.overflowCount).toBe(1);
-        expect(result?.resolvedFindingIds).toEqual(new Set(['safe-id', '<!--broken-->']));
-        expect(result?.normalizedResolvedIds).toEqual(new Set(['safe-id', '--broken']));
+        expect(result?.resolvedFindingIds).toEqual(new Set(['safe-id']));
     });
 
     it('returns undefined for non-object responses', () => {
         expect(prepareBugbotFindings('not-json', [], 'low', 10)).toBeUndefined();
+    });
+
+    it('rejects marker-colliding and overlong ids before publication', () => {
+        const result = prepareBugbotFindings({
+            findings: [
+                { id: 'id-->x', title: 'canonical', description: 'safe' },
+                { id: 'a'.repeat(201), title: 'too long', description: 'rejected' },
+            ],
+            resolved_finding_ids: ['resolved-->id', 'b'.repeat(201)],
+        }, [], 'low', 10);
+
+        expect(result?.toPublish.map((finding) => finding.id)).toEqual([]);
+        expect(result?.resolvedFindingIds).toEqual(new Set());
     });
 });

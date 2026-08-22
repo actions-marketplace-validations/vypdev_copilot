@@ -41,12 +41,15 @@ export function buildBugbotFixPrompt(
     const safeId = (id: string) => id.replace(/`/g, "\\`");
     const findingsBlock = targetFindingIds
         .map((id) => {
-            const data = context.existingByFindingId[id];
-            if (!data) return null;
-            const issueBody = context.issueComments.find((c) => c.id === data.issueCommentId)?.body ?? null;
-            const fullBody = truncateFindingBody((issueBody?.trim() ?? ""), MAX_FINDING_BODY_LENGTH);
+            const fullBody = context.unresolvedFindingsWithBody.find(
+                (finding) => finding.id === id
+            )?.fullBody.trim() ?? "";
             if (!fullBody) return null;
-            return `---\n**Finding id:** \`${safeId(id)}\`\n\n**Full comment (title, description, location, suggestion):**\n${fullBody}\n`;
+            const boundedBody = truncateFindingBody(
+                fullBody,
+                MAX_FINDING_BODY_LENGTH,
+            );
+            return `---\n**Finding id:** \`${safeId(id)}\`\n\n**Full comment (title, description, location, suggestion):**\n${boundedBody}\n`;
         })
         .filter(Boolean)
         .join("\n");

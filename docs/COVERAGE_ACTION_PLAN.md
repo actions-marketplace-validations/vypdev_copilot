@@ -3,27 +3,34 @@
 **Status:** Active companion to
 [`repowise-perfect-metrics-plan.md`](repowise-perfect-metrics-plan.md).
 
-**Checkpoint:** `4841d2563582eb0c297e6170579e8f6de4585073`
+**Latest published immutable checkpoint:**
+`4841d2563582eb0c297e6170579e8f6de4585073`, measured 2026-08-21 by the
+architecture-metrics collector.
 
-**Measured:** 2026-08-21 by the immutable architecture-metrics collector on a
-clean code checkpoint. This document replaces earlier inventories whenever
-their paths or percentages no longer describe the current architecture.
+**Phase 4 remediated candidate:** measured 2026-08-22 from the pre-freeze
+worktree based on `600d54f69645cfdc9b327f139ca0799a9b2a1204`, after incorporating
+the accepted independent-review findings. These Jest figures describe the
+current candidate, but they are not an independent approval or the immutable
+RepoWise/Graphify record; that record is created only after the newly reviewed
+source commit exists.
 
-## 1. Current baseline
+## 1. Current candidate baseline
 
 ```text
-Jest suites: 228 passed / 228 total
-Tests: 1477 passed, 1 skipped
-Lines: 91.56% (6144/6710)
-Branches: 84.46% (2479/2935)
-Functions: 88.53% (980/1107)
+Jest suites: 239 passed / 239 total
+Tests: 1552 passed, 1 skipped
+Statements: 92.53% (6773/7319)
+Branches: 86.01% (2607/3031)
+Functions: 91.21% (1038/1138)
+Lines: 93.58% (6462/6905)
 ```
 
-The immutable collector persists LCOV line, branch and function aggregates. It
-does not persist Jest's separate statement aggregate, so this checkpoint does
-not reconstruct or substitute a statement percentage.
+The candidate values above come directly from
+`pnpm exec jest --coverage --runInBand`. The immutable collector persists LCOV
+line, branch and function aggregates, but not Jest's separate statement
+aggregate; its later evidence record must not reconstruct a statement value.
 
-RepoWise ingests the same LCOV through a different mapper:
+The latest published immutable RepoWise checkpoint remains:
 
 ```text
 Mapped files: 330
@@ -31,7 +38,9 @@ Lines: 91.56%
 Branches: 82.31%
 ```
 
-The two summaries are related evidence, not interchangeable percentages.
+The current Jest candidate and the older published RepoWise checkpoint are
+separately labelled evidence. They are not interchangeable percentages or a
+substitute for the pending Phase 4 immutable collector run.
 
 ## 2. Coverage principles
 
@@ -52,32 +61,38 @@ The two summaries are related evidence, not interchangeable percentages.
 
 ## 3. Current zero-line-coverage inventory
 
-The current LCOV inventory contains 14 zero-line paths: 13 productive files and
+The current LCOV inventory contains 10 zero-line paths: nine productive files and
 one misplaced test file. Jest discovers tests only under `__tests__`, while
 `collectCoverageFrom` includes root-level `*.test.ts` files; therefore the
 misplaced release test is visible as uncovered source until it is classified
 and migrated.
 
-| Capability   | File                                                                       | Initial action                                |
-| ------------ | -------------------------------------------------------------------------- | --------------------------------------------- |
-| Branch       | `src/data/repository/branch_name_repository.ts`                            | Pure branch-name behavior contract            |
-| Issue        | `src/data/repository/issue/bugbot_issue_repository.ts`                     | Composition/delegation contract               |
-| Issue        | `src/data/repository/issue/execution_issue_setup_repository.ts`            | Execution-setup delegation contract           |
-| Pull request | `src/data/repository/pull_request/bugbot_pull_request_repository.ts`       | Composition/delegation contract               |
-| Pull request | `src/data/repository/pull_request/pull_request_review_repository.ts`       | Phase 4 review capability contract            |
-| Test layout  | `src/data/repository/release/repository_release_repository.test.ts`        | Migrate useful scenarios under `__tests__`    |
-| Composition  | `src/infrastructure/composition/agent_capability_composition_root.ts`      | Capability and identity wiring test           |
-| Composition  | `src/infrastructure/composition/bugbot_composition_root.ts`                | Route/capability wiring test                  |
-| Composition  | `src/infrastructure/composition/execution_issue_setup_composition_root.ts` | Exact adapter binding test                    |
-| Composition  | `src/infrastructure/composition/issue_use_case_composition.ts`             | Constructor contract or coverage through root |
-| Composition  | `src/infrastructure/composition/organization_members_composition_root.ts`  | Exact adapter binding test                    |
-| Composition  | `src/infrastructure/composition/pull_request_use_case_composition.ts`      | Constructor contract or coverage through root |
-| Composition  | `src/infrastructure/composition/pull_request_use_case_composition_root.ts` | Exact use-case graph and sharing test         |
-| Composition  | `src/infrastructure/composition/release_composition_root.ts`               | Release capability binding test               |
+| Capability  | File                                                                       | Initial action                                |
+| ----------- | -------------------------------------------------------------------------- | --------------------------------------------- |
+| Branch      | `src/data/repository/branch_name_repository.ts`                            | Pure branch-name behavior contract            |
+| Issue       | `src/data/repository/issue/bugbot_issue_repository.ts`                     | Composition/delegation contract               |
+| Issue       | `src/data/repository/issue/execution_issue_setup_repository.ts`            | Execution-setup delegation contract           |
+| Test layout | `src/data/repository/release/repository_release_repository.test.ts`        | Migrate useful scenarios under `__tests__`    |
+| Composition | `src/infrastructure/composition/agent_capability_composition_root.ts`      | Capability and identity wiring test           |
+| Composition | `src/infrastructure/composition/execution_issue_setup_composition_root.ts` | Exact adapter binding test                    |
+| Composition | `src/infrastructure/composition/issue_use_case_composition.ts`             | Constructor contract or coverage through root |
+| Composition | `src/infrastructure/composition/organization_members_composition_root.ts`  | Exact adapter binding test                    |
+| Composition | `src/infrastructure/composition/pull_request_use_case_composition.ts`      | Constructor contract or coverage through root |
+| Composition | `src/infrastructure/composition/release_composition_root.ts`               | Release capability binding test               |
 
 Some adapters above are exercised indirectly by higher-level tests but are not
 recognized as covered in the current Jest execution graph. Add direct behavior
 contracts rather than assuming indirect coverage.
+
+Phase 4 removed the zero-coverage review aggregate. Its replacement reviewer,
+review-comment query, review-comment command, and review-thread adapters, plus
+the Bugbot and pull-request composition roots touched by the migration, now have
+direct behavioral/wiring contracts. The reviewer, query, and command adapters
+report 100% statements, branches, functions, and lines. The thread adapter
+reports 98.63% statements, 96.15% branches, and 100% functions/lines after adding
+64-bit ID normalization, nullable pagination, cursor-liveness, mutation-result,
+and idempotent already-resolved behavior. Those uncovered defensive branches are
+not hidden behind import-only tests.
 
 ## 4. Lowest-covered non-zero production files
 

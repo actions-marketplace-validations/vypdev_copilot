@@ -5,12 +5,12 @@
 import type { Execution } from "../../../../../data/model/execution";
 import type { BugbotContextPorts } from "../../../../../application/ports/bugbot_context_ports";
 import type { BugbotPullRequestReadPort } from "../../../../../application/ports/bugbot_pull_request_read_ports";
+import type { PullRequestReviewComment } from "../../../../../application/ports/pull_request_review_comment_ports";
 import type { BugbotContext } from "./types";
 import {
     buildPreviousFindingsBlock,
     collectPreviousBugbotFindings,
     parseBugbotFindingComments,
-    type BugbotComment,
 } from "./bugbot_finding_context";
 import { logDebugInfo } from "../../../../../utils/logger";
 
@@ -36,8 +36,8 @@ async function loadOpenPullRequestComments(
     repo: string,
     openPrNumbers: number[],
     token: string
-): Promise<ReadonlyMap<number, BugbotComment[]>> {
-    const commentsByPullRequest = new Map<number, BugbotComment[]>();
+): Promise<ReadonlyMap<number, PullRequestReviewComment[]>> {
+    const commentsByPullRequest = new Map<number, PullRequestReviewComment[]>();
     for (const prNumber of openPrNumbers) {
         commentsByPullRequest.set(
             prNumber,

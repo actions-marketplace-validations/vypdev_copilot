@@ -7,7 +7,10 @@ import { logDebugInfo, logError, logInfo } from "../../../../../utils/logger";
 import { getTaskEmoji } from "../../../../../utils/task_emoji";
 import { ParamUseCase } from "../../../base/param_usecase";
 import { Result } from "../../../../../data/model/result";
-import type { BugbotContext } from "./types";
+import {
+    isExistingFindingFullyResolved,
+    type BugbotContext,
+} from "./types";
 import { buildBugbotFixPrompt } from "./build_bugbot_fix_prompt";
 import { loadBugbotContext } from "./load_bugbot_context_use_case";
 import { listWorkspacePaths, isSensitiveWorkspacePath, selectWorkspacePathsToCommit } from "./workspace_changes";
@@ -91,7 +94,7 @@ export class BugbotAutofixUseCase implements ParamUseCase<BugbotAutofixParam, Re
 
         const validIds = new Set(
             Object.entries(context.existingByFindingId)
-                .filter(([, info]) => !info.resolved)
+                .filter(([, info]) => !isExistingFindingFullyResolved(info))
                 .map(([id]) => id)
         );
         const idsToFix = targetFindingIds.filter((id) => validIds.has(id));

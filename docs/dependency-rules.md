@@ -162,16 +162,31 @@ Application ports describe semantic capabilities such as:
 ```text
 ConfigurationStorePort
 IssueLifecyclePort
-PullRequestReviewPort
+PullRequestReviewerPort
+PullRequestReviewCommentQueryPort
+PullRequestReviewCommentCommandPort
+PullRequestReviewThreadCommandPort
 ProjectBoardCommandPort
 OrganizationMembersPort
 RepositoryReleasePublicationPort
 ```
 
+When one adapter implements several operations, application callers still
+receive the narrowest semantic subport they need. In particular, finding
+resolution may list/update review comments and resolve a thread, but it must not
+receive review-comment creation merely because the same adapter implements it.
+
 They must not expose Octokit request parameters, endpoint names, GraphQL query
 strings, OpenCode response parts, provider agent IDs, or raw response
 envelopes. Provider client contracts may use provider-shaped DTOs only outside
 application behavior.
+
+Provider exceptions are translated at the specialized adapter boundary into
+operation-specific semantic errors. Raw provider messages, causes, request
+parameters, tokens and GraphQL transport details must not cross application
+ports, enter `Result.errors`, or be interpolated into logs. Command outcomes
+remain observable through every productive caller; partial success must not be
+reported as unconditional success.
 
 ## Forbidden abstractions
 

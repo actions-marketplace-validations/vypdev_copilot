@@ -1,56 +1,69 @@
-import type { BugbotPullRequestWritePort } from "../../../../../application/ports/bugbot_pull_request_write_ports";
-import { logDebugInfo, logError } from "../../../../../utils/logger";
-import { replaceMarkerInBody } from "./marker";
+import type { BugbotPullRequestResolutionPort } from "../../../../../application/ports/bugbot_pull_request_resolution_ports";
+import { PullRequestReviewOperationError } from "../../../../../application/ports/pull_request_review_errors";
+import { buildMarker, parseMarker, replaceMarkerInBody } from "./marker";
 
 export interface PullRequestFindingResolution {
-    findingId: string;
-    commentId: number;
-    prNumber: number;
-    owner: string;
-    repo: string;
-    token: string;
+  findingId: string;
+  commentIdentity: string;
+  pullRequestNumber: number;
+  owner: string;
+  repo: string;
+  token: string;
 }
 
+const RESOLVED_NOTE =
+  "\n\n---\n**Resolved** (OpenCode confirmed fixed in latest analysis).\n";
+
 export async function resolvePullRequestFinding(
-    repository: BugbotPullRequestWritePort,
-    resolution: PullRequestFindingResolution
+  repository: BugbotPullRequestResolutionPort,
+  resolution: PullRequestFindingResolution,
 ): Promise<void> {
-    const { findingId, commentId, prNumber, owner, repo, token } = resolution;
-    const comments = await repository.listPullRequestReviewComments(owner, repo, prNumber, token);
-    const comment = comments.find((candidate) => candidate.id === commentId);
-    if (comment == null) {
-        logError(
-            `[Bugbot] No se encontró el comentario de la PR para marcar como resuelto. findingId="${findingId}", prCommentId=${commentId}, prNumber=${prNumber}, owner=${owner}, repo=${repo}.`
-        );
-        return;
-    }
+  const comments = await repository.listPullRequestReviewComments(
+    resolution.owner,
+    resolution.repo,
+    resolution.pullRequestNumber,
+    resolution.token,
+  );
+  const comment = comments.find(
+    (candidate) => candidate.identity === resolution.commentIdentity,
+  );
+  if (comment?.body == null) {
+    throw new PullRequestReviewOperationError("resolve-thread");
+  }
 
-    const { updated, replaced } = replaceMarkerInBody(comment.body ?? "", findingId, true);
-    if (!replaced) return;
+  const marker = parseMarker(comment.body).find(
+    (candidate) => candidate.findingId === resolution.findingId,
+  );
+  if (marker == null) {
+    throw new PullRequestReviewOperationError("resolve-thread");
+  }
 
-    try {
-        await repository.updatePullRequestReviewComment(
-            owner,
-            repo,
-            commentId,
-            updated.trimEnd(),
-            token
-        );
-        logDebugInfo(
-            `Marked finding "${findingId}" as resolved on PR #${prNumber} (review comment ${commentId}).`
-        );
-        if (comment.node_id) {
-            await repository.resolvePullRequestReviewThread(
-                owner,
-                repo,
-                prNumber,
-                comment.node_id,
-                token
-            );
-        }
-    } catch (err) {
-        logError(
-            `[Bugbot] Error al actualizar comentario de revisión de la PR (marcar como resuelto). findingId="${findingId}", prCommentId=${commentId}, prNumber=${prNumber}: ${err}`
-        );
-    }
+  await repository.resolvePullRequestReviewThread(
+    resolution.owner,
+    resolution.repo,
+    resolution.pullRequestNumber,
+    resolution.commentIdentity,
+    resolution.token,
+  );
+
+  if (marker.resolved) return;
+  const replacement = `${RESOLVED_NOTE}${buildMarker(
+    resolution.findingId,
+    true,
+  )}`;
+  const replaced = replaceMarkerInBody(
+    comment.body,
+    resolution.findingId,
+    true,
+    replacement,
+  );
+  if (!replaced.found || !replaced.changed) return;
+
+  await repository.updatePullRequestReviewComment(
+    resolution.owner,
+    resolution.repo,
+    resolution.commentIdentity,
+    replaced.updated,
+    resolution.token,
+  );
 }
